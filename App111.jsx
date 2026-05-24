@@ -2281,6 +2281,15 @@ const OMBOR_MAYDONLAR = [
   { id:"tuz",      nom:"Tuz",                birlik:"kg",     emoji:"🧂" },
 ];
 
+// Hisobot ko'rinishi uchun birlik konvertatsiyasi: "un" → qop (50 kg = 1 qop),
+// "yog'" → plastik quti (5 litr = 1 quti). Saqlangan qiymatlar kg/litr da qoladi.
+const HISOBOT_UN_IDLAR = ["oqUn", "sariqUn", "qoraUn"];
+function hisobotBirlik(id, qiymat, aslBirlik) {
+  if (HISOBOT_UN_IDLAR.includes(id)) return { qiymat: qiymat / 50, birlik: "qop" };
+  if (id === "yog")                  return { qiymat: qiymat / 5,  birlik: "plastik quti" };
+  return { qiymat, birlik: aslBirlik };
+}
+
 const EMPTY_OMBOR_FORM = () => ({
   sana: new Date().toISOString().split("T")[0],
   ...Object.fromEntries(OMBOR_MAYDONLAR.map(m => [m.id, ""]))
@@ -2482,7 +2491,8 @@ function Ombor({ omborlar, setOmborlar, hisobotlarTarixi=[], setHisobotlarTarixi
             {hasAny ? (
               <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:6 }}>
                 {balansArr.map(b => {
-                  const qiy = b.qiymat;
+                  const k = hisobotBirlik(b.id, b.qiymat, b.birlik);
+                  const qiy = k.qiymat;
                   const formatted = Math.abs(qiy) >= 100
                     ? Math.round(qiy).toLocaleString()
                     : Math.abs(qiy) >= 1
@@ -2492,7 +2502,7 @@ function Ombor({ omborlar, setOmborlar, hisobotlarTarixi=[], setHisobotlarTarixi
                   return (
                     <div key={b.id} style={{ background:C.surface,border:`1px solid ${C.borderSoft}`,borderRadius:8,padding:"6px 9px",display:"flex",justifyContent:"space-between",alignItems:"center",gap:4 }}>
                       <span style={{ fontSize:9,color:C.sub,fontWeight:700,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>{b.emoji} {b.nom}</span>
-                      <span style={{ fontSize:T.xs,fontWeight:800,color,whiteSpace:"nowrap" }}>{formatted} {b.birlik}</span>
+                      <span style={{ fontSize:T.xs,fontWeight:800,color,whiteSpace:"nowrap" }}>{formatted} {k.birlik}</span>
                     </div>
                   );
                 })}
@@ -2754,11 +2764,15 @@ function Ombor({ omborlar, setOmborlar, hisobotlarTarixi=[], setHisobotlarTarixi
                   </div>
                 </div>
                 <div style={{ display:"flex",flexWrap:"wrap",gap:5 }}>
-                  {bor.map(m => (
+                  {bor.map(m => {
+                    const k = hisobotBirlik(m.id, m.qiymat, m.birlik);
+                    const v = +k.qiymat.toFixed(2);
+                    return (
                     <div key={m.id} style={{ background:C.surface,border:`1px solid ${C.border}`,borderRadius:8,padding:"4px 9px",fontSize:9,color:C.sub,fontWeight:700 }}>
-                      {m.emoji} {m.nom}: <span style={{ color:C.accent }}>{m.qiymat} {m.birlik}</span>
+                      {m.emoji} {m.nom}: <span style={{ color:C.accent }}>{v} {k.birlik}</span>
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
                 {delConfirmId === h.id && (
                   <div className="pop-in" style={{ background:C.redDim,border:`1px solid ${C.red}40`,borderRadius:10,padding:10,marginTop:10 }}>
