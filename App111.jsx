@@ -3069,6 +3069,23 @@ function Ombor({ omborlar, setOmborlar, hisobotlarTarixi=[], setHisobotlarTarixi
 }
 
 // ─── APP ─────────────────────────────────────────────────────────
+// localStorage'da saqlanadigan state — ilova qayta ochilganda ma'lumotlar yo'qolmaydi.
+// (Web brauzerda ham, Expo WebView'da ham ishlaydi.)
+function usePersistedState(key, initial) {
+  const [val, setVal] = useState(() => {
+    try {
+      const raw = typeof localStorage !== "undefined" ? localStorage.getItem(key) : null;
+      return raw != null ? JSON.parse(raw) : initial;
+    } catch { return initial; }
+  });
+  useEffect(() => {
+    try {
+      if (typeof localStorage !== "undefined") localStorage.setItem(key, JSON.stringify(val));
+    } catch { /* kvota yoki maxfiy rejim — e'tiborsiz qoldiramiz */ }
+  }, [key, val]);
+  return [val, setVal];
+}
+
 const MODULES_CONFIG = [
   { id:"dashboard",  label:"Markaz",          icon:"📊", iconSrc: ICON_DASHBOARD },
   { id:"production", label:"Ishlab chiqarish", icon:"🏭", iconSrc: ICON_PRODUCTION },
@@ -3080,7 +3097,7 @@ export default function App() {
   const [splash, setSplash]                             = useState(true);
   const [active, setActive]                             = useState("dashboard");
   const [key, setKey]                                   = useState(0);
-  const [ishchilar, setIshchilar]                       = useState([
+  const [ishchilar, setIshchilar]                       = usePersistedState("nurnon:ishchilar", [
     { id:1, ism:"Feruz aka",   lavozimId:"nonYopuvchi", lavozimCustom:"", haqTuri:"qop",    miqdor:30000,  tel:"", holat:"Aktiv", tatilQaytishSana:"", tahrirSoni:0, nonTurlari:["Issiq non"], nonNarxlari:{ "Issiq non":30000 } },
     { id:2, ism:"Otabek va Vahob aka",  lavozimId:"nonYopuvchi", lavozimCustom:"", haqTuri:"qop",    miqdor:60000,  tel:"", holat:"Aktiv", tatilQaytishSana:"", tahrirSoni:0, nonTurlari:["Issiq non"], nonNarxlari:{ "Issiq non":60000 } },
     { id:3, ism:"Dilshod aka", lavozimId:"nonYopuvchi", lavozimCustom:"", haqTuri:"qop",    miqdor:25000,  tel:"", holat:"Aktiv", tatilQaytishSana:"", tahrirSoni:0, nonTurlari:["Issiq non"], nonNarxlari:{ "Issiq non":25000 } },
@@ -3090,7 +3107,7 @@ export default function App() {
     { id:7, ism:"Diyor aka",   lavozimId:"nonYopuvchi", lavozimCustom:"Patirchi/Qora non", haqTuri:"qop", miqdor:75000, tel:"", holat:"Aktiv", tatilQaytishSana:"", tahrirSoni:0, nonTurlari:["Patir","Katta qora non"], nonNarxlari:{ "Patir":75000, "Katta qora non":100000 } },
     { id:8, ism:"Sardor aka", lavozimId:"nonYopuvchi", lavozimCustom:"Patirchi/Qora non", haqTuri:"qop", miqdor:75000, tel:"", holat:"Aktiv", tatilQaytishSana:"", tahrirSoni:0, nonTurlari:["Patir","Katta qora non"], nonNarxlari:{ "Patir":75000, "Katta qora non":100000 } },
   ]);
-  const [nonlar, setNonlar]                             = useState([
+  const [nonlar, setNonlar]                             = usePersistedState("nurnon:nonlar", [
     {
       id: 1,
       nom: "Issiq non",
@@ -3176,7 +3193,7 @@ export default function App() {
       mahsulotlar: []
     },
   ]);
-  const [mahsulotNarxlari, setMahsulotNarxlari]         = useState({
+  const [mahsulotNarxlari, setMahsulotNarxlari]         = usePersistedState("nurnon:mahsulotNarxlari", {
     oqUn:     { miqdor:"50000", narx:"288000" },
     sariqUn:  { miqdor:"50000", narx:"230000" },
     qoraUn:   { miqdor:"50000", narx:"230000" },
@@ -3187,22 +3204,22 @@ export default function App() {
     quruqSut: { miqdor:"1000",  narx:"30000"  },
     shakar:   { miqdor:"1000",  narx:"15700"  },
   });
-  const [customMahsulotlar, setCustomMahsulotlar]       = useState([]);
-  const [qarzlar, setQarzlar]                           = useState([]);
-  const [optomlar, setOptomlar]                         = useState([]);
-  const [omborlar, setOmborlar]                         = useState([]);
-  const [gazNarx, setGazNarx]                           = useState("350000");
-  const [elektroNarx, setElektroNarx]                   = useState("0");
-  const [kunlikQopSoni, setKunlikQopSoni]               = useState("");
-  const [sotilmaganNon, setSotilmaganNon]               = useState({});
+  const [customMahsulotlar, setCustomMahsulotlar]       = usePersistedState("nurnon:customMahsulotlar", []);
+  const [qarzlar, setQarzlar]                           = usePersistedState("nurnon:qarzlar", []);
+  const [optomlar, setOptomlar]                         = usePersistedState("nurnon:optomlar", []);
+  const [omborlar, setOmborlar]                         = usePersistedState("nurnon:omborlar", []);
+  const [gazNarx, setGazNarx]                           = usePersistedState("nurnon:gazNarx", "350000");
+  const [elektroNarx, setElektroNarx]                   = usePersistedState("nurnon:elektroNarx", "0");
+  const [kunlikQopSoni, setKunlikQopSoni]               = usePersistedState("nurnon:kunlikQopSoni", "");
+  const [sotilmaganNon, setSotilmaganNon]               = usePersistedState("nurnon:sotilmaganNon", {});
   const [qopTasdiqlandi, setQopTasdiqlandi]             = useState(false);
   const [hisobotYopildi, setHisobotYopildi]             = useState(false);
-  const [hisobotlarTarixi, setHisobotlarTarixi]         = useState([]);
-  const [tasdiqlanganKunlar, setTasdiqlanganKunlar]     = useState([]);
-  const [tashqariSonlar, setTashqariSonlar]             = useState({});
-  const [kunlikQoplar, setKunlikQoplar]                 = useState([]);
-  const [braklar, setBraklar]                           = useState([]);
-  const [ozIshlabQoplar, setOzIshlabQoplar]             = useState({});
+  const [hisobotlarTarixi, setHisobotlarTarixi]         = usePersistedState("nurnon:hisobotlarTarixi", []);
+  const [tasdiqlanganKunlar, setTasdiqlanganKunlar]     = usePersistedState("nurnon:tasdiqlanganKunlar", []);
+  const [tashqariSonlar, setTashqariSonlar]             = usePersistedState("nurnon:tashqariSonlar", {});
+  const [kunlikQoplar, setKunlikQoplar]                 = usePersistedState("nurnon:kunlikQoplar", []);
+  const [braklar, setBraklar]                           = usePersistedState("nurnon:braklar", []);
+  const [ozIshlabQoplar, setOzIshlabQoplar]             = usePersistedState("nurnon:ozIshlabQoplar", {});
 
   const nav = (id) => { setActive(id); };
 

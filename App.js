@@ -12,7 +12,9 @@ export default function App() {
       <StatusBar style="light" backgroundColor="#A06020" />
       <WebView
         originWhitelist={["*"]}
-        source={{ html: WEB_HTML, baseUrl: "" }}
+        // baseUrl barqaror origin beradi — bu localStorage'ning ilova qayta
+        // ochilganda ham saqlanib qolishi uchun zarur (Android WebView).
+        source={{ html: WEB_HTML, baseUrl: "https://nurnon.local/" }}
         style={styles.webview}
         javaScriptEnabled
         domStorageEnabled
