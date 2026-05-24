@@ -2516,13 +2516,30 @@ const OMBOR_MAYDONLAR = [
   { id:"tuz",      nom:"Tuz",                birlik:"kg",     emoji:"🧂" },
 ];
 
-// Hisobot ko'rinishi uchun birlik konvertatsiyasi: "un" → qop (50 kg = 1 qop),
-// "yog'" → plastik quti (5 litr = 1 quti). Saqlangan qiymatlar kg/litr da qoladi.
+// Ombor "katta birlik": un → qop (50 kg = 1 qop), yog' → plastik quti (5 litr = 1 quti).
+// Saqlangan qiymatlar baza birligida (kg/litr) qoladi; faqat kiritish va ko'rsatishda konvert.
 const HISOBOT_UN_IDLAR = ["oqUn", "sariqUn", "qoraUn"];
-function hisobotBirlik(id, qiymat, aslBirlik) {
-  if (HISOBOT_UN_IDLAR.includes(id)) return { qiymat: qiymat / 50, birlik: "qop" };
-  if (id === "yog")                  return { qiymat: qiymat / 5,  birlik: "plastik quti" };
-  return { qiymat, birlik: aslBirlik };
+function omborKattaBirlik(id) {
+  if (HISOBOT_UN_IDLAR.includes(id)) return { birlik: "qop", faktor: 50 };
+  if (id === "yog")                  return { birlik: "plastik quti", faktor: 5 };
+  return null;
+}
+// Balansni "63 qop 23 kg" / "53 plastik quti 3 litr" ko'rinishida matnga aylantirish.
+function zaxiraMatni(id, qiymat, bazaBirlik) {
+  const katta = omborKattaBirlik(id);
+  const manfiy = qiymat < 0;
+  const abs = Math.abs(qiymat);
+  const pref = manfiy ? "−" : "";
+  const son = (x) => x >= 100 ? Math.round(x).toLocaleString() : x >= 1 ? +x.toFixed(1) : +x.toFixed(2);
+  if (!katta) {
+    return abs === 0 ? `0 ${bazaBirlik}` : `${pref}${son(abs)} ${bazaBirlik}`;
+  }
+  if (abs === 0) return `0 ${katta.birlik}`;
+  const kattaSon = Math.floor(abs / katta.faktor);
+  const qoldiq = +(abs - kattaSon * katta.faktor).toFixed(1);
+  if (kattaSon > 0 && qoldiq > 0) return `${pref}${kattaSon} ${katta.birlik} ${qoldiq} ${bazaBirlik}`;
+  if (kattaSon > 0)               return `${pref}${kattaSon} ${katta.birlik}`;
+  return `${pref}${qoldiq} ${bazaBirlik}`;
 }
 
 const EMPTY_OMBOR_FORM = () => ({
@@ -2551,12 +2568,14 @@ function YangiSetForma({ omborlar, setOmborlar, onClose }) {
   const [delConfirmId, setDelConfirmId] = useState(null);
   const [showForm, setShowForm] = useState(false);
 
-  const jami = SET_MAHSULOTLAR.reduce((s,m)=>s+(parseFloat(sf[m.id])||0),0);
-
   const openNew = () => { setSf(EMPTY_SET_FORM()); setEditId(null); setShowForm(true); };
   const openEdit = (h) => {
     const f = {};
-    SET_MAHSULOTLAR.forEach(m=>{ f[m.id] = h.maydonlar.find(x=>x.id===m.id)?.qiymat||""; });
+    SET_MAHSULOTLAR.forEach(m=>{
+      const baza = h.maydonlar.find(x=>x.id===m.id)?.qiymat || 0;
+      const faktor = omborKattaBirlik(m.id)?.faktor || 1;
+      f[m.id] = baza ? String(baza / faktor) : "";
+    });
     setSf(f); setEditId(h.id); setShowForm(true);
   };
   const closeForm = () => { setSf(EMPTY_SET_FORM()); setEditId(null); setShowForm(false); };
@@ -2569,7 +2588,7 @@ function YangiSetForma({ omborlar, setOmborlar, onClose }) {
       sana: new Date().toISOString().split("T")[0],
       vaqt: editId ? (omborlar.find(x=>x.id===editId)?.vaqt || Date.now()) : Date.now(),
       turi: "yangiset",
-      maydonlar: SET_MAHSULOTLAR.map(m => ({ ...m, qiymat: parseFloat(sf[m.id]) || 0 }))
+      maydonlar: SET_MAHSULOTLAR.map(m => ({ ...m, qiymat: (parseFloat(sf[m.id]) || 0) * (omborKattaBirlik(m.id)?.faktor || 1) }))
     };
     if (editId) { setOmborlar(p=>p.map(x=>x.id===editId?entry:x)); }
     else        { setOmborlar(p=>[entry,...p]); }
@@ -2592,17 +2611,17 @@ function YangiSetForma({ omborlar, setOmborlar, onClose }) {
           </div>
           <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:14 }}>
             {SET_MAHSULOTLAR.map(m=>{
-              const isUn = m.id==="oqUn" || m.id==="sariqUn" || m.id==="qoraUn";
+              const katta = omborKattaBirlik(m.id);
               const qty = parseFloat(sf[m.id])||0;
               return (
                 <div key={m.id}>
-                  <div style={{ fontSize:9,color:C.sub,marginBottom:4,fontWeight:700 }}>{m.emoji} {m.nom} ({m.birlik})</div>
+                  <div style={{ fontSize:9,color:C.sub,marginBottom:4,fontWeight:700 }}>{m.emoji} {m.nom} ({katta?katta.birlik:m.birlik})</div>
                   <input type="number" value={sf[m.id]}
                     onChange={e=>setSf(p=>({...p,[m.id]:e.target.value}))}
-                    placeholder={isUn?"50 kg = 1 qop":"0"}
+                    placeholder={katta?`Nechta ${katta.birlik}`:"0"}
                     style={{ width:"100%",background:C.surface,border:`1px solid ${C.border}`,borderRadius:9,padding:"9px 11px",color:C.text,fontSize:T.sm,fontWeight:600 }} />
-                  {isUn && qty>0 && (
-                    <div style={{ fontSize:9,color:C.muted,marginTop:3 }}>≈ {(qty/50).toFixed(1)} qop</div>
+                  {katta && qty>0 && (
+                    <div style={{ fontSize:9,color:C.muted,marginTop:3 }}>= {(qty*katta.faktor).toLocaleString()} {m.birlik}</div>
                   )}
                 </div>
               );
@@ -2613,16 +2632,19 @@ function YangiSetForma({ omborlar, setOmborlar, onClose }) {
             {SET_MAHSULOTLAR.filter(m=>parseFloat(sf[m.id])>0).length===0 ? (
               <div style={{ fontSize:T.xs,color:C.muted }}>Hali kiritilmagan</div>
             ) : (
-              SET_MAHSULOTLAR.filter(m=>parseFloat(sf[m.id])>0).map(m=>(
+              SET_MAHSULOTLAR.filter(m=>parseFloat(sf[m.id])>0).map(m=>{
+                const katta = omborKattaBirlik(m.id);
+                return (
                 <div key={m.id} style={{ display:"flex",justifyContent:"space-between",marginBottom:3 }}>
                   <span style={{ fontSize:T.xs,color:C.sub }}>{m.emoji} {m.nom}</span>
-                  <span style={{ fontSize:T.xs,fontWeight:800,color:C.blue }}>{parseFloat(sf[m.id])||0} {m.birlik}</span>
+                  <span style={{ fontSize:T.xs,fontWeight:800,color:C.blue }}>{parseFloat(sf[m.id])||0} {katta?katta.birlik:m.birlik}</span>
                 </div>
-              ))
+                );
+              })
             )}
             <div style={{ borderTop:`1px solid ${C.border}`,paddingTop:8,marginTop:6,display:"flex",justifyContent:"space-between" }}>
               <span style={{ fontSize:T.xs,color:C.muted }}>Umumiy pozitsiyalar</span>
-              <span style={{ fontSize:T.sm,fontWeight:900,color:C.blue }}>{SET_MAHSULOTLAR.filter(m=>parseFloat(sf[m.id])>0).length} xil · {jami.toFixed(1)} umumiy</span>
+              <span style={{ fontSize:T.sm,fontWeight:900,color:C.blue }}>{SET_MAHSULOTLAR.filter(m=>parseFloat(sf[m.id])>0).length} xil mahsulot</span>
             </div>
           </div>
           <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:8 }}>
@@ -2732,18 +2754,13 @@ function Ombor({ omborlar, setOmborlar, hisobotlarTarixi=[], setHisobotlarTarixi
             {hasAny ? (
               <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:6 }}>
                 {balansArr.map(b => {
-                  const k = hisobotBirlik(b.id, b.qiymat, b.birlik);
-                  const qiy = k.qiymat;
-                  const formatted = Math.abs(qiy) >= 100
-                    ? Math.round(qiy).toLocaleString()
-                    : Math.abs(qiy) >= 1
-                      ? qiy.toFixed(1).replace(/\.0$/, "")
-                      : qiy.toFixed(2).replace(/0$/, "");
+                  const qiy = b.qiymat;
+                  const matn = zaxiraMatni(b.id, qiy, b.birlik);
                   const color = qiy > 0 ? C.green : qiy < 0 ? C.red : C.muted;
                   return (
                     <div key={b.id} style={{ background:C.surface,border:`1px solid ${C.borderSoft}`,borderRadius:8,padding:"6px 9px",display:"flex",justifyContent:"space-between",alignItems:"center",gap:4 }}>
                       <span style={{ fontSize:9,color:C.sub,fontWeight:700,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>{b.emoji} {b.nom}</span>
-                      <span style={{ fontSize:T.xs,fontWeight:800,color,whiteSpace:"nowrap" }}>{formatted} {k.birlik}</span>
+                      <span style={{ fontSize:T.xs,fontWeight:800,color,whiteSpace:"nowrap" }}>{matn}</span>
                     </div>
                   );
                 })}
@@ -3025,15 +3042,11 @@ function Ombor({ omborlar, setOmborlar, hisobotlarTarixi=[], setHisobotlarTarixi
                   </div>
                 </div>
                 <div style={{ display:"flex",flexWrap:"wrap",gap:5 }}>
-                  {bor.map(m => {
-                    const k = hisobotBirlik(m.id, m.qiymat, m.birlik);
-                    const v = +k.qiymat.toFixed(2);
-                    return (
+                  {bor.map(m => (
                     <div key={m.id} style={{ background:C.surface,border:`1px solid ${C.border}`,borderRadius:8,padding:"4px 9px",fontSize:9,color:C.sub,fontWeight:700 }}>
-                      {m.emoji} {m.nom}: <span style={{ color:C.accent }}>{v} {k.birlik}</span>
+                      {m.emoji} {m.nom}: <span style={{ color:C.accent }}>{zaxiraMatni(m.id, m.qiymat, m.birlik)}</span>
                     </div>
-                    );
-                  })}
+                  ))}
                 </div>
                 {delConfirmId === h.id && (
                   <div className="pop-in" style={{ background:C.redDim,border:`1px solid ${C.red}40`,borderRadius:10,padding:10,marginTop:10 }}>
