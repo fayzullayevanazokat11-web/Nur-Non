@@ -659,14 +659,6 @@ function Dashboard({ nonlar=[], qarzlar=[], setQarzlar, optomlar=[], setOptomlar
         {stats.map(s => <StatCard key={s.label} {...s} />)}
       </div>
 
-      <div className="slide-up" style={{ animationDelay:".22s",background:`linear-gradient(135deg, ${C.green}20, ${C.accent}10)`,border:`1px solid ${C.green}40`,borderRadius:16,padding:"16px 20px",marginBottom:20,display:"flex",justifyContent:"space-between",alignItems:"center" }}>
-        <div>
-          <div style={{ fontSize:T.xs,color:C.muted,textTransform:"uppercase",letterSpacing:1,marginBottom:4 }}>Bugungi sof foyda</div>
-          <div style={{ fontSize:32,fontWeight:900,color:C.green,letterSpacing:-1 }}>740,000</div>
-          <div style={{ fontSize:T.xs,color:C.muted }}>so'm · 4,320,000 − 3,580,000</div>
-        </div>
-        <div style={{ fontSize:40,opacity:0.55 }}>🍞</div>
-      </div>
 
       <SLabel>Muhim ogohlantirishlar</SLabel>
       {(() => {
