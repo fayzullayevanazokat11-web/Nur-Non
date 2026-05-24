@@ -353,7 +353,10 @@ function Dashboard({ nonlar=[], qarzlar=[], setQarzlar, optomlar=[], setOptomlar
     bugunIshchiHaq += parseFloat(w.miqdor)||0;
   });
 
-  const bugunSofFoyda = Math.round(bugunDaromad - bugunXomashyo - bugunIshchiHaq);
+  // Hech qanday ma'lumot kiritilmaguncha sof foyda 0 (xodim haqi ayrilib ketmasin).
+  // Ma'lumot kirita boshlangach to'liq hisob ishlaydi.
+  const malumotKiritilgan = ozJamiQop > 0 || tashqariJamiDona > 0;
+  const bugunSofFoyda = malumotKiritilgan ? Math.round(bugunDaromad - bugunXomashyo - bugunIshchiHaq) : 0;
 
   // Stats massivining birinchi elementini almashtirib, bugungi daromadni qo'yamiz
   stats[0] = { label:"Bugungi sof foyda", value: bugunSofFoyda.toLocaleString(), unit:"so'm",
