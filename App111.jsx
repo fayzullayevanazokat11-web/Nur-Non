@@ -1335,14 +1335,12 @@ const MAHSULOTLAR_KATALOG = [
   { id:"oqUn",     nom:"Oq un",             birlik:"g",  emoji:"🌾" },
   { id:"sariqUn",  nom:"Sariq un",          birlik:"g",  emoji:"🌾" },
   { id:"qoraUn",   nom:"Qora un",           birlik:"g",  emoji:"🌾" },
-  { id:"suv",      nom:"Suv",               birlik:"ml", emoji:"💧" },
   { id:"sut",      nom:"Sut",               birlik:"ml", emoji:"🥛" },
   { id:"yog",      nom:"Yog'",              birlik:"ml", emoji:"🫗" },
   { id:"jir",      nom:"Jir (hayvon yog')", birlik:"g",  emoji:"🥓" },
   { id:"quruqSut", nom:"Quruq sut",         birlik:"g",  emoji:"🥄" },
   { id:"achitqi",  nom:"Achitqi (Droja)",   birlik:"g",  emoji:"🍞" },
-  { id:"shakar",   nom:"Shakar",            birlik:"g",  emoji:"🍬" },
-  { id:"tuz",      nom:"Tuz",               birlik:"g",  emoji:"🧂" },
+  { id:"shakar",   nom:"Shakar va Tuz",     birlik:"g",  emoji:"🍬" },
 ];
 
 const EMPTY_NON = { nom:"", narx:"", nonSoni:"", ozIshlab:true, tashqariFoyda:"", mahsulotlar:[] };
@@ -2494,6 +2492,11 @@ function Ombor({ omborlar, setOmborlar, hisobotlarTarixi=[], setHisobotlarTarixi
     if (!form.sana || !filled) {
       setErr(true); setTimeout(() => setErr(false), 600); return;
     }
+    // Bir sanada faqat bitta hisobot bo'lishi kerak
+    const takror = omborlar.some(h => h.turi!=="yangiset" && h.sana===form.sana && h.id!==editId);
+    if (takror) {
+      setErr(true); setTimeout(() => setErr(false), 600); return;
+    }
     const entry = {
       id: editId || Date.now(),
       sana: form.sana,
@@ -2515,6 +2518,9 @@ function Ombor({ omborlar, setOmborlar, hisobotlarTarixi=[], setHisobotlarTarixi
     setShowForm(false); setHisobotTuri(null);
     setEditId(null); setForm(EMPTY_OMBOR_FORM());
   };
+
+  // Tanlangan sana uchun allaqachon hisobot bormi? (tahrirlanayotgandan tashqari)
+  const dupSana = !!form.sana && omborlar.some(h => h.turi!=="yangiset" && h.sana===form.sana && h.id!==editId);
 
   return (
     <div>
@@ -2762,7 +2768,12 @@ function Ombor({ omborlar, setOmborlar, hisobotlarTarixi=[], setHisobotlarTarixi
             <div style={{ fontSize:9,color:C.muted,marginBottom:6,textTransform:"uppercase",letterSpacing:0.8 }}>Sana *</div>
             <input type="date" value={form.sana}
               onChange={e => setForm(p => ({ ...p, sana:e.target.value }))}
-              style={{ ...inpStyle(err&&!form.sana), colorScheme:"dark" }} />
+              style={{ ...inpStyle((err&&!form.sana)||dupSana), colorScheme:"dark" }} />
+            {dupSana && (
+              <div className="pop-in" style={{ marginTop:8,background:C.redDim,border:`1px solid ${C.red}40`,borderRadius:8,padding:"8px 11px",fontSize:T.xs,color:C.red,fontWeight:700 }}>
+                ⚠️ Bu sana uchun hisobot allaqachon mavjud! Bir kunda faqat bitta hisobot bo'lishi mumkin.
+              </div>
+            )}
           </div>
 
           {/* Mahsulotlar */}
@@ -2784,8 +2795,8 @@ function Ombor({ omborlar, setOmborlar, hisobotlarTarixi=[], setHisobotlarTarixi
               style={{ border:`1px solid ${C.border}`,background:"transparent",borderRadius:10,padding:"11px 8px",color:C.sub,cursor:"pointer",fontSize:T.sm }}>
               Bekor
             </button>
-            <button onClick={saveHisobot}
-              style={{ border:"none",background:C.accent,borderRadius:10,padding:"11px 8px",color:"#FFF3E8",fontWeight:800,cursor:"pointer",fontSize:T.sm }}>
+            <button onClick={saveHisobot} disabled={dupSana}
+              style={{ border:"none",background:dupSana?C.border:C.accent,borderRadius:10,padding:"11px 8px",color:dupSana?C.muted:"#FFF3E8",fontWeight:800,cursor:dupSana?"not-allowed":"pointer",fontSize:T.sm }}>
               ✓ Saqlash
             </button>
           </div>
@@ -2804,15 +2815,30 @@ function Ombor({ omborlar, setOmborlar, hisobotlarTarixi=[], setHisobotlarTarixi
           <div style={{ fontSize:T.xs,color:C.muted,marginBottom:10,textTransform:"uppercase",letterSpacing:1,fontWeight:700 }}>
             📋 Saqlangan hisobotlar ({omborlar.filter(h=>h.turi!=="yangiset").length} ta)
           </div>
+          {(() => {
+            const sanoq = {};
+            omborlar.filter(h=>h.turi!=="yangiset").forEach(h => { sanoq[h.sana] = (sanoq[h.sana]||0)+1; });
+            const takror = Object.keys(sanoq).filter(s => sanoq[s] > 1);
+            if (takror.length === 0) return null;
+            return (
+              <div className="pop-in" style={{ background:C.redDim,border:`1px solid ${C.red}50`,borderRadius:12,padding:"11px 14px",marginBottom:12 }}>
+                <div style={{ fontSize:T.sm,fontWeight:800,color:C.red,marginBottom:3 }}>⚠️ Takror sana aniqlandi</div>
+                <div style={{ fontSize:10,color:C.muted }}>
+                  Quyidagi sana(lar) bir necha marta kiritilgan: {takror.join(", ")}. Bir kunda faqat bitta hisobot bo'lishi kerak — ortiqchasini o'chiring.
+                </div>
+              </div>
+            );
+          })()}
           {omborlar.filter(h=>h.turi!=="yangiset").map((h, i) => {
+            const isDup = omborlar.filter(x=>x.turi!=="yangiset"&&x.sana===h.sana).length > 1;
             const daysAgo = Math.floor((Date.now() - h.vaqt) / (24*60*60*1000));
             const bor = h.maydonlar.filter(m => m.qiymat > 0);
             return (
               <div key={h.id} className={`fade-in s${Math.min(i+1,5)}`}
-                style={{ background:C.card,border:`1px solid ${C.border}`,borderRadius:14,padding:"12px 14px",marginBottom:10 }}>
+                style={{ background:C.card,border:`1px solid ${isDup?C.red+"70":C.border}`,borderRadius:14,padding:"12px 14px",marginBottom:10 }}>
                 <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10 }}>
                   <div>
-                    <div style={{ fontSize:T.sm,fontWeight:800,color:C.text }}>📅 {h.sana}</div>
+                    <div style={{ fontSize:T.sm,fontWeight:800,color:C.text }}>📅 {h.sana} {isDup && <span style={{ fontSize:9,color:C.red,fontWeight:800 }}>⚠️ takror</span>}</div>
                     <div style={{ fontSize:9,color:C.muted,marginTop:2 }}>{daysAgo===0?"Bugun":daysAgo===1?"Kecha":`${daysAgo} kun oldin`} · {bor.length} xil mahsulot</div>
                   </div>
                   <div style={{ display:"flex",gap:6 }}>
@@ -2965,11 +2991,12 @@ export default function App() {
     oqUn:     { miqdor:"50000", narx:"288000" },
     sariqUn:  { miqdor:"50000", narx:"230000" },
     qoraUn:   { miqdor:"50000", narx:"230000" },
+    sut:      { miqdor:"1000",  narx:"7000"   },
     yog:      { miqdor:"15000", narx:"285000" },
+    jir:      { miqdor:"1000",  narx:"25000"  },
     achitqi:  { miqdor:"500",   narx:"44000"  },
     quruqSut: { miqdor:"1000",  narx:"30000"  },
     shakar:   { miqdor:"1000",  narx:"15700"  },
-    tuz:      { miqdor:"1000",  narx:"15700"  },
   });
   const [customMahsulotlar, setCustomMahsulotlar]       = useState([]);
   const [qarzlar, setQarzlar]                           = useState([]);
