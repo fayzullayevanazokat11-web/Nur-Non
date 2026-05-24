@@ -1,2 +1,12 @@
 node_modules/
 dist/
+
+# Expo / EAS
+.expo/
+web-build/
+*.orig.*
+android/
+ios/
+
+# webBundle.js — `npm run bundle` orqali yaratiladi, lekin native build uchun
+# kerak bo'lgani sababli git'da saqlanadi (ignore qilinmaydi).
