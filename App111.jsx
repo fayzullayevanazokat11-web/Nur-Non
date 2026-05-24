@@ -621,6 +621,96 @@ function Dashboard({ nonlar=[], qarzlar=[], setQarzlar, optomlar=[], setOptomlar
                 </div>
               </div>
 
+              {/* ── OPTOM & QARZ QO'SHIMCHA FOYDASI ── */}
+              {(() => {
+                // Assortimentdan bitta nondan sof foyda (ingredient asosida)
+                const bittaNonFoyda = (nonNomi) => {
+                  const n = (M_nonlar||[]).find(x => x.nom === nonNomi);
+                  if (!n) return 0;
+                  if (n.ozIshlab === false) return parseFloat(n.tashqariFoyda) || 2000;
+                  const norma = parseFloat(n.nonSoni) || 0;
+                  if (norma <= 0) return 0;
+                  return (parseFloat(n.narx) || 0) - (M_getTannarx(n) / norma);
+                };
+                const sameDay = (ms) => !!ms && new Date(ms).toISOString().split("T")[0] === M_sana;
+
+                // Optom — o'sha sanadagi savdolar (skidka ayriladi)
+                const optomKun = (optomlar||[]).filter(o => o.sana === M_sana);
+                const optomQatorlar = optomKun.map(o => {
+                  let foyda = 0, dona = 0;
+                  (o.savat||[]).forEach(s => { foyda += bittaNonFoyda(s.nonNomi) * (s.soni||0); dona += (s.soni||0); });
+                  return { id:o.id, ism:o.ism, dona, foyda: foyda - (o.chegirma||0) };
+                });
+                const optomFoyda = optomQatorlar.reduce((s,x)=>s+x.foyda,0);
+                const optomDona  = optomQatorlar.reduce((s,x)=>s+x.dona,0);
+
+                // Qarz — o'sha sanada TO'LANGAN qarzlar (skidkasiz, faqat sof foyda)
+                const qarzKun = (qarzlar||[]).filter(q => q.tolangan && sameDay(q.tolanganVaqt));
+                const qarzQatorlar = qarzKun.map(q => {
+                  const savat = q.savat || [{ nonNomi:q.nonNomi, soni:q.soni }];
+                  let foyda = 0, dona = 0;
+                  savat.forEach(s => { foyda += bittaNonFoyda(s.nonNomi) * (s.soni||0); dona += (s.soni||0); });
+                  return { id:q.id, ism:q.ism, dona, foyda };
+                });
+                const qarzFoyda = qarzQatorlar.reduce((s,x)=>s+x.foyda,0);
+                const qarzDona  = qarzQatorlar.reduce((s,x)=>s+x.dona,0);
+
+                if (optomKun.length === 0 && qarzKun.length === 0) return null;
+                const umumiy = M_sof + optomFoyda + qarzFoyda;
+
+                return (
+                  <>
+                    {optomKun.length > 0 && (
+                      <div className="hisobot-row" style={{ marginTop:10 }}>
+                        <div style={{ fontSize:9,color:C.blue,fontWeight:800,textTransform:"uppercase",letterSpacing:1,marginBottom:8 }}>🛒 Optom foydasi ({optomDona} dona)</div>
+                        {optomQatorlar.map(o => (
+                          <div key={o.id} style={{ display:"flex",justifyContent:"space-between",fontSize:T.xs,color:C.text,marginBottom:5,padding:"5px 8px",background:C.card,borderRadius:7,border:`1px solid ${C.borderSoft}` }}>
+                            <div>
+                              <div style={{ fontWeight:700 }}>{o.ism}</div>
+                              <div style={{ fontSize:9,color:C.muted,marginTop:1 }}>{o.dona} dona · skidka ayrilgan</div>
+                            </div>
+                            <span style={{ fontWeight:800,color:o.foyda>=0?C.green:C.red }}>{o.foyda>=0?"+":""}{Math.round(o.foyda).toLocaleString()} so'm</span>
+                          </div>
+                        ))}
+                        <div style={{ display:"flex",justifyContent:"space-between",fontSize:T.xs,fontWeight:800,color:C.blue,padding:"3px 8px" }}>
+                          <span>Optom jami:</span>
+                          <span>+{Math.round(optomFoyda).toLocaleString()} so'm</span>
+                        </div>
+                      </div>
+                    )}
+
+                    {qarzKun.length > 0 && (
+                      <div className="hisobot-row" style={{ marginTop:10 }}>
+                        <div style={{ fontSize:9,color:C.accent,fontWeight:800,textTransform:"uppercase",letterSpacing:1,marginBottom:8 }}>🤝 Qarz foydasi ({qarzDona} dona · to'langan)</div>
+                        {qarzQatorlar.map(q => (
+                          <div key={q.id} style={{ display:"flex",justifyContent:"space-between",fontSize:T.xs,color:C.text,marginBottom:5,padding:"5px 8px",background:C.card,borderRadius:7,border:`1px solid ${C.borderSoft}` }}>
+                            <div>
+                              <div style={{ fontWeight:700 }}>{q.ism}</div>
+                              <div style={{ fontSize:9,color:C.muted,marginTop:1 }}>{q.dona} dona · sof foyda</div>
+                            </div>
+                            <span style={{ fontWeight:800,color:q.foyda>=0?C.green:C.red }}>{q.foyda>=0?"+":""}{Math.round(q.foyda).toLocaleString()} so'm</span>
+                          </div>
+                        ))}
+                        <div style={{ display:"flex",justifyContent:"space-between",fontSize:T.xs,fontWeight:800,color:C.accent,padding:"3px 8px" }}>
+                          <span>Qarz jami:</span>
+                          <span>+{Math.round(qarzFoyda).toLocaleString()} so'm</span>
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="hisobot-row" style={{ background:`linear-gradient(135deg, ${C.green}20, ${C.accent}12)`,border:`1.5px solid ${C.green}50`,borderRadius:12,padding:"10px 12px",marginTop:8 }}>
+                      <div style={{ fontSize:9,color:C.muted,marginBottom:5 }}>
+                        Kunlik {Math.round(M_sof).toLocaleString()} + Optom {Math.round(optomFoyda).toLocaleString()} + Qarz {Math.round(qarzFoyda).toLocaleString()}
+                      </div>
+                      <div style={{ display:"flex",justifyContent:"space-between",fontSize:T.md,fontWeight:900,color:C.text }}>
+                        <span>💰 Umumiy sof foyda:</span>
+                        <span style={{ color:umumiy>=0?C.green:C.red }}>{Math.round(umumiy).toLocaleString()} so'm</span>
+                      </div>
+                    </div>
+                  </>
+                );
+              })()}
+
             </div>
 
             {/* Yopish tugmasi */}
