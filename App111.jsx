@@ -193,7 +193,8 @@ function Dashboard({ nonlar=[], qarzlar=[], setQarzlar, optomlar=[], setOptomlar
   hisobotYopildi, setHisobotYopildi,
   hisobotlarTarixi=[], setHisobotlarTarixi,
   tashqariSonlar={}, setTashqariSonlar,
-  ozIshlabQoplar={}, setOzIshlabQoplar }) {
+  ozIshlabQoplar={}, setOzIshlabQoplar,
+  tasdiqlanganKunlar=[], onNav }) {
   const stats = [
     { label:"Bugungi daromad",  value:"4,320,000", unit:"so'm", trend:"↑ +12%", color:C.green, delay:0.05 },
     // "Sotilgan non" va "Kunlik qop" qiymatlari pastda — kunlik qop hisobi helperlaridan keyin to'ldiriladi
@@ -668,8 +669,76 @@ function Dashboard({ nonlar=[], qarzlar=[], setQarzlar, optomlar=[], setOptomlar
       </div>
 
       <SLabel>Muhim ogohlantirishlar</SLabel>
-      <AlertCard type="success" msg="Bugungi tushum muvaffaqiyatli: +4,320,000 so'm" delay={0.25} />
-      <AlertCard type="info"    msg="Bugungi ish jarayoni barqaror ketmoqda 📈" delay={0.3} />
+      {(() => {
+        const omborPending = (hisobotlarTarixi||[]).filter(h => !tasdiqlanganKunlar.includes(h.id));
+        const qopOk      = qopTasdiqlandi;
+        const needsOmbor = hisobotlarTarixi.length > 0;
+        const omborOk    = needsOmbor && omborPending.length === 0;
+        const allDone    = qopOk && (!needsOmbor || omborOk);
+        const nothingYet = !qopOk && !needsOmbor;
+
+        if (nothingYet) return (
+          <div className="slide-up" style={{ animationDelay:".25s",background:C.card,border:`1px solid ${C.blue}30`,borderRadius:12,padding:"12px 14px",marginBottom:8,display:"flex",alignItems:"center",gap:10 }}>
+            <span style={{ fontSize:T.md }}>📋</span>
+            <span style={{ fontSize:T.sm,color:C.muted }}>Bugungi ma'lumotlar hali kiritilmagan</span>
+          </div>
+        );
+
+        if (allDone) return (
+          <div className="slide-up" style={{ animationDelay:".25s",background:C.card,borderLeft:`4px solid ${C.green}`,border:`1px solid ${C.green}20`,borderRadius:12,padding:"12px 14px",marginBottom:8,display:"flex",alignItems:"center",gap:10 }}>
+            <span style={{ fontSize:T.md }}>✅</span>
+            <span style={{ fontSize:T.sm,fontWeight:700,color:C.green }}>Barcha kunlik vazifalar bajarildi!</span>
+          </div>
+        );
+
+        return (
+          <div style={{ marginBottom:8 }}>
+            {/* Vazifa 1: Kunlik qop hisobi */}
+            <div className="slide-up" style={{ animationDelay:".25s",background:C.card,borderLeft:`4px solid ${qopOk?C.green:C.accent}`,border:`1px solid ${qopOk?C.green+"30":C.accent+"40"}`,borderRadius:12,padding:"12px 14px",marginBottom:8,display:"flex",alignItems:"center",gap:10 }}>
+              <span style={{ fontSize:T.md,minWidth:22 }}>{qopOk?"✅":"📦"}</span>
+              <div style={{ flex:1,minWidth:0 }}>
+                <div style={{ fontSize:T.sm,fontWeight:700,color:qopOk?C.green:C.text }}>
+                  {qopOk?"✓ Kunlik qop kiritildi":"Kunlik qop hisobini kiritish"}
+                </div>
+                <div style={{ fontSize:9,color:C.muted,marginTop:2 }}>
+                  {qopOk
+                    ? `${ozJamiQop} qop · ${(ozJamiDona+tashqariJamiDona).toLocaleString()} dona non`
+                    : "Bugungi ishlab chiqarish ma'lumotlari kutilmoqda"}
+                </div>
+              </div>
+              {!qopOk && (
+                <button onClick={()=>setShowKunlikQop(true)} className="btn"
+                  style={{ background:C.accent,border:"none",borderRadius:8,padding:"6px 10px",color:"#FFF3E8",fontSize:9,fontWeight:800,cursor:"pointer",whiteSpace:"nowrap" }}>
+                  Kiritish →
+                </button>
+              )}
+            </div>
+
+            {/* Vazifa 2: Ombor tasdiqlash */}
+            {needsOmbor && (
+              <div className="slide-up" style={{ animationDelay:".3s",background:C.card,borderLeft:`4px solid ${omborOk?C.green:C.blue}`,border:`1px solid ${omborOk?C.green+"30":C.blue+"30"}`,borderRadius:12,padding:"12px 14px",marginBottom:8,display:"flex",alignItems:"center",gap:10 }}>
+                <span style={{ fontSize:T.md,minWidth:22 }}>{omborOk?"✅":"🗄️"}</span>
+                <div style={{ flex:1,minWidth:0 }}>
+                  <div style={{ fontSize:T.sm,fontWeight:700,color:omborOk?C.green:C.text }}>
+                    {omborOk?"✓ Ombor tasdiqlandi":"Ombor o'zgarishlarini tasdiqlash"}
+                  </div>
+                  <div style={{ fontSize:9,color:C.muted,marginTop:2 }}>
+                    {omborOk
+                      ? "Barcha kunlik sarflar ombordan ayirildi"
+                      : `${omborPending.length} ta kunlik hisobot tasdiqlanmagan`}
+                  </div>
+                </div>
+                {!omborOk && onNav && (
+                  <button onClick={()=>onNav("ombor")} className="btn"
+                    style={{ background:C.blue,border:"none",borderRadius:8,padding:"6px 10px",color:"#fff",fontSize:9,fontWeight:800,cursor:"pointer",whiteSpace:"nowrap" }}>
+                    O'tish →
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+        );
+      })()}
 
       <div style={{ marginTop:28 }}>
         {/* ── KUNLIK QOP VA SOTILGAN NON ── */}
@@ -2407,15 +2476,13 @@ function YangiSetForma({ omborlar, setOmborlar, onClose }) {
   );
 }
 
-function Ombor({ omborlar, setOmborlar, hisobotlarTarixi=[], setHisobotlarTarixi, nonlar=[], mahsulotNarxlari={} }) {
+function Ombor({ omborlar, setOmborlar, hisobotlarTarixi=[], setHisobotlarTarixi, nonlar=[], mahsulotNarxlari={}, tasdiqlanganKunlar=[], setTasdiqlanganKunlar }) {
   const [showForm, setShowForm]         = useState(false);
   const [hisobotTuri, setHisobotTuri]   = useState(null); // null | "yangiset" | "ayirish"
   const [form, setForm]                 = useState(EMPTY_OMBOR_FORM());
   const [err, setErr]                   = useState(false);
   const [editId, setEditId]             = useState(null);
   const [delConfirmId, setDelConfirmId] = useState(null);
-  const [tasdiqlanganKunlar, setTasdiqlanganKunlar] = useState([]); // o'chirilgan hisobot.id ro'yxati
-
   const inpStyle = (e) => ({
     width:"100%", background:C.surface, border:`1px solid ${e?C.red:C.border}`,
     borderRadius:9, padding:"9px 11px", color:C.text, fontSize:T.sm, fontWeight:600
@@ -2923,6 +2990,7 @@ export default function App() {
   const [qopTasdiqlandi, setQopTasdiqlandi]             = useState(false);
   const [hisobotYopildi, setHisobotYopildi]             = useState(false);
   const [hisobotlarTarixi, setHisobotlarTarixi]         = useState([]);
+  const [tasdiqlanganKunlar, setTasdiqlanganKunlar]     = useState([]);
   const [tashqariSonlar, setTashqariSonlar]             = useState({});
   const [kunlikQoplar, setKunlikQoplar]                 = useState([]);
   const [braklar, setBraklar]                           = useState([]);
@@ -2942,6 +3010,7 @@ export default function App() {
         hisobotlarTarixi={hisobotlarTarixi} setHisobotlarTarixi={setHisobotlarTarixi}
         tashqariSonlar={tashqariSonlar} setTashqariSonlar={setTashqariSonlar}
         ozIshlabQoplar={ozIshlabQoplar} setOzIshlabQoplar={setOzIshlabQoplar}
+        tasdiqlanganKunlar={tasdiqlanganKunlar} onNav={nav}
       />;
       case "production": return (
         <Production
@@ -2952,7 +3021,7 @@ export default function App() {
         />
       );
       case "ishchilar": return <Ishchilar ishchilar={ishchilar} setIshchilar={setIshchilar} nonlar={nonlar} />;
-      case "ombor":     return <Ombor omborlar={omborlar} setOmborlar={setOmborlar} hisobotlarTarixi={hisobotlarTarixi} setHisobotlarTarixi={setHisobotlarTarixi} nonlar={nonlar} mahsulotNarxlari={mahsulotNarxlari} />;
+      case "ombor":     return <Ombor omborlar={omborlar} setOmborlar={setOmborlar} hisobotlarTarixi={hisobotlarTarixi} setHisobotlarTarixi={setHisobotlarTarixi} nonlar={nonlar} mahsulotNarxlari={mahsulotNarxlari} tasdiqlanganKunlar={tasdiqlanganKunlar} setTasdiqlanganKunlar={setTasdiqlanganKunlar} />;
       default:          return <Dashboard />;
     }
   };
