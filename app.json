@@ -3,8 +3,14 @@
     "name": "Nur-Non",
     "slug": "Nur-Non",
     "version": "1.0.0",
+    "platforms": ["android", "ios", "web"],
     "android": {
       "package": "com.nurnon.app"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "BU_ERGA_EXPO_DASHBOARDDAN_OLINGAN_IDNI_QO'YING"
+      }
     }
   }
 }
