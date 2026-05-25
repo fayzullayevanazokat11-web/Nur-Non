@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "Nur-Non",
-    "slug": "Nur-Non",
+    "slug": "nur-non",
     "version": "1.0.0",
     "platforms": ["android", "ios", "web"],
     "android": {
@@ -9,7 +9,7 @@
     },
     "extra": {
       "eas": {
-        "projectId": "d1b6767d-2885-4d43-8182-7fd1c2b49ea9"
+        "projectId": "Sizning_Project_ID_ingiz"
       }
     }
   }
