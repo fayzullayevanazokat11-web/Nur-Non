@@ -1,0 +1,10 @@
+{
+  "expo": {
+    "name": "Nur-Non",
+    "slug": "Nur-Non",
+    "version": "1.0.0",
+    "android": {
+      "package": "com.nurnon.app"
+    }
+  }
+}
