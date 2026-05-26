@@ -19,7 +19,10 @@ export default function Markaz() {
   const {
     nonlar, ishchilar, qarzlar, setQarzlar, optomlar, setOptomlar, kartalar, setKartalar,
     ozIshlabQoplar, tashqariSonlar, sotilmaganNon, mahsulotNarxlari,
+    hisobotlarTarixi, setHisobotlarTarixi,
   } = useApp();
+
+  const ochirHisobot = (id) => setHisobotlarTarixi((p) => p.filter((h) => h.id !== id));
 
   const stats = useMemo(
     () => hisoblaKunlik({ nonlar, ishchilar, ozIshlabQoplar, tashqariSonlar, sotilmaganNon, optomlar, qarzlar, mahsulotNarxlari }),
@@ -56,12 +59,12 @@ export default function Markaz() {
       return;
     }
     if (modalTur === "qarz") {
-      setQarzlar((prev) => [...prev, { id: Date.now(), ism: forma.ism.trim(), summa, izoh: forma.izoh.trim(), sana, tolangan: false, tolanganVaqt: null }]);
+      setQarzlar((prev) => [...prev, { id: Date.now(), ism: forma.ism.trim(), summa, izoh: forma.izoh.trim(), sana, vaqt: Date.now(), tolangan: false, tolanganVaqt: null }]);
     } else if (modalTur === "optom") {
       setOptomlar((prev) => [...prev, { id: Date.now(), ism: forma.ism.trim(), summa, izoh: forma.izoh.trim(), sana, vaqt: Date.now() }]);
     } else {
       const pv = kartaHisob(summa, nonlar, mahsulotNarxlari);
-      setKartalar((prev) => [...prev, { id: Date.now(), summa, izoh: forma.izoh.trim(), sana, dona: pv.dona, sofFoyda: pv.sofFoyda }]);
+      setKartalar((prev) => [...prev, { id: Date.now(), summa, izoh: forma.izoh.trim(), sana, vaqt: Date.now(), dona: pv.dona, sofFoyda: pv.sofFoyda }]);
     }
     yopModal();
   };
@@ -93,8 +96,31 @@ export default function Markaz() {
           <Btn onPress={() => setQopOchiq(true)}>+ Ma'lumot kiritish</Btn>
         </Card>
 
+        {/* KUNLIK HISOBOTLAR TARIXI (30 kun) */}
+        <SectionHead emoji="📅" nom="KUNLIK HISOBOTLAR (30 kun)" sum={`${(hisobotlarTarixi || []).length} ta`} color={C.accent} />
+        {(hisobotlarTarixi || []).length === 0 ? (
+          <Text style={styles.bosh}>Hali hisobot yo'q</Text>
+        ) : (
+          [...hisobotlarTarixi].slice(0, 30).map((h) => (
+            <Card key={h.id} style={styles.item}>
+              <View style={styles.rowBetween}>
+                <View style={styles.flex1}>
+                  <Text style={styles.itemIsm}>{h.sana}</Text>
+                  <Text style={styles.itemIzoh}>{h.jamiNon || 0} dona · {h.jamiQop || 0} qop · {h.sotilganNon || 0} sotilgan</Text>
+                </View>
+                <Text style={[styles.itemSumma, { color: (h.sofFoyda || 0) >= 0 ? C.green : C.red }]}>{formatSom(h.sofFoyda)} so'm</Text>
+              </View>
+              <View style={styles.actions}>
+                <Pressable accessibilityLabel="O'chirish" onPress={() => ochirHisobot(h.id)} hitSlop={6} style={styles.actBtn}>
+                  <Ionicons name="trash-outline" size={16} color={C.red} />
+                </Pressable>
+              </View>
+            </Card>
+          ))
+        )}
+
         {/* QARZ */}
-        <SectionHead emoji="🏷️" nom="QARZLAR" sum={`${formatSom(qarz.summa)} so'm · ${qarz.soni} ta`} color={C.red} />
+        <SectionHead emoji="🏷️" nom="QARZLAR" sum={`${formatSom(qarz.summa)} so'm · ${qarz.soni} ta`} color={C.red} style={{ marginTop: 18 }} />
         <Btn color={C.red} onPress={() => ochModal("qarz")}>+ Qarz qo'shish</Btn>
         <View style={styles.gap10} />
         {(qarzlar || []).length === 0 ? <Text style={styles.bosh}>Hali qarz yo'q</Text> : (

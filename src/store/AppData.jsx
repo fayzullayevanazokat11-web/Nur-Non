@@ -1,5 +1,5 @@
 // Butun ilova holati — har bir kolleksiya "nurnon:" prefiksi bilan AsyncStorage'da.
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useState, useEffect } from "react";
 import usePersistedState from "./usePersistedState";
 import { SEED_NONLAR, SEED_ISHCHILAR, SEED_MAHSULOT_NARXLARI } from "../logic/data";
 
@@ -37,6 +37,21 @@ export function AppDataProvider({ children }) {
   // ── Vaqtinchalik oqim bayroqlari (saqlanmaydi) ──
   const [qopTasdiqlandi, setQopTasdiqlandi]       = useState(false);
   const [hisobotYopildi, setHisobotYopildi]       = useState(false);
+
+  // Avtomatik tozalash (hidratsiyadan keyin): karta/optom va to'langan qarz 7 kun,
+  // kunlik hisobotlar 30 kun saqlanadi, so'ng o'chiriladi.
+  useEffect(() => {
+    const t = setTimeout(() => {
+      const now = Date.now();
+      const D = 86400000;
+      const yosh = (e) => now - (e.vaqt || (e.sana ? Date.parse(e.sana) : now) || now);
+      setKartalar((p) => p.filter((k) => yosh(k) < 7 * D));
+      setOptomlar((p) => p.filter((o) => yosh(o) < 7 * D));
+      setQarzlar((p) => p.filter((q) => !q.tolangan || (now - (q.tolanganVaqt || now)) < 7 * D));
+      setHisobotlarTarixi((p) => p.filter((h) => (now - (h.vaqt || now)) < 30 * D));
+    }, 1500);
+    return () => clearTimeout(t);
+  }, []);
 
   const value = {
     nonlar, setNonlar,
