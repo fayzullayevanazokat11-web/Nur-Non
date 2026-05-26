@@ -93,10 +93,10 @@ export default function IshlabChiqarish() {
                     <Text style={styles.badge}>{oz ? "🏭 O'zimizniki" : "📦 Tashqaridan"}</Text>
                   </View>
                   <View style={styles.cardActs}>
-                    <Pressable onPress={() => ochTahrir(non)} hitSlop={8} style={styles.act}>
+                    <Pressable accessibilityLabel="Tahrirlash" onPress={() => ochTahrir(non)} hitSlop={8} style={styles.act}>
                       <Ionicons name="create-outline" size={18} color={C.accent} />
                     </Pressable>
-                    <Pressable onPress={() => ochirNon(non.id)} hitSlop={8} style={styles.act}>
+                    <Pressable accessibilityLabel="O'chirish" onPress={() => ochirNon(non.id)} hitSlop={8} style={styles.act}>
                       <Ionicons name="trash-outline" size={18} color={C.red} />
                     </Pressable>
                   </View>
