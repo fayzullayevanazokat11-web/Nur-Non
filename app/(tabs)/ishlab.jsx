@@ -84,11 +84,11 @@ export default function IshlabChiqarish() {
               ? getQopTannarx(non, mahsulotNarxlari)
               : Math.max(0, (parseFloat(non.narx) || 0) - (parseFloat(non.tashqariFoyda) || 0));
             return (
-              <Card key={non.id} accent={oz} style={styles.item}>
-                <View style={styles.rowBetween}>
+              <Card key={non.id} style={styles.item}>
+                <View style={styles.cardHead}>
                   <View style={styles.flex1}>
                     <Text style={styles.nonNom}>{non.nom}</Text>
-                    <View style={[styles.chip, { backgroundColor: (oz ? C.accent : C.blue) + "12" }]}>
+                    <View style={[styles.chip, { backgroundColor: (oz ? C.accent : C.blue) + "16" }]}>
                       <Text style={[styles.chipTxt, { color: oz ? C.accent : C.blue }]}>{oz ? "O'zimizniki" : "Tashqaridan"}</Text>
                     </View>
                   </View>
@@ -101,17 +101,18 @@ export default function IshlabChiqarish() {
                     </Pressable>
                   </View>
                 </View>
-                <View style={styles.divider} />
-                <Row label="Sotuv narxi" value={`${formatSom(non.narx)} so'm`} valueColor={C.accent} bold />
-                {oz ? (
-                  <>
-                    <Row label="1 qop normasi" value={`${non.nonSoni} dona`} />
-                    <Row label="1 qop tannarxi" value={`${formatSom(tannarx)} so'm`} valueColor={C.red} />
-                    <Row label="Ingredientlar" value={`${(non.mahsulotlar || []).length} xil`} />
-                  </>
-                ) : (
-                  <Row label="Tannarxi" value={`${formatSom(tannarx)} so'm`} valueColor={C.red} />
-                )}
+                <View style={styles.cardBody}>
+                  <Row label="Sotuv narxi" value={`${formatSom(non.narx)} so'm`} valueColor={C.accent} bold />
+                  {oz ? (
+                    <>
+                      <Row label="1 qop normasi" value={`${non.nonSoni} dona`} />
+                      <Row label="1 qop tannarxi" value={`${formatSom(tannarx)} so'm`} valueColor={C.red} />
+                      <Row label="Ingredientlar" value={`${(non.mahsulotlar || []).length} xil`} last />
+                    </>
+                  ) : (
+                    <Row label="Tannarxi" value={`${formatSom(tannarx)} so'm`} valueColor={C.red} last />
+                  )}
+                </View>
               </Card>
             );
           })
@@ -151,9 +152,9 @@ export default function IshlabChiqarish() {
   );
 }
 
-function Row({ label, value, valueColor = C.text, bold = false }) {
+function Row({ label, value, valueColor = C.text, bold = false, last = false }) {
   return (
-    <View style={styles.row}>
+    <View style={[styles.row, last && styles.rowLast]}>
       <Text style={styles.label}>{label}</Text>
       <Text style={[styles.value, { color: valueColor, fontWeight: bold ? "800" : "600" }]}>{value}</Text>
     </View>
@@ -164,16 +165,17 @@ const styles = StyleSheet.create({
   safe:      { flex: 1, backgroundColor: C.bg },
   scroll:    { padding: S[4], paddingBottom: S[7] },
   gap14:     { height: S[4] },
-  item:      { marginBottom: S[3] },
-  rowBetween:{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+  item:      { marginBottom: S[3], padding: 0 },
+  cardHead:  { flexDirection: "row", justifyContent: "space-between", alignItems: "center", backgroundColor: C.panel, paddingVertical: S[3], paddingHorizontal: S[4], borderTopLeftRadius: R.lg, borderTopRightRadius: R.lg, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: C.borderSoft },
+  cardBody:  { paddingVertical: S[3], paddingHorizontal: S[4] },
   flex1:     { flex: 1 },
   nonNom:    { fontSize: T.lg, fontWeight: "800", color: C.text },
   chip:      { alignSelf: "flex-start", paddingVertical: 3, paddingHorizontal: 9, borderRadius: R.pill, marginTop: 5 },
   chipTxt:   { fontSize: 11, fontWeight: "700", letterSpacing: 0.2 },
   cardActs:  { flexDirection: "row", gap: S[1] },
   act:       { padding: 6 },
-  divider:   { height: StyleSheet.hairlineWidth, backgroundColor: C.border, marginVertical: S[3] },
   row:       { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: S[2] },
+  rowLast:   { marginBottom: 0 },
   label:     { fontSize: T.sm, color: C.sub },
   value:     { fontSize: T.sm },
   muted:     { fontSize: T.sm, color: C.muted },

@@ -4,6 +4,7 @@
 
 export const C = {
   bg: "#F7F0E6", surface: "#FBF5EC", card: "#FFFFFF",
+  panel: "#F2E8D6",  // karta sarlavha bandi — oq tanaga nisbatan biroz quyuqroq
   border: "#EADCC6", borderSoft: "#F0E6D6",
   accent: "#A06020", accentDim: "#A0602012",
   red: "#c94f4f", redDim: "#c94f4f12",

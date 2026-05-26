@@ -83,7 +83,7 @@ export default function Xodimlar() {
         ) : (
           ishchilar.map((w) => (
             <Card key={w.id} style={styles.item}>
-              <View style={styles.rowBetween}>
+              <View style={styles.cardHead}>
                 <View style={styles.left}>
                   <Avatar name={w.ism} />
                   <View style={styles.flex1}>
@@ -100,8 +100,7 @@ export default function Xodimlar() {
                   </Pressable>
                 </View>
               </View>
-              <View style={styles.divider} />
-              <View style={styles.rowBetween}>
+              <View style={styles.cardBody}>
                 <View style={[styles.statePill, { backgroundColor: (w.holat === "Aktiv" ? C.green : C.muted) + "14" }]}>
                   <Text style={[styles.stateTxt, { color: w.holat === "Aktiv" ? C.green : C.sub }]}>{w.holat}</Text>
                 </View>
@@ -171,15 +170,15 @@ const styles = StyleSheet.create({
   statUnit:  { fontSize: 10, color: C.muted, marginTop: 2 },
   gap12:     { height: S[3] },
   gap14:     { height: S[4] },
-  item:      { marginBottom: S[2] },
-  rowBetween:{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+  item:      { marginBottom: S[2], padding: 0 },
+  cardHead:  { flexDirection: "row", justifyContent: "space-between", alignItems: "center", backgroundColor: C.panel, paddingVertical: S[3], paddingHorizontal: S[4], borderTopLeftRadius: R.lg, borderTopRightRadius: R.lg, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: C.borderSoft },
+  cardBody:  { flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingVertical: S[3], paddingHorizontal: S[4] },
   left:      { flexDirection: "row", alignItems: "center", gap: S[3], flex: 1 },
   flex1:     { flex: 1 },
   ism:       { fontSize: T.md, fontWeight: "700", color: C.text },
   lavozim:   { fontSize: T.sm, color: C.sub, marginTop: 1 },
   cardActs:  { flexDirection: "row", gap: S[1] },
   act:       { padding: 6 },
-  divider:   { height: StyleSheet.hairlineWidth, backgroundColor: C.border, marginVertical: S[3] },
   statePill: { paddingVertical: 3, paddingHorizontal: 10, borderRadius: R.pill },
   stateTxt:  { fontSize: 11, fontWeight: "700", letterSpacing: 0.2 },
   haq:       { fontSize: T.sm, fontWeight: "800", color: C.accent },
