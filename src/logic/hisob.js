@@ -112,6 +112,18 @@ export function omborBalans(omborlar) {
   return Object.values(balans);
 }
 
+// Faol (to'lanmagan) qarzlar jami
+export function qarzJami(qarzlar) {
+  const faol = (qarzlar || []).filter((q) => !q.tolangan);
+  return { soni: faol.length, summa: faol.reduce((s, q) => s + (parseFloat(q.summa) || 0), 0) };
+}
+
+// Optom savdolar jami
+export function optomJami(optomlar) {
+  const list = optomlar || [];
+  return { soni: list.length, summa: list.reduce((s, o) => s + (parseFloat(o.summa) || 0), 0) };
+}
+
 // So'm formatlash (Hermes Intl'ga bog'liq emas)
 export function formatSom(n) {
   const x = Math.round(Number(n) || 0);
