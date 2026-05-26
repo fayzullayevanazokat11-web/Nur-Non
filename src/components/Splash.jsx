@@ -1,11 +1,13 @@
-// Splash ekran — ilova ochilganda ~2.2s ko'rinadi (avvalgi versiyadagidek).
+// Splash ekran — "Non" logo rasmi, bir xil (oq) fonda. Ochilganda ~2.2s.
 import { useEffect, useRef } from "react";
-import { View, Text, Animated, StyleSheet } from "react-native";
+import { View, Text, Image, Animated, StyleSheet } from "react-native";
 import { C } from "../theme";
+
+const LOGO = require("../../assets/splash-logo.jpg");
 
 export function Splash({ onDone }) {
   const op = useRef(new Animated.Value(0)).current;
-  const sc = useRef(new Animated.Value(0.9)).current;
+  const sc = useRef(new Animated.Value(0.92)).current;
 
   useEffect(() => {
     Animated.parallel([
@@ -21,10 +23,7 @@ export function Splash({ onDone }) {
   return (
     <View style={styles.wrap}>
       <Animated.View style={{ opacity: op, transform: [{ scale: sc }], alignItems: "center" }}>
-        <View style={styles.logo}>
-          <Text style={styles.logoTxt}>Non</Text>
-        </View>
-        <Text style={styles.title}>Nur-Non</Text>
+        <Image source={LOGO} style={styles.logo} resizeMode="contain" />
         <Text style={styles.sub}>Boshqaruv tizimi</Text>
       </Animated.View>
     </View>
@@ -34,21 +33,11 @@ export function Splash({ onDone }) {
 const styles = StyleSheet.create({
   wrap: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: C.accent,
+    backgroundColor: "#FFFFFF",   // bir xil (oq) fon — logo bilan mos
     alignItems: "center",
     justifyContent: "center",
     zIndex: 999,
   },
-  logo: {
-    width: 96,
-    height: 96,
-    borderRadius: 28,
-    backgroundColor: "#FFF3E8",
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 18,
-  },
-  logoTxt: { fontSize: 30, fontWeight: "900", color: C.accent, fontFamily: "Georgia", letterSpacing: 0.5 },
-  title: { fontSize: 34, fontWeight: "900", color: "#FFF3E8", letterSpacing: 0.5 },
-  sub: { fontSize: 14, color: "#FFF3E8", opacity: 0.85, marginTop: 4, letterSpacing: 1 },
+  logo: { width: 300, height: 220 },
+  sub: { fontSize: 14, color: C.accent, marginTop: -6, letterSpacing: 1.5, fontWeight: "700" },
 });
