@@ -1,5 +1,6 @@
 // Pastki tab navigatsiya — 4 ta ekran.
 import { Tabs } from "expo-router";
+import { StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { C } from "../../src/theme";
 
@@ -10,8 +11,8 @@ export default function TabsLayout() {
         headerShown: false,
         tabBarActiveTintColor: C.accent,
         tabBarInactiveTintColor: C.muted,
-        tabBarStyle: { backgroundColor: C.card, borderTopColor: C.border, borderTopWidth: 1 },
-        tabBarLabelStyle: { fontSize: 11, fontWeight: "700" },
+        tabBarStyle: { backgroundColor: C.card, borderTopColor: C.borderSoft, borderTopWidth: StyleSheet.hairlineWidth, paddingTop: 6 },
+        tabBarLabelStyle: { fontSize: 11, fontWeight: "600", letterSpacing: 0.2 },
         tabBarItemStyle: { paddingVertical: 4 },
       }}
     >

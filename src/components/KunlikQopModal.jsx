@@ -5,7 +5,7 @@ import { View, Text, ScrollView, TextInput, StyleSheet } from "react-native";
 import { useApp } from "../store/AppData";
 import { Modal } from "./Modal";
 import { Btn } from "./Btn";
-import { C, T } from "../theme";
+import { C, T, S, R } from "../theme";
 import { hisoblaKunlik, formatSom } from "../logic/hisob";
 
 const toStr = (obj) => Object.fromEntries(Object.entries(obj || {}).map(([k, v]) => [k, String(v)]));
@@ -76,14 +76,14 @@ export function KunlikQopModal({ visible, onClose, onTasdiq }) {
 
   return (
     <Modal modalVisible={visible} onClose={onClose}>
-      <Text style={styles.title}>📦 Kunlik qop hisobi</Text>
+      <Text style={styles.title}>Kunlik qop hisobi</Text>
 
       <ScrollView style={styles.scroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
         {nonlar.map((n) => {
           const oz = n.ozIshlab !== false;
           return (
             <View key={n.id} style={styles.nonRow}>
-              <Text style={styles.nonNom} numberOfLines={1}>{oz ? "🏭" : "📦"} {n.nom}</Text>
+              <Text style={styles.nonNom} numberOfLines={1}>{n.nom}</Text>
               <View style={styles.inputs}>
                 <View style={styles.col}>
                   <Text style={styles.lbl}>{oz ? "Qop" : "Dona"}</Text>
@@ -115,7 +115,7 @@ export function KunlikQopModal({ visible, onClose, onTasdiq }) {
 
       <View style={styles.btns}>
         <View style={styles.flex1}><Btn secondary onPress={saqla}>Saqlash</Btn></View>
-        <View style={styles.flex1}><Btn onPress={tasdiqla}>✓ Tasdiqlash</Btn></View>
+        <View style={styles.flex1}><Btn onPress={tasdiqla}>Tasdiqlash</Btn></View>
       </View>
     </Modal>
   );
@@ -125,25 +125,24 @@ function SumRow({ label, value, bold, color = C.text }) {
   return (
     <View style={styles.sumRow}>
       <Text style={styles.sumLabel}>{label}</Text>
-      <Text style={[styles.sumVal, { color, fontWeight: bold ? "900" : "700" }]}>{value}</Text>
+      <Text style={[styles.sumVal, { color, fontWeight: bold ? "800" : "600" }]}>{value}</Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  title:   { fontSize: T.lg, fontWeight: "900", color: C.text, marginBottom: 12 },
+  title:   { fontSize: T.lg, fontWeight: "800", color: C.text, marginBottom: S[3] },
   scroll:  { maxHeight: 360 },
-  nonRow:  { marginBottom: 12, borderBottomWidth: 1, borderBottomColor: C.borderSoft, paddingBottom: 10 },
-  nonNom:  { fontSize: T.md, fontWeight: "800", color: C.text, marginBottom: 6 },
-  tur:     { fontSize: T.sm },
-  inputs:  { flexDirection: "row", gap: 10 },
+  nonRow:  { marginBottom: S[3], borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: C.borderSoft, paddingBottom: S[3] },
+  nonNom:  { fontSize: T.md, fontWeight: "700", color: C.text, marginBottom: 6 },
+  inputs:  { flexDirection: "row", gap: S[3] },
   col:     { flex: 1 },
-  lbl:     { fontSize: T.xs, color: C.muted, fontWeight: "700", marginBottom: 4 },
-  input:   { borderWidth: 1, borderColor: C.border, borderRadius: 9, paddingVertical: 9, paddingHorizontal: 12, fontSize: T.md, color: C.text, backgroundColor: C.surface },
-  summary: { marginTop: 12, backgroundColor: C.accent + "10", borderWidth: 1, borderColor: C.accent + "30", borderRadius: 12, padding: 12 },
+  lbl:     { fontSize: T.xs, color: C.sub, fontWeight: "600", marginBottom: S[1] },
+  input:   { borderWidth: 1, borderColor: C.border, borderRadius: R.md, paddingVertical: 10, paddingHorizontal: 12, fontSize: T.md, color: C.text, backgroundColor: C.surface },
+  summary: { marginTop: S[3], backgroundColor: C.accent + "0D", borderRadius: R.md, padding: S[3] },
   sumRow:  { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 5 },
   sumLabel:{ fontSize: T.sm, color: C.sub },
   sumVal:  { fontSize: T.md },
-  btns:    { flexDirection: "row", gap: 10, marginTop: 12 },
+  btns:    { flexDirection: "row", gap: S[3], marginTop: S[3] },
   flex1:   { flex: 1 },
 });

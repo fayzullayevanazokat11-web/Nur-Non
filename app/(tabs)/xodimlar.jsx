@@ -8,9 +8,11 @@ import { useApp } from "../../src/store/AppData";
 import { Card } from "../../src/components/Card";
 import { Btn } from "../../src/components/Btn";
 import { Modal } from "../../src/components/Modal";
-import { C, T } from "../../src/theme";
+import { ScreenHeader } from "../../src/components/ScreenHeader";
+import { Avatar } from "../../src/components/Avatar";
+import { C, T, S, R } from "../../src/theme";
 import { formatSom } from "../../src/logic/hisob";
-import { LAVOZIMLAR, getLavozimEmoji, getLavozimLabel } from "../../src/logic/konstantalar";
+import { LAVOZIMLAR, getLavozimLabel } from "../../src/logic/konstantalar";
 
 const BOSH_FORMA = { ism: "", lavozimId: LAVOZIMLAR[0].id, miqdor: "", holat: "Aktiv" };
 const HOLATLAR = ["Aktiv", "Ta'tilda"];
@@ -62,8 +64,7 @@ export default function Xodimlar() {
   return (
     <SafeAreaView style={styles.safe} edges={["top"]}>
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-        <Text style={styles.eyebrow}>Jamoa</Text>
-        <Text style={styles.title}>Xodimlar</Text>
+        <ScreenHeader eyebrow="Jamoa" title="Xodimlar" />
 
         <View style={styles.statsRow}>
           <Card style={styles.statTile}>
@@ -74,7 +75,7 @@ export default function Xodimlar() {
         </View>
 
         <View style={styles.gap14} />
-        <Btn onPress={ochYangi}>+ Yangi ishchi kiritish</Btn>
+        <Btn onPress={ochYangi}>Yangi ishchi kiritish</Btn>
         <View style={styles.gap14} />
 
         {(ishchilar || []).length === 0 ? (
@@ -84,7 +85,7 @@ export default function Xodimlar() {
             <Card key={w.id} style={styles.item}>
               <View style={styles.rowBetween}>
                 <View style={styles.left}>
-                  <View style={styles.avatar}><Text style={styles.avatarEmoji}>{getLavozimEmoji(w)}</Text></View>
+                  <Avatar name={w.ism} />
                   <View style={styles.flex1}>
                     <Text style={styles.ism}>{w.ism}</Text>
                     <Text style={styles.lavozim}>{getLavozimLabel(w)}</Text>
@@ -101,7 +102,9 @@ export default function Xodimlar() {
               </View>
               <View style={styles.divider} />
               <View style={styles.rowBetween}>
-                <Text style={[styles.badge, { color: w.holat === "Aktiv" ? C.green : C.sub }]}>{w.holat}</Text>
+                <View style={[styles.statePill, { backgroundColor: (w.holat === "Aktiv" ? C.green : C.muted) + "14" }]}>
+                  <Text style={[styles.stateTxt, { color: w.holat === "Aktiv" ? C.green : C.sub }]}>{w.holat}</Text>
+                </View>
                 <Text style={styles.haq}>
                   {formatSom(w.miqdor)} so'm{w.haqTuri === "qop" ? "/qop" : "/kun"}
                 </Text>
@@ -113,7 +116,7 @@ export default function Xodimlar() {
 
       {/* Qo'shish / Tahrirlash modali */}
       <Modal modalVisible={modalOchiq} onClose={yopModal}>
-        <Text style={styles.modalTitle}>{tahrirId ? "✏️ Xodimni tahrirlash" : "👤 Yangi ishchi"}</Text>
+        <Text style={styles.modalTitle}>{tahrirId ? "Xodimni tahrirlash" : "Yangi ishchi"}</Text>
 
         <ScrollView style={styles.formScroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
           <Text style={styles.inputLabel}>Ism *</Text>
@@ -125,7 +128,7 @@ export default function Xodimlar() {
               const tanlangan = forma.lavozimId === lav.id;
               return (
                 <Pressable key={lav.id} onPress={() => yangila("lavozimId", lav.id)} style={[styles.lavBtn, tanlangan && styles.lavBtnActive]}>
-                  <Text style={styles.lavEmoji}>{lav.emoji}</Text>
+                  <Ionicons name={tanlangan ? "checkmark-circle" : "ellipse-outline"} size={16} color={tanlangan ? C.accent : C.muted} />
                   <Text style={[styles.lavLabel, tanlangan && styles.lavLabelActive]} numberOfLines={1}>{lav.label}</Text>
                 </Pressable>
               );
@@ -151,7 +154,7 @@ export default function Xodimlar() {
         <View style={styles.gap12} />
         <View style={styles.modalRow}>
           <View style={styles.flex1}><Btn secondary onPress={yopModal}>Bekor</Btn></View>
-          <View style={styles.flex1}><Btn onPress={saqla}>✓ Saqlash</Btn></View>
+          <View style={styles.flex1}><Btn onPress={saqla}>Saqlash</Btn></View>
         </View>
       </Modal>
     </SafeAreaView>
@@ -160,46 +163,42 @@ export default function Xodimlar() {
 
 const styles = StyleSheet.create({
   safe:      { flex: 1, backgroundColor: C.bg },
-  scroll:    { padding: 16, paddingBottom: 32 },
-  eyebrow:   { fontSize: T.sm, color: C.sub, fontWeight: "600" },
-  title:     { fontSize: T.xl, fontWeight: "900", color: C.text, marginTop: 2, marginBottom: 14 },
-  statsRow:  { flexDirection: "row", gap: 8 },
-  statTile:  { flex: 1, paddingVertical: 12, paddingHorizontal: 12 },
-  statLabel: { fontSize: 9, color: C.muted, fontWeight: "700", letterSpacing: 0.6, marginBottom: 5 },
-  statValue: { fontSize: 24, fontWeight: "900" },
+  scroll:    { padding: S[4], paddingBottom: S[7] },
+  statsRow:  { flexDirection: "row", gap: S[2] },
+  statTile:  { flex: 1, paddingVertical: S[3], paddingHorizontal: S[3] },
+  statLabel: { fontSize: 9, color: C.muted, fontWeight: "700", letterSpacing: 0.8, textTransform: "uppercase", marginBottom: S[2] },
+  statValue: { fontSize: 26, fontWeight: "800", letterSpacing: -0.3 },
   statUnit:  { fontSize: 10, color: C.muted, marginTop: 2 },
-  gap12:     { height: 12 },
-  gap14:     { height: 14 },
-  item:      { marginBottom: 10 },
+  gap12:     { height: S[3] },
+  gap14:     { height: S[4] },
+  item:      { marginBottom: S[2] },
   rowBetween:{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-  left:      { flexDirection: "row", alignItems: "center", gap: 10, flex: 1 },
-  avatar:    { width: 42, height: 42, borderRadius: 12, backgroundColor: C.surface, alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: C.borderSoft },
-  avatarEmoji:{ fontSize: 20 },
+  left:      { flexDirection: "row", alignItems: "center", gap: S[3], flex: 1 },
   flex1:     { flex: 1 },
-  ism:       { fontSize: T.md, fontWeight: "900", color: C.text },
+  ism:       { fontSize: T.md, fontWeight: "700", color: C.text },
   lavozim:   { fontSize: T.sm, color: C.sub, marginTop: 1 },
-  cardActs:  { flexDirection: "row", gap: 6 },
+  cardActs:  { flexDirection: "row", gap: S[1] },
   act:       { padding: 6 },
-  divider:   { height: 1, backgroundColor: C.border, marginVertical: 8 },
-  badge:     { fontSize: T.xs, fontWeight: "800" },
-  haq:       { fontSize: T.sm, fontWeight: "900", color: C.accent },
+  divider:   { height: StyleSheet.hairlineWidth, backgroundColor: C.border, marginVertical: S[3] },
+  statePill: { paddingVertical: 3, paddingHorizontal: 10, borderRadius: R.pill },
+  stateTxt:  { fontSize: 11, fontWeight: "700", letterSpacing: 0.2 },
+  haq:       { fontSize: T.sm, fontWeight: "800", color: C.accent },
   muted:     { fontSize: T.sm, color: C.muted },
 
   // Modal
-  modalTitle: { fontSize: T.lg, fontWeight: "900", color: C.text, marginBottom: 12 },
+  modalTitle: { fontSize: T.lg, fontWeight: "800", color: C.text, marginBottom: S[3] },
   formScroll: { maxHeight: 440 },
-  inputLabel: { fontSize: T.xs, color: C.muted, fontWeight: "700", marginBottom: 6, marginTop: 4, letterSpacing: 0.3 },
-  input: { borderWidth: 1, borderColor: C.border, borderRadius: 10, paddingVertical: 11, paddingHorizontal: 14, fontSize: T.md, color: C.text, backgroundColor: C.surface },
-  lavGrid:   { flexDirection: "row", flexWrap: "wrap", gap: 8 },
-  lavBtn: { width: "47%", flexDirection: "row", alignItems: "center", gap: 8, borderWidth: 1, borderColor: C.border, borderRadius: 10, paddingVertical: 10, paddingHorizontal: 10, backgroundColor: "transparent" },
-  lavBtnActive: { borderColor: C.accent, backgroundColor: C.accent + "18" },
-  lavEmoji:     { fontSize: 18 },
-  lavLabel:     { fontSize: T.sm, color: C.sub, fontWeight: "700", flexShrink: 1 },
-  lavLabelActive: { color: C.accent },
-  holatRow:  { flexDirection: "row", gap: 8 },
-  holatBtn:  { flex: 1, borderWidth: 1, borderColor: C.border, borderRadius: 10, paddingVertical: 10, alignItems: "center" },
-  holatBtnActive: { borderColor: C.accent, backgroundColor: C.accent + "18" },
-  holatTxt:  { fontSize: T.sm, color: C.sub, fontWeight: "700" },
-  holatTxtActive: { color: C.accent },
-  modalRow:  { flexDirection: "row", gap: 10 },
+  inputLabel: { fontSize: T.xs, color: C.sub, fontWeight: "600", marginBottom: 6, marginTop: S[1], letterSpacing: 0.3 },
+  input: { borderWidth: 1, borderColor: C.border, borderRadius: R.md, paddingVertical: 12, paddingHorizontal: 14, fontSize: T.md, color: C.text, backgroundColor: C.surface },
+  lavGrid:   { flexDirection: "row", flexWrap: "wrap", gap: S[2] },
+  lavBtn: { width: "47%", flexDirection: "row", alignItems: "center", gap: S[2], borderWidth: 1, borderColor: C.border, borderRadius: R.md, paddingVertical: 11, paddingHorizontal: 11, backgroundColor: "transparent" },
+  lavBtnActive: { borderColor: C.accent, backgroundColor: C.accent + "0D" },
+  lavLabel:     { fontSize: T.sm, color: C.sub, fontWeight: "600", flexShrink: 1 },
+  lavLabelActive: { color: C.accent, fontWeight: "700" },
+  holatRow:  { flexDirection: "row", gap: S[2] },
+  holatBtn:  { flex: 1, borderWidth: 1, borderColor: C.border, borderRadius: R.md, paddingVertical: 11, alignItems: "center" },
+  holatBtnActive: { borderColor: C.accent, backgroundColor: C.accent + "0D" },
+  holatTxt:  { fontSize: T.sm, color: C.sub, fontWeight: "600" },
+  holatTxtActive: { color: C.accent, fontWeight: "700" },
+  modalRow:  { flexDirection: "row", gap: S[3] },
 });

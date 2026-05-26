@@ -5,7 +5,7 @@ import { View, Text, ScrollView, StyleSheet } from "react-native";
 import { useApp } from "../store/AppData";
 import { Modal } from "./Modal";
 import { Btn } from "./Btn";
-import { C, T } from "../theme";
+import { C, T, S, R } from "../theme";
 import { hisoblaKunlik, formatSom } from "../logic/hisob";
 
 export function HisobotModal({ visible, onClose }) {
@@ -36,35 +36,35 @@ export function HisobotModal({ visible, onClose }) {
 
   return (
     <Modal modalVisible={visible} onClose={onClose}>
-      <Text style={styles.title}>✅ Kunlik hisobot</Text>
+      <Text style={styles.title}>Kunlik hisobot</Text>
       <Text style={styles.sana}>{data.bugun}</Text>
 
       <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
         {/* Ishlab chiqarish (qop) */}
-        <View style={styles.block}>
-          <Text style={styles.blockHead}>🏭 Ishlab chiqarish (kunlik qop)</Text>
+        <View style={[styles.block, { backgroundColor: C.accent + "0D" }]}>
+          <Text style={styles.blockHead}>Ishlab chiqarish (kunlik qop)</Text>
           <Row label="Ishlab chiqarilgan" value={`${data.kunlik.jamiNon} dona`} />
           <Row label="Sotilgan" value={`${data.kunlik.sotilganNon} dona`} />
           <Row label="Sof foyda" value={`${formatSom(data.kunlik.sofFoyda)} so'm`} color={data.kunlik.sofFoyda >= 0 ? C.green : C.red} bold />
         </View>
 
         {/* Karta */}
-        <View style={[styles.block, { borderColor: C.green + "40" }]}>
-          <Text style={[styles.blockHead, { color: C.green }]}>💳 Karta to'lovlari (bugun)</Text>
+        <View style={[styles.block, { backgroundColor: C.green + "0D" }]}>
+          <Text style={[styles.blockHead, { color: C.green }]}>Karta to'lovlari (bugun)</Text>
           <Row label="Summa" value={`${formatSom(data.kartaSum)} so'm`} />
           <Row label="≈ Non" value={`${data.kartaDona} dona`} />
           <Row label="Sof foyda" value={`${formatSom(data.kartaFoyda)} so'm`} color={C.green} bold />
         </View>
 
         {/* Optom */}
-        <View style={[styles.block, { borderColor: C.blue + "40" }]}>
-          <Text style={[styles.blockHead, { color: C.blue }]}>📦 Optom savdolar (bugun)</Text>
+        <View style={[styles.block, { backgroundColor: C.blue + "0D" }]}>
+          <Text style={[styles.blockHead, { color: C.blue }]}>Optom savdolar (bugun)</Text>
           <Row label={`${data.optomSoni} ta savdo`} value={`${formatSom(data.optomSum)} so'm`} bold />
         </View>
 
         {/* Qarz */}
-        <View style={[styles.block, { borderColor: C.red + "40" }]}>
-          <Text style={[styles.blockHead, { color: C.red }]}>🏷️ Qarz (bugun)</Text>
+        <View style={[styles.block, { backgroundColor: C.red + "0D" }]}>
+          <Text style={[styles.blockHead, { color: C.red }]}>Qarz (bugun)</Text>
           <Row label={`${data.qarzSoni} ta qarz`} value={`${formatSom(data.qarzSum)} so'm`} bold />
           <Text style={styles.note}>* Qarz alohida — hali to'lanmagan, umumiyga qo'shilmaydi</Text>
         </View>
@@ -89,24 +89,24 @@ function Row({ label, value, color = C.text, bold }) {
   return (
     <View style={styles.row}>
       <Text style={styles.rowLabel}>{label}</Text>
-      <Text style={[styles.rowVal, { color, fontWeight: bold ? "900" : "700" }]}>{value}</Text>
+      <Text style={[styles.rowVal, { color, fontWeight: bold ? "800" : "600" }]}>{value}</Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  title:     { fontSize: T.lg, fontWeight: "900", color: C.text },
-  sana:      { fontSize: T.sm, color: C.muted, marginBottom: 12 },
+  title:     { fontSize: T.lg, fontWeight: "800", color: C.text },
+  sana:      { fontSize: T.sm, color: C.muted, marginBottom: S[3] },
   scroll:    { maxHeight: 420 },
-  block:     { borderWidth: 1, borderColor: C.border, borderRadius: 12, padding: 12, marginBottom: 10, backgroundColor: C.surface },
-  blockHead: { fontSize: T.sm, fontWeight: "800", color: C.text, marginBottom: 8 },
+  block:     { borderRadius: R.md, padding: S[3], marginBottom: S[2], backgroundColor: C.surface },
+  blockHead: { fontSize: T.sm, fontWeight: "700", color: C.text, marginBottom: S[2] },
   row:       { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 5 },
   rowLabel:  { fontSize: T.sm, color: C.sub },
   rowVal:    { fontSize: T.sm },
-  note:      { fontSize: 9, color: C.muted, marginTop: 4, fontStyle: "italic" },
-  umumiy:    { borderRadius: 14, padding: 14, backgroundColor: C.accent + "12", borderWidth: 1, borderColor: C.accent + "40", alignItems: "center", marginTop: 2 },
-  umumiyLabel: { fontSize: T.xs, color: C.muted, fontWeight: "800", letterSpacing: 1 },
-  umumiyVal: { fontSize: 26, fontWeight: "900", marginTop: 4 },
+  note:      { fontSize: 11, color: C.muted, marginTop: S[1] },
+  umumiy:    { borderRadius: R.md, padding: S[4], backgroundColor: C.accent + "0D", alignItems: "center", marginTop: S[1] },
+  umumiyLabel: { fontSize: T.xs, color: C.sub, fontWeight: "700", letterSpacing: 1 },
+  umumiyVal: { fontSize: T.xxl, fontWeight: "800", marginTop: S[1], letterSpacing: -0.5 },
   umumiyForm: { fontSize: 10, color: C.muted, marginTop: 6, textAlign: "center" },
-  gap12:     { height: 12 },
+  gap12:     { height: S[3] },
 });

@@ -9,11 +9,6 @@ export const LAVOZIMLAR = [
   { id: "boshqasi",    label: "Boshqasi",     emoji: "✏️" },
 ];
 
-export function getLavozimEmoji(w) {
-  if (!w) return "👤";
-  return LAVOZIMLAR.find((l) => l.id === w.lavozimId)?.emoji || "👤";
-}
-
 export function getLavozimLabel(w) {
   if (!w) return "Xodim";
   if (w.lavozimId === "boshqasi") return w.lavozimCustom || "Boshqasi";

@@ -8,7 +8,8 @@ import { useApp } from "../../src/store/AppData";
 import { Card } from "../../src/components/Card";
 import { Btn } from "../../src/components/Btn";
 import { Modal } from "../../src/components/Modal";
-import { C, T } from "../../src/theme";
+import { ScreenHeader } from "../../src/components/ScreenHeader";
+import { C, T, S, R } from "../../src/theme";
 import { formatSom, getQopTannarx } from "../../src/logic/hisob";
 
 const BOSH_FORMA = { nom: "", narx: "", tannarx: "", nonSoni: "" };
@@ -69,12 +70,9 @@ export default function IshlabChiqarish() {
   return (
     <SafeAreaView style={styles.safe} edges={["top"]}>
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-        <Text style={styles.eyebrow}>Assortiment</Text>
-        <Text style={styles.title}>Ishlab chiqarish</Text>
-        <Text style={styles.subtitle}>{nonlar.length} xil non · {aktivIshchi} aktiv xodim</Text>
+        <ScreenHeader eyebrow="Assortiment" title="Ishlab chiqarish" subtitle={`${nonlar.length} xil non · ${aktivIshchi} aktiv xodim`} />
 
-        <View style={styles.gap14} />
-        <Btn onPress={ochYangi}>+ Yangi non turi kiritish</Btn>
+        <Btn onPress={ochYangi}>Yangi non turi kiritish</Btn>
         <View style={styles.gap14} />
 
         {nonlar.length === 0 ? (
@@ -90,7 +88,9 @@ export default function IshlabChiqarish() {
                 <View style={styles.rowBetween}>
                   <View style={styles.flex1}>
                     <Text style={styles.nonNom}>{non.nom}</Text>
-                    <Text style={styles.badge}>{oz ? "🏭 O'zimizniki" : "📦 Tashqaridan"}</Text>
+                    <View style={[styles.chip, { backgroundColor: (oz ? C.accent : C.blue) + "12" }]}>
+                      <Text style={[styles.chipTxt, { color: oz ? C.accent : C.blue }]}>{oz ? "O'zimizniki" : "Tashqaridan"}</Text>
+                    </View>
                   </View>
                   <View style={styles.cardActs}>
                     <Pressable accessibilityLabel="Tahrirlash" onPress={() => ochTahrir(non)} hitSlop={8} style={styles.act}>
@@ -120,7 +120,7 @@ export default function IshlabChiqarish() {
 
       {/* Qo'shish / Tahrirlash modali */}
       <Modal modalVisible={modalOchiq} onClose={yopModal}>
-        <Text style={styles.modalTitle}>{tahrirId ? "✏️ Nonni tahrirlash" : "📦 Yangi non turi"}</Text>
+        <Text style={styles.modalTitle}>{tahrirId ? "Nonni tahrirlash" : "Yangi non turi"}</Text>
 
         <Text style={styles.inputLabel}>Non nomi *</Text>
         <TextInput value={forma.nom} onChangeText={(v) => yangila("nom", v)} placeholder="Masalan: Kulcha" placeholderTextColor={C.muted} style={styles.input} />
@@ -144,7 +144,7 @@ export default function IshlabChiqarish() {
         <View style={styles.gap14} />
         <View style={styles.modalRow}>
           <View style={styles.flex1}><Btn secondary onPress={yopModal}>Bekor</Btn></View>
-          <View style={styles.flex1}><Btn onPress={saqla}>✓ Saqlash</Btn></View>
+          <View style={styles.flex1}><Btn onPress={saqla}>Saqlash</Btn></View>
         </View>
       </Modal>
     </SafeAreaView>
@@ -155,35 +155,33 @@ function Row({ label, value, valueColor = C.text, bold = false }) {
   return (
     <View style={styles.row}>
       <Text style={styles.label}>{label}</Text>
-      <Text style={[styles.value, { color: valueColor, fontWeight: bold ? "900" : "700" }]}>{value}</Text>
+      <Text style={[styles.value, { color: valueColor, fontWeight: bold ? "800" : "600" }]}>{value}</Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   safe:      { flex: 1, backgroundColor: C.bg },
-  scroll:    { padding: 16, paddingBottom: 32 },
-  eyebrow:   { fontSize: T.sm, color: C.sub, fontWeight: "600" },
-  title:     { fontSize: T.xl, fontWeight: "900", color: C.text, marginTop: 2 },
-  subtitle:  { fontSize: T.sm, color: C.muted, marginTop: 2 },
-  gap14:     { height: 14 },
-  item:      { marginBottom: 12 },
+  scroll:    { padding: S[4], paddingBottom: S[7] },
+  gap14:     { height: S[4] },
+  item:      { marginBottom: S[3] },
   rowBetween:{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
   flex1:     { flex: 1 },
-  nonNom:    { fontSize: T.lg, fontWeight: "900", color: C.text },
-  badge:     { fontSize: T.xs, color: C.sub, fontWeight: "700", marginTop: 2 },
-  cardActs:  { flexDirection: "row", gap: 6 },
+  nonNom:    { fontSize: T.lg, fontWeight: "800", color: C.text },
+  chip:      { alignSelf: "flex-start", paddingVertical: 3, paddingHorizontal: 9, borderRadius: R.pill, marginTop: 5 },
+  chipTxt:   { fontSize: 11, fontWeight: "700", letterSpacing: 0.2 },
+  cardActs:  { flexDirection: "row", gap: S[1] },
   act:       { padding: 6 },
-  divider:   { height: 1, backgroundColor: C.border, marginVertical: 8 },
-  row:       { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 6 },
+  divider:   { height: StyleSheet.hairlineWidth, backgroundColor: C.border, marginVertical: S[3] },
+  row:       { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: S[2] },
   label:     { fontSize: T.sm, color: C.sub },
   value:     { fontSize: T.sm },
   muted:     { fontSize: T.sm, color: C.muted },
 
   // Modal
-  modalTitle: { fontSize: T.lg, fontWeight: "900", color: C.text, marginBottom: 14 },
-  inputLabel: { fontSize: T.xs, color: C.muted, fontWeight: "700", marginBottom: 6, letterSpacing: 0.4 },
-  input: { borderWidth: 1, borderColor: C.accent, borderRadius: 10, paddingVertical: 11, paddingHorizontal: 14, fontSize: T.md, color: C.text, backgroundColor: C.surface, marginBottom: 12 },
-  hint: { fontSize: 9, color: C.muted, marginTop: -6, marginBottom: 8 },
-  modalRow: { flexDirection: "row", gap: 10 },
+  modalTitle: { fontSize: T.lg, fontWeight: "800", color: C.text, marginBottom: S[4] },
+  inputLabel: { fontSize: T.xs, color: C.sub, fontWeight: "600", marginBottom: 6, letterSpacing: 0.3 },
+  input: { borderWidth: 1, borderColor: C.border, borderRadius: R.md, paddingVertical: 12, paddingHorizontal: 14, fontSize: T.md, color: C.text, backgroundColor: C.surface, marginBottom: S[3] },
+  hint: { fontSize: 11, color: C.muted, marginTop: -6, marginBottom: S[2] },
+  modalRow: { flexDirection: "row", gap: S[3] },
 });

@@ -1,6 +1,6 @@
-// Tugma — Pressable asosida. Bosilganda ozgina shaffoflashadi.
+// Tugma — Pressable asosida. Bosilganda yengil shaffoflashadi + kichrayadi.
 import { Pressable, Text, StyleSheet } from "react-native";
-import { C, T } from "../theme";
+import { C, T, R } from "../theme";
 
 export function Btn({
   children,
@@ -26,7 +26,8 @@ export function Btn({
           width: full ? "100%" : undefined,
           borderWidth: secondary ? 1 : 0,
           borderColor: C.border,
-          opacity: pressed && !disabled ? 0.85 : 1,
+          opacity: pressed && !disabled ? 0.9 : 1,
+          transform: [{ scale: pressed && !disabled ? 0.985 : 1 }],
         },
         style,
       ]}
@@ -38,11 +39,11 @@ export function Btn({
 
 const styles = StyleSheet.create({
   base: {
-    borderRadius: 12,
-    paddingVertical: 13,
+    borderRadius: R.md,
+    paddingVertical: 14,
     paddingHorizontal: 16,
     alignItems: "center",
     justifyContent: "center",
   },
-  label: { fontSize: T.md, fontWeight: "800", letterSpacing: 0.3 },
+  label: { fontSize: T.md, fontWeight: "700", letterSpacing: 0.2 },
 });
