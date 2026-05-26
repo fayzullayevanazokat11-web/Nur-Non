@@ -9,6 +9,7 @@ import { Card } from "../../src/components/Card";
 import { Btn } from "../../src/components/Btn";
 import { Modal } from "../../src/components/Modal";
 import { KunlikQopModal } from "../../src/components/KunlikQopModal";
+import { HisobotModal } from "../../src/components/HisobotModal";
 import { C, T } from "../../src/theme";
 import { hisoblaKunlik, formatSom, qarzJami, optomJami, kartaJami, kartaHisob } from "../../src/logic/hisob";
 
@@ -32,6 +33,7 @@ export default function Markaz() {
   const [modalTur, setModalTur] = useState(null);
   const [forma, setForma] = useState(BOSH_FORMA);
   const [qopOchiq, setQopOchiq] = useState(false);
+  const [hisobotOchiq, setHisobotOchiq] = useState(false);
 
   const ochModal = (tur) => { setForma(BOSH_FORMA); setModalTur(tur); };
   const yopModal = () => setModalTur(null);
@@ -169,8 +171,13 @@ export default function Markaz() {
         )}
       </ScrollView>
 
-      {/* Kunlik qop hisobi modali */}
-      <KunlikQopModal visible={qopOchiq} onClose={() => setQopOchiq(false)} />
+      {/* Kunlik qop hisobi modali → Tasdiqlashda yakuniy hisobot ochiladi */}
+      <KunlikQopModal
+        visible={qopOchiq}
+        onClose={() => setQopOchiq(false)}
+        onTasdiq={() => { setQopOchiq(false); setHisobotOchiq(true); }}
+      />
+      <HisobotModal visible={hisobotOchiq} onClose={() => setHisobotOchiq(false)} />
 
       {/* Universal modal: Qarz / Optom / Karta */}
       <Modal modalVisible={modalTur !== null} onClose={yopModal}>

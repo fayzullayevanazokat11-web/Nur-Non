@@ -1,7 +1,7 @@
 // Kunlik qop hisobi — har non uchun qop/dona + sotilmagan kiritiladi,
 // jonli sof foyda ko'rsatiladi, "Tasdiqlash" hisobot snapshotini saqlaydi.
 import { useEffect, useMemo, useState } from "react";
-import { View, Text, ScrollView, TextInput, StyleSheet, Alert } from "react-native";
+import { View, Text, ScrollView, TextInput, StyleSheet } from "react-native";
 import { useApp } from "../store/AppData";
 import { Modal } from "./Modal";
 import { Btn } from "./Btn";
@@ -10,7 +10,7 @@ import { hisoblaKunlik, formatSom } from "../logic/hisob";
 
 const toStr = (obj) => Object.fromEntries(Object.entries(obj || {}).map(([k, v]) => [k, String(v)]));
 
-export function KunlikQopModal({ visible, onClose }) {
+export function KunlikQopModal({ visible, onClose, onTasdiq }) {
   const {
     nonlar, ishchilar, optomlar, qarzlar, mahsulotNarxlari,
     ozIshlabQoplar, setOzIshlabQoplar, tashqariSonlar, setTashqariSonlar,
@@ -69,8 +69,9 @@ export function KunlikQopModal({ visible, onClose }) {
     };
     // Bir kunda bitta hisobot — o'sha sanani almashtiramiz
     setHisobotlarTarixi((prev) => [snapshot, ...(prev || []).filter((h) => h.sana !== sana)]);
-    onClose();
-    Alert.alert("Tasdiqlandi", `Kunlik hisobot saqlandi.\nSof foyda: ${formatSom(r.sofFoyda)} so'm`);
+    // Yakuniy hisobot modalini ochish (Karta/Optom/Qarz integratsiyasi bilan)
+    if (onTasdiq) onTasdiq();
+    else onClose();
   };
 
   return (
