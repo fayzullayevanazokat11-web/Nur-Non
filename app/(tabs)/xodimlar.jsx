@@ -1,24 +1,58 @@
-// "Xodimlar" ekrani — kasb emoji bilan (rasmsiz).
-import { useMemo } from "react";
-import { View, Text, ScrollView, Pressable, StyleSheet, Alert } from "react-native";
+// "Xodimlar" ekrani — kasb emoji bilan + "Yangi ishchi" modali.
+import { useMemo, useState } from "react";
+import { View, Text, ScrollView, Pressable, TextInput, StyleSheet, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 
 import { useApp } from "../../src/store/AppData";
 import { Card } from "../../src/components/Card";
 import { Btn } from "../../src/components/Btn";
+import { Modal } from "../../src/components/Modal";
 import { C, T } from "../../src/theme";
 import { formatSom } from "../../src/logic/hisob";
-import { getLavozimEmoji, getLavozimLabel } from "../../src/logic/konstantalar";
+import { LAVOZIMLAR, getLavozimEmoji, getLavozimLabel } from "../../src/logic/konstantalar";
+
+const BOSH_FORMA = { ism: "", lavozimId: LAVOZIMLAR[0].id, miqdor: "" };
 
 export default function Xodimlar() {
   const { ishchilar, setIshchilar } = useApp();
+
+  const [modalOchiq, setModalOchiq] = useState(false);
+  const [forma, setForma] = useState(BOSH_FORMA);
 
   const aktiv = (ishchilar || []).filter((w) => w.holat === "Aktiv");
   const oylikFond = useMemo(
     () => aktiv.reduce((s, w) => s + (parseFloat(w.miqdor) || 0) * (w.haqTuri === "kunlik" ? 30 : 1), 0),
     [aktiv]
   );
+
+  const ochModal = () => { setForma(BOSH_FORMA); setModalOchiq(true); };
+  const yopModal = () => setModalOchiq(false);
+  const yangila = (k, v) => setForma((p) => ({ ...p, [k]: v }));
+
+  // Saqlash — setIshchilar orqali yangi ishchi qo'shiladi (ro'yxat darhol yangilanadi)
+  const saqla = () => {
+    if (!forma.ism.trim()) {
+      Alert.alert("Ism kiritilmagan", "Iltimos, xodim ismini kiriting.");
+      return;
+    }
+    const yangiIshchi = {
+      id: Date.now(),
+      ism: forma.ism.trim(),
+      lavozimId: forma.lavozimId,
+      lavozimCustom: "",
+      haqTuri: "kunlik",
+      miqdor: parseFloat(forma.miqdor) || 0,
+      tel: "",
+      holat: "Aktiv",
+      tatilQaytishSana: "",
+      tahrirSoni: 0,
+      nonTurlari: [],
+      nonNarxlari: {},
+    };
+    setIshchilar((prev) => [...prev, yangiIshchi]);
+    yopModal();
+  };
 
   const ochir = (id) =>
     Alert.alert("O'chirish", "Bu xodimni o'chirasizmi?", [
@@ -46,7 +80,7 @@ export default function Xodimlar() {
         </View>
 
         <View style={styles.gap14} />
-        <Btn onPress={() => Alert.alert("Tez orada", "Xodim qo'shish formasi keyingi bosqichda.")}>+ Yangi ishchi kiritish</Btn>
+        <Btn onPress={ochModal}>+ Yangi ishchi kiritish</Btn>
         <View style={styles.gap14} />
 
         {(ishchilar || []).length === 0 ? (
@@ -77,6 +111,55 @@ export default function Xodimlar() {
           ))
         )}
       </ScrollView>
+
+      {/* Yangi ishchi kiritish modali */}
+      <Modal modalVisible={modalOchiq} onClose={yopModal}>
+        <Text style={styles.modalTitle}>👤 Yangi ishchi</Text>
+
+        <ScrollView style={styles.formScroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+          <Text style={styles.inputLabel}>Ism *</Text>
+          <TextInput
+            value={forma.ism}
+            onChangeText={(v) => yangila("ism", v)}
+            placeholder="Masalan: Akmal aka"
+            placeholderTextColor={C.muted}
+            style={styles.input}
+          />
+
+          <Text style={styles.inputLabel}>Lavozim</Text>
+          <View style={styles.lavGrid}>
+            {LAVOZIMLAR.map((lav) => {
+              const tanlangan = forma.lavozimId === lav.id;
+              return (
+                <Pressable
+                  key={lav.id}
+                  onPress={() => yangila("lavozimId", lav.id)}
+                  style={[styles.lavBtn, tanlangan && styles.lavBtnActive]}
+                >
+                  <Text style={styles.lavEmoji}>{lav.emoji}</Text>
+                  <Text style={[styles.lavLabel, tanlangan && styles.lavLabelActive]} numberOfLines={1}>{lav.label}</Text>
+                </Pressable>
+              );
+            })}
+          </View>
+
+          <Text style={styles.inputLabel}>Tarif stavkasi (so'm)</Text>
+          <TextInput
+            value={forma.miqdor}
+            onChangeText={(v) => yangila("miqdor", v)}
+            placeholder="0"
+            placeholderTextColor={C.muted}
+            keyboardType="numeric"
+            style={styles.input}
+          />
+        </ScrollView>
+
+        <View style={styles.gap12} />
+        <View style={styles.modalRow}>
+          <View style={styles.flex1}><Btn secondary onPress={yopModal}>Bekor</Btn></View>
+          <View style={styles.flex1}><Btn onPress={saqla}>✓ Saqlash</Btn></View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -91,6 +174,7 @@ const styles = StyleSheet.create({
   statLabel: { fontSize: 9, color: C.muted, fontWeight: "700", letterSpacing: 0.6, marginBottom: 5 },
   statValue: { fontSize: 24, fontWeight: "900" },
   statUnit:  { fontSize: 10, color: C.muted, marginTop: 2 },
+  gap12:     { height: 12 },
   gap14:     { height: 14 },
   item:      { marginBottom: 10 },
   rowBetween:{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
@@ -105,4 +189,37 @@ const styles = StyleSheet.create({
   badge:     { fontSize: T.xs, fontWeight: "800" },
   haq:       { fontSize: T.sm, fontWeight: "900", color: C.accent },
   muted:     { fontSize: T.sm, color: C.muted },
+
+  // Modal
+  modalTitle: { fontSize: T.lg, fontWeight: "900", color: C.text, marginBottom: 12 },
+  formScroll: { maxHeight: 440 },
+  inputLabel: { fontSize: T.xs, color: C.muted, fontWeight: "700", marginBottom: 6, marginTop: 4, letterSpacing: 0.3 },
+  input: {
+    borderWidth: 1,
+    borderColor: C.border,        // C.border rangida
+    borderRadius: 10,
+    paddingVertical: 11,
+    paddingHorizontal: 14,
+    fontSize: T.md,
+    color: C.text,
+    backgroundColor: C.surface,
+  },
+  lavGrid:   { flexDirection: "row", flexWrap: "wrap", gap: 8 },
+  lavBtn: {
+    width: "47%",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    borderWidth: 1,
+    borderColor: C.border,
+    borderRadius: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 10,
+    backgroundColor: "transparent",
+  },
+  lavBtnActive: { borderColor: C.accent, backgroundColor: C.accent + "18" },
+  lavEmoji:     { fontSize: 18 },
+  lavLabel:     { fontSize: T.sm, color: C.sub, fontWeight: "700", flexShrink: 1 },
+  lavLabelActive: { color: C.accent },
+  modalRow:  { flexDirection: "row", gap: 10 },
 });
