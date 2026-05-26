@@ -7,9 +7,13 @@ export const C = {
   panel: "#F2E8D6",  // karta sarlavha bandi — oq tanaga nisbatan biroz quyuqroq
   border: "#EADCC6", borderSoft: "#F0E6D6",
   accent: "#A06020", accentDim: "#A0602012",
-  red: "#c94f4f", redDim: "#c94f4f12",
-  green: "#5a8a5a", greenDim: "#5a8a5a12",
-  blue: "#7a8ab0", blueDim: "#7a8ab012",
+  // Semantik rollar — faqat asosiy (issiq) palitra tonlari (qizil/yashil/ko'k YO'Q):
+  // red  → "cost/qarz/manfiy"  = eng quyuq jigarrang
+  // green→ "foyda/aktiv/musbat" = accent (karamel)
+  // blue → "optom/neytral urg'u" = o'rta jigarrang (sub)
+  red: "#3A1E08", redDim: "#3A1E080D",
+  green: "#A06020", greenDim: "#A060200D",
+  blue: "#8A7050", blueDim: "#8A70500D",
   text: "#3A1E08",   // asosiy matn
   sub: "#8A7050",    // ikkilamchi matn (quyuqroq)
   muted: "#B39A78",  // uchlamchi / hint (ochroq)

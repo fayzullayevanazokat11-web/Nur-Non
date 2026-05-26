@@ -9,6 +9,7 @@ import { Card } from "../../src/components/Card";
 import { Btn } from "../../src/components/Btn";
 import { Modal } from "../../src/components/Modal";
 import { ScreenHeader } from "../../src/components/ScreenHeader";
+import { ExpandableCard } from "../../src/components/ExpandableCard";
 import { Avatar } from "../../src/components/Avatar";
 import { C, T, S, R } from "../../src/theme";
 import { formatSom } from "../../src/logic/hisob";
@@ -82,8 +83,10 @@ export default function Xodimlar() {
           <Card><Text style={styles.muted}>Xodimlar hali kiritilmagan</Text></Card>
         ) : (
           ishchilar.map((w) => (
-            <Card key={w.id} style={styles.item}>
-              <View style={styles.cardHead}>
+            <ExpandableCard
+              key={w.id}
+              style={styles.item}
+              header={
                 <View style={styles.left}>
                   <Avatar name={w.ism} />
                   <View style={styles.flex1}>
@@ -91,16 +94,9 @@ export default function Xodimlar() {
                     <Text style={styles.lavozim}>{getLavozimLabel(w)}</Text>
                   </View>
                 </View>
-                <View style={styles.cardActs}>
-                  <Pressable accessibilityLabel="Tahrirlash" onPress={() => ochTahrir(w)} hitSlop={8} style={styles.act}>
-                    <Ionicons name="create-outline" size={18} color={C.accent} />
-                  </Pressable>
-                  <Pressable accessibilityLabel="O'chirish" onPress={() => ochir(w.id)} hitSlop={8} style={styles.act}>
-                    <Ionicons name="trash-outline" size={18} color={C.red} />
-                  </Pressable>
-                </View>
-              </View>
-              <View style={styles.cardBody}>
+              }
+            >
+              <View style={styles.bodyTop}>
                 <View style={[styles.statePill, { backgroundColor: (w.holat === "Aktiv" ? C.green : C.muted) + "14" }]}>
                   <Text style={[styles.stateTxt, { color: w.holat === "Aktiv" ? C.green : C.sub }]}>{w.holat}</Text>
                 </View>
@@ -108,7 +104,17 @@ export default function Xodimlar() {
                   {formatSom(w.miqdor)} so'm{w.haqTuri === "qop" ? "/qop" : "/kun"}
                 </Text>
               </View>
-            </Card>
+              <View style={styles.bodyActions}>
+                <Pressable accessibilityLabel="Tahrirlash" onPress={() => ochTahrir(w)} hitSlop={8} style={styles.actBtn}>
+                  <Ionicons name="create-outline" size={16} color={C.accent} />
+                  <Text style={[styles.actTxt, { color: C.accent }]}> Tahrirlash</Text>
+                </Pressable>
+                <Pressable accessibilityLabel="O'chirish" onPress={() => ochir(w.id)} hitSlop={8} style={styles.actBtn}>
+                  <Ionicons name="trash-outline" size={16} color={C.red} />
+                  <Text style={[styles.actTxt, { color: C.red }]}> O'chirish</Text>
+                </Pressable>
+              </View>
+            </ExpandableCard>
           ))
         )}
       </ScrollView>
@@ -170,19 +176,19 @@ const styles = StyleSheet.create({
   statUnit:  { fontSize: 10, color: C.muted, marginTop: 2 },
   gap12:     { height: S[3] },
   gap14:     { height: S[4] },
-  item:      { marginBottom: S[2], padding: 0 },
-  cardHead:  { flexDirection: "row", justifyContent: "space-between", alignItems: "center", backgroundColor: C.panel, paddingVertical: S[3], paddingHorizontal: S[4], borderTopLeftRadius: R.lg, borderTopRightRadius: R.lg, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: C.borderSoft },
-  cardBody:  { flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingVertical: S[3], paddingHorizontal: S[4] },
+  item:      { marginBottom: S[2] },
   left:      { flexDirection: "row", alignItems: "center", gap: S[3], flex: 1 },
   flex1:     { flex: 1 },
   ism:       { fontSize: T.md, fontWeight: "700", color: C.text },
   lavozim:   { fontSize: T.sm, color: C.sub, marginTop: 1 },
-  cardActs:  { flexDirection: "row", gap: S[1] },
-  act:       { padding: 6 },
+  bodyTop:   { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
   statePill: { paddingVertical: 3, paddingHorizontal: 10, borderRadius: R.pill },
   stateTxt:  { fontSize: 11, fontWeight: "700", letterSpacing: 0.2 },
   haq:       { fontSize: T.sm, fontWeight: "800", color: C.accent },
   muted:     { fontSize: T.sm, color: C.muted },
+  bodyActions:{ flexDirection: "row", justifyContent: "flex-end", gap: S[4], marginTop: S[3], borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: C.borderSoft, paddingTop: S[3] },
+  actBtn:    { flexDirection: "row", alignItems: "center" },
+  actTxt:    { fontSize: T.sm, fontWeight: "700" },
 
   // Modal
   modalTitle: { fontSize: T.lg, fontWeight: "800", color: C.text, marginBottom: S[3] },

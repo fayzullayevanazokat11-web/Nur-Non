@@ -9,6 +9,7 @@ import { Card } from "../../src/components/Card";
 import { Btn } from "../../src/components/Btn";
 import { Modal } from "../../src/components/Modal";
 import { ScreenHeader } from "../../src/components/ScreenHeader";
+import { ExpandableCard } from "../../src/components/ExpandableCard";
 import { C, T, S, R } from "../../src/theme";
 import { formatSom, getQopTannarx } from "../../src/logic/hisob";
 
@@ -84,36 +85,39 @@ export default function IshlabChiqarish() {
               ? getQopTannarx(non, mahsulotNarxlari)
               : Math.max(0, (parseFloat(non.narx) || 0) - (parseFloat(non.tashqariFoyda) || 0));
             return (
-              <Card key={non.id} style={styles.item}>
-                <View style={styles.cardHead}>
-                  <View style={styles.flex1}>
+              <ExpandableCard
+                key={non.id}
+                style={styles.item}
+                header={
+                  <View>
                     <Text style={styles.nonNom}>{non.nom}</Text>
                     <View style={[styles.chip, { backgroundColor: (oz ? C.accent : C.blue) + "16" }]}>
                       <Text style={[styles.chipTxt, { color: oz ? C.accent : C.blue }]}>{oz ? "O'zimizniki" : "Tashqaridan"}</Text>
                     </View>
                   </View>
-                  <View style={styles.cardActs}>
-                    <Pressable accessibilityLabel="Tahrirlash" onPress={() => ochTahrir(non)} hitSlop={8} style={styles.act}>
-                      <Ionicons name="create-outline" size={18} color={C.accent} />
-                    </Pressable>
-                    <Pressable accessibilityLabel="O'chirish" onPress={() => ochirNon(non.id)} hitSlop={8} style={styles.act}>
-                      <Ionicons name="trash-outline" size={18} color={C.red} />
-                    </Pressable>
-                  </View>
+                }
+              >
+                <Row label="Sotuv narxi" value={`${formatSom(non.narx)} so'm`} valueColor={C.accent} bold />
+                {oz ? (
+                  <>
+                    <Row label="1 qop normasi" value={`${non.nonSoni} dona`} />
+                    <Row label="1 qop tannarxi" value={`${formatSom(tannarx)} so'm`} valueColor={C.red} />
+                    <Row label="Ingredientlar" value={`${(non.mahsulotlar || []).length} xil`} last />
+                  </>
+                ) : (
+                  <Row label="Tannarxi" value={`${formatSom(tannarx)} so'm`} valueColor={C.red} last />
+                )}
+                <View style={styles.bodyActions}>
+                  <Pressable accessibilityLabel="Tahrirlash" onPress={() => ochTahrir(non)} hitSlop={8} style={styles.actBtn}>
+                    <Ionicons name="create-outline" size={16} color={C.accent} />
+                    <Text style={[styles.actTxt, { color: C.accent }]}> Tahrirlash</Text>
+                  </Pressable>
+                  <Pressable accessibilityLabel="O'chirish" onPress={() => ochirNon(non.id)} hitSlop={8} style={styles.actBtn}>
+                    <Ionicons name="trash-outline" size={16} color={C.red} />
+                    <Text style={[styles.actTxt, { color: C.red }]}> O'chirish</Text>
+                  </Pressable>
                 </View>
-                <View style={styles.cardBody}>
-                  <Row label="Sotuv narxi" value={`${formatSom(non.narx)} so'm`} valueColor={C.accent} bold />
-                  {oz ? (
-                    <>
-                      <Row label="1 qop normasi" value={`${non.nonSoni} dona`} />
-                      <Row label="1 qop tannarxi" value={`${formatSom(tannarx)} so'm`} valueColor={C.red} />
-                      <Row label="Ingredientlar" value={`${(non.mahsulotlar || []).length} xil`} last />
-                    </>
-                  ) : (
-                    <Row label="Tannarxi" value={`${formatSom(tannarx)} so'm`} valueColor={C.red} last />
-                  )}
-                </View>
-              </Card>
+              </ExpandableCard>
             );
           })
         )}
@@ -165,20 +169,19 @@ const styles = StyleSheet.create({
   safe:      { flex: 1, backgroundColor: C.bg },
   scroll:    { padding: S[4], paddingBottom: S[7] },
   gap14:     { height: S[4] },
-  item:      { marginBottom: S[3], padding: 0 },
-  cardHead:  { flexDirection: "row", justifyContent: "space-between", alignItems: "center", backgroundColor: C.panel, paddingVertical: S[3], paddingHorizontal: S[4], borderTopLeftRadius: R.lg, borderTopRightRadius: R.lg, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: C.borderSoft },
-  cardBody:  { paddingVertical: S[3], paddingHorizontal: S[4] },
+  item:      { marginBottom: S[3] },
   flex1:     { flex: 1 },
   nonNom:    { fontSize: T.lg, fontWeight: "800", color: C.text },
   chip:      { alignSelf: "flex-start", paddingVertical: 3, paddingHorizontal: 9, borderRadius: R.pill, marginTop: 5 },
   chipTxt:   { fontSize: 11, fontWeight: "700", letterSpacing: 0.2 },
-  cardActs:  { flexDirection: "row", gap: S[1] },
-  act:       { padding: 6 },
   row:       { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: S[2] },
   rowLast:   { marginBottom: 0 },
   label:     { fontSize: T.sm, color: C.sub },
   value:     { fontSize: T.sm },
   muted:     { fontSize: T.sm, color: C.muted },
+  bodyActions:{ flexDirection: "row", justifyContent: "flex-end", gap: S[4], marginTop: S[3], borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: C.borderSoft, paddingTop: S[3] },
+  actBtn:    { flexDirection: "row", alignItems: "center" },
+  actTxt:    { fontSize: T.sm, fontWeight: "700" },
 
   // Modal
   modalTitle: { fontSize: T.lg, fontWeight: "800", color: C.text, marginBottom: S[4] },

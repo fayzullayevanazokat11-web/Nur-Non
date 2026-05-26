@@ -9,6 +9,7 @@ import { Card } from "../../src/components/Card";
 import { Btn } from "../../src/components/Btn";
 import { Modal } from "../../src/components/Modal";
 import { ScreenHeader } from "../../src/components/ScreenHeader";
+import { ExpandableCard } from "../../src/components/ExpandableCard";
 import { KunlikQopModal } from "../../src/components/KunlikQopModal";
 import { HisobotModal } from "../../src/components/HisobotModal";
 import { C, T, S, R } from "../../src/theme";
@@ -101,20 +102,24 @@ export default function Markaz() {
           <Text style={styles.bosh}>Hali hisobot yo'q</Text>
         ) : (
           [...hisobotlarTarixi].slice(0, 30).map((h) => (
-            <Card key={h.id} style={styles.item}>
-              <View style={styles.rowBetween}>
-                <View style={styles.flex1}>
-                  <Text style={styles.itemIsm}>{h.sana}</Text>
-                  <Text style={styles.itemIzoh}>{h.jamiNon || 0} dona · {h.jamiQop || 0} qop · {h.sotilganNon || 0} sotilgan</Text>
+            <ExpandableCard
+              key={h.id}
+              style={styles.item}
+              header={
+                <View style={styles.mHead}>
+                  <Text style={[styles.itemIsm, styles.flex1]} numberOfLines={1}>{h.sana}</Text>
+                  <Text style={[styles.itemSumma, { color: (h.sofFoyda || 0) >= 0 ? C.green : C.red }]} numberOfLines={1}>{formatSom(h.sofFoyda)} so'm</Text>
                 </View>
-                <Text style={[styles.itemSumma, { color: (h.sofFoyda || 0) >= 0 ? C.green : C.red }]}>{formatSom(h.sofFoyda)} so'm</Text>
-              </View>
+              }
+            >
+              <Text style={styles.itemIzoh}>{h.jamiNon || 0} dona · {h.jamiQop || 0} qop · {h.sotilganNon || 0} sotilgan</Text>
               <View style={styles.actions}>
                 <Pressable accessibilityLabel="O'chirish" onPress={() => ochirHisobot(h.id)} hitSlop={6} style={styles.actBtn}>
                   <Ionicons name="trash-outline" size={16} color={C.red} />
+                  <Text style={[styles.actTxt, { color: C.red }]}> O'chirish</Text>
                 </Pressable>
               </View>
-            </Card>
+            </ExpandableCard>
           ))
         )}
 
@@ -124,27 +129,31 @@ export default function Markaz() {
         <View style={styles.gap10} />
         {(qarzlar || []).length === 0 ? <Text style={styles.bosh}>Hali qarz yo'q</Text> : (
           [...qarzlar].reverse().map((q) => (
-            <Card key={q.id} style={styles.item}>
-              <View style={styles.rowBetween}>
-                <View style={styles.flex1}>
-                  <Text style={styles.itemIsm}>{q.ism}{q.tolangan ? "  · to'landi" : ""}</Text>
-                  {q.izoh ? <Text style={styles.itemIzoh}>{q.izoh}</Text> : null}
-                  <Text style={styles.itemSana}>{q.sana}</Text>
+            <ExpandableCard
+              key={q.id}
+              style={styles.item}
+              header={
+                <View style={styles.mHead}>
+                  <Text style={[styles.itemIsm, styles.flex1]} numberOfLines={1}>{q.ism}{q.tolangan ? "  · to'landi" : ""}</Text>
+                  <Text style={[styles.itemSumma, { color: q.tolangan ? C.muted : C.red }]} numberOfLines={1}>{formatSom(q.summa)} so'm</Text>
                 </View>
-                <Text style={[styles.itemSumma, { color: q.tolangan ? C.muted : C.red }]}>{formatSom(q.summa)} so'm</Text>
-              </View>
+              }
+            >
+              {q.izoh ? <Text style={styles.itemIzoh}>{q.izoh}</Text> : null}
+              <Text style={styles.itemSana}>{q.sana}</Text>
               <View style={styles.actions}>
                 {!q.tolangan && (
                   <Pressable onPress={() => tolaQarz(q.id)} hitSlop={6} style={styles.actBtn}>
-                    <Ionicons name="checkmark" size={15} color={C.green} />
-                    <Text style={[styles.actTxt, { color: C.green }]}> To'landi</Text>
+                    <Ionicons name="checkmark" size={15} color={C.accent} />
+                    <Text style={[styles.actTxt, { color: C.accent }]}> To'landi</Text>
                   </Pressable>
                 )}
                 <Pressable onPress={() => ochirQarz(q.id)} hitSlop={6} style={styles.actBtn}>
                   <Ionicons name="trash-outline" size={16} color={C.red} />
+                  <Text style={[styles.actTxt, { color: C.red }]}> O'chirish</Text>
                 </Pressable>
               </View>
-            </Card>
+            </ExpandableCard>
           ))
         )}
 
@@ -154,21 +163,25 @@ export default function Markaz() {
         <View style={styles.gap10} />
         {(optomlar || []).length === 0 ? <Text style={styles.bosh}>Hali optom savdo yo'q</Text> : (
           [...optomlar].reverse().map((o) => (
-            <Card key={o.id} style={styles.item}>
-              <View style={styles.rowBetween}>
-                <View style={styles.flex1}>
-                  <Text style={styles.itemIsm}>{o.ism}</Text>
-                  {o.izoh ? <Text style={styles.itemIzoh}>{o.izoh}</Text> : null}
-                  <Text style={styles.itemSana}>{o.sana}</Text>
+            <ExpandableCard
+              key={o.id}
+              style={styles.item}
+              header={
+                <View style={styles.mHead}>
+                  <Text style={[styles.itemIsm, styles.flex1]} numberOfLines={1}>{o.ism}</Text>
+                  <Text style={[styles.itemSumma, { color: C.blue }]} numberOfLines={1}>{formatSom(o.summa)} so'm</Text>
                 </View>
-                <Text style={[styles.itemSumma, { color: C.blue }]}>{formatSom(o.summa)} so'm</Text>
-              </View>
+              }
+            >
+              {o.izoh ? <Text style={styles.itemIzoh}>{o.izoh}</Text> : null}
+              <Text style={styles.itemSana}>{o.sana}</Text>
               <View style={styles.actions}>
                 <Pressable onPress={() => ochirOptom(o.id)} hitSlop={6} style={styles.actBtn}>
                   <Ionicons name="trash-outline" size={16} color={C.red} />
+                  <Text style={[styles.actTxt, { color: C.red }]}> O'chirish</Text>
                 </Pressable>
               </View>
-            </Card>
+            </ExpandableCard>
           ))
         )}
 
@@ -178,21 +191,25 @@ export default function Markaz() {
         <View style={styles.gap10} />
         {(kartalar || []).length === 0 ? <Text style={styles.bosh}>Hali karta to'lovi yo'q</Text> : (
           [...kartalar].reverse().map((k) => (
-            <Card key={k.id} style={styles.item}>
-              <View style={styles.rowBetween}>
-                <View style={styles.flex1}>
-                  <Text style={styles.itemIsm}>{k.izoh || "Karta to'lovi"}</Text>
-                  <Text style={styles.itemIzoh}>≈ {k.dona} dona non · sof foyda {formatSom(k.sofFoyda)} so'm</Text>
-                  <Text style={styles.itemSana}>{k.sana}</Text>
+            <ExpandableCard
+              key={k.id}
+              style={styles.item}
+              header={
+                <View style={styles.mHead}>
+                  <Text style={[styles.itemIsm, styles.flex1]} numberOfLines={1}>{k.izoh || "Karta to'lovi"}</Text>
+                  <Text style={[styles.itemSumma, { color: C.green }]} numberOfLines={1}>{formatSom(k.summa)} so'm</Text>
                 </View>
-                <Text style={[styles.itemSumma, { color: C.green }]}>{formatSom(k.summa)} so'm</Text>
-              </View>
+              }
+            >
+              <Text style={styles.itemIzoh}>≈ {k.dona} dona non · sof foyda {formatSom(k.sofFoyda)} so'm</Text>
+              <Text style={styles.itemSana}>{k.sana}</Text>
               <View style={styles.actions}>
                 <Pressable onPress={() => ochirKarta(k.id)} hitSlop={6} style={styles.actBtn}>
                   <Ionicons name="trash-outline" size={16} color={C.red} />
+                  <Text style={[styles.actTxt, { color: C.red }]}> O'chirish</Text>
                 </Pressable>
               </View>
-            </Card>
+            </ExpandableCard>
           ))
         )}
       </ScrollView>
@@ -291,14 +308,14 @@ const styles = StyleSheet.create({
   secSum:    { fontSize: T.sm, fontWeight: "700" },
   bosh:      { fontSize: T.sm, color: C.muted, paddingVertical: S[2] },
 
-  item:      { marginBottom: S[2], paddingVertical: S[3] },
-  rowBetween:{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" },
+  item:      { marginBottom: S[2] },
+  mHead:     { flexDirection: "row", justifyContent: "space-between", alignItems: "center", gap: S[2] },
   flex1:     { flex: 1 },
   itemIsm:   { fontSize: T.md, fontWeight: "700", color: C.text },
   itemIzoh:  { fontSize: T.sm, color: C.sub, marginTop: 2 },
   itemSana:  { fontSize: T.xs, color: C.muted, marginTop: 2 },
   itemSumma: { fontSize: T.md, fontWeight: "800", marginLeft: S[2] },
-  actions:   { flexDirection: "row", justifyContent: "flex-end", gap: S[4], marginTop: S[3], borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: C.border, paddingTop: S[2] },
+  actions:   { flexDirection: "row", justifyContent: "flex-end", gap: S[4], marginTop: S[3], borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: C.borderSoft, paddingTop: S[3] },
   actBtn:    { flexDirection: "row", alignItems: "center" },
   actTxt:    { fontSize: T.sm, fontWeight: "700" },
   gap10:     { height: S[3] },
