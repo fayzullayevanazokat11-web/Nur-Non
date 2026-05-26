@@ -124,6 +124,30 @@ export function optomJami(optomlar) {
   return { soni: list.length, summa: list.reduce((s, o) => s + (parseFloat(o.summa) || 0), 0) };
 }
 
+// Karta to'lovlari jami
+export function kartaJami(kartalar) {
+  const list = kartalar || [];
+  return {
+    soni: list.length,
+    summa: list.reduce((s, k) => s + (parseFloat(k.summa) || 0), 0),
+    sofFoyda: list.reduce((s, k) => s + (parseFloat(k.sofFoyda) || 0), 0),
+  };
+}
+
+// Karta to'lovi: o'rtacha non narxi asosida ~nechta non chiqadi va undan sof foyda.
+// (o'zimiz ishlab chiqaradigan nonlarning o'rtacha narxi va o'rtacha bitta non tannarxi)
+export function kartaHisob(summa, nonlar, mahsulotNarxlari) {
+  const oz = (nonlar || []).filter(
+    (n) => n.ozIshlab !== false && parseFloat(n.narx) > 0 && parseFloat(n.nonSoni) > 0
+  );
+  if (oz.length === 0 || !summa) return { dona: 0, sofFoyda: 0, avgNarx: 0 };
+  const avgNarx = oz.reduce((s, n) => s + parseFloat(n.narx), 0) / oz.length;
+  const avgTannarx = oz.reduce((s, n) => s + getQopTannarx(n, mahsulotNarxlari) / parseFloat(n.nonSoni), 0) / oz.length;
+  const dona = avgNarx > 0 ? Math.round(summa / avgNarx) : 0;
+  const sofFoyda = Math.round(summa - dona * avgTannarx);
+  return { dona, sofFoyda, avgNarx: Math.round(avgNarx) };
+}
+
 // So'm formatlash (Hermes Intl'ga bog'liq emas)
 export function formatSom(n) {
   const x = Math.round(Number(n) || 0);
