@@ -76,7 +76,10 @@ export function hisoblaKunlik({
   const sofFoyda = malumotBor ? Math.round(daromad - xomashyo - ishchiHaq) : 0;
   const sotilganNon = Math.max(0, jamiNon - jamiSotilmagan);
 
-  return { sofFoyda, jamiNon, jamiQop, sotilganNon };
+  return {
+    sofFoyda, jamiNon, jamiQop, sotilganNon,
+    daromad: Math.round(daromad), xomashyo: Math.round(xomashyo), ishchiHaq: Math.round(ishchiHaq),
+  };
 }
 
 // ── Ombor birliklari ──

@@ -8,6 +8,7 @@ import { useApp } from "../../src/store/AppData";
 import { Card } from "../../src/components/Card";
 import { Btn } from "../../src/components/Btn";
 import { Modal } from "../../src/components/Modal";
+import { KunlikQopModal } from "../../src/components/KunlikQopModal";
 import { C, T } from "../../src/theme";
 import { hisoblaKunlik, formatSom, qarzJami, optomJami, kartaJami, kartaHisob } from "../../src/logic/hisob";
 
@@ -30,6 +31,7 @@ export default function Markaz() {
 
   const [modalTur, setModalTur] = useState(null);
   const [forma, setForma] = useState(BOSH_FORMA);
+  const [qopOchiq, setQopOchiq] = useState(false);
 
   const ochModal = (tur) => { setForma(BOSH_FORMA); setModalTur(tur); };
   const yopModal = () => setModalTur(null);
@@ -85,6 +87,8 @@ export default function Markaz() {
         <Card accent style={styles.block}>
           <Text style={styles.cardTitle}>📦 Kunlik qop hisobi</Text>
           <Text style={styles.muted}>{nonlar.length} xil non · {stats.jamiNon} dona ishlab chiqarildi</Text>
+          <View style={styles.gap10} />
+          <Btn onPress={() => setQopOchiq(true)}>+ Ma'lumot kiritish</Btn>
         </Card>
 
         {/* QARZ */}
@@ -164,6 +168,9 @@ export default function Markaz() {
           ))
         )}
       </ScrollView>
+
+      {/* Kunlik qop hisobi modali */}
+      <KunlikQopModal visible={qopOchiq} onClose={() => setQopOchiq(false)} />
 
       {/* Universal modal: Qarz / Optom / Karta */}
       <Modal modalVisible={modalTur !== null} onClose={yopModal}>
