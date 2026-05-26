@@ -11,9 +11,9 @@ import { Modal } from "../../src/components/Modal";
 import { ScreenHeader } from "../../src/components/ScreenHeader";
 import { ExpandableCard } from "../../src/components/ExpandableCard";
 import { C, T, S, R } from "../../src/theme";
-import { formatSom, getQopTannarx } from "../../src/logic/hisob";
+import { formatSom, getQopTannarx, getIngNarx } from "../../src/logic/hisob";
 
-const BOSH_FORMA = { nom: "", narx: "", tannarx: "", nonSoni: "" };
+const BOSH_FORMA = { nom: "", narx: "", tannarx: "", nonSoni: "", mahsulotlar: [] };
 
 export default function IshlabChiqarish() {
   const { nonlar, setNonlar, ishchilar, mahsulotNarxlari } = useApp();
@@ -24,12 +24,17 @@ export default function IshlabChiqarish() {
   const [forma, setForma] = useState(BOSH_FORMA);
 
   const yangila = (k, v) => setForma((p) => ({ ...p, [k]: v }));
+  const yangilaIng = (id, miqdor) =>
+    setForma((p) => ({ ...p, mahsulotlar: p.mahsulotlar.map((m) => (m.id === id ? { ...m, miqdor } : m)) }));
 
   const ochYangi = () => { setForma(BOSH_FORMA); setTahrirId(null); setTahrirOz(false); setModalOchiq(true); };
   const ochTahrir = (non) => {
     const oz = non.ozIshlab !== false;
     const tannarx = oz ? "" : String(Math.max(0, (parseFloat(non.narx) || 0) - (parseFloat(non.tashqariFoyda) || 0)));
-    setForma({ nom: non.nom, narx: String(non.narx || ""), tannarx, nonSoni: String(non.nonSoni || "") });
+    setForma({
+      nom: non.nom, narx: String(non.narx || ""), tannarx, nonSoni: String(non.nonSoni || ""),
+      mahsulotlar: oz ? (non.mahsulotlar || []).map((m) => ({ ...m, miqdor: String(m.miqdor ?? "") })) : [],
+    });
     setTahrirId(non.id); setTahrirOz(oz); setModalOchiq(true);
   };
   const yopModal = () => setModalOchiq(false);
@@ -45,7 +50,10 @@ export default function IshlabChiqarish() {
       setNonlar((prev) => prev.map((n) => {
         if (n.id !== tahrirId) return n;
         if (n.ozIshlab !== false) {
-          return { ...n, nom: forma.nom.trim(), narx, nonSoni: parseFloat(forma.nonSoni) || 0 };
+          return {
+            ...n, nom: forma.nom.trim(), narx, nonSoni: parseFloat(forma.nonSoni) || 0,
+            mahsulotlar: (forma.mahsulotlar || []).map((m) => ({ ...m, miqdor: parseFloat(m.miqdor) || 0 })),
+          };
         }
         const tannarx = parseFloat(forma.tannarx) || 0;
         return { ...n, nom: forma.nom.trim(), narx, tashqariFoyda: Math.max(0, narx - tannarx) };
@@ -67,6 +75,7 @@ export default function IshlabChiqarish() {
     ]);
 
   const aktivIshchi = (ishchilar || []).filter((w) => w.holat === "Aktiv").length;
+  const formaTannarx = (forma.mahsulotlar || []).reduce((s, m) => s + getIngNarx(m, mahsulotNarxlari), 0);
 
   return (
     <SafeAreaView style={styles.safe} edges={["top"]}>
@@ -101,8 +110,17 @@ export default function IshlabChiqarish() {
                 {oz ? (
                   <>
                     <Row label="1 qop normasi" value={`${non.nonSoni} dona`} />
-                    <Row label="1 qop tannarxi" value={`${formatSom(tannarx)} so'm`} valueColor={C.red} />
-                    <Row label="Ingredientlar" value={`${(non.mahsulotlar || []).length} xil`} last />
+                    <Row label="1 qop tannarxi" value={`${formatSom(tannarx)} so'm`} valueColor={C.red} bold last />
+                    <View style={styles.ingWrap}>
+                      <Text style={styles.ingHead}>INGREDIENTLAR ({(non.mahsulotlar || []).length})</Text>
+                      {(non.mahsulotlar || []).map((m) => (
+                        <View key={m.id} style={styles.ingRow}>
+                          <Text style={styles.ingNom} numberOfLines={1}>{m.emoji} {m.nom}</Text>
+                          <Text style={styles.ingMiqdor}>{m.miqdor} {m.birlik}</Text>
+                          <Text style={styles.ingNarx}>{formatSom(getIngNarx(m, mahsulotNarxlari))} so'm</Text>
+                        </View>
+                      ))}
+                    </View>
                   </>
                 ) : (
                   <Row label="Tannarxi" value={`${formatSom(tannarx)} so'm`} valueColor={C.red} last />
@@ -137,7 +155,29 @@ export default function IshlabChiqarish() {
           <>
             <Text style={styles.inputLabel}>1 qop normasi (dona)</Text>
             <TextInput value={forma.nonSoni} onChangeText={(v) => yangila("nonSoni", v)} placeholder="0" placeholderTextColor={C.muted} keyboardType="numeric" style={styles.input} />
-            <Text style={styles.hint}>Tannarx ingredientlardan hisoblanadi (Ombor narxlari)</Text>
+
+            <Text style={styles.inputLabel}>Ingredientlar (1 qopga)</Text>
+            <ScrollView style={styles.ingScroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+              {(forma.mahsulotlar || []).map((m) => (
+                <View key={m.id} style={styles.ingEditRow}>
+                  <Text style={styles.ingEditNom} numberOfLines={1}>{m.emoji} {m.nom}</Text>
+                  <TextInput
+                    value={String(m.miqdor)}
+                    onChangeText={(v) => yangilaIng(m.id, v)}
+                    placeholder="0"
+                    placeholderTextColor={C.muted}
+                    keyboardType="numeric"
+                    style={styles.ingInput}
+                  />
+                  <Text style={styles.ingUnit}>{m.birlik}</Text>
+                </View>
+              ))}
+            </ScrollView>
+            <View style={styles.ingTotal}>
+              <Text style={styles.ingTotalLabel}>1 qop tannarxi</Text>
+              <Text style={styles.ingTotalVal}>{formatSom(formaTannarx)} so'm</Text>
+            </View>
+            <Text style={styles.hint}>Narx Ombor narxlaridan avtomatik hisoblanadi</Text>
           </>
         ) : (
           <>
@@ -183,7 +223,24 @@ const styles = StyleSheet.create({
   actBtn:    { flexDirection: "row", alignItems: "center" },
   actTxt:    { fontSize: T.sm, fontWeight: "700" },
 
+  // Karta — ingredient ro'yxati
+  ingWrap:   { marginTop: S[3], borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: C.borderSoft, paddingTop: S[3] },
+  ingHead:   { fontSize: 10, color: C.muted, fontWeight: "700", letterSpacing: 0.8, marginBottom: S[2] },
+  ingRow:    { flexDirection: "row", alignItems: "center", marginBottom: 6 },
+  ingNom:    { flex: 1, fontSize: T.sm, color: C.text },
+  ingMiqdor: { fontSize: T.xs, color: C.muted, width: 78, textAlign: "right" },
+  ingNarx:   { fontSize: T.xs, color: C.sub, fontWeight: "700", width: 82, textAlign: "right" },
+
   // Modal
+  ingScroll:    { maxHeight: 220, marginBottom: S[2] },
+  ingEditRow:   { flexDirection: "row", alignItems: "center", gap: S[2], marginBottom: S[2] },
+  ingEditNom:   { flex: 1, fontSize: T.sm, color: C.text },
+  ingInput:     { width: 90, borderWidth: 1, borderColor: C.border, borderRadius: R.sm, paddingVertical: 8, paddingHorizontal: 10, fontSize: T.sm, color: C.text, backgroundColor: C.surface, textAlign: "right" },
+  ingUnit:      { width: 28, fontSize: T.xs, color: C.muted },
+  ingTotal:     { flexDirection: "row", justifyContent: "space-between", alignItems: "center", backgroundColor: C.accent + "0D", borderWidth: 1, borderColor: C.accent + "2E", borderRadius: R.md, paddingVertical: S[2], paddingHorizontal: S[3], marginBottom: S[2] },
+  ingTotalLabel:{ fontSize: T.sm, color: C.sub, fontWeight: "600" },
+  ingTotalVal:  { fontSize: T.md, color: C.accent, fontWeight: "800" },
+
   modalTitle: { fontSize: T.lg, fontWeight: "800", color: C.text, marginBottom: S[4] },
   inputLabel: { fontSize: T.xs, color: C.sub, fontWeight: "600", marginBottom: 6, letterSpacing: 0.3 },
   input: { borderWidth: 1, borderColor: C.border, borderRadius: R.md, paddingVertical: 12, paddingHorizontal: 14, fontSize: T.md, color: C.text, backgroundColor: C.surface, marginBottom: S[3] },

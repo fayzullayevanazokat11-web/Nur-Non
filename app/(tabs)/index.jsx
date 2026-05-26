@@ -125,7 +125,7 @@ export default function Markaz() {
 
         {/* QARZ */}
         <SectionHead icon="pricetag-outline" nom="QARZLAR" sum={`${formatSom(qarz.summa)} so'm · ${qarz.soni} ta`} color={C.red} style={{ marginTop: S[6] }} />
-        <Btn color={C.red} onPress={() => ochModal("qarz")}>Qarz qo'shish</Btn>
+        <Btn color={C.accent} onPress={() => ochModal("qarz")}>Qarz qo'shish</Btn>
         <View style={styles.gap10} />
         {(qarzlar || []).length === 0 ? <Text style={styles.bosh}>Hali qarz yo'q</Text> : (
           [...qarzlar].reverse().map((q) => (
@@ -159,7 +159,7 @@ export default function Markaz() {
 
         {/* OPTOM */}
         <SectionHead icon="cube-outline" nom="OPTOM SAVDOLAR" sum={`${formatSom(optom.summa)} so'm · ${optom.soni} ta`} color={C.blue} style={{ marginTop: S[6] }} />
-        <Btn color={C.blue} onPress={() => ochModal("optom")}>Xarid qo'shish</Btn>
+        <Btn color={C.accent} onPress={() => ochModal("optom")}>Xarid qo'shish</Btn>
         <View style={styles.gap10} />
         {(optomlar || []).length === 0 ? <Text style={styles.bosh}>Hali optom savdo yo'q</Text> : (
           [...optomlar].reverse().map((o) => (
@@ -187,7 +187,7 @@ export default function Markaz() {
 
         {/* KARTA */}
         <SectionHead icon="card-outline" nom="KARTA TO'LOVLARI" sum={`${formatSom(karta.summa)} so'm · ${karta.soni} ta`} color={C.green} style={{ marginTop: S[6] }} />
-        <Btn color={C.green} onPress={() => ochModal("karta")}>Karta to'lovi</Btn>
+        <Btn color={C.accent} onPress={() => ochModal("karta")}>Karta to'lovi</Btn>
         <View style={styles.gap10} />
         {(kartalar || []).length === 0 ? <Text style={styles.bosh}>Hali karta to'lovi yo'q</Text> : (
           [...kartalar].reverse().map((k) => (
