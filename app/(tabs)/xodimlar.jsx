@@ -1,5 +1,5 @@
 // "Xodimlar" ekrani — kasb emoji bilan + "Yangi ishchi" modali.
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { View, Text, ScrollView, Pressable, TextInput, StyleSheet, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -21,10 +21,6 @@ export default function Xodimlar() {
   const [forma, setForma] = useState(BOSH_FORMA);
 
   const aktiv = (ishchilar || []).filter((w) => w.holat === "Aktiv");
-  const oylikFond = useMemo(
-    () => aktiv.reduce((s, w) => s + (parseFloat(w.miqdor) || 0) * (w.haqTuri === "kunlik" ? 30 : 1), 0),
-    [aktiv]
-  );
 
   const ochModal = () => { setForma(BOSH_FORMA); setModalOchiq(true); };
   const yopModal = () => setModalOchiq(false);
@@ -71,11 +67,6 @@ export default function Xodimlar() {
             <Text style={styles.statLabel}>AKTIV XODIMLAR</Text>
             <Text style={[styles.statValue, { color: C.text }]}>{aktiv.length}</Text>
             <Text style={styles.statUnit}>nafar</Text>
-          </Card>
-          <Card style={styles.statTile}>
-            <Text style={styles.statLabel}>OYLIK FOND (TAXM.)</Text>
-            <Text style={[styles.statValue, { color: C.green }]} numberOfLines={1}>{formatSom(oylikFond)}</Text>
-            <Text style={styles.statUnit}>so'm / oy</Text>
           </Card>
         </View>
 
