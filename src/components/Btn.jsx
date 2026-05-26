@@ -1,6 +1,7 @@
-// Tugma — Pressable asosida. Bosilganda yengil shaffoflashadi + kichrayadi.
-import { Pressable, Text, StyleSheet } from "react-native";
-import { C, T, R } from "../theme";
+// Tugma — Pressable asosida. Bosilganda silliq (ease-in-out) kichrayadi + shaffoflashadi.
+import { useRef } from "react";
+import { Animated, Pressable, Text, Easing, StyleSheet } from "react-native";
+import { C, T, R, ANIM } from "../theme";
 
 export function Btn({
   children,
@@ -15,29 +16,48 @@ export function Btn({
   const bg = disabled ? C.border : secondary ? "transparent" : color;
   const fg = disabled ? C.muted : secondary ? C.sub : textColor;
 
+  const v = useRef(new Animated.Value(0)).current;
+  const animate = (to) =>
+    Animated.timing(v, {
+      toValue: to,
+      duration: ANIM.pressDuration,
+      easing: Easing.inOut(Easing.ease),
+      useNativeDriver: true,
+    }).start();
+
+  const scale = v.interpolate({ inputRange: [0, 1], outputRange: [1, 0.97] });
+  const opacity = v.interpolate({ inputRange: [0, 1], outputRange: [1, 0.9] });
+
   return (
     <Pressable
       onPress={disabled ? undefined : onPress}
       disabled={disabled}
-      style={({ pressed }) => [
-        styles.base,
-        {
-          backgroundColor: bg,
-          width: full ? "100%" : undefined,
-          borderWidth: secondary ? 1 : 0,
-          borderColor: C.border,
-          opacity: pressed && !disabled ? 0.9 : 1,
-          transform: [{ scale: pressed && !disabled ? 0.985 : 1 }],
-        },
-        style,
-      ]}
+      onPressIn={() => !disabled && animate(1)}
+      onPressOut={() => !disabled && animate(0)}
+      style={full ? styles.full : undefined}
     >
-      <Text style={[styles.label, { color: fg }]}>{children}</Text>
+      <Animated.View
+        style={[
+          styles.base,
+          {
+            backgroundColor: bg,
+            width: full ? "100%" : undefined,
+            borderWidth: secondary ? 1 : 0,
+            borderColor: C.border,
+            opacity,
+            transform: [{ scale }],
+          },
+          style,
+        ]}
+      >
+        <Text style={[styles.label, { color: fg }]}>{children}</Text>
+      </Animated.View>
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
+  full: { width: "100%" },
   base: {
     borderRadius: R.md,
     paddingVertical: 14,

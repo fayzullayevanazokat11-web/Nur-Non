@@ -11,7 +11,7 @@ export default function TabsLayout() {
         headerShown: false,
         tabBarActiveTintColor: C.accent,
         tabBarInactiveTintColor: C.muted,
-        tabBarStyle: { backgroundColor: C.card, borderTopColor: C.borderSoft, borderTopWidth: StyleSheet.hairlineWidth, paddingTop: 6 },
+        tabBarStyle: { backgroundColor: C.card, borderTopColor: C.border, borderTopWidth: StyleSheet.hairlineWidth, paddingTop: 6 },
         tabBarLabelStyle: { fontSize: 11, fontWeight: "600", letterSpacing: 0.2 },
         tabBarItemStyle: { paddingVertical: 4 },
       }}

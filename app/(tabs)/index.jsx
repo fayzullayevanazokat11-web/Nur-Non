@@ -327,7 +327,7 @@ const styles = StyleSheet.create({
   inputLabel: { fontSize: T.xs, color: C.sub, fontWeight: "600", marginBottom: 6, marginTop: S[1], letterSpacing: 0.3 },
   input:     { borderWidth: 1, borderColor: C.border, borderRadius: R.md, paddingVertical: 12, paddingHorizontal: 14, fontSize: T.md, color: C.text, backgroundColor: C.surface },
   inputMulti:{ minHeight: 64, textAlignVertical: "top" },
-  preview:   { marginTop: S[3], backgroundColor: C.green + "0D", borderRadius: R.md, padding: S[3] },
+  preview:   { marginTop: S[3], backgroundColor: C.green + "0D", borderWidth: 1, borderColor: C.green + "2E", borderRadius: R.md, padding: S[3] },
   previewTitle: { fontSize: T.xs, color: C.sub, fontWeight: "600", marginBottom: S[2], letterSpacing: 0.3 },
   previewRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: S[1] },
   previewLabel: { fontSize: T.sm, color: C.sub },

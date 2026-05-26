@@ -41,7 +41,7 @@ export function HisobotModal({ visible, onClose }) {
 
       <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
         {/* Ishlab chiqarish (qop) */}
-        <View style={[styles.block, { backgroundColor: C.accent + "0D" }]}>
+        <View style={[styles.block, { backgroundColor: C.accent + "0D", borderColor: C.accent + "2E" }]}>
           <Text style={styles.blockHead}>Ishlab chiqarish (kunlik qop)</Text>
           <Row label="Ishlab chiqarilgan" value={`${data.kunlik.jamiNon} dona`} />
           <Row label="Sotilgan" value={`${data.kunlik.sotilganNon} dona`} />
@@ -49,7 +49,7 @@ export function HisobotModal({ visible, onClose }) {
         </View>
 
         {/* Karta */}
-        <View style={[styles.block, { backgroundColor: C.green + "0D" }]}>
+        <View style={[styles.block, { backgroundColor: C.green + "0D", borderColor: C.green + "2E" }]}>
           <Text style={[styles.blockHead, { color: C.green }]}>Karta to'lovlari (bugun)</Text>
           <Row label="Summa" value={`${formatSom(data.kartaSum)} so'm`} />
           <Row label="≈ Non" value={`${data.kartaDona} dona`} />
@@ -57,13 +57,13 @@ export function HisobotModal({ visible, onClose }) {
         </View>
 
         {/* Optom */}
-        <View style={[styles.block, { backgroundColor: C.blue + "0D" }]}>
+        <View style={[styles.block, { backgroundColor: C.blue + "0D", borderColor: C.blue + "2E" }]}>
           <Text style={[styles.blockHead, { color: C.blue }]}>Optom savdolar (bugun)</Text>
           <Row label={`${data.optomSoni} ta savdo`} value={`${formatSom(data.optomSum)} so'm`} bold />
         </View>
 
         {/* Qarz */}
-        <View style={[styles.block, { backgroundColor: C.red + "0D" }]}>
+        <View style={[styles.block, { backgroundColor: C.red + "0D", borderColor: C.red + "26" }]}>
           <Text style={[styles.blockHead, { color: C.red }]}>Qarz (bugun)</Text>
           <Row label={`${data.qarzSoni} ta qarz`} value={`${formatSom(data.qarzSum)} so'm`} bold />
           <Text style={styles.note}>* Qarz alohida — hali to'lanmagan, umumiyga qo'shilmaydi</Text>
@@ -98,13 +98,13 @@ const styles = StyleSheet.create({
   title:     { fontSize: T.lg, fontWeight: "800", color: C.text },
   sana:      { fontSize: T.sm, color: C.muted, marginBottom: S[3] },
   scroll:    { maxHeight: 420 },
-  block:     { borderRadius: R.md, padding: S[3], marginBottom: S[2], backgroundColor: C.surface },
+  block:     { borderRadius: R.md, borderWidth: 1, borderColor: C.border, padding: S[3], marginBottom: S[2], backgroundColor: C.surface },
   blockHead: { fontSize: T.sm, fontWeight: "700", color: C.text, marginBottom: S[2] },
   row:       { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 5 },
   rowLabel:  { fontSize: T.sm, color: C.sub },
   rowVal:    { fontSize: T.sm },
   note:      { fontSize: 11, color: C.muted, marginTop: S[1] },
-  umumiy:    { borderRadius: R.md, padding: S[4], backgroundColor: C.accent + "0D", alignItems: "center", marginTop: S[1] },
+  umumiy:    { borderRadius: R.md, borderWidth: 1, borderColor: C.accent + "2E", padding: S[4], backgroundColor: C.accent + "0D", alignItems: "center", marginTop: S[1] },
   umumiyLabel: { fontSize: T.xs, color: C.sub, fontWeight: "700", letterSpacing: 1 },
   umumiyVal: { fontSize: T.xxl, fontWeight: "800", marginTop: S[1], letterSpacing: -0.5 },
   umumiyForm: { fontSize: 10, color: C.muted, marginTop: 6, textAlign: "center" },

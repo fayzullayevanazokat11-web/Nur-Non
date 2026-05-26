@@ -139,7 +139,7 @@ const styles = StyleSheet.create({
   col:     { flex: 1 },
   lbl:     { fontSize: T.xs, color: C.sub, fontWeight: "600", marginBottom: S[1] },
   input:   { borderWidth: 1, borderColor: C.border, borderRadius: R.md, paddingVertical: 10, paddingHorizontal: 12, fontSize: T.md, color: C.text, backgroundColor: C.surface },
-  summary: { marginTop: S[3], backgroundColor: C.accent + "0D", borderRadius: R.md, padding: S[3] },
+  summary: { marginTop: S[3], backgroundColor: C.accent + "0D", borderWidth: 1, borderColor: C.accent + "2E", borderRadius: R.md, padding: S[3] },
   sumRow:  { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 5 },
   sumLabel:{ fontSize: T.sm, color: C.sub },
   sumVal:  { fontSize: T.md },

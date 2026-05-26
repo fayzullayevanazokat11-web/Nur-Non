@@ -130,7 +130,7 @@ const styles = StyleSheet.create({
   muted:     { fontSize: T.sm, color: C.sub },
 
   grid:      { flexDirection: "row", flexWrap: "wrap", gap: S[2] },
-  cell:      { width: "48%", backgroundColor: C.surface, borderRadius: R.sm, paddingVertical: S[2], paddingHorizontal: S[3], flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+  cell:      { width: "48%", backgroundColor: C.surface, borderWidth: 1, borderColor: C.borderSoft, borderRadius: R.sm, paddingVertical: S[2], paddingHorizontal: S[3], flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
   cellNom:   { fontSize: 10, color: C.sub, fontWeight: "600", flexShrink: 1 },
   cellVal:   { fontSize: T.xs, fontWeight: "700", marginLeft: S[1] },
 
