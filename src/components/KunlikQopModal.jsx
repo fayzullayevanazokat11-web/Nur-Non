@@ -2,6 +2,7 @@
 // jonli sof foyda ko'rsatiladi, "Tasdiqlash" hisobot snapshotini saqlaydi.
 import { useEffect, useMemo, useState } from "react";
 import { View, Text, ScrollView, TextInput, StyleSheet } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { useApp } from "../store/AppData";
 import { Modal } from "./Modal";
 import { Btn } from "./Btn";
@@ -76,7 +77,10 @@ export function KunlikQopModal({ visible, onClose, onTasdiq }) {
 
   return (
     <Modal modalVisible={visible} onClose={onClose}>
-      <Text style={styles.title}>Kunlik qop hisobi</Text>
+      <View style={styles.head}>
+        <Ionicons name="calculator-outline" size={20} color={C.accent} />
+        <Text style={styles.title}>Kunlik qop hisobi</Text>
+      </View>
 
       <ScrollView style={styles.scroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
         {nonlar.map((n) => {
@@ -114,8 +118,8 @@ export function KunlikQopModal({ visible, onClose, onTasdiq }) {
       </View>
 
       <View style={styles.btns}>
-        <View style={styles.flex1}><Btn secondary onPress={saqla}>Saqlash</Btn></View>
-        <View style={styles.flex1}><Btn onPress={tasdiqla}>Tasdiqlash</Btn></View>
+        <View style={styles.flex1}><Btn secondary onPress={saqla} icon="save-outline">Saqlash</Btn></View>
+        <View style={styles.flex1}><Btn onPress={tasdiqla} icon="checkmark-circle-outline">Tasdiqlash</Btn></View>
       </View>
     </Modal>
   );
@@ -131,7 +135,8 @@ function SumRow({ label, value, bold, color = C.text }) {
 }
 
 const styles = StyleSheet.create({
-  title:   { fontSize: T.lg, fontWeight: "800", color: C.text, marginBottom: S[3] },
+  head:    { flexDirection: "row", alignItems: "center", gap: S[2], marginBottom: S[3] },
+  title:   { fontSize: T.lg, fontWeight: "800", color: C.text },
   scroll:  { maxHeight: 360 },
   nonRow:  { marginBottom: S[3], borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: C.borderSoft, paddingBottom: S[3] },
   nonNom:  { fontSize: T.md, fontWeight: "700", color: C.text, marginBottom: 6 },

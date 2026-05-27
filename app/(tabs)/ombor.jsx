@@ -2,6 +2,7 @@
 import { useMemo, useState } from "react";
 import { View, Text, ScrollView, TextInput, StyleSheet, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { Ionicons } from "@expo/vector-icons";
 
 import { useApp } from "../../src/store/AppData";
 import { Card } from "../../src/components/Card";
@@ -54,10 +55,13 @@ export default function Ombor() {
   return (
     <SafeAreaView style={styles.safe} edges={["top"]}>
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-        <ScreenHeader eyebrow="Zaxira" title="Ombor hisoboti" subtitle={`${setSoni} ta set kiritilgan`} />
+        <ScreenHeader eyebrow="Zaxira" title="Ombor hisoboti" subtitle={`${setSoni} ta set kiritilgan`} icon="server-outline" />
 
         <Card accent>
-          <Text style={styles.cardTitle}>Mavjud zaxira</Text>
+          <View style={styles.cardTitleRow}>
+            <Ionicons name="cube-outline" size={16} color={C.accent} />
+            <Text style={styles.cardTitle}>Mavjud zaxira</Text>
+          </View>
           <Text style={styles.muted}>Set kirimlari − tasdiqlangan xarajat</Text>
           <View style={styles.gap10} />
           <View style={styles.grid}>
@@ -75,12 +79,15 @@ export default function Ombor() {
         </Card>
 
         <View style={styles.gap14} />
-        <Btn color={C.blue} onPress={ochModal}>Yangi set kiritish</Btn>
+        <Btn color={C.blue} onPress={ochModal} icon="add-outline">Yangi set kiritish</Btn>
       </ScrollView>
 
       {/* Yangi set kiritish modali */}
       <Modal modalVisible={modalOchiq} onClose={yopModal}>
-        <Text style={styles.modalTitle}>Yangi keltirilgan set</Text>
+        <View style={styles.modalHead}>
+          <Ionicons name="add-circle-outline" size={20} color={C.accent} />
+          <Text style={styles.modalTitle}>Yangi keltirilgan set</Text>
+        </View>
 
         <ScrollView
           style={styles.formScroll}
@@ -126,7 +133,8 @@ const styles = StyleSheet.create({
   gap10:     { height: S[3] },
   gap12:     { height: S[3] },
   gap14:     { height: S[4] },
-  cardTitle: { fontSize: T.md, fontWeight: "700", color: C.text, marginBottom: S[1] },
+  cardTitleRow:{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: S[1] },
+  cardTitle: { fontSize: T.md, fontWeight: "700", color: C.text },
   muted:     { fontSize: T.sm, color: C.sub },
 
   grid:      { flexDirection: "row", flexWrap: "wrap", gap: S[2] },
@@ -135,7 +143,8 @@ const styles = StyleSheet.create({
   cellVal:   { fontSize: T.xs, fontWeight: "700", marginLeft: S[1] },
 
   // Modal
-  modalTitle: { fontSize: T.lg, fontWeight: "800", color: C.text, marginBottom: S[3] },
+  modalHead:  { flexDirection: "row", alignItems: "center", gap: S[2], marginBottom: S[3] },
+  modalTitle: { fontSize: T.lg, fontWeight: "800", color: C.text },
   formScroll: { maxHeight: 420 },
   field:      { marginBottom: S[3] },
   inputLabel: { fontSize: T.xs, color: C.sub, fontWeight: "600", marginBottom: 5, letterSpacing: 0.3 },

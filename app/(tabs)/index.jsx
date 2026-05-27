@@ -81,19 +81,22 @@ export default function Markaz() {
   return (
     <SafeAreaView style={styles.safe} edges={["top"]}>
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-        <ScreenHeader eyebrow="Nonvoyxona №1" title="Bosh ko'rsatkichlar" subtitle="Bugungi ish ko'rsatkichlari" />
+        <ScreenHeader eyebrow="Nonvoyxona №1" title="Bosh ko'rsatkichlar" subtitle="Bugungi ish ko'rsatkichlari" icon="home-outline" />
 
         <View style={styles.statsRow}>
-          <StatTile label="Bugungi sof foyda" unit="so'm" value={formatSom(stats.sofFoyda)} color={stats.sofFoyda >= 0 ? C.green : C.red} />
-          <StatTile label="Sotilgan non" unit="dona" value={String(stats.sotilganNon)} color={C.text} />
-          <StatTile label="Kunlik qop" unit="qop" value={String(stats.jamiQop)} color={C.accent} />
+          <StatTile label="Bugungi sof foyda" unit="so'm" value={formatSom(stats.sofFoyda)} color={stats.sofFoyda >= 0 ? C.green : C.red} icon="trending-up-outline" />
+          <StatTile label="Sotilgan non" unit="dona" value={String(stats.sotilganNon)} color={C.text} icon="cube-outline" />
+          <StatTile label="Kunlik qop" unit="qop" value={String(stats.jamiQop)} color={C.accent} icon="layers-outline" />
         </View>
 
         <Card accent style={styles.block}>
-          <Text style={styles.cardTitle}>Kunlik qop hisobi</Text>
+          <View style={styles.cardTitleRow}>
+            <Ionicons name="calculator-outline" size={16} color={C.accent} />
+            <Text style={styles.cardTitle}>Kunlik qop hisobi</Text>
+          </View>
           <Text style={styles.muted}>{nonlar.length} xil non · {stats.jamiNon} dona ishlab chiqarildi</Text>
           <View style={styles.gap10} />
-          <Btn onPress={() => setQopOchiq(true)}>Ma'lumot kiritish</Btn>
+          <Btn onPress={() => setQopOchiq(true)} icon="create-outline">Ma'lumot kiritish</Btn>
         </Card>
 
         {/* KUNLIK HISOBOTLAR TARIXI (30 kun) */}
@@ -125,7 +128,7 @@ export default function Markaz() {
 
         {/* QARZ */}
         <SectionHead icon="pricetag-outline" nom="QARZLAR" sum={`${formatSom(qarz.summa)} so'm · ${qarz.soni} ta`} color={C.red} style={{ marginTop: S[6] }} />
-        <Btn color={C.accent} onPress={() => ochModal("qarz")}>Qarz qo'shish</Btn>
+        <Btn color={C.accent} onPress={() => ochModal("qarz")} icon="add-outline">Qarz qo'shish</Btn>
         <View style={styles.gap10} />
         {(qarzlar || []).length === 0 ? <Text style={styles.bosh}>Hali qarz yo'q</Text> : (
           [...qarzlar].reverse().map((q) => (
@@ -159,7 +162,7 @@ export default function Markaz() {
 
         {/* OPTOM */}
         <SectionHead icon="cube-outline" nom="OPTOM SAVDOLAR" sum={`${formatSom(optom.summa)} so'm · ${optom.soni} ta`} color={C.blue} style={{ marginTop: S[6] }} />
-        <Btn color={C.accent} onPress={() => ochModal("optom")}>Xarid qo'shish</Btn>
+        <Btn color={C.accent} onPress={() => ochModal("optom")} icon="add-outline">Xarid qo'shish</Btn>
         <View style={styles.gap10} />
         {(optomlar || []).length === 0 ? <Text style={styles.bosh}>Hali optom savdo yo'q</Text> : (
           [...optomlar].reverse().map((o) => (
@@ -187,7 +190,7 @@ export default function Markaz() {
 
         {/* KARTA */}
         <SectionHead icon="card-outline" nom="KARTA TO'LOVLARI" sum={`${formatSom(karta.summa)} so'm · ${karta.soni} ta`} color={C.green} style={{ marginTop: S[6] }} />
-        <Btn color={C.accent} onPress={() => ochModal("karta")}>Karta to'lovi</Btn>
+        <Btn color={C.accent} onPress={() => ochModal("karta")} icon="card-outline">Karta to'lovi</Btn>
         <View style={styles.gap10} />
         {(kartalar || []).length === 0 ? <Text style={styles.bosh}>Hali karta to'lovi yo'q</Text> : (
           [...kartalar].reverse().map((k) => (
@@ -224,9 +227,12 @@ export default function Markaz() {
 
       {/* Universal modal: Qarz / Optom / Karta */}
       <Modal modalVisible={modalTur !== null} onClose={yopModal}>
-        <Text style={styles.modalTitle}>
-          {qarzModal ? "Yangi qarz" : kartaModal ? "Karta to'lovi" : "Yangi optom savdo"}
-        </Text>
+        <View style={styles.modalHead}>
+          <Ionicons name={qarzModal ? "pricetag-outline" : kartaModal ? "card-outline" : "cube-outline"} size={20} color={C.accent} />
+          <Text style={styles.modalTitle}>
+            {qarzModal ? "Yangi qarz" : kartaModal ? "Karta to'lovi" : "Yangi optom savdo"}
+          </Text>
+        </View>
         <ScrollView style={styles.formScroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
           {!kartaModal && (
             <>
@@ -278,11 +284,12 @@ function SectionHead({ icon, nom, sum, color, style }) {
   );
 }
 
-function StatTile({ label, value, unit, color }) {
+function StatTile({ label, value, unit, color, icon }) {
   const len = String(value || "").length;
   const valSize = len > 9 ? 14 : len > 7 ? 16 : len > 5 ? 18 : 20;
   return (
     <Card style={styles.statTile}>
+      <Ionicons name={icon} size={15} color={C.accent} style={styles.statIcon} />
       <Text style={styles.statLabel} numberOfLines={1}>{label}</Text>
       <Text style={[styles.statValue, { color, fontSize: valSize }]} numberOfLines={1}>{value}</Text>
       <Text style={styles.statUnit}>{unit}</Text>
@@ -295,11 +302,13 @@ const styles = StyleSheet.create({
   scroll:    { padding: S[4], paddingBottom: S[7] },
   statsRow:  { flexDirection: "row", gap: S[2], marginBottom: S[5] },
   statTile:  { flex: 1, paddingVertical: S[3], paddingHorizontal: S[3] },
+  statIcon:  { marginBottom: S[1] },
   statLabel: { fontSize: 9, color: C.muted, fontWeight: "700", letterSpacing: 0.8, textTransform: "uppercase", marginBottom: S[2] },
   statValue: { fontWeight: "800", letterSpacing: -0.3 },
   statUnit:  { fontSize: 10, color: C.muted, marginTop: 2 },
   block:     { marginBottom: S[5] },
-  cardTitle: { fontSize: T.md, fontWeight: "700", color: C.text, marginBottom: S[1] },
+  cardTitleRow:{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: S[1] },
+  cardTitle: { fontSize: T.md, fontWeight: "700", color: C.text },
   muted:     { fontSize: T.sm, color: C.sub },
 
   secHead:   { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: S[3] },
@@ -322,7 +331,8 @@ const styles = StyleSheet.create({
   gap12:     { height: S[3] },
 
   // Modal
-  modalTitle: { fontSize: T.lg, fontWeight: "800", color: C.text, marginBottom: S[3] },
+  modalHead:  { flexDirection: "row", alignItems: "center", gap: S[2], marginBottom: S[3] },
+  modalTitle: { fontSize: T.lg, fontWeight: "800", color: C.text },
   formScroll: { maxHeight: 400 },
   inputLabel: { fontSize: T.xs, color: C.sub, fontWeight: "600", marginBottom: 6, marginTop: S[1], letterSpacing: 0.3 },
   input:     { borderWidth: 1, borderColor: C.border, borderRadius: R.md, paddingVertical: 12, paddingHorizontal: 14, fontSize: T.md, color: C.text, backgroundColor: C.surface },

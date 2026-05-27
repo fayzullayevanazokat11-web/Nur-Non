@@ -65,10 +65,11 @@ export default function Xodimlar() {
   return (
     <SafeAreaView style={styles.safe} edges={["top"]}>
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-        <ScreenHeader eyebrow="Jamoa" title="Xodimlar" />
+        <ScreenHeader eyebrow="Jamoa" title="Xodimlar" icon="people-outline" />
 
         <View style={styles.statsRow}>
           <Card style={styles.statTile}>
+            <Ionicons name="people-circle-outline" size={15} color={C.accent} style={styles.statIcon} />
             <Text style={styles.statLabel}>AKTIV XODIMLAR</Text>
             <Text style={[styles.statValue, { color: C.text }]}>{aktiv.length}</Text>
             <Text style={styles.statUnit}>nafar</Text>
@@ -76,7 +77,7 @@ export default function Xodimlar() {
         </View>
 
         <View style={styles.gap14} />
-        <Btn onPress={ochYangi}>Yangi ishchi kiritish</Btn>
+        <Btn onPress={ochYangi} icon="person-add-outline">Yangi ishchi kiritish</Btn>
         <View style={styles.gap14} />
 
         {(ishchilar || []).length === 0 ? (
@@ -121,7 +122,10 @@ export default function Xodimlar() {
 
       {/* Qo'shish / Tahrirlash modali */}
       <Modal modalVisible={modalOchiq} onClose={yopModal}>
-        <Text style={styles.modalTitle}>{tahrirId ? "Xodimni tahrirlash" : "Yangi ishchi"}</Text>
+        <View style={styles.modalHead}>
+          <Ionicons name={tahrirId ? "create-outline" : "person-add-outline"} size={20} color={C.accent} />
+          <Text style={styles.modalTitle}>{tahrirId ? "Xodimni tahrirlash" : "Yangi ishchi"}</Text>
+        </View>
 
         <ScrollView style={styles.formScroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
           <Text style={styles.inputLabel}>Ism *</Text>
@@ -171,6 +175,7 @@ const styles = StyleSheet.create({
   scroll:    { padding: S[4], paddingBottom: S[7] },
   statsRow:  { flexDirection: "row", gap: S[2] },
   statTile:  { flex: 1, paddingVertical: S[3], paddingHorizontal: S[3] },
+  statIcon:  { marginBottom: S[1] },
   statLabel: { fontSize: 9, color: C.muted, fontWeight: "700", letterSpacing: 0.8, textTransform: "uppercase", marginBottom: S[2] },
   statValue: { fontSize: 26, fontWeight: "800", letterSpacing: -0.3 },
   statUnit:  { fontSize: 10, color: C.muted, marginTop: 2 },
@@ -191,7 +196,8 @@ const styles = StyleSheet.create({
   actTxt:    { fontSize: T.sm, fontWeight: "700" },
 
   // Modal
-  modalTitle: { fontSize: T.lg, fontWeight: "800", color: C.text, marginBottom: S[3] },
+  modalHead:  { flexDirection: "row", alignItems: "center", gap: S[2], marginBottom: S[3] },
+  modalTitle: { fontSize: T.lg, fontWeight: "800", color: C.text },
   formScroll: { maxHeight: 440 },
   inputLabel: { fontSize: T.xs, color: C.sub, fontWeight: "600", marginBottom: 6, marginTop: S[1], letterSpacing: 0.3 },
   input: { borderWidth: 1, borderColor: C.border, borderRadius: R.md, paddingVertical: 12, paddingHorizontal: 14, fontSize: T.md, color: C.text, backgroundColor: C.surface },

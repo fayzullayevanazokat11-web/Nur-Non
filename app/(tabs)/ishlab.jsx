@@ -10,6 +10,7 @@ import { Btn } from "../../src/components/Btn";
 import { Modal } from "../../src/components/Modal";
 import { ScreenHeader } from "../../src/components/ScreenHeader";
 import { ExpandableCard } from "../../src/components/ExpandableCard";
+import { MahsulotNarxi } from "../../src/components/MahsulotNarxi";
 import { C, T, S, R } from "../../src/theme";
 import { formatSom, getQopTannarx, getIngNarx } from "../../src/logic/hisob";
 
@@ -18,6 +19,7 @@ const BOSH_FORMA = { nom: "", narx: "", tannarx: "", nonSoni: "", mahsulotlar: [
 export default function IshlabChiqarish() {
   const { nonlar, setNonlar, ishchilar, mahsulotNarxlari } = useApp();
 
+  const [tab, setTab] = useState("assortiment");     // "assortiment" | "narx"
   const [modalOchiq, setModalOchiq] = useState(false);
   const [tahrirId, setTahrirId] = useState(null);   // null = yangi, aks holda tahrir
   const [tahrirOz, setTahrirOz] = useState(false);  // tahrirlanayotgan non o'zimiznikimi
@@ -80,9 +82,25 @@ export default function IshlabChiqarish() {
   return (
     <SafeAreaView style={styles.safe} edges={["top"]}>
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-        <ScreenHeader eyebrow="Assortiment" title="Ishlab chiqarish" subtitle={`${nonlar.length} xil non · ${aktivIshchi} aktiv xodim`} />
+        <ScreenHeader eyebrow="Assortiment" title="Ishlab chiqarish" subtitle={`${nonlar.length} xil non · ${aktivIshchi} aktiv xodim`} icon="cube-outline" />
 
-        <Btn onPress={ochYangi}>Yangi non turi kiritish</Btn>
+        <View style={styles.segment}>
+          <Pressable style={[styles.seg, tab === "assortiment" && styles.segActive]} onPress={() => setTab("assortiment")}>
+            <Ionicons name="grid-outline" size={15} color={tab === "assortiment" ? "#FFF3E8" : C.sub} />
+            <Text style={[styles.segTxt, tab === "assortiment" && styles.segTxtActive]}>Assortiment</Text>
+          </Pressable>
+          <Pressable style={[styles.seg, tab === "narx" && styles.segActive]} onPress={() => setTab("narx")}>
+            <Ionicons name="pricetags-outline" size={15} color={tab === "narx" ? "#FFF3E8" : C.sub} />
+            <Text style={[styles.segTxt, tab === "narx" && styles.segTxtActive]}>Mahsulot narxi</Text>
+          </Pressable>
+        </View>
+        <View style={styles.gap14} />
+
+        {tab === "narx" ? (
+          <MahsulotNarxi />
+        ) : (
+          <>
+        <Btn onPress={ochYangi} icon="add-circle-outline">Yangi non turi kiritish</Btn>
         <View style={styles.gap14} />
 
         {nonlar.length === 0 ? (
@@ -139,11 +157,16 @@ export default function IshlabChiqarish() {
             );
           })
         )}
+          </>
+        )}
       </ScrollView>
 
       {/* Qo'shish / Tahrirlash modali */}
       <Modal modalVisible={modalOchiq} onClose={yopModal}>
-        <Text style={styles.modalTitle}>{tahrirId ? "Nonni tahrirlash" : "Yangi non turi"}</Text>
+        <View style={styles.modalHead}>
+          <Ionicons name={tahrirId ? "create-outline" : "add-circle-outline"} size={20} color={C.accent} />
+          <Text style={styles.modalTitle}>{tahrirId ? "Nonni tahrirlash" : "Yangi non turi"}</Text>
+        </View>
 
         <Text style={styles.inputLabel}>Non nomi *</Text>
         <TextInput value={forma.nom} onChangeText={(v) => yangila("nom", v)} placeholder="Masalan: Kulcha" placeholderTextColor={C.muted} style={styles.input} />
@@ -209,6 +232,11 @@ const styles = StyleSheet.create({
   safe:      { flex: 1, backgroundColor: C.bg },
   scroll:    { padding: S[4], paddingBottom: S[7] },
   gap14:     { height: S[4] },
+  segment:   { flexDirection: "row", gap: S[1], backgroundColor: C.surface, borderWidth: 1, borderColor: C.border, borderRadius: R.lg, padding: 4 },
+  seg:       { flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, paddingVertical: 11, borderRadius: R.md },
+  segActive: { backgroundColor: C.accent },
+  segTxt:    { fontSize: T.sm, fontWeight: "700", color: C.sub },
+  segTxtActive: { color: "#FFF3E8" },
   item:      { marginBottom: S[3] },
   flex1:     { flex: 1 },
   nonNom:    { fontSize: T.lg, fontWeight: "800", color: C.text },
@@ -241,7 +269,8 @@ const styles = StyleSheet.create({
   ingTotalLabel:{ fontSize: T.sm, color: C.sub, fontWeight: "600" },
   ingTotalVal:  { fontSize: T.md, color: C.accent, fontWeight: "800" },
 
-  modalTitle: { fontSize: T.lg, fontWeight: "800", color: C.text, marginBottom: S[4] },
+  modalHead:  { flexDirection: "row", alignItems: "center", gap: S[2], marginBottom: S[4] },
+  modalTitle: { fontSize: T.lg, fontWeight: "800", color: C.text },
   inputLabel: { fontSize: T.xs, color: C.sub, fontWeight: "600", marginBottom: 6, letterSpacing: 0.3 },
   input: { borderWidth: 1, borderColor: C.border, borderRadius: R.md, paddingVertical: 12, paddingHorizontal: 14, fontSize: T.md, color: C.text, backgroundColor: C.surface, marginBottom: S[3] },
   hint: { fontSize: 11, color: C.muted, marginTop: -6, marginBottom: S[2] },

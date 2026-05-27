@@ -1,6 +1,7 @@
 // Tugma — Pressable asosida. Bosilganda silliq (ease-in-out) kichrayadi + shaffoflashadi.
 import { useRef } from "react";
 import { Animated, Pressable, Text, Easing, StyleSheet } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { C, T, R, ANIM } from "../theme";
 
 export function Btn({
@@ -8,6 +9,7 @@ export function Btn({
   onPress,
   color = C.accent,
   textColor = "#FFF3E8",
+  icon,
   disabled = false,
   secondary = false,
   full = true,
@@ -50,6 +52,7 @@ export function Btn({
           style,
         ]}
       >
+        {icon ? <Ionicons name={icon} size={18} color={fg} style={styles.icon} /> : null}
         <Text style={[styles.label, { color: fg }]}>{children}</Text>
       </Animated.View>
     </Pressable>
@@ -59,11 +62,13 @@ export function Btn({
 const styles = StyleSheet.create({
   full: { width: "100%" },
   base: {
+    flexDirection: "row",
     borderRadius: R.md,
     paddingVertical: 14,
     paddingHorizontal: 16,
     alignItems: "center",
     justifyContent: "center",
   },
+  icon:  { marginRight: 8 },
   label: { fontSize: T.md, fontWeight: "700", letterSpacing: 0.2 },
 });

@@ -2,6 +2,7 @@
 // Ishlab chiqarish (qop) sof foydasi + bugungi Karta / Optom / Qarz integratsiyasi.
 import { useMemo } from "react";
 import { View, Text, ScrollView, StyleSheet } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { useApp } from "../store/AppData";
 import { Modal } from "./Modal";
 import { Btn } from "./Btn";
@@ -36,7 +37,10 @@ export function HisobotModal({ visible, onClose }) {
 
   return (
     <Modal modalVisible={visible} onClose={onClose}>
-      <Text style={styles.title}>Kunlik hisobot</Text>
+      <View style={styles.head}>
+        <Ionicons name="document-text-outline" size={20} color={C.accent} />
+        <Text style={styles.title}>Kunlik hisobot</Text>
+      </View>
       <Text style={styles.sana}>{data.bugun}</Text>
 
       <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
@@ -80,7 +84,7 @@ export function HisobotModal({ visible, onClose }) {
       </ScrollView>
 
       <View style={styles.gap12} />
-      <Btn onPress={onClose}>Yopish</Btn>
+      <Btn onPress={onClose} icon="checkmark-outline">Yopish</Btn>
     </Modal>
   );
 }
@@ -95,6 +99,7 @@ function Row({ label, value, color = C.text, bold }) {
 }
 
 const styles = StyleSheet.create({
+  head:      { flexDirection: "row", alignItems: "center", gap: S[2] },
   title:     { fontSize: T.lg, fontWeight: "800", color: C.text },
   sana:      { fontSize: T.sm, color: C.muted, marginBottom: S[3] },
   scroll:    { maxHeight: 420 },
