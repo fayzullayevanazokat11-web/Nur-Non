@@ -29,6 +29,8 @@ const STYLES = `
 @keyframes fadeIn{0%{opacity:0}100%{opacity:1}}
 @keyframes popIn{0%{opacity:0;transform:scale(0.88)}70%{transform:scale(1.04)}100%{opacity:1;transform:scale(1)}}
 @keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}
+@keyframes toastIn{0%{opacity:0;transform:translateY(24px) scale(0.96)}100%{opacity:1;transform:translateY(0) scale(1)}}
+.toast-item{animation:toastIn 0.3s cubic-bezier(.22,.68,0,1.2) both}
 .slide-up{animation:slideUp 0.3s cubic-bezier(.22,.68,0,1.2) both}
 .fade-in{animation:fadeIn 0.25s ease both}
 .pop-in{animation:popIn 0.28s cubic-bezier(.34,1.56,.64,1) both}
@@ -46,22 +48,53 @@ input:focus{outline:none;border-color:#A06020 !important}
 *{box-sizing:border-box}
 `;
 
-// ─── LAVOZIM IKONALARI (rasm sifatida) ────────────────────────
-const ICON_LAV_CHECHA = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBAUEBAYFBQUGBgYHCQ4JCQgICRINDQoOFRIWFhUSFBQXGiEcFxgfGRQUHScdHyIjJSUlFhwpLCgkKyEkJST/2wBDAQYGBgkICREJCREkGBQYJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCT/wAARCABnAIADASIAAhEBAxEB/8QAHAAAAQQDAQAAAAAAAAAAAAAAAAECBgcDBAUI/8QAQhAAAQMDAgMECAMFBQkBAAAAAQIDBAAFEQYhEjFBBxNRYSIyM3FygZGxFEJSCBUWI6FDU4KS8BcYJGJ0orKzwdH/xAAYAQEBAQEBAAAAAAAAAAAAAAAAAQIDBP/EAB4RAQEBAQADAQADAAAAAAAAAAABEQISITFRAyJB/9oADAMBAAIRAxEAPwD0/RRRXnbFFFFAUCiubqDUNt0taX7rdZIjxWQMnBUpaicJQlI3UonYJG5NKOlmubddTWOx7XW822AeeJUlDZ+hOagsZepu0SWRcJU3TtnKSpNtgL4Zbien4h8ezz+hvGORVnIqV2bs70nYgDB0/bUPdX1sBx1XmXF5UfmayuSMTPafoaQvu29X2EqPIGagZ+ZNSGNMjzmBIiPsyGVcnGVhaT8xtWGVZ7dLZUy9BirbIwQWUH7iopL7KrNHU5MsSpVjuIPEiRbHBHJ8lISO7cHktJoek1FLUF07reZDuTNj1Q5GccfX3UK7Rk92zKX/AHTiD7F7bYZKVYPCelTqrEsFFFFUFNc9mv4T9qdTXPZr+E/agXNAOaQU111uO0t55xDbbaSta1qASlI3JJPIAVA/NKMnkCfdUDZ1RqHXThGkEsWyz9L3OZLi5A/VHY2ynwW4QD0BG9YLh2UvXFKlT9TX66OkZzJnuNoJ8m2ShKfdg++mrn6sMgjmCPlVK6nuytZavcfQ4tUC0SVQLehJ9EyRs/J8yndtB6YWRuajWqIuodBSVKtV0vNsLAKzwTHHW1gDPqOlSSOfSpfpTTKrdadNONtqcK4DbzqgvcvOJK1H3lTh58ioGpvvGsyatCw2/wDdttaa4OBRAUoYwc46+fSujTAA2G20BIA2wOQAHT+lZBVYJQaXrSHnQVV2rWlkNyA6grjSkcLoTsRkjCgc7KSRxJVzBGfGpJ2W6mlaj0wEXN1Ll1tryoMxY/tFpAKXf8aClXvJpO03CLIXSCSAUjHQ5Bzn5f0+YrPs81tadDXy4Juy5DTVziMuNtMRnHlKdaccb2SgH8nB9Klbk3lflLUKZ7YtGLKRKuMm2gnAVcYL8ZH+ZSeEfM1L4sqPNjokxJDUhh0cSHWlhaFjxBGxFXWLLGamuezX8J+1Oprns1/CftVC1W2vZ/8AEt+/hZKs2q3Nty7unpIWvJYjHxSQkuLHUJSn81WUBkgeJxVVabxetOajurRCps28SZSwBxLLSHCy0B/hZAxy3NZan6s23spYhsoAx6AzvnfHj/8Am3htWxXI0veE3W2NlSh37QCFjry2P0rprfDb7TSsDveIJJPNQGcfTJ+VVlE+1PTaNRaTltpGJCE4QoDodiD5b1uaLbZmaUsLwQctRGUY22KUp38eYqSKSFJKVAFJGCD1FaVmgN2qJ+AZSsMsKV3fENuFRKgAeuM4+VDfWMX41StQuRMnu2YrayBn1nFrAP0R/WuoKgmopyrdq6U4kjiMOK4jIBGQqQnr5kfWptEkIlR0Ptq4krGQfv8A1oVlpqlAEAnc8qca4U67D+KrXbWlniKHnHUj9IRtn5/agTV9nXeLWplJGE5UdtzjB2+n2ql7N2e3HUeo1kIU2zFYQwt7GEpWrLpHnstH1r0E8lKm1JUAQQQQeR8qwW23t22N3SMFSlKccXjHGtRyT/rkABTFnWOXadG2u1RUsBC3wkYJdOeL3iuBd9GvaSW5ftDITDfSeOVaArgh3AdRw8mnf0rTgZ9YEVPa1bopKLbKK/VDK8/Q0Ja1tO3+FqiyRbvAK+4ko4glYwttQOFIUOikqBSR4iug57Nfwn7VXPZVNU3fdRW0HEeQiNd2Unop0Lbe+q2eL3qNWM4P5a/hP2pCzKcNlA+BqhtAaiGir5c7XcVJDLc+TFdSrkB3y1Anx9FYPzq+RVL9rmj2oWoRqBTgj266d2zKkn1YctI4W3Fno24nCFHoUoJ2zSrz+LFTYQJybvZpSQHRkoyShweR8+tbt7VJ/dJltt8EmOQ8hsq24gdsnwPL3KNUnatY6m0VK/dkxt4Nt4KDwEoIPLfwO/06dJza+1eBcmXIt1bQ2CkocUj8vTOD08/djJ2qaXmptYtQxNQREyIxKeLcNq9YeIPmCCD4EEV1K8+3O6S7RdHp9ieckR1rLi2mwQ5n+8QOqsAcSOZwFD0gQduB29SzFCSWHlDYu5yMeIPQ+IO9Nh4X/Eg7Vss36NIyShxhUJYPRSgHWvqppSfe5XV7L9XonQBBkOg93u2skniyeXLPXrVfaj1rbtU2xxu8Xm3RC60G0LS+jvgQQpKwgHi4kqCVct8Edag1h1RLiSA4pqQhaVEktNOlAIO5SeHdJ5jyNS9TW5xbHq+7XRq1xVPOKCcAkZ8qrns+vS9Q66uE5wpUlEdSEZzkcShjGfJBPuNVjrTtRM+KEIdf4SkD00KThXnxAbcq0ovaA5p23/uvT1yjSLzIHFJuDLgW2wCAPQ/UoDCU+7NXyiT+O49JRL+zeb9KtcUBxmBjv3gdu9B9Qe7qfEEdK7lUN2T6pg6UYdM5xeHGkowo5WVZznJ55OfealN97aWIT34SHFDs9fsohP8AMSDyW9/dp8j6auQA51dZvN3IstUhtL4YKh3hQXMeCQcZPzqLaquEq6AWy04dyf5qxyG+APPffbnWrZL5At8BUi9TWXp0pPeyHVjOD+VtKB0HgNh4k5qMXztPU736YoRBtUdtbkh7AAQ2NuY5nkMDmcAZ6kkrsaGhsM9oF0aiOd41brJDhuKH61PPOYONs45++rFc9mv4T9qhnZVp+TabDIudwZWxcb0+ZrrS/WZb4Qlpo+aUAZ81Gpk4f5a/hP2pDr6cKxTYca4xHocxhqRGfQW3WnUhSHEkYIIPMGstAqoqO/8AZhfLMz3Onw1fbOgANW6Y8ESoqRyQ0+rIWgdErwRyCqqvVdsuJVwXGx3y3FHqrehOAtn/AJVthSCPnXrGgEgbEj3Gs43O3jaxLukt59hc5lMGIGw5KcYWXUqXkoQlHo8SsJJ3wABknkKsLTWhbNe565D1vTcJryO8XKuZ70uYwM92jhbH+U+81t9qDQOsb+9kZQu3czzJYeH/AMFd3s1fT+JSkeiO5Wnw68vEcvGpOW+ur9ieae0fbbbFb7uKyykp9mw2lpPv9ACpEy0lhHA3lKR04ifuaVKkrQFJIII2I5UtbcWJyK24fSLh5bFZIO+eR/1jblUa1LoLT16in8ZY7VKUBsqRHbyDkb8WAc/OpVWGWCYzoyRlJAI6VCenm3Uui7dAKk2uZcbE6tIB7p5TrONvRwTxpG/NCh7qrlqW7o+YYslLDBUe8Q42codyccaVHcnxzuN81dOv0MMyVNNDLSFEozjkSCCeg6c6Ox63NOayjOPttukWqY4ONIVjMptIxn4T9axeffp3nfr2rm2jUOonw1bbfPuvGU4bgtKKCNvXdUAhP1P2q4tBdkEphUadq0xiIziXo9pjnjaQ6PVceX/arT+Ueqnc7k5q2OScdB06UmT41qcud734U0xz2a/hP2p1Nc9mv4T9q0wdRRRQFKKSlHKgoLtEYeuOtNSMMtuOKTLgDCBnZMbO/l6ZrStmsLFpZzimX+GJKElJYilUhfPPJsKwffiut21dl+orteZl6tKJdyts5tpUq3xXOFaXm08AWUZHepKQNs7EcjnaomLPDhrTDmOIt7oI/wCHmoVHcbPmlYH9M1ztsrvzJYuJP7RNriIKY0K8TAT6xiNt7/4nAR9K2x+0QsoSpGjp7gPVUxpJPngA1AbVpBUpCTFeiPhP5kKBSvy86nFp0N3wQmRGCUpCTxd0o43JPJPnVms2cxsK/aHS2v8An6TujQ4eLDchhZx47keX086P94DTzi+KTFvducJG7sQqb5cyW1L6eWK6z3Zyw5F4WoSiVDAIBwvI86gF77OZiUuJRbCEBQSSlBA2HMnA8s0/sk8Ky3y82/VanZFkuMG4DdRZjuDvEbjk3socv05rs9j7hRrCEyrIX+6ZyCkjBGJTKh/5GqWuVgZcmIjIfiLkJUA2204HFg88hLYUvOfAVefYjovVEC6OX3UbksMNQlQoKJyOGQoLWla1KGSoJHAAnjPFz2AwKkttb6knP1cZpKU8qSujgKa57Nfwn7U6muezX8J+1A6iiigKUcqKKBc1hlxI09osy47Mho80PIC0n5GiioI3N7K9DT1cT2lbSlX6mWA0fqjFaqex/RzJzHhXCL/091lN/ZyiimRfKsn+yjTCxh0Xp5J/K5epah9O8oa7ItCNOhxemoclY5GWpcj/ANijRRTDyqSW60W2zt91bLfDgt/pjMpaH/aBW5miiiENJRRVBTXPZr+E/aiig//Z";
-const ICON_LAV_YORDAMCHI = "data:image/jpeg;base64,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";
-const ICON_LAV_NONYOPUVCHI = "data:image/jpeg;base64,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";
-const ICON_LAV_XAMIRCHI = "data:image/jpeg;base64,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";
-const ICON_LAV_KASSIR = "data:image/jpeg;base64,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";
-const ICON_LAV_BOSHQASI = "data:image/jpeg;base64,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";
+// ─── TOAST (ogohlantirish / muvaffaqiyat xabarlari) ───────────────
+let _toastListeners = [];
+let _toastId = 0;
+function notify(msg, type = "warn") {
+  const t = { id: ++_toastId, msg, type };
+  _toastListeners.forEach(fn => fn(t));
+}
+function ToastHost() {
+  const [toasts, setToasts] = useState([]);
+  useEffect(() => {
+    const fn = (t) => {
+      setToasts(p => [...p, t]);
+      setTimeout(() => setToasts(p => p.filter(x => x.id !== t.id)), 2600);
+    };
+    _toastListeners.push(fn);
+    return () => { _toastListeners = _toastListeners.filter(x => x !== fn); };
+  }, []);
+  if (!toasts.length) return null;
+  return (
+    <div style={{ position:"fixed", left:0, right:0, bottom:24, display:"flex", flexDirection:"column", alignItems:"center", gap:8, zIndex:9999, pointerEvents:"none", padding:"0 16px" }}>
+      {toasts.map(t => {
+        const ok = t.type === "success";
+        return (
+          <div key={t.id} className="toast-item" style={{
+            maxWidth:420, width:"100%", background:C.card,
+            border:`1px solid ${ok?C.green:C.red}`,
+            borderLeft:`5px solid ${ok?C.green:C.red}`,
+            borderRadius:12, padding:"12px 16px", color:C.text, fontSize:T.sm,
+            boxShadow:"0 8px 24px rgba(58,30,8,0.18)", display:"flex", alignItems:"center", gap:10,
+          }}>
+            <span style={{ fontSize:18 }}>{ok ? "✅" : "⚠️"}</span>
+            <span style={{ fontWeight:600 }}>{t.msg}</span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
 
 // ─── LAVOZIMLAR ───────────────────────────────────────────────────
 const LAVOZIMLAR = [
-  { id:"nonYopuvchi", label:"Non yopuvchi", emoji:"🫓",  iconSrc: ICON_LAV_NONYOPUVCHI },
-  { id:"xamirchi",    label:"Xamirchi",     emoji:"🌾",  iconSrc: ICON_LAV_XAMIRCHI },
-  { id:"yordamchi",   label:"Yordamchi",    emoji:"🙋",  iconSrc: ICON_LAV_YORDAMCHI },
-  { id:"kassir",      label:"Kassir",       emoji:"🧾",  iconSrc: ICON_LAV_KASSIR },
-  { id:"checha",      label:"Checha (Pazanda)", emoji:"👩", iconSrc: ICON_LAV_CHECHA },
-  { id:"boshqasi",    label:"Boshqasi",     emoji:"✏️", iconSrc: ICON_LAV_BOSHQASI },
+  { id:"nonYopuvchi", label:"Non yopuvchi", emoji:"🫓" },
+  { id:"xamirchi",    label:"Xamirchi",     emoji:"🌾" },
+  { id:"yordamchi",   label:"Yordamchi",    emoji:"🙋" },
+  { id:"kassir",      label:"Kassir",       emoji:"🧾" },
+  { id:"checha",      label:"Checha (Pazanda)", emoji:"👩" },
+  { id:"boshqasi",    label:"Boshqasi",     emoji:"✏️" },
 ];
 
 // ─── BOSQICH 2: tatilQaytishSana qo'shildi ────────────────────────
@@ -82,10 +115,6 @@ function getLavozimLabel(w) {
 function getLavozimEmoji(w) {
   if (!w) return "👤";
   return LAVOZIMLAR.find(l=>l.id===w.lavozimId)?.emoji||"👤";
-}
-function getLavozimIcon(w) {
-  if (!w) return null;
-  return LAVOZIMLAR.find(l=>l.id===w.lavozimId)?.iconSrc || null;
 }
 
 // ─── BOSQICH 2: Ta'tildan qolgan kunlarni hisoblash ───────────────
@@ -261,31 +290,47 @@ function Dashboard({ nonlar=[], qarzlar=[], setQarzlar, optomlar=[], setOptomlar
   const jamiSotilmagan  = Object.values(sotilmaganNon||{}).reduce((s,v)=>s+(parseInt(v)||0),0);
   const sotilganNonSoni = Math.max(0, jamiNon - jamiSotilmagan);
 
+  // Optom/qarz orqali ketgan nonlar shu kunlik hisobdan chiqariladi —
+  // ularning foydasi pastdagi optom/qarz bo'limida alohida sanaladi (har non bir marta).
+  // Qarz nonlari berilgan (sotilgan) sana bo'yicha ayriladi, foydasi esa to'langan sanada ko'rsatiladi.
+  const bugunSana = new Date().toISOString().split("T")[0];
+  const divertedByNon = {};
+  (optomlar||[]).filter(o => o.sana === bugunSana).forEach(o =>
+    (o.savat||[]).forEach(s => { divertedByNon[s.nonNomi] = (divertedByNon[s.nonNomi]||0) + (s.soni||0); })
+  );
+  (qarzlar||[]).filter(q => q.sana === bugunSana).forEach(q => {
+    const savat = q.savat || [{ nonNomi:q.nonNomi, soni:q.soni }];
+    savat.forEach(s => { divertedByNon[s.nonNomi] = (divertedByNon[s.nonNomi]||0) + (s.soni||0); });
+  });
+
   // Sof foyda hisobi: faqat sotilgan nonlardan keladigan tushum
-  // Har bir non turi uchun: (qop_soni × norma − sotilmagan) × sotuv_narxi
+  // Har bir non turi uchun: (qop_soni × norma − sotilmagan − optom/qarz) × sotuv_narxi
   let bugunDaromad   = 0;
   let bugunXomashyo  = 0;
   nonlar.forEach(n => {
     const norma = parseFloat(n.nonSoni)||0;
     const narx  = parseFloat(n.narx)||0;
     const sotilmaganShu = parseInt((sotilmaganNon||{})[n.id])||0;
+    const divertedShu   = divertedByNon[n.nom]||0;
     if (n.ozIshlab !== false) {
       // O'zimizniki
       const qopSoni  = parseInt(ozIshlabQoplar[n.id])||0;
       const ishlabchiqarilgan = qopSoni * norma;
-      const sotilganShu = Math.max(0, ishlabchiqarilgan - sotilmaganShu);
-      bugunDaromad += sotilganShu * narx;
-      // Xom-ashyo xarajati - qancha qilingan bo'lsa shuncha (dinamik narx)
-      bugunXomashyo += qopSoni * getQopTannarx(n);
+      const retailSold = Math.max(0, ishlabchiqarilgan - sotilmaganShu - divertedShu);
+      bugunDaromad += retailSold * narx;
+      // Xom-ashyo xarajati - qancha qilingan bo'lsa shuncha (dinamik narx),
+      // optom/qarz nonlari xarajati esa o'sha bo'limga o'tkaziladi.
+      const perBreadCost = norma > 0 ? getQopTannarx(n) / norma : 0;
+      bugunXomashyo += qopSoni * getQopTannarx(n) - Math.min(divertedShu, ishlabchiqarilgan) * perBreadCost;
     } else {
       // Tashqaridan
       const olinganDona = parseInt(tashqariSonlar[n.id])||0;
-      const sotilganShu = Math.max(0, olinganDona - sotilmaganShu);
-      bugunDaromad += sotilganShu * narx;
+      const retailSold = Math.max(0, olinganDona - sotilmaganShu - divertedShu);
+      bugunDaromad += retailSold * narx;
       // Tashqaridan kelganlar uchun xarajat = sotuv narxi − bittadan foyda
       const bittaFoyda = parseFloat(n.tashqariFoyda)||2000;
       const tannarx    = Math.max(0, narx - bittaFoyda);
-      bugunXomashyo += olinganDona * tannarx;
+      bugunXomashyo += (olinganDona - Math.min(divertedShu, olinganDona)) * tannarx;
     }
   });
 
@@ -308,7 +353,10 @@ function Dashboard({ nonlar=[], qarzlar=[], setQarzlar, optomlar=[], setOptomlar
     bugunIshchiHaq += parseFloat(w.miqdor)||0;
   });
 
-  const bugunSofFoyda = Math.round(bugunDaromad - bugunXomashyo - bugunIshchiHaq);
+  // Hech qanday ma'lumot kiritilmaguncha sof foyda 0 (xodim haqi ayrilib ketmasin).
+  // Ma'lumot kirita boshlangach to'liq hisob ishlaydi.
+  const malumotKiritilgan = ozJamiQop > 0 || tashqariJamiDona > 0;
+  const bugunSofFoyda = malumotKiritilgan ? Math.round(bugunDaromad - bugunXomashyo - bugunIshchiHaq) : 0;
 
   // Stats massivining birinchi elementini almashtirib, bugungi daromadni qo'yamiz
   stats[0] = { label:"Bugungi sof foyda", value: bugunSofFoyda.toLocaleString(), unit:"so'm",
@@ -322,6 +370,10 @@ function Dashboard({ nonlar=[], qarzlar=[], setQarzlar, optomlar=[], setOptomlar
   );
 
   const tasdiqlashQop = () => {
+    // Ma'lumot kiritilmagan bo'lsa — to'xtatamiz
+    if (ozJamiQop === 0 && tashqariJamiDona === 0) {
+      notify("Avval kunlik qop ma'lumotini kiriting"); return;
+    }
     // Bir kunda faqat bitta hisobot — duplikat tekshiruv
     const mavjud = (hisobotlarTarixi||[]).find(h => h.sana === hisobotSanasi);
     if (mavjud) {
@@ -362,6 +414,7 @@ function Dashboard({ nonlar=[], qarzlar=[], setQarzlar, optomlar=[], setOptomlar
       .filter(h => (hozir - (h.vaqt||0)) < sonRaqami)
     ];
     setHisobotlarTarixi(yangilangan);
+    notify("Kunlik hisobot saqlandi", "success");
     // 3) Modalni ochish
     setQopTasdiqlandi(true);
     setHisobotYopildi(false);
@@ -379,6 +432,7 @@ function Dashboard({ nonlar=[], qarzlar=[], setQarzlar, optomlar=[], setOptomlar
   const ochTarixOchir = (id) => {
     setHisobotlarTarixi(p => (p||[]).filter(h => h.id !== id));
     setTanlangonTarix(null);
+    notify("Hisobot o'chirildi", "success");
   };
 
   // ── Qarz savatcha ──
@@ -410,8 +464,13 @@ function Dashboard({ nonlar=[], qarzlar=[], setQarzlar, optomlar=[], setOptomlar
   };
 
   const saveQarz = () => {
-    if (!qarzIsm.trim() || qarzSavat.length===0) {
-      setQarzErr(true); setTimeout(() => setQarzErr(false), 600); return;
+    if (!qarzIsm.trim()) {
+      setQarzErr(true); setTimeout(() => setQarzErr(false), 600);
+      notify("Qarz oluvchi ismini kiriting"); return;
+    }
+    if (qarzSavat.length===0) {
+      setQarzErr(true); setTimeout(() => setQarzErr(false), 600);
+      notify("Kamida bitta non qo'shing"); return;
     }
     const savatWithNarx = qarzSavat.map(s => {
       const non = nonlar.find(n => n.nom===s.nonNomi);
@@ -431,14 +490,18 @@ function Dashboard({ nonlar=[], qarzlar=[], setQarzlar, optomlar=[], setOptomlar
     };
     if (editQarzId) {
       setQarzlar(p => p.map(q => q.id===editQarzId ? {...q, ...entry} : q));
+      notify("Qarz yangilandi", "success");
     } else {
       setQarzlar(p => [...p, entry]);
+      notify("Qarz qo'shildi", "success");
     }
     resetQarzForm();
   };
 
-  const tolaQarz = (id) =>
+  const tolaQarz = (id) => {
     setQarzlar(p => p.map(q => q.id===id ? { ...q, tolandan:true, tolangan:true, tolanganVaqt:Date.now() } : q));
+    notify("Qarz to'landi deb belgilandi", "success");
+  };
 
   // ── Optom savatcha ──
   const addToSavat = (nom) => {
@@ -477,8 +540,13 @@ function Dashboard({ nonlar=[], qarzlar=[], setQarzlar, optomlar=[], setOptomlar
   };
 
   const saveOptom = () => {
-    if (!optomXaridor.trim() || optomSavat.length===0) {
-      setOptomErr(true); setTimeout(() => setOptomErr(false), 600); return;
+    if (!optomXaridor.trim()) {
+      setOptomErr(true); setTimeout(() => setOptomErr(false), 600);
+      notify("Xaridor ismini kiriting"); return;
+    }
+    if (optomSavat.length===0) {
+      setOptomErr(true); setTimeout(() => setOptomErr(false), 600);
+      notify("Kamida bitta non qo'shing"); return;
     }
     const savatWithNarx = optomSavat.map(s => {
       const non = nonlar.find(n => n.nom===s.nonNomi);
@@ -497,8 +565,10 @@ function Dashboard({ nonlar=[], qarzlar=[], setQarzlar, optomlar=[], setOptomlar
     };
     if (editOptomId) {
       setOptomlar(p => p.map(o => o.id===editOptomId ? entry : o));
+      notify("Optom savdo yangilandi", "success");
     } else {
       setOptomlar(p => [...p, entry]);
+      notify("Optom savdo qo'shildi", "success");
     }
     resetOptomForm();
   };
@@ -620,6 +690,96 @@ function Dashboard({ nonlar=[], qarzlar=[], setQarzlar, optomlar=[], setOptomlar
                   <span style={{ color:M_sof>=0?C.green:C.red }}>{M_sof.toLocaleString()} so'm</span>
                 </div>
               </div>
+
+              {/* ── OPTOM & QARZ QO'SHIMCHA FOYDASI ── */}
+              {(() => {
+                // Assortimentdan bitta nondan sof foyda (ingredient asosida)
+                const bittaNonFoyda = (nonNomi) => {
+                  const n = (M_nonlar||[]).find(x => x.nom === nonNomi);
+                  if (!n) return 0;
+                  if (n.ozIshlab === false) return parseFloat(n.tashqariFoyda) || 2000;
+                  const norma = parseFloat(n.nonSoni) || 0;
+                  if (norma <= 0) return 0;
+                  return (parseFloat(n.narx) || 0) - (M_getTannarx(n) / norma);
+                };
+                const sameDay = (ms) => !!ms && new Date(ms).toISOString().split("T")[0] === M_sana;
+
+                // Optom — o'sha sanadagi savdolar (skidka ayriladi)
+                const optomKun = (optomlar||[]).filter(o => o.sana === M_sana);
+                const optomQatorlar = optomKun.map(o => {
+                  let foyda = 0, dona = 0;
+                  (o.savat||[]).forEach(s => { foyda += bittaNonFoyda(s.nonNomi) * (s.soni||0); dona += (s.soni||0); });
+                  return { id:o.id, ism:o.ism, dona, foyda: foyda - (o.chegirma||0) };
+                });
+                const optomFoyda = optomQatorlar.reduce((s,x)=>s+x.foyda,0);
+                const optomDona  = optomQatorlar.reduce((s,x)=>s+x.dona,0);
+
+                // Qarz — o'sha sanada TO'LANGAN qarzlar (skidkasiz, faqat sof foyda)
+                const qarzKun = (qarzlar||[]).filter(q => q.tolangan && sameDay(q.tolanganVaqt));
+                const qarzQatorlar = qarzKun.map(q => {
+                  const savat = q.savat || [{ nonNomi:q.nonNomi, soni:q.soni }];
+                  let foyda = 0, dona = 0;
+                  savat.forEach(s => { foyda += bittaNonFoyda(s.nonNomi) * (s.soni||0); dona += (s.soni||0); });
+                  return { id:q.id, ism:q.ism, dona, foyda };
+                });
+                const qarzFoyda = qarzQatorlar.reduce((s,x)=>s+x.foyda,0);
+                const qarzDona  = qarzQatorlar.reduce((s,x)=>s+x.dona,0);
+
+                if (optomKun.length === 0 && qarzKun.length === 0) return null;
+                const umumiy = M_sof + optomFoyda + qarzFoyda;
+
+                return (
+                  <>
+                    {optomKun.length > 0 && (
+                      <div className="hisobot-row" style={{ marginTop:10 }}>
+                        <div style={{ fontSize:9,color:C.blue,fontWeight:800,textTransform:"uppercase",letterSpacing:1,marginBottom:8 }}>🛒 Optom foydasi ({optomDona} dona)</div>
+                        {optomQatorlar.map(o => (
+                          <div key={o.id} style={{ display:"flex",justifyContent:"space-between",fontSize:T.xs,color:C.text,marginBottom:5,padding:"5px 8px",background:C.card,borderRadius:7,border:`1px solid ${C.borderSoft}` }}>
+                            <div>
+                              <div style={{ fontWeight:700 }}>{o.ism}</div>
+                              <div style={{ fontSize:9,color:C.muted,marginTop:1 }}>{o.dona} dona · skidka ayrilgan</div>
+                            </div>
+                            <span style={{ fontWeight:800,color:o.foyda>=0?C.green:C.red }}>{o.foyda>=0?"+":""}{Math.round(o.foyda).toLocaleString()} so'm</span>
+                          </div>
+                        ))}
+                        <div style={{ display:"flex",justifyContent:"space-between",fontSize:T.xs,fontWeight:800,color:C.blue,padding:"3px 8px" }}>
+                          <span>Optom jami:</span>
+                          <span>+{Math.round(optomFoyda).toLocaleString()} so'm</span>
+                        </div>
+                      </div>
+                    )}
+
+                    {qarzKun.length > 0 && (
+                      <div className="hisobot-row" style={{ marginTop:10 }}>
+                        <div style={{ fontSize:9,color:C.accent,fontWeight:800,textTransform:"uppercase",letterSpacing:1,marginBottom:8 }}>🤝 Qarz foydasi ({qarzDona} dona · to'langan)</div>
+                        {qarzQatorlar.map(q => (
+                          <div key={q.id} style={{ display:"flex",justifyContent:"space-between",fontSize:T.xs,color:C.text,marginBottom:5,padding:"5px 8px",background:C.card,borderRadius:7,border:`1px solid ${C.borderSoft}` }}>
+                            <div>
+                              <div style={{ fontWeight:700 }}>{q.ism}</div>
+                              <div style={{ fontSize:9,color:C.muted,marginTop:1 }}>{q.dona} dona · sof foyda</div>
+                            </div>
+                            <span style={{ fontWeight:800,color:q.foyda>=0?C.green:C.red }}>{q.foyda>=0?"+":""}{Math.round(q.foyda).toLocaleString()} so'm</span>
+                          </div>
+                        ))}
+                        <div style={{ display:"flex",justifyContent:"space-between",fontSize:T.xs,fontWeight:800,color:C.accent,padding:"3px 8px" }}>
+                          <span>Qarz jami:</span>
+                          <span>+{Math.round(qarzFoyda).toLocaleString()} so'm</span>
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="hisobot-row" style={{ background:`linear-gradient(135deg, ${C.green}20, ${C.accent}12)`,border:`1.5px solid ${C.green}50`,borderRadius:12,padding:"10px 12px",marginTop:8 }}>
+                      <div style={{ fontSize:9,color:C.muted,marginBottom:5 }}>
+                        Kunlik {Math.round(M_sof).toLocaleString()} + Optom {Math.round(optomFoyda).toLocaleString()} + Qarz {Math.round(qarzFoyda).toLocaleString()}
+                      </div>
+                      <div style={{ display:"flex",justifyContent:"space-between",fontSize:T.md,fontWeight:900,color:C.text }}>
+                        <span>💰 Umumiy sof foyda:</span>
+                        <span style={{ color:umumiy>=0?C.green:C.red }}>{Math.round(umumiy).toLocaleString()} so'm</span>
+                      </div>
+                    </div>
+                  </>
+                );
+              })()}
 
             </div>
 
@@ -1100,7 +1260,7 @@ function Dashboard({ nonlar=[], qarzlar=[], setQarzlar, optomlar=[], setOptomlar
                     <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:6 }}>
                       <button onClick={()=>setDelQarzId(null)}
                         style={{ border:`1px solid ${C.border}`,background:"transparent",borderRadius:8,padding:"8px",color:C.sub,cursor:"pointer",fontSize:T.xs }}>Bekor</button>
-                      <button onClick={()=>{ setQarzlar(p=>p.filter(x=>x.id!==q.id)); setDelQarzId(null); }}
+                      <button onClick={()=>{ setQarzlar(p=>p.filter(x=>x.id!==q.id)); setDelQarzId(null); notify("Qarz o'chirildi", "success"); }}
                         style={{ border:"none",background:C.red,borderRadius:8,padding:"8px",color:"#fff",fontWeight:800,cursor:"pointer",fontSize:T.xs }}>Ha, o'chirish</button>
                     </div>
                   </div>
@@ -1316,7 +1476,7 @@ function Dashboard({ nonlar=[], qarzlar=[], setQarzlar, optomlar=[], setOptomlar
                       <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:6 }}>
                         <button onClick={()=>setDelOptomId(null)}
                           style={{ border:`1px solid ${C.border}`,background:"transparent",borderRadius:8,padding:"8px",color:C.sub,cursor:"pointer",fontSize:T.xs }}>Bekor</button>
-                        <button onClick={()=>{ setOptomlar(p=>p.filter(x=>x.id!==o.id)); setDelOptomId(null); }}
+                        <button onClick={()=>{ setOptomlar(p=>p.filter(x=>x.id!==o.id)); setDelOptomId(null); notify("Optom savdo o'chirildi", "success"); }}
                           style={{ border:"none",background:C.red,borderRadius:8,padding:"8px",color:"#fff",fontWeight:800,cursor:"pointer",fontSize:T.xs }}>Ha, o'chirish</button>
                       </div>
                     </div>
@@ -1335,14 +1495,12 @@ const MAHSULOTLAR_KATALOG = [
   { id:"oqUn",     nom:"Oq un",             birlik:"g",  emoji:"🌾" },
   { id:"sariqUn",  nom:"Sariq un",          birlik:"g",  emoji:"🌾" },
   { id:"qoraUn",   nom:"Qora un",           birlik:"g",  emoji:"🌾" },
-  { id:"suv",      nom:"Suv",               birlik:"ml", emoji:"💧" },
   { id:"sut",      nom:"Sut",               birlik:"ml", emoji:"🥛" },
   { id:"yog",      nom:"Yog'",              birlik:"ml", emoji:"🫗" },
   { id:"jir",      nom:"Jir (hayvon yog')", birlik:"g",  emoji:"🥓" },
   { id:"quruqSut", nom:"Quruq sut",         birlik:"g",  emoji:"🥄" },
   { id:"achitqi",  nom:"Achitqi (Droja)",   birlik:"g",  emoji:"🍞" },
-  { id:"shakar",   nom:"Shakar",            birlik:"g",  emoji:"🍬" },
-  { id:"tuz",      nom:"Tuz",               birlik:"g",  emoji:"🧂" },
+  { id:"shakar",   nom:"Shakar va Tuz",     birlik:"g",  emoji:"🍬" },
 ];
 
 const EMPTY_NON = { nom:"", narx:"", nonSoni:"", ozIshlab:true, tashqariFoyda:"", mahsulotlar:[] };
@@ -1405,18 +1563,25 @@ function Production({ ishchilar=[], mahsulotNarxlari, setMahsulotNarxlari, custo
   const saveNon = () => {
     // Tashqaridan kelgan nonlar uchun nonSoni majburiy emas
     if (!aForm.nom.trim()||!aForm.narx||(aForm.ozIshlab && !aForm.nonSoni)) {
-      setAFormErr(true); setTimeout(()=>setAFormErr(false),600); return;
+      setAFormErr(true); setTimeout(()=>setAFormErr(false),600);
+      notify("Majburiy maydonlarni to'ldiring"); return;
+    }
+    // Duplikat non nomi taqiqlanadi
+    const nomDup = (nonlar||[]).some(n => n.nom.trim().toLowerCase() === aForm.nom.trim().toLowerCase() && n.id !== aSelId);
+    if (nomDup) {
+      setAFormErr(true); setTimeout(()=>setAFormErr(false),600);
+      notify("Bu nomli non allaqachon mavjud"); return;
     }
     const clean = aForm.ozIshlab
       ? aForm.mahsulotlar.filter(m=>parseFloat(m.miqdor)>0).map(m=>({ id:m.id,nom:m.nom,birlik:m.birlik,emoji:m.emoji,miqdor:parseFloat(m.miqdor)||0,narx:getEffectiveNarx(m) }))
       : [];
     const yangi = { id:aSelId||Date.now(),nom:aForm.nom.trim(),narx:parseFloat(aForm.narx)||0,nonSoni:parseFloat(aForm.nonSoni)||0,ozIshlab:aForm.ozIshlab,tashqariFoyda:parseFloat(aForm.tashqariFoyda)||0,mahsulotlar:clean };
-    if (aSelId) { setNonlar(p=>p.map(n=>n.id===aSelId?yangi:n)); }
-    else        { setNonlar(p=>[...p,yangi]); }
+    if (aSelId) { setNonlar(p=>p.map(n=>n.id===aSelId?yangi:n)); notify("Non yangilandi", "success"); }
+    else        { setNonlar(p=>[...p,yangi]); notify("Non qo'shildi", "success"); }
     setAForm(EMPTY_NON); setASelId(null); setAView("list");
   };
 
-  const deleteNon = () => { setNonlar(p=>p.filter(n=>n.id!==aSelId)); setAForm(EMPTY_NON); setASelId(null); setConfirmDelNon(false); setAView("list"); };
+  const deleteNon = () => { setNonlar(p=>p.filter(n=>n.id!==aSelId)); setAForm(EMPTY_NON); setASelId(null); setConfirmDelNon(false); setAView("list"); notify("Non o'chirildi", "success"); };
   const addMahsulot    = (mk) => { setAForm(p=>({...p,mahsulotlar:[...p.mahsulotlar,{id:mk.id,nom:mk.nom,birlik:mk.birlik,emoji:mk.emoji,miqdor:"",narx:""}]})); setShowAddProd(false); };
   const updateMahsulot = (id,field,val) => setAForm(p=>({...p,mahsulotlar:p.mahsulotlar.map(m=>m.id===id?{...m,[field]:val}:m)}));
   const removeMahsulot = (id) => setAForm(p=>({...p,mahsulotlar:p.mahsulotlar.filter(m=>m.id!==id)}));
@@ -1869,7 +2034,17 @@ function Ishchilar({ ishchilar, setIshchilar, nonlar=[] }) {
       ? turlari.length > 0 && turlari.every(nm => parseFloat(narxlari[nm]) > 0)
       : !!form.miqdor;
     if (!form.ism.trim() || !qopValid || (form.lavozimId==="boshqasi" && !form.lavozimCustom.trim())) {
-      setFormErr(true); setTimeout(()=>setFormErr(false),600); return;
+      setFormErr(true); setTimeout(()=>setFormErr(false),600);
+      if (!form.ism.trim()) notify("Xodim ismini kiriting");
+      else if (form.lavozimId==="boshqasi" && !form.lavozimCustom.trim()) notify("Lavozim nomini kiriting");
+      else notify(isQop ? "Non turi va narxini kiriting" : "Ish haqi miqdorini kiriting");
+      return;
+    }
+    // Duplikat xodim ismi taqiqlanadi
+    const ismDup = (ishchilar||[]).some(w => (w.ism||"").trim().toLowerCase() === form.ism.trim().toLowerCase() && w.id !== selId);
+    if (ismDup) {
+      setFormErr(true); setTimeout(()=>setFormErr(false),600);
+      notify("Bu ismli xodim allaqachon mavjud"); return;
     }
     // Qopchilar uchun miqdor sifatida birinchi non narxini olamiz (fallback)
     const finalMiqdor = isQop
@@ -1881,6 +2056,7 @@ function Ishchilar({ ishchilar, setIshchilar, nonlar=[] }) {
         ...w, ...form,
         miqdor: finalMiqdor,
       } : w));
+      notify("Xodim yangilandi", "success");
     } else {
       // Yangi xodim qo'shish
       setIshchilar(p => [...p, {
@@ -1888,6 +2064,7 @@ function Ishchilar({ ishchilar, setIshchilar, nonlar=[] }) {
         id: Date.now(),
         miqdor: finalMiqdor,
       }]);
+      notify("Xodim qo'shildi", "success");
     }
     setForm(EMPTY_WORKER_FORM); setSelId(null); setView("list");
   };
@@ -1895,6 +2072,7 @@ function Ishchilar({ ishchilar, setIshchilar, nonlar=[] }) {
   const deleteWorker = () => {
     setIshchilar(p => p.filter(w => w.id!==selId));
     setSelId(null); setView("list"); setConfirmDel(false);
+    notify("Xodim o'chirildi", "success");
   };
 
   // ── FORM ──
@@ -1925,7 +2103,7 @@ function Ishchilar({ ishchilar, setIshchilar, nonlar=[] }) {
             {LAVOZIMLAR.map(lav=>(
               <button key={lav.id} onClick={()=>setForm(p=>({...p,lavozimId:lav.id,lavozimCustom:""}))}
                 style={{ border:`1px solid ${form.lavozimId===lav.id?C.accent:C.border}`,background:form.lavozimId===lav.id?C.accent+"18":"transparent",borderRadius:10,padding:"10px 8px",fontSize:T.sm,color:form.lavozimId===lav.id?C.accent:C.sub,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:6 }}>
-                <img src={lav.iconSrc} alt="" style={{ width:22,height:22,objectFit:"contain",borderRadius:4 }} />
+                <span style={{ fontSize:20 }}>{lav.emoji}</span>
                 <span>{lav.label}</span>
               </button>
             ))}
@@ -2076,9 +2254,7 @@ function Ishchilar({ ishchilar, setIshchilar, nonlar=[] }) {
           <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14 }}>
             <div style={{ display:"flex",alignItems:"center",gap:12 }}>
               <div style={{ width:52,height:52,borderRadius:14,background:C.surface,display:"flex",alignItems:"center",justifyContent:"center",fontSize:26,overflow:"hidden",border:`1px solid ${C.borderSoft}` }}>
-                {getLavozimIcon(sel)
-                  ? <img src={getLavozimIcon(sel)} alt="" style={{ width:"100%",height:"100%",objectFit:"contain",padding:4 }} />
-                  : getLavozimEmoji(sel)}
+                {getLavozimEmoji(sel)}
               </div>
               <div>
                 <div style={{ fontSize:22,fontWeight:900,color:C.text,fontFamily:"Georgia, serif" }}>{sel.ism}</div>
@@ -2295,9 +2471,7 @@ function Ishchilar({ ishchilar, setIshchilar, nonlar=[] }) {
             <div style={{ display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:8 }}>
               <div style={{ display:"flex",alignItems:"center",gap:10 }}>
                 <div style={{ width:40,height:40,borderRadius:10,background:C.surface,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,overflow:"hidden",border:`1px solid ${C.borderSoft}` }}>
-                  {getLavozimIcon(w)
-                    ? <img src={getLavozimIcon(w)} alt="" style={{ width:"100%",height:"100%",objectFit:"contain",padding:3 }} />
-                    : getLavozimEmoji(w)}
+                  {getLavozimEmoji(w)}
                 </div>
                 <div>
                   <div style={{ fontSize:T.md,fontWeight:700,color:C.text }}>{w.ism}</div>
@@ -2342,13 +2516,30 @@ const OMBOR_MAYDONLAR = [
   { id:"tuz",      nom:"Tuz",                birlik:"kg",     emoji:"🧂" },
 ];
 
-// Hisobot ko'rinishi uchun birlik konvertatsiyasi: "un" → qop (50 kg = 1 qop),
-// "yog'" → plastik quti (5 litr = 1 quti). Saqlangan qiymatlar kg/litr da qoladi.
+// Ombor "katta birlik": un → qop (50 kg = 1 qop), yog' → plastik quti (5 litr = 1 quti).
+// Saqlangan qiymatlar baza birligida (kg/litr) qoladi; faqat kiritish va ko'rsatishda konvert.
 const HISOBOT_UN_IDLAR = ["oqUn", "sariqUn", "qoraUn"];
-function hisobotBirlik(id, qiymat, aslBirlik) {
-  if (HISOBOT_UN_IDLAR.includes(id)) return { qiymat: qiymat / 50, birlik: "qop" };
-  if (id === "yog")                  return { qiymat: qiymat / 5,  birlik: "plastik quti" };
-  return { qiymat, birlik: aslBirlik };
+function omborKattaBirlik(id) {
+  if (HISOBOT_UN_IDLAR.includes(id)) return { birlik: "qop", faktor: 50 };
+  if (id === "yog")                  return { birlik: "plastik quti", faktor: 5 };
+  return null;
+}
+// Balansni "63 qop 23 kg" / "53 plastik quti 3 litr" ko'rinishida matnga aylantirish.
+function zaxiraMatni(id, qiymat, bazaBirlik) {
+  const katta = omborKattaBirlik(id);
+  const manfiy = qiymat < 0;
+  const abs = Math.abs(qiymat);
+  const pref = manfiy ? "−" : "";
+  const son = (x) => x >= 100 ? Math.round(x).toLocaleString() : x >= 1 ? +x.toFixed(1) : +x.toFixed(2);
+  if (!katta) {
+    return abs === 0 ? `0 ${bazaBirlik}` : `${pref}${son(abs)} ${bazaBirlik}`;
+  }
+  if (abs === 0) return `0 ${katta.birlik}`;
+  const kattaSon = Math.floor(abs / katta.faktor);
+  const qoldiq = +(abs - kattaSon * katta.faktor).toFixed(1);
+  if (kattaSon > 0 && qoldiq > 0) return `${pref}${kattaSon} ${katta.birlik} ${qoldiq} ${bazaBirlik}`;
+  if (kattaSon > 0)               return `${pref}${kattaSon} ${katta.birlik}`;
+  return `${pref}${qoldiq} ${bazaBirlik}`;
 }
 
 const EMPTY_OMBOR_FORM = () => ({
@@ -2377,12 +2568,14 @@ function YangiSetForma({ omborlar, setOmborlar, onClose }) {
   const [delConfirmId, setDelConfirmId] = useState(null);
   const [showForm, setShowForm] = useState(false);
 
-  const jami = SET_MAHSULOTLAR.reduce((s,m)=>s+(parseFloat(sf[m.id])||0),0);
-
   const openNew = () => { setSf(EMPTY_SET_FORM()); setEditId(null); setShowForm(true); };
   const openEdit = (h) => {
     const f = {};
-    SET_MAHSULOTLAR.forEach(m=>{ f[m.id] = h.maydonlar.find(x=>x.id===m.id)?.qiymat||""; });
+    SET_MAHSULOTLAR.forEach(m=>{
+      const baza = h.maydonlar.find(x=>x.id===m.id)?.qiymat || 0;
+      const faktor = omborKattaBirlik(m.id)?.faktor || 1;
+      f[m.id] = baza ? String(baza / faktor) : "";
+    });
     setSf(f); setEditId(h.id); setShowForm(true);
   };
   const closeForm = () => { setSf(EMPTY_SET_FORM()); setEditId(null); setShowForm(false); };
@@ -2395,7 +2588,7 @@ function YangiSetForma({ omborlar, setOmborlar, onClose }) {
       sana: new Date().toISOString().split("T")[0],
       vaqt: editId ? (omborlar.find(x=>x.id===editId)?.vaqt || Date.now()) : Date.now(),
       turi: "yangiset",
-      maydonlar: SET_MAHSULOTLAR.map(m => ({ ...m, qiymat: parseFloat(sf[m.id]) || 0 }))
+      maydonlar: SET_MAHSULOTLAR.map(m => ({ ...m, qiymat: (parseFloat(sf[m.id]) || 0) * (omborKattaBirlik(m.id)?.faktor || 1) }))
     };
     if (editId) { setOmborlar(p=>p.map(x=>x.id===editId?entry:x)); }
     else        { setOmborlar(p=>[entry,...p]); }
@@ -2418,17 +2611,17 @@ function YangiSetForma({ omborlar, setOmborlar, onClose }) {
           </div>
           <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:14 }}>
             {SET_MAHSULOTLAR.map(m=>{
-              const isUn = m.id==="oqUn" || m.id==="sariqUn" || m.id==="qoraUn";
+              const katta = omborKattaBirlik(m.id);
               const qty = parseFloat(sf[m.id])||0;
               return (
                 <div key={m.id}>
-                  <div style={{ fontSize:9,color:C.sub,marginBottom:4,fontWeight:700 }}>{m.emoji} {m.nom} ({m.birlik})</div>
+                  <div style={{ fontSize:9,color:C.sub,marginBottom:4,fontWeight:700 }}>{m.emoji} {m.nom} ({katta?katta.birlik:m.birlik})</div>
                   <input type="number" value={sf[m.id]}
                     onChange={e=>setSf(p=>({...p,[m.id]:e.target.value}))}
-                    placeholder={isUn?"50 kg = 1 qop":"0"}
+                    placeholder={katta?`Nechta ${katta.birlik}`:"0"}
                     style={{ width:"100%",background:C.surface,border:`1px solid ${C.border}`,borderRadius:9,padding:"9px 11px",color:C.text,fontSize:T.sm,fontWeight:600 }} />
-                  {isUn && qty>0 && (
-                    <div style={{ fontSize:9,color:C.muted,marginTop:3 }}>≈ {(qty/50).toFixed(1)} qop</div>
+                  {katta && qty>0 && (
+                    <div style={{ fontSize:9,color:C.muted,marginTop:3 }}>= {(qty*katta.faktor).toLocaleString()} {m.birlik}</div>
                   )}
                 </div>
               );
@@ -2439,16 +2632,19 @@ function YangiSetForma({ omborlar, setOmborlar, onClose }) {
             {SET_MAHSULOTLAR.filter(m=>parseFloat(sf[m.id])>0).length===0 ? (
               <div style={{ fontSize:T.xs,color:C.muted }}>Hali kiritilmagan</div>
             ) : (
-              SET_MAHSULOTLAR.filter(m=>parseFloat(sf[m.id])>0).map(m=>(
+              SET_MAHSULOTLAR.filter(m=>parseFloat(sf[m.id])>0).map(m=>{
+                const katta = omborKattaBirlik(m.id);
+                return (
                 <div key={m.id} style={{ display:"flex",justifyContent:"space-between",marginBottom:3 }}>
                   <span style={{ fontSize:T.xs,color:C.sub }}>{m.emoji} {m.nom}</span>
-                  <span style={{ fontSize:T.xs,fontWeight:800,color:C.blue }}>{parseFloat(sf[m.id])||0} {m.birlik}</span>
+                  <span style={{ fontSize:T.xs,fontWeight:800,color:C.blue }}>{parseFloat(sf[m.id])||0} {katta?katta.birlik:m.birlik}</span>
                 </div>
-              ))
+                );
+              })
             )}
             <div style={{ borderTop:`1px solid ${C.border}`,paddingTop:8,marginTop:6,display:"flex",justifyContent:"space-between" }}>
               <span style={{ fontSize:T.xs,color:C.muted }}>Umumiy pozitsiyalar</span>
-              <span style={{ fontSize:T.sm,fontWeight:900,color:C.blue }}>{SET_MAHSULOTLAR.filter(m=>parseFloat(sf[m.id])>0).length} xil · {jami.toFixed(1)} umumiy</span>
+              <span style={{ fontSize:T.sm,fontWeight:900,color:C.blue }}>{SET_MAHSULOTLAR.filter(m=>parseFloat(sf[m.id])>0).length} xil mahsulot</span>
             </div>
           </div>
           <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:8 }}>
@@ -2494,6 +2690,11 @@ function Ombor({ omborlar, setOmborlar, hisobotlarTarixi=[], setHisobotlarTarixi
     if (!form.sana || !filled) {
       setErr(true); setTimeout(() => setErr(false), 600); return;
     }
+    // Bir sanada faqat bitta hisobot bo'lishi kerak
+    const takror = omborlar.some(h => h.turi!=="yangiset" && h.sana===form.sana && h.id!==editId);
+    if (takror) {
+      setErr(true); setTimeout(() => setErr(false), 600); return;
+    }
     const entry = {
       id: editId || Date.now(),
       sana: form.sana,
@@ -2515,6 +2716,9 @@ function Ombor({ omborlar, setOmborlar, hisobotlarTarixi=[], setHisobotlarTarixi
     setShowForm(false); setHisobotTuri(null);
     setEditId(null); setForm(EMPTY_OMBOR_FORM());
   };
+
+  // Tanlangan sana uchun allaqachon hisobot bormi? (tahrirlanayotgandan tashqari)
+  const dupSana = !!form.sana && omborlar.some(h => h.turi!=="yangiset" && h.sana===form.sana && h.id!==editId);
 
   return (
     <div>
@@ -2550,18 +2754,13 @@ function Ombor({ omborlar, setOmborlar, hisobotlarTarixi=[], setHisobotlarTarixi
             {hasAny ? (
               <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:6 }}>
                 {balansArr.map(b => {
-                  const k = hisobotBirlik(b.id, b.qiymat, b.birlik);
-                  const qiy = k.qiymat;
-                  const formatted = Math.abs(qiy) >= 100
-                    ? Math.round(qiy).toLocaleString()
-                    : Math.abs(qiy) >= 1
-                      ? qiy.toFixed(1).replace(/\.0$/, "")
-                      : qiy.toFixed(2).replace(/0$/, "");
+                  const qiy = b.qiymat;
+                  const matn = zaxiraMatni(b.id, qiy, b.birlik);
                   const color = qiy > 0 ? C.green : qiy < 0 ? C.red : C.muted;
                   return (
                     <div key={b.id} style={{ background:C.surface,border:`1px solid ${C.borderSoft}`,borderRadius:8,padding:"6px 9px",display:"flex",justifyContent:"space-between",alignItems:"center",gap:4 }}>
                       <span style={{ fontSize:9,color:C.sub,fontWeight:700,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>{b.emoji} {b.nom}</span>
-                      <span style={{ fontSize:T.xs,fontWeight:800,color,whiteSpace:"nowrap" }}>{formatted} {k.birlik}</span>
+                      <span style={{ fontSize:T.xs,fontWeight:800,color,whiteSpace:"nowrap" }}>{matn}</span>
                     </div>
                   );
                 })}
@@ -2762,7 +2961,12 @@ function Ombor({ omborlar, setOmborlar, hisobotlarTarixi=[], setHisobotlarTarixi
             <div style={{ fontSize:9,color:C.muted,marginBottom:6,textTransform:"uppercase",letterSpacing:0.8 }}>Sana *</div>
             <input type="date" value={form.sana}
               onChange={e => setForm(p => ({ ...p, sana:e.target.value }))}
-              style={{ ...inpStyle(err&&!form.sana), colorScheme:"dark" }} />
+              style={{ ...inpStyle((err&&!form.sana)||dupSana), colorScheme:"dark" }} />
+            {dupSana && (
+              <div className="pop-in" style={{ marginTop:8,background:C.redDim,border:`1px solid ${C.red}40`,borderRadius:8,padding:"8px 11px",fontSize:T.xs,color:C.red,fontWeight:700 }}>
+                ⚠️ Bu sana uchun hisobot allaqachon mavjud! Bir kunda faqat bitta hisobot bo'lishi mumkin.
+              </div>
+            )}
           </div>
 
           {/* Mahsulotlar */}
@@ -2784,8 +2988,8 @@ function Ombor({ omborlar, setOmborlar, hisobotlarTarixi=[], setHisobotlarTarixi
               style={{ border:`1px solid ${C.border}`,background:"transparent",borderRadius:10,padding:"11px 8px",color:C.sub,cursor:"pointer",fontSize:T.sm }}>
               Bekor
             </button>
-            <button onClick={saveHisobot}
-              style={{ border:"none",background:C.accent,borderRadius:10,padding:"11px 8px",color:"#FFF3E8",fontWeight:800,cursor:"pointer",fontSize:T.sm }}>
+            <button onClick={saveHisobot} disabled={dupSana}
+              style={{ border:"none",background:dupSana?C.border:C.accent,borderRadius:10,padding:"11px 8px",color:dupSana?C.muted:"#FFF3E8",fontWeight:800,cursor:dupSana?"not-allowed":"pointer",fontSize:T.sm }}>
               ✓ Saqlash
             </button>
           </div>
@@ -2804,15 +3008,30 @@ function Ombor({ omborlar, setOmborlar, hisobotlarTarixi=[], setHisobotlarTarixi
           <div style={{ fontSize:T.xs,color:C.muted,marginBottom:10,textTransform:"uppercase",letterSpacing:1,fontWeight:700 }}>
             📋 Saqlangan hisobotlar ({omborlar.filter(h=>h.turi!=="yangiset").length} ta)
           </div>
+          {(() => {
+            const sanoq = {};
+            omborlar.filter(h=>h.turi!=="yangiset").forEach(h => { sanoq[h.sana] = (sanoq[h.sana]||0)+1; });
+            const takror = Object.keys(sanoq).filter(s => sanoq[s] > 1);
+            if (takror.length === 0) return null;
+            return (
+              <div className="pop-in" style={{ background:C.redDim,border:`1px solid ${C.red}50`,borderRadius:12,padding:"11px 14px",marginBottom:12 }}>
+                <div style={{ fontSize:T.sm,fontWeight:800,color:C.red,marginBottom:3 }}>⚠️ Takror sana aniqlandi</div>
+                <div style={{ fontSize:10,color:C.muted }}>
+                  Quyidagi sana(lar) bir necha marta kiritilgan: {takror.join(", ")}. Bir kunda faqat bitta hisobot bo'lishi kerak — ortiqchasini o'chiring.
+                </div>
+              </div>
+            );
+          })()}
           {omborlar.filter(h=>h.turi!=="yangiset").map((h, i) => {
+            const isDup = omborlar.filter(x=>x.turi!=="yangiset"&&x.sana===h.sana).length > 1;
             const daysAgo = Math.floor((Date.now() - h.vaqt) / (24*60*60*1000));
             const bor = h.maydonlar.filter(m => m.qiymat > 0);
             return (
               <div key={h.id} className={`fade-in s${Math.min(i+1,5)}`}
-                style={{ background:C.card,border:`1px solid ${C.border}`,borderRadius:14,padding:"12px 14px",marginBottom:10 }}>
+                style={{ background:C.card,border:`1px solid ${isDup?C.red+"70":C.border}`,borderRadius:14,padding:"12px 14px",marginBottom:10 }}>
                 <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10 }}>
                   <div>
-                    <div style={{ fontSize:T.sm,fontWeight:800,color:C.text }}>📅 {h.sana}</div>
+                    <div style={{ fontSize:T.sm,fontWeight:800,color:C.text }}>📅 {h.sana} {isDup && <span style={{ fontSize:9,color:C.red,fontWeight:800 }}>⚠️ takror</span>}</div>
                     <div style={{ fontSize:9,color:C.muted,marginTop:2 }}>{daysAgo===0?"Bugun":daysAgo===1?"Kecha":`${daysAgo} kun oldin`} · {bor.length} xil mahsulot</div>
                   </div>
                   <div style={{ display:"flex",gap:6 }}>
@@ -2823,15 +3042,11 @@ function Ombor({ omborlar, setOmborlar, hisobotlarTarixi=[], setHisobotlarTarixi
                   </div>
                 </div>
                 <div style={{ display:"flex",flexWrap:"wrap",gap:5 }}>
-                  {bor.map(m => {
-                    const k = hisobotBirlik(m.id, m.qiymat, m.birlik);
-                    const v = +k.qiymat.toFixed(2);
-                    return (
+                  {bor.map(m => (
                     <div key={m.id} style={{ background:C.surface,border:`1px solid ${C.border}`,borderRadius:8,padding:"4px 9px",fontSize:9,color:C.sub,fontWeight:700 }}>
-                      {m.emoji} {m.nom}: <span style={{ color:C.accent }}>{v} {k.birlik}</span>
+                      {m.emoji} {m.nom}: <span style={{ color:C.accent }}>{zaxiraMatni(m.id, m.qiymat, m.birlik)}</span>
                     </div>
-                    );
-                  })}
+                  ))}
                 </div>
                 {delConfirmId === h.id && (
                   <div className="pop-in" style={{ background:C.redDim,border:`1px solid ${C.red}40`,borderRadius:10,padding:10,marginTop:10 }}>
@@ -2854,6 +3069,23 @@ function Ombor({ omborlar, setOmborlar, hisobotlarTarixi=[], setHisobotlarTarixi
 }
 
 // ─── APP ─────────────────────────────────────────────────────────
+// localStorage'da saqlanadigan state — ilova qayta ochilganda ma'lumotlar yo'qolmaydi.
+// (Web brauzerda ham, Expo WebView'da ham ishlaydi.)
+function usePersistedState(key, initial) {
+  const [val, setVal] = useState(() => {
+    try {
+      const raw = typeof localStorage !== "undefined" ? localStorage.getItem(key) : null;
+      return raw != null ? JSON.parse(raw) : initial;
+    } catch { return initial; }
+  });
+  useEffect(() => {
+    try {
+      if (typeof localStorage !== "undefined") localStorage.setItem(key, JSON.stringify(val));
+    } catch { /* kvota yoki maxfiy rejim — e'tiborsiz qoldiramiz */ }
+  }, [key, val]);
+  return [val, setVal];
+}
+
 const MODULES_CONFIG = [
   { id:"dashboard",  label:"Markaz",          icon:"📊", iconSrc: ICON_DASHBOARD },
   { id:"production", label:"Ishlab chiqarish", icon:"🏭", iconSrc: ICON_PRODUCTION },
@@ -2865,7 +3097,7 @@ export default function App() {
   const [splash, setSplash]                             = useState(true);
   const [active, setActive]                             = useState("dashboard");
   const [key, setKey]                                   = useState(0);
-  const [ishchilar, setIshchilar]                       = useState([
+  const [ishchilar, setIshchilar]                       = usePersistedState("nurnon:ishchilar", [
     { id:1, ism:"Feruz aka",   lavozimId:"nonYopuvchi", lavozimCustom:"", haqTuri:"qop",    miqdor:30000,  tel:"", holat:"Aktiv", tatilQaytishSana:"", tahrirSoni:0, nonTurlari:["Issiq non"], nonNarxlari:{ "Issiq non":30000 } },
     { id:2, ism:"Otabek va Vahob aka",  lavozimId:"nonYopuvchi", lavozimCustom:"", haqTuri:"qop",    miqdor:60000,  tel:"", holat:"Aktiv", tatilQaytishSana:"", tahrirSoni:0, nonTurlari:["Issiq non"], nonNarxlari:{ "Issiq non":60000 } },
     { id:3, ism:"Dilshod aka", lavozimId:"nonYopuvchi", lavozimCustom:"", haqTuri:"qop",    miqdor:25000,  tel:"", holat:"Aktiv", tatilQaytishSana:"", tahrirSoni:0, nonTurlari:["Issiq non"], nonNarxlari:{ "Issiq non":25000 } },
@@ -2875,7 +3107,7 @@ export default function App() {
     { id:7, ism:"Diyor aka",   lavozimId:"nonYopuvchi", lavozimCustom:"Patirchi/Qora non", haqTuri:"qop", miqdor:75000, tel:"", holat:"Aktiv", tatilQaytishSana:"", tahrirSoni:0, nonTurlari:["Patir","Katta qora non"], nonNarxlari:{ "Patir":75000, "Katta qora non":100000 } },
     { id:8, ism:"Sardor aka", lavozimId:"nonYopuvchi", lavozimCustom:"Patirchi/Qora non", haqTuri:"qop", miqdor:75000, tel:"", holat:"Aktiv", tatilQaytishSana:"", tahrirSoni:0, nonTurlari:["Patir","Katta qora non"], nonNarxlari:{ "Patir":75000, "Katta qora non":100000 } },
   ]);
-  const [nonlar, setNonlar]                             = useState([
+  const [nonlar, setNonlar]                             = usePersistedState("nurnon:nonlar", [
     {
       id: 1,
       nom: "Issiq non",
@@ -2961,32 +3193,33 @@ export default function App() {
       mahsulotlar: []
     },
   ]);
-  const [mahsulotNarxlari, setMahsulotNarxlari]         = useState({
+  const [mahsulotNarxlari, setMahsulotNarxlari]         = usePersistedState("nurnon:mahsulotNarxlari", {
     oqUn:     { miqdor:"50000", narx:"288000" },
     sariqUn:  { miqdor:"50000", narx:"230000" },
     qoraUn:   { miqdor:"50000", narx:"230000" },
+    sut:      { miqdor:"1000",  narx:"7000"   },
     yog:      { miqdor:"15000", narx:"285000" },
+    jir:      { miqdor:"1000",  narx:"25000"  },
     achitqi:  { miqdor:"500",   narx:"44000"  },
     quruqSut: { miqdor:"1000",  narx:"30000"  },
     shakar:   { miqdor:"1000",  narx:"15700"  },
-    tuz:      { miqdor:"1000",  narx:"15700"  },
   });
-  const [customMahsulotlar, setCustomMahsulotlar]       = useState([]);
-  const [qarzlar, setQarzlar]                           = useState([]);
-  const [optomlar, setOptomlar]                         = useState([]);
-  const [omborlar, setOmborlar]                         = useState([]);
-  const [gazNarx, setGazNarx]                           = useState("350000");
-  const [elektroNarx, setElektroNarx]                   = useState("0");
-  const [kunlikQopSoni, setKunlikQopSoni]               = useState("");
-  const [sotilmaganNon, setSotilmaganNon]               = useState({});
+  const [customMahsulotlar, setCustomMahsulotlar]       = usePersistedState("nurnon:customMahsulotlar", []);
+  const [qarzlar, setQarzlar]                           = usePersistedState("nurnon:qarzlar", []);
+  const [optomlar, setOptomlar]                         = usePersistedState("nurnon:optomlar", []);
+  const [omborlar, setOmborlar]                         = usePersistedState("nurnon:omborlar", []);
+  const [gazNarx, setGazNarx]                           = usePersistedState("nurnon:gazNarx", "350000");
+  const [elektroNarx, setElektroNarx]                   = usePersistedState("nurnon:elektroNarx", "0");
+  const [kunlikQopSoni, setKunlikQopSoni]               = usePersistedState("nurnon:kunlikQopSoni", "");
+  const [sotilmaganNon, setSotilmaganNon]               = usePersistedState("nurnon:sotilmaganNon", {});
   const [qopTasdiqlandi, setQopTasdiqlandi]             = useState(false);
   const [hisobotYopildi, setHisobotYopildi]             = useState(false);
-  const [hisobotlarTarixi, setHisobotlarTarixi]         = useState([]);
-  const [tasdiqlanganKunlar, setTasdiqlanganKunlar]     = useState([]);
-  const [tashqariSonlar, setTashqariSonlar]             = useState({});
-  const [kunlikQoplar, setKunlikQoplar]                 = useState([]);
-  const [braklar, setBraklar]                           = useState([]);
-  const [ozIshlabQoplar, setOzIshlabQoplar]             = useState({});
+  const [hisobotlarTarixi, setHisobotlarTarixi]         = usePersistedState("nurnon:hisobotlarTarixi", []);
+  const [tasdiqlanganKunlar, setTasdiqlanganKunlar]     = usePersistedState("nurnon:tasdiqlanganKunlar", []);
+  const [tashqariSonlar, setTashqariSonlar]             = usePersistedState("nurnon:tashqariSonlar", {});
+  const [kunlikQoplar, setKunlikQoplar]                 = usePersistedState("nurnon:kunlikQoplar", []);
+  const [braklar, setBraklar]                           = usePersistedState("nurnon:braklar", []);
+  const [ozIshlabQoplar, setOzIshlabQoplar]             = usePersistedState("nurnon:ozIshlabQoplar", {});
 
   const nav = (id) => { setActive(id); };
 
@@ -3023,6 +3256,7 @@ export default function App() {
   return (
     <>
       <style>{STYLES}</style>
+      <ToastHost />
       {splash && <Splash onDone={()=>setSplash(false)} />}
       <div style={{ background:C.bg,minHeight:"100vh",fontFamily:"'Segoe UI', Roboto, sans-serif",color:C.text,maxWidth:420,margin:"0 auto",position:"relative",paddingBottom:84,opacity:splash?0:1,transition:"opacity 0.4s ease" }}>
 

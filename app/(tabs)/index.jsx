@@ -1,0 +1,347 @@
+// "Markaz" ekrani — kunlik ko'rsatkichlar + Qarz / Optom / Karta to'lovlari.
+import { useMemo, useState } from "react";
+import { View, Text, ScrollView, Pressable, TextInput, StyleSheet, Alert } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { Ionicons } from "@expo/vector-icons";
+
+import { useApp } from "../../src/store/AppData";
+import { Card } from "../../src/components/Card";
+import { Btn } from "../../src/components/Btn";
+import { Modal } from "../../src/components/Modal";
+import { BrandHeader } from "../../src/components/BrandHeader";
+import { ExpandableCard } from "../../src/components/ExpandableCard";
+import { KunlikQopModal } from "../../src/components/KunlikQopModal";
+import { HisobotModal } from "../../src/components/HisobotModal";
+import { C, T, S, R } from "../../src/theme";
+import { hisoblaKunlik, formatSom, qarzJami, optomJami, kartaJami, kartaHisob } from "../../src/logic/hisob";
+
+const BOSH_FORMA = { ism: "", summa: "", izoh: "" };
+
+export default function Markaz() {
+  const {
+    nonlar, ishchilar, qarzlar, setQarzlar, optomlar, setOptomlar, kartalar, setKartalar,
+    ozIshlabQoplar, tashqariSonlar, sotilmaganNon, mahsulotNarxlari,
+    hisobotlarTarixi, setHisobotlarTarixi,
+  } = useApp();
+
+  const ochirHisobot = (id) => setHisobotlarTarixi((p) => p.filter((h) => h.id !== id));
+
+  const stats = useMemo(
+    () => hisoblaKunlik({ nonlar, ishchilar, ozIshlabQoplar, tashqariSonlar, sotilmaganNon, optomlar, qarzlar, mahsulotNarxlari }),
+    [nonlar, ishchilar, ozIshlabQoplar, tashqariSonlar, sotilmaganNon, optomlar, qarzlar, mahsulotNarxlari]
+  );
+
+  const qarz = useMemo(() => qarzJami(qarzlar), [qarzlar]);
+  const optom = useMemo(() => optomJami(optomlar), [optomlar]);
+  const karta = useMemo(() => kartaJami(kartalar), [kartalar]);
+
+  const [modalTur, setModalTur] = useState(null);
+  const [forma, setForma] = useState(BOSH_FORMA);
+  const [qopOchiq, setQopOchiq] = useState(false);
+  const [hisobotOchiq, setHisobotOchiq] = useState(false);
+
+  const ochModal = (tur) => { setForma(BOSH_FORMA); setModalTur(tur); };
+  const yopModal = () => setModalTur(null);
+  const yangila = (k, v) => setForma((p) => ({ ...p, [k]: v }));
+
+  const kartaModal = modalTur === "karta";
+  const qarzModal = modalTur === "qarz";
+
+  // Karta modali uchun jonli hisob: kiritilgan narxdan ~nechta non va sof foyda
+  const preview = useMemo(
+    () => (kartaModal ? kartaHisob(parseFloat(forma.summa) || 0, nonlar, mahsulotNarxlari) : null),
+    [kartaModal, forma.summa, nonlar, mahsulotNarxlari]
+  );
+
+  const saqla = () => {
+    const summa = parseFloat(forma.summa) || 0;
+    const sana = new Date().toISOString().split("T")[0];
+    if (!summa || (!kartaModal && !forma.ism.trim())) {
+      Alert.alert("Maydonlar to'liq emas", kartaModal ? "Iltimos, summani kiriting." : "Iltimos, ism va summani kiriting.");
+      return;
+    }
+    if (modalTur === "qarz") {
+      setQarzlar((prev) => [...prev, { id: Date.now(), ism: forma.ism.trim(), summa, izoh: forma.izoh.trim(), sana, vaqt: Date.now(), tolangan: false, tolanganVaqt: null }]);
+    } else if (modalTur === "optom") {
+      setOptomlar((prev) => [...prev, { id: Date.now(), ism: forma.ism.trim(), summa, izoh: forma.izoh.trim(), sana, vaqt: Date.now() }]);
+    } else {
+      const pv = kartaHisob(summa, nonlar, mahsulotNarxlari);
+      setKartalar((prev) => [...prev, { id: Date.now(), summa, izoh: forma.izoh.trim(), sana, vaqt: Date.now(), dona: pv.dona, sofFoyda: pv.sofFoyda }]);
+    }
+    yopModal();
+  };
+
+  const tolaQarz = (id) => setQarzlar((prev) => prev.map((q) => q.id === id ? { ...q, tolangan: true, tolanganVaqt: Date.now() } : q));
+  const ochirQarz = (id) => setQarzlar((prev) => prev.filter((q) => q.id !== id));
+  const ochirOptom = (id) => setOptomlar((prev) => prev.filter((o) => o.id !== id));
+  const ochirKarta = (id) => setKartalar((prev) => prev.filter((k) => k.id !== id));
+
+  const akcent = qarzModal ? C.red : kartaModal ? C.green : C.blue;
+
+  return (
+    <SafeAreaView style={styles.safe} edges={["top"]}>
+      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+        <BrandHeader />
+
+        <View style={styles.statsRow}>
+          <StatTile label="Bugungi sof foyda" unit="so'm" value={formatSom(stats.sofFoyda)} color={stats.sofFoyda >= 0 ? C.green : C.red} icon="trending-up-outline" />
+          <StatTile label="Sotilgan non" unit="dona" value={String(stats.sotilganNon)} color={C.text} icon="cube-outline" />
+          <StatTile label="Kunlik qop" unit="qop" value={String(stats.jamiQop)} color={C.accent} icon="layers-outline" />
+        </View>
+
+        <Card accent style={styles.block}>
+          <View style={styles.cardTitleRow}>
+            <Ionicons name="calculator-outline" size={18} color={C.sub} />
+            <Text style={styles.cardTitle}>Kunlik qop hisobi</Text>
+          </View>
+          <Text style={styles.muted}>{nonlar.length} xil non · {stats.jamiNon} dona ishlab chiqarildi</Text>
+          <View style={styles.gap10} />
+          <Btn onPress={() => setQopOchiq(true)} icon="create-outline">Ma'lumot kiritish</Btn>
+        </Card>
+
+        {/* KUNLIK HISOBOTLAR TARIXI (30 kun) */}
+        <SectionHead icon="calendar-outline" nom="KUNLIK HISOBOTLAR (30 kun)" sum={`${(hisobotlarTarixi || []).length} ta`} color={C.accent} />
+        {(hisobotlarTarixi || []).length === 0 ? (
+          <Text style={styles.bosh}>Hali hisobot yo'q</Text>
+        ) : (
+          [...hisobotlarTarixi].slice(0, 30).map((h) => (
+            <ExpandableCard
+              key={h.id}
+              style={styles.item}
+              header={
+                <View style={styles.mHead}>
+                  <Text style={[styles.itemIsm, styles.flex1]} numberOfLines={1}>{h.sana}</Text>
+                  <Text style={[styles.itemSumma, { color: (h.sofFoyda || 0) >= 0 ? C.green : C.red }]} numberOfLines={1}>{formatSom(h.sofFoyda)} so'm</Text>
+                </View>
+              }
+            >
+              <Text style={styles.itemIzoh}>{h.jamiNon || 0} dona · {h.jamiQop || 0} qop · {h.sotilganNon || 0} sotilgan</Text>
+              <View style={styles.actions}>
+                <Pressable accessibilityLabel="O'chirish" onPress={() => ochirHisobot(h.id)} hitSlop={6} style={styles.actBtn}>
+                  <Ionicons name="trash-outline" size={16} color={C.red} />
+                  <Text style={[styles.actTxt, { color: C.red }]}> O'chirish</Text>
+                </Pressable>
+              </View>
+            </ExpandableCard>
+          ))
+        )}
+
+        {/* QARZ */}
+        <SectionHead icon="pricetag-outline" nom="QARZLAR" sum={`${formatSom(qarz.summa)} so'm · ${qarz.soni} ta`} color={C.red} style={{ marginTop: S[6] }} />
+        <Btn color={C.accent} onPress={() => ochModal("qarz")} icon="add-outline">Qarz qo'shish</Btn>
+        <View style={styles.gap10} />
+        {(qarzlar || []).length === 0 ? <Text style={styles.bosh}>Hali qarz yo'q</Text> : (
+          [...qarzlar].reverse().map((q) => (
+            <ExpandableCard
+              key={q.id}
+              style={styles.item}
+              header={
+                <View style={styles.mHead}>
+                  <Text style={[styles.itemIsm, styles.flex1]} numberOfLines={1}>{q.ism}{q.tolangan ? "  · to'landi" : ""}</Text>
+                  <Text style={[styles.itemSumma, { color: q.tolangan ? C.muted : C.red }]} numberOfLines={1}>{formatSom(q.summa)} so'm</Text>
+                </View>
+              }
+            >
+              {q.izoh ? <Text style={styles.itemIzoh}>{q.izoh}</Text> : null}
+              <Text style={styles.itemSana}>{q.sana}</Text>
+              <View style={styles.actions}>
+                {!q.tolangan && (
+                  <Pressable onPress={() => tolaQarz(q.id)} hitSlop={6} style={styles.actBtn}>
+                    <Ionicons name="checkmark" size={15} color={C.accent} />
+                    <Text style={[styles.actTxt, { color: C.accent }]}> To'landi</Text>
+                  </Pressable>
+                )}
+                <Pressable onPress={() => ochirQarz(q.id)} hitSlop={6} style={styles.actBtn}>
+                  <Ionicons name="trash-outline" size={16} color={C.red} />
+                  <Text style={[styles.actTxt, { color: C.red }]}> O'chirish</Text>
+                </Pressable>
+              </View>
+            </ExpandableCard>
+          ))
+        )}
+
+        {/* OPTOM */}
+        <SectionHead icon="cube-outline" nom="OPTOM SAVDOLAR" sum={`${formatSom(optom.summa)} so'm · ${optom.soni} ta`} color={C.blue} style={{ marginTop: S[6] }} />
+        <Btn color={C.accent} onPress={() => ochModal("optom")} icon="add-outline">Xarid qo'shish</Btn>
+        <View style={styles.gap10} />
+        {(optomlar || []).length === 0 ? <Text style={styles.bosh}>Hali optom savdo yo'q</Text> : (
+          [...optomlar].reverse().map((o) => (
+            <ExpandableCard
+              key={o.id}
+              style={styles.item}
+              header={
+                <View style={styles.mHead}>
+                  <Text style={[styles.itemIsm, styles.flex1]} numberOfLines={1}>{o.ism}</Text>
+                  <Text style={[styles.itemSumma, { color: C.blue }]} numberOfLines={1}>{formatSom(o.summa)} so'm</Text>
+                </View>
+              }
+            >
+              {o.izoh ? <Text style={styles.itemIzoh}>{o.izoh}</Text> : null}
+              <Text style={styles.itemSana}>{o.sana}</Text>
+              <View style={styles.actions}>
+                <Pressable onPress={() => ochirOptom(o.id)} hitSlop={6} style={styles.actBtn}>
+                  <Ionicons name="trash-outline" size={16} color={C.red} />
+                  <Text style={[styles.actTxt, { color: C.red }]}> O'chirish</Text>
+                </Pressable>
+              </View>
+            </ExpandableCard>
+          ))
+        )}
+
+        {/* KARTA */}
+        <SectionHead icon="card-outline" nom="KARTA TO'LOVLARI" sum={`${formatSom(karta.summa)} so'm · ${karta.soni} ta`} color={C.green} style={{ marginTop: S[6] }} />
+        <Btn color={C.accent} onPress={() => ochModal("karta")} icon="card-outline">Karta to'lovi</Btn>
+        <View style={styles.gap10} />
+        {(kartalar || []).length === 0 ? <Text style={styles.bosh}>Hali karta to'lovi yo'q</Text> : (
+          [...kartalar].reverse().map((k) => (
+            <ExpandableCard
+              key={k.id}
+              style={styles.item}
+              header={
+                <View style={styles.mHead}>
+                  <Text style={[styles.itemIsm, styles.flex1]} numberOfLines={1}>{k.izoh || "Karta to'lovi"}</Text>
+                  <Text style={[styles.itemSumma, { color: C.green }]} numberOfLines={1}>{formatSom(k.summa)} so'm</Text>
+                </View>
+              }
+            >
+              <Text style={styles.itemIzoh}>≈ {k.dona} dona non · sof foyda {formatSom(k.sofFoyda)} so'm</Text>
+              <Text style={styles.itemSana}>{k.sana}</Text>
+              <View style={styles.actions}>
+                <Pressable onPress={() => ochirKarta(k.id)} hitSlop={6} style={styles.actBtn}>
+                  <Ionicons name="trash-outline" size={16} color={C.red} />
+                  <Text style={[styles.actTxt, { color: C.red }]}> O'chirish</Text>
+                </Pressable>
+              </View>
+            </ExpandableCard>
+          ))
+        )}
+      </ScrollView>
+
+      {/* Kunlik qop hisobi modali → Tasdiqlashda yakuniy hisobot ochiladi */}
+      <KunlikQopModal
+        visible={qopOchiq}
+        onClose={() => setQopOchiq(false)}
+        onTasdiq={() => { setQopOchiq(false); setHisobotOchiq(true); }}
+      />
+      {/* Hisobot yopilgach Karta bo'limi bo'shaydi (kunlik tasdiqdan keyin yangilanadi) */}
+      <HisobotModal visible={hisobotOchiq} onClose={() => { setHisobotOchiq(false); setKartalar([]); }} />
+
+      {/* Universal modal: Qarz / Optom / Karta */}
+      <Modal modalVisible={modalTur !== null} onClose={yopModal}>
+        <View style={styles.modalHead}>
+          <Ionicons name={qarzModal ? "pricetag-outline" : kartaModal ? "card-outline" : "cube-outline"} size={20} color={C.sub} />
+          <Text style={styles.modalTitle}>
+            {qarzModal ? "Yangi qarz" : kartaModal ? "Karta to'lovi" : "Yangi optom savdo"}
+          </Text>
+        </View>
+        <ScrollView style={styles.formScroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+          {!kartaModal && (
+            <>
+              <Text style={styles.inputLabel}>{qarzModal ? "Qarz oluvchi *" : "Xaridor *"}</Text>
+              <TextInput value={forma.ism} onChangeText={(v) => yangila("ism", v)} placeholder="Ism familiya" placeholderTextColor={C.muted} style={styles.input} />
+            </>
+          )}
+
+          <Text style={styles.inputLabel}>{kartaModal ? "Aniq narx (so'm) *" : "Summa (so'm) *"}</Text>
+          <TextInput value={forma.summa} onChangeText={(v) => yangila("summa", v)} placeholder="0" placeholderTextColor={C.muted} keyboardType="numeric" style={styles.input} />
+
+          <Text style={styles.inputLabel}>Izoh</Text>
+          <TextInput value={forma.izoh} onChangeText={(v) => yangila("izoh", v)} placeholder="Qo'shimcha izoh (ixtiyoriy)" placeholderTextColor={C.muted} multiline style={[styles.input, styles.inputMulti]} />
+
+          {/* Karta uchun jonli hisob */}
+          {kartaModal && (parseFloat(forma.summa) || 0) > 0 && (
+            <View style={styles.preview}>
+              <Text style={styles.previewTitle}>Hisob (o'rtacha narx asosida)</Text>
+              <View style={styles.previewRow}>
+                <Text style={styles.previewLabel}>≈ Nechta non</Text>
+                <Text style={styles.previewVal}>{preview.dona} dona</Text>
+              </View>
+              <View style={styles.previewRow}>
+                <Text style={styles.previewLabel}>Xarajat ayrilib sof foyda</Text>
+                <Text style={[styles.previewVal, { color: preview.sofFoyda >= 0 ? C.green : C.red }]}>{formatSom(preview.sofFoyda)} so'm</Text>
+              </View>
+            </View>
+          )}
+        </ScrollView>
+        <View style={styles.gap12} />
+        <View style={styles.modalRow}>
+          <View style={styles.flex1}><Btn secondary onPress={yopModal}>Bekor</Btn></View>
+          <View style={styles.flex1}><Btn color={akcent} onPress={saqla}>Saqlash</Btn></View>
+        </View>
+      </Modal>
+    </SafeAreaView>
+  );
+}
+
+function SectionHead({ icon, nom, sum, color, style }) {
+  return (
+    <View style={[styles.secHead, style]}>
+      <View style={styles.secHeadLeft}>
+        <Ionicons name={icon} size={13} color={C.sub} />
+        <Text style={styles.section}>{nom}</Text>
+      </View>
+      <Text style={[styles.secSum, { color }]}>{sum}</Text>
+    </View>
+  );
+}
+
+function StatTile({ label, value, unit, color, icon }) {
+  const len = String(value || "").length;
+  const valSize = len > 9 ? 14 : len > 7 ? 16 : len > 5 ? 18 : 20;
+  return (
+    <Card style={styles.statTile}>
+      <Ionicons name={icon} size={16} color={C.sub} style={styles.statIcon} />
+      <Text style={styles.statLabel} numberOfLines={1}>{label}</Text>
+      <Text style={[styles.statValue, { color, fontSize: valSize }]} numberOfLines={1}>{value}</Text>
+      <Text style={styles.statUnit}>{unit}</Text>
+    </Card>
+  );
+}
+
+const styles = StyleSheet.create({
+  safe:      { flex: 1, backgroundColor: C.bg },
+  scroll:    { padding: S[5], paddingBottom: S[8] },
+  statsRow:  { flexDirection: "row", gap: S[2], marginBottom: S[5] },
+  statTile:  { flex: 1, paddingVertical: S[3], paddingHorizontal: S[3] },
+  statIcon:  { marginBottom: S[1] },
+  statLabel: { fontSize: 9, color: C.muted, fontWeight: "700", letterSpacing: 0.8, textTransform: "uppercase", marginBottom: S[2] },
+  statValue: { fontWeight: "800", letterSpacing: -0.3 },
+  statUnit:  { fontSize: 10, color: C.muted, marginTop: 2 },
+  block:     { marginBottom: S[5] },
+  cardTitleRow:{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: S[1] },
+  cardTitle: { fontSize: T.md, fontWeight: "700", color: C.text },
+  muted:     { fontSize: T.sm, color: C.sub },
+
+  secHead:   { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: S[3] },
+  secHeadLeft:{ flexDirection: "row", alignItems: "center", gap: 6 },
+  section:   { fontSize: T.xs, color: C.sub, fontWeight: "700", letterSpacing: 1 },
+  secSum:    { fontSize: T.sm, fontWeight: "700" },
+  bosh:      { fontSize: T.sm, color: C.muted, paddingVertical: S[2] },
+
+  item:      { marginBottom: S[3] },
+  mHead:     { flexDirection: "row", justifyContent: "space-between", alignItems: "center", gap: S[2] },
+  flex1:     { flex: 1 },
+  itemIsm:   { fontSize: T.md, fontWeight: "700", color: C.text },
+  itemIzoh:  { fontSize: T.sm, color: C.sub, marginTop: 2 },
+  itemSana:  { fontSize: T.xs, color: C.muted, marginTop: 2 },
+  itemSumma: { fontSize: T.md, fontWeight: "800", marginLeft: S[2] },
+  actions:   { flexDirection: "row", justifyContent: "flex-end", gap: S[4], marginTop: S[3], borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: C.borderSoft, paddingTop: S[3] },
+  actBtn:    { flexDirection: "row", alignItems: "center" },
+  actTxt:    { fontSize: T.sm, fontWeight: "700" },
+  gap10:     { height: S[3] },
+  gap12:     { height: S[3] },
+
+  // Modal
+  modalHead:  { flexDirection: "row", alignItems: "center", gap: S[2], marginBottom: S[3] },
+  modalTitle: { fontSize: T.lg, fontWeight: "800", color: C.text },
+  formScroll: { maxHeight: 400 },
+  inputLabel: { fontSize: T.xs, color: C.sub, fontWeight: "600", marginBottom: 6, marginTop: S[1], letterSpacing: 0.3 },
+  input:     { borderWidth: 1, borderColor: C.border, borderRadius: R.md, paddingVertical: 12, paddingHorizontal: 14, fontSize: T.md, color: C.text, backgroundColor: C.surface },
+  inputMulti:{ minHeight: 64, textAlignVertical: "top" },
+  preview:   { marginTop: S[3], backgroundColor: C.green + "0D", borderWidth: 1, borderColor: C.green + "2E", borderRadius: R.md, padding: S[3] },
+  previewTitle: { fontSize: T.xs, color: C.sub, fontWeight: "600", marginBottom: S[2], letterSpacing: 0.3 },
+  previewRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: S[1] },
+  previewLabel: { fontSize: T.sm, color: C.sub },
+  previewVal: { fontSize: T.md, fontWeight: "800", color: C.text },
+  modalRow:  { flexDirection: "row", gap: S[3] },
+});

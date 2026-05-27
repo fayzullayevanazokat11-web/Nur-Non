@@ -1,2 +1,15 @@
 node_modules/
+
+# Expo
+.expo/
 dist/
+web-build/
+*.orig.*
+
+# Native
+android/
+ios/
+
+# Muhit
+.env*.local
+npm-debug.*
