@@ -59,7 +59,7 @@ export default function Ombor() {
 
         <Card accent>
           <View style={styles.cardTitleRow}>
-            <Ionicons name="cube-outline" size={16} color={C.accent} />
+            <Ionicons name="cube-outline" size={18} color={C.sub} />
             <Text style={styles.cardTitle}>Mavjud zaxira</Text>
           </View>
           <Text style={styles.muted}>Set kirimlari − tasdiqlangan xarajat</Text>
@@ -85,7 +85,7 @@ export default function Ombor() {
       {/* Yangi set kiritish modali */}
       <Modal modalVisible={modalOchiq} onClose={yopModal}>
         <View style={styles.modalHead}>
-          <Ionicons name="add-circle-outline" size={20} color={C.accent} />
+          <Ionicons name="add-circle-outline" size={20} color={C.sub} />
           <Text style={styles.modalTitle}>Yangi keltirilgan set</Text>
         </View>
 
@@ -129,7 +129,7 @@ export default function Ombor() {
 
 const styles = StyleSheet.create({
   safe:      { flex: 1, backgroundColor: C.bg },
-  scroll:    { padding: S[4], paddingBottom: S[7] },
+  scroll:    { padding: S[5], paddingBottom: S[8] },
   gap10:     { height: S[3] },
   gap12:     { height: S[3] },
   gap14:     { height: S[4] },

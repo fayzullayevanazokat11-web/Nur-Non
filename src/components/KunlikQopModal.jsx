@@ -78,7 +78,7 @@ export function KunlikQopModal({ visible, onClose, onTasdiq }) {
   return (
     <Modal modalVisible={visible} onClose={onClose}>
       <View style={styles.head}>
-        <Ionicons name="calculator-outline" size={20} color={C.accent} />
+        <Ionicons name="calculator-outline" size={20} color={C.sub} />
         <Text style={styles.title}>Kunlik qop hisobi</Text>
       </View>
 

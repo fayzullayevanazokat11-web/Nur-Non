@@ -1,5 +1,5 @@
-// Ekran sarlavhasi — barcha ekranlarda bir xil: eyebrow (TRACKED CAPS) + title + subtitle.
-// Ixtiyoriy `icon` — sarlavha yonida accent rangli ikonka.
+// Ekran sarlavhasi — eyebrow (TRACKED CAPS) + title + subtitle.
+// Ixtiyoriy `icon` — sarlavha yonida neytral (taupe) ikonka (jigarrang faqat tugmalar uchun).
 import { View, Text, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { C, T, S, R } from "../theme";
@@ -11,7 +11,7 @@ export function ScreenHeader({ eyebrow, title, subtitle, icon, style }) {
       <View style={styles.titleRow}>
         {icon ? (
           <View style={styles.iconBox}>
-            <Ionicons name={icon} size={18} color={C.accent} />
+            <Ionicons name={icon} size={20} color={C.sub} />
           </View>
         ) : null}
         <Text style={styles.title}>{title}</Text>
@@ -22,10 +22,10 @@ export function ScreenHeader({ eyebrow, title, subtitle, icon, style }) {
 }
 
 const styles = StyleSheet.create({
-  wrap:     { marginBottom: S[5] },
-  eyebrow:  { fontSize: 11, color: C.muted, fontWeight: "700", letterSpacing: 1.4 },
-  titleRow: { flexDirection: "row", alignItems: "center", gap: S[2], marginTop: S[1] },
-  iconBox:  { width: 34, height: 34, borderRadius: R.sm, alignItems: "center", justifyContent: "center", backgroundColor: C.accent + "0D", borderWidth: 1, borderColor: C.accent + "2E" },
-  title:    { fontSize: T.xl, color: C.text, fontWeight: "800", letterSpacing: -0.3, flexShrink: 1 },
-  subtitle: { fontSize: T.sm, color: C.sub, fontWeight: "500", marginTop: S[1] },
+  wrap:     { marginBottom: S[6] },
+  eyebrow:  { fontSize: 11, color: C.muted, fontWeight: "700", letterSpacing: 1.8 },
+  titleRow: { flexDirection: "row", alignItems: "center", gap: S[3], marginTop: S[2] },
+  iconBox:  { width: 42, height: 42, borderRadius: R.md, alignItems: "center", justifyContent: "center", backgroundColor: C.panel },
+  title:    { fontSize: T.xl, color: C.text, fontWeight: "800", letterSpacing: -0.6, lineHeight: T.xl + 4, flexShrink: 1 },
+  subtitle: { fontSize: T.sm, color: C.sub, fontWeight: "500", marginTop: S[2], lineHeight: 19 },
 });

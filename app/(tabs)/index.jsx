@@ -91,7 +91,7 @@ export default function Markaz() {
 
         <Card accent style={styles.block}>
           <View style={styles.cardTitleRow}>
-            <Ionicons name="calculator-outline" size={16} color={C.accent} />
+            <Ionicons name="calculator-outline" size={18} color={C.sub} />
             <Text style={styles.cardTitle}>Kunlik qop hisobi</Text>
           </View>
           <Text style={styles.muted}>{nonlar.length} xil non · {stats.jamiNon} dona ishlab chiqarildi</Text>
@@ -228,7 +228,7 @@ export default function Markaz() {
       {/* Universal modal: Qarz / Optom / Karta */}
       <Modal modalVisible={modalTur !== null} onClose={yopModal}>
         <View style={styles.modalHead}>
-          <Ionicons name={qarzModal ? "pricetag-outline" : kartaModal ? "card-outline" : "cube-outline"} size={20} color={C.accent} />
+          <Ionicons name={qarzModal ? "pricetag-outline" : kartaModal ? "card-outline" : "cube-outline"} size={20} color={C.sub} />
           <Text style={styles.modalTitle}>
             {qarzModal ? "Yangi qarz" : kartaModal ? "Karta to'lovi" : "Yangi optom savdo"}
           </Text>
@@ -289,7 +289,7 @@ function StatTile({ label, value, unit, color, icon }) {
   const valSize = len > 9 ? 14 : len > 7 ? 16 : len > 5 ? 18 : 20;
   return (
     <Card style={styles.statTile}>
-      <Ionicons name={icon} size={15} color={C.accent} style={styles.statIcon} />
+      <Ionicons name={icon} size={16} color={C.sub} style={styles.statIcon} />
       <Text style={styles.statLabel} numberOfLines={1}>{label}</Text>
       <Text style={[styles.statValue, { color, fontSize: valSize }]} numberOfLines={1}>{value}</Text>
       <Text style={styles.statUnit}>{unit}</Text>
@@ -299,7 +299,7 @@ function StatTile({ label, value, unit, color, icon }) {
 
 const styles = StyleSheet.create({
   safe:      { flex: 1, backgroundColor: C.bg },
-  scroll:    { padding: S[4], paddingBottom: S[7] },
+  scroll:    { padding: S[5], paddingBottom: S[8] },
   statsRow:  { flexDirection: "row", gap: S[2], marginBottom: S[5] },
   statTile:  { flex: 1, paddingVertical: S[3], paddingHorizontal: S[3] },
   statIcon:  { marginBottom: S[1] },
@@ -317,7 +317,7 @@ const styles = StyleSheet.create({
   secSum:    { fontSize: T.sm, fontWeight: "700" },
   bosh:      { fontSize: T.sm, color: C.muted, paddingVertical: S[2] },
 
-  item:      { marginBottom: S[2] },
+  item:      { marginBottom: S[3] },
   mHead:     { flexDirection: "row", justifyContent: "space-between", alignItems: "center", gap: S[2] },
   flex1:     { flex: 1 },
   itemIsm:   { fontSize: T.md, fontWeight: "700", color: C.text },

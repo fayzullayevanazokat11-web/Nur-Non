@@ -38,7 +38,7 @@ export function HisobotModal({ visible, onClose }) {
   return (
     <Modal modalVisible={visible} onClose={onClose}>
       <View style={styles.head}>
-        <Ionicons name="document-text-outline" size={20} color={C.accent} />
+        <Ionicons name="document-text-outline" size={20} color={C.sub} />
         <Text style={styles.title}>Kunlik hisobot</Text>
       </View>
       <Text style={styles.sana}>{data.bugun}</Text>

@@ -3,39 +3,38 @@
 // RN'da fontSize/spacing SON bo'ladi (px emas).
 
 export const C = {
-  // Minimalistik: barcha fonlar OQ — shakl chegara (border) bilan beriladi
-  bg: "#FFFFFF", surface: "#FFFFFF", card: "#FFFFFF",
-  panel: "#FFFFFF",  // sarlavha bandi ham oq — pastki hairline ajratadi
-  border: "#E4D5BB", borderSoft: "#EFE7D7",  // yupqa, lekin sezilarli (tashqi) / yumshoqroq (ichki)
-  accent: "#A06020", accentDim: "#A0602012",
-  // Semantik rollar — faqat asosiy (issiq) palitra tonlari (qizil/yashil/ko'k YO'Q):
-  // red  → "cost/qarz/manfiy"  = eng quyuq jigarrang
-  // green→ "foyda/aktiv/musbat" = accent (karamel)
-  // blue → "optom/neytral urg'u" = o'rta jigarrang (sub)
+  // Premium minimalist: OQ asosiy fon, QAYMOQ bloklar (qatlamlararo farq + yumshoq soya)
+  bg: "#FFFFFF",          // asosiy ekran foni — oq
+  surface: "#FFFFFF",     // input/inset — oq (qaymoq karta ustida toza ko'rinadi)
+  card: "#FBF6EC",        // bloklar — yumshoq qaymoq
+  panel: "#F6EEDF",       // ichki band / chuqurroq qaymoq
+  border: "#EFE4D1", borderSoft: "#F4ECDD",  // juda yumshoq, past kontrast
+  accent: "#A0612A", accentDim: "#A0612A12", // jigarrang — FAQAT asosiy harakatlar (tugmalar) uchun
+  // Semantik rollar — issiq palitra tonlari (qizil/yashil/ko'k YO'Q):
   red: "#3A1E08", redDim: "#3A1E080D",
-  green: "#A06020", greenDim: "#A060200D",
-  blue: "#8A7050", blueDim: "#8A70500D",
-  text: "#3A1E08",   // asosiy matn
-  sub: "#8A7050",    // ikkilamchi matn (quyuqroq)
-  muted: "#B39A78",  // uchlamchi / hint (ochroq)
+  green: "#A0612A", greenDim: "#A0612A0D",
+  blue: "#8A7355", blueDim: "#8A73550D",
+  text: "#33200E",   // asosiy matn — iliq quyuq jigarrang
+  sub: "#8A7458",    // ikkilamchi matn / dekorativ ikonkalar
+  muted: "#B5A07E",  // uchlamchi / hint
 };
 
-export const T = { xs: 12, sm: 13, md: 15, lg: 18, xl: 26, xxl: 32 };
+export const T = { xs: 12, sm: 13, md: 15, lg: 19, xl: 28, xxl: 34 };
 
-// 4pt asosidagi spacing shkalasi — barcha gap/margin/padding shu yerdan
-export const S = { 1: 4, 2: 8, 3: 12, 4: 16, 5: 20, 6: 24, 7: 32 };
+// 4pt asosidagi spacing shkalasi
+export const S = { 1: 4, 2: 8, 3: 12, 4: 16, 5: 20, 6: 24, 7: 32, 8: 40 };
 
-// Burchak radiuslari
-export const R = { sm: 10, md: 14, lg: 18, xl: 22, pill: 999 };
+// Burchak radiuslari — yumshoqroq (premium)
+export const R = { sm: 14, md: 18, lg: 24, xl: 30, pill: 999 };
 
-// Juda yengil soya — chegara asosiy, soya faqat nozik "ko'tarilish" beradi
+// Yumshoq, tarqoq (diffused) iliq soya — bloklarga yengil chuqurlik beradi
 export const shadow = {
-  shadowColor: "#3A1E08",
-  shadowOpacity: 0.04,
-  shadowRadius: 8,
-  shadowOffset: { width: 0, height: 2 },
-  elevation: 1,
+  shadowColor: "#5A3A1A",
+  shadowOpacity: 0.10,
+  shadowRadius: 24,
+  shadowOffset: { width: 0, height: 10 },
+  elevation: 3,
 };
 
-// Animatsiya — barcha o'tishlar uchun yagona ease-in-out konfiguratsiyasi
-export const ANIM = { duration: 200, pressDuration: 130 };
+// Animatsiya — yagona ease-in-out konfiguratsiyasi
+export const ANIM = { duration: 220, pressDuration: 140 };

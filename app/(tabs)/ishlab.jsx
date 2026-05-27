@@ -164,7 +164,7 @@ export default function IshlabChiqarish() {
       {/* Qo'shish / Tahrirlash modali */}
       <Modal modalVisible={modalOchiq} onClose={yopModal}>
         <View style={styles.modalHead}>
-          <Ionicons name={tahrirId ? "create-outline" : "add-circle-outline"} size={20} color={C.accent} />
+          <Ionicons name={tahrirId ? "create-outline" : "add-circle-outline"} size={20} color={C.sub} />
           <Text style={styles.modalTitle}>{tahrirId ? "Nonni tahrirlash" : "Yangi non turi"}</Text>
         </View>
 
@@ -230,10 +230,10 @@ function Row({ label, value, valueColor = C.text, bold = false, last = false }) 
 
 const styles = StyleSheet.create({
   safe:      { flex: 1, backgroundColor: C.bg },
-  scroll:    { padding: S[4], paddingBottom: S[7] },
+  scroll:    { padding: S[5], paddingBottom: S[8] },
   gap14:     { height: S[4] },
-  segment:   { flexDirection: "row", gap: S[1], backgroundColor: C.surface, borderWidth: 1, borderColor: C.border, borderRadius: R.lg, padding: 4 },
-  seg:       { flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, paddingVertical: 11, borderRadius: R.md },
+  segment:   { flexDirection: "row", gap: S[1], backgroundColor: C.panel, borderRadius: R.lg, padding: 5 },
+  seg:       { flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, paddingVertical: 12, borderRadius: R.md },
   segActive: { backgroundColor: C.accent },
   segTxt:    { fontSize: T.sm, fontWeight: "700", color: C.sub },
   segTxtActive: { color: "#FFF3E8" },

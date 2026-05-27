@@ -69,7 +69,7 @@ export default function Xodimlar() {
 
         <View style={styles.statsRow}>
           <Card style={styles.statTile}>
-            <Ionicons name="people-circle-outline" size={15} color={C.accent} style={styles.statIcon} />
+            <Ionicons name="people-circle-outline" size={16} color={C.sub} style={styles.statIcon} />
             <Text style={styles.statLabel}>AKTIV XODIMLAR</Text>
             <Text style={[styles.statValue, { color: C.text }]}>{aktiv.length}</Text>
             <Text style={styles.statUnit}>nafar</Text>
@@ -123,7 +123,7 @@ export default function Xodimlar() {
       {/* Qo'shish / Tahrirlash modali */}
       <Modal modalVisible={modalOchiq} onClose={yopModal}>
         <View style={styles.modalHead}>
-          <Ionicons name={tahrirId ? "create-outline" : "person-add-outline"} size={20} color={C.accent} />
+          <Ionicons name={tahrirId ? "create-outline" : "person-add-outline"} size={20} color={C.sub} />
           <Text style={styles.modalTitle}>{tahrirId ? "Xodimni tahrirlash" : "Yangi ishchi"}</Text>
         </View>
 
@@ -172,7 +172,7 @@ export default function Xodimlar() {
 
 const styles = StyleSheet.create({
   safe:      { flex: 1, backgroundColor: C.bg },
-  scroll:    { padding: S[4], paddingBottom: S[7] },
+  scroll:    { padding: S[5], paddingBottom: S[8] },
   statsRow:  { flexDirection: "row", gap: S[2] },
   statTile:  { flex: 1, paddingVertical: S[3], paddingHorizontal: S[3] },
   statIcon:  { marginBottom: S[1] },
@@ -181,7 +181,7 @@ const styles = StyleSheet.create({
   statUnit:  { fontSize: 10, color: C.muted, marginTop: 2 },
   gap12:     { height: S[3] },
   gap14:     { height: S[4] },
-  item:      { marginBottom: S[2] },
+  item:      { marginBottom: S[3] },
   left:      { flexDirection: "row", alignItems: "center", gap: S[3], flex: 1 },
   flex1:     { flex: 1 },
   ism:       { fontSize: T.md, fontWeight: "700", color: C.text },

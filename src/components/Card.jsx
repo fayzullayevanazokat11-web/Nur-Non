@@ -18,14 +18,14 @@ export function Card({ children, danger = false, accent = false, animate = true,
   }, [animate, v]);
 
   const variant = danger
-    ? { backgroundColor: C.red + "0D", borderColor: C.red + "26" }
+    ? { backgroundColor: C.red + "0D", borderWidth: 1, borderColor: C.red + "22" }
     : accent
-    ? { backgroundColor: C.accent + "0D", borderColor: C.accent + "2E" }
-    : { backgroundColor: C.card, borderColor: C.border };
+    ? { backgroundColor: C.accent + "10", borderWidth: 1, borderColor: C.accent + "24" }
+    : { backgroundColor: C.card, borderWidth: 0 };
 
   const entrance = {
     opacity: v,
-    transform: [{ translateY: v.interpolate({ inputRange: [0, 1], outputRange: [8, 0] }) }],
+    transform: [{ translateY: v.interpolate({ inputRange: [0, 1], outputRange: [10, 0] }) }],
   };
 
   return <Animated.View style={[styles.base, variant, entrance, style]}>{children}</Animated.View>;
@@ -34,8 +34,7 @@ export function Card({ children, danger = false, accent = false, animate = true,
 const styles = StyleSheet.create({
   base: {
     borderRadius: R.lg,
-    borderWidth: 1,
-    padding: S[4],
+    padding: S[5],
     ...shadow,
   },
 });

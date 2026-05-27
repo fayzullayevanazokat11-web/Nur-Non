@@ -20,7 +20,7 @@ export function MahsulotNarxi() {
     <View>
       <Card accent style={styles.hint}>
         <View style={styles.hintRow}>
-          <Ionicons name="bulb" size={16} color={C.accent} style={styles.hintIcon} />
+          <Ionicons name="bulb-outline" size={16} color={C.sub} style={styles.hintIcon} />
           <Text style={styles.hintTxt}>
             Har bir xomashyo uchun <Text style={styles.bold}>qancha miqdori = qancha so'm</Text> ekanini kiriting.
             Assortiment bo'limida gramm kiritganingizda narx <Text style={styles.bold}>avtomatik</Text> hisoblanadi.
@@ -49,7 +49,7 @@ export function MahsulotNarxi() {
                 <Text style={styles.per}>1{unit} = {perUnit ? perUnit.toFixed(2) : "0"} so'm</Text>
                 {kiritilgan ? (
                   <View style={styles.badge}>
-                    <Ionicons name="checkmark-circle" size={12} color={C.accent} />
+                    <Ionicons name="checkmark-circle-outline" size={12} color={C.sub} />
                     <Text style={styles.badgeTxt}> Narx kiritilgan</Text>
                   </View>
                 ) : (
@@ -107,15 +107,15 @@ const styles = StyleSheet.create({
   item:      { marginBottom: S[3] },
   head:      { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: S[3] },
   headLeft:  { flexDirection: "row", alignItems: "center", gap: S[2], flex: 1 },
-  emojiBox:  { width: 42, height: 42, borderRadius: R.md, alignItems: "center", justifyContent: "center", backgroundColor: C.accent + "0D", borderWidth: 1, borderColor: C.border },
+  emojiBox:  { width: 44, height: 44, borderRadius: R.md, alignItems: "center", justifyContent: "center", backgroundColor: C.panel },
   emoji:     { fontSize: 20 },
   flex1:     { flex: 1 },
   nom:       { fontSize: T.md, fontWeight: "800", color: C.text },
   sub:       { fontSize: T.xs, color: C.muted, marginTop: 1 },
   headRight: { alignItems: "flex-end" },
-  per:       { fontSize: T.sm, fontWeight: "800", color: C.accent },
+  per:       { fontSize: T.sm, fontWeight: "800", color: C.text },
   badge:     { flexDirection: "row", alignItems: "center", marginTop: 2 },
-  badgeTxt:  { fontSize: 11, color: C.accent, fontWeight: "600" },
+  badgeTxt:  { fontSize: 11, color: C.sub, fontWeight: "600" },
   badgeNo:   { fontSize: 11, color: C.muted, fontWeight: "600" },
 
   inputs:    { flexDirection: "row", gap: S[3] },
@@ -125,5 +125,5 @@ const styles = StyleSheet.create({
 
   example:   { flexDirection: "row", alignItems: "center", marginTop: S[3], backgroundColor: C.surface, borderWidth: 1, borderColor: C.borderSoft, borderRadius: R.sm, paddingVertical: S[2], paddingHorizontal: S[3] },
   exTxt:     { fontSize: T.xs, color: C.sub },
-  exBold:    { fontWeight: "800", color: C.accent },
+  exBold:    { fontWeight: "800", color: C.text },
 });

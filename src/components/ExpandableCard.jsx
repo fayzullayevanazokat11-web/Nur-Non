@@ -52,9 +52,9 @@ export function ExpandableCard({ header, children, defaultOpen = false, style })
 
 const styles = StyleSheet.create({
   card:       { padding: 0 },
-  head:       { flexDirection: "row", alignItems: "center", gap: S[2], paddingVertical: S[3], paddingHorizontal: S[4] },
+  head:       { flexDirection: "row", alignItems: "center", gap: S[2], paddingVertical: S[4], paddingHorizontal: S[5] },
   headClosed: { borderRadius: R.lg },
   headOpen:   { borderTopLeftRadius: R.lg, borderTopRightRadius: R.lg, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: C.borderSoft },
   headLeft:   { flex: 1 },
-  body:       { paddingVertical: S[3], paddingHorizontal: S[4] },
+  body:       { paddingVertical: S[4], paddingHorizontal: S[5] },
 });
