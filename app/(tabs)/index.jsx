@@ -8,7 +8,7 @@ import { useApp } from "../../src/store/AppData";
 import { Card } from "../../src/components/Card";
 import { Btn } from "../../src/components/Btn";
 import { Modal } from "../../src/components/Modal";
-import { ScreenHeader } from "../../src/components/ScreenHeader";
+import { BrandHeader } from "../../src/components/BrandHeader";
 import { ExpandableCard } from "../../src/components/ExpandableCard";
 import { KunlikQopModal } from "../../src/components/KunlikQopModal";
 import { HisobotModal } from "../../src/components/HisobotModal";
@@ -81,7 +81,7 @@ export default function Markaz() {
   return (
     <SafeAreaView style={styles.safe} edges={["top"]}>
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-        <ScreenHeader logo={require("../../assets/logo.jpg")} title="Bosh ko'rsatkichlar" subtitle="Bugungi ish ko'rsatkichlari" icon="home-outline" />
+        <BrandHeader />
 
         <View style={styles.statsRow}>
           <StatTile label="Bugungi sof foyda" unit="so'm" value={formatSom(stats.sofFoyda)} color={stats.sofFoyda >= 0 ? C.green : C.red} icon="trending-up-outline" />
