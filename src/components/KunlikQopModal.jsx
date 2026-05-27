@@ -7,7 +7,7 @@ import { useApp } from "../store/AppData";
 import { Modal } from "./Modal";
 import { Btn } from "./Btn";
 import { C, T, S, R } from "../theme";
-import { hisoblaKunlik, formatSom } from "../logic/hisob";
+import { hisoblaKunlik, formatSom, kunlikXomashyoSarfi } from "../logic/hisob";
 
 const toStr = (obj) => Object.fromEntries(Object.entries(obj || {}).map(([k, v]) => [k, String(v)]));
 
@@ -16,6 +16,7 @@ export function KunlikQopModal({ visible, onClose, onTasdiq }) {
     nonlar, ishchilar, optomlar, qarzlar, mahsulotNarxlari,
     ozIshlabQoplar, setOzIshlabQoplar, tashqariSonlar, setTashqariSonlar,
     sotilmaganNon, setSotilmaganNon, hisobotlarTarixi, setHisobotlarTarixi,
+    setOmborSorovlar,
   } = useApp();
 
   const [fQop, setFQop] = useState({});
@@ -70,6 +71,14 @@ export function KunlikQopModal({ visible, onClose, onTasdiq }) {
     };
     // Bir kunda bitta hisobot — o'sha sanani almashtiramiz
     setHisobotlarTarixi((prev) => [snapshot, ...(prev || []).filter((h) => h.sana !== sana)]);
+
+    // Omborga so'rovnoma — xomashyo AVTOMATIK ketmaydi; ombor bo'limida tasdiqlanadi.
+    const sarf = kunlikXomashyoSarfi(nonlar, fQop);
+    if (sarf.length > 0) {
+      const sorov = { id: Date.now() + 1, sana, vaqt: Date.now(), manba: "Kunlik qop hisobi", maydonlar: sarf };
+      setOmborSorovlar((prev) => [sorov, ...(prev || []).filter((s) => s.sana !== sana)]);
+    }
+
     // Yakuniy hisobot modalini ochish (Karta/Optom/Qarz integratsiyasi bilan)
     if (onTasdiq) onTasdiq();
     else onClose();

@@ -115,6 +115,26 @@ export function omborBalans(omborlar) {
   return Object.values(balans);
 }
 
+// Kunlik qop hisobidan kelib chiqadigan xomashyo sarfi (faqat ombordagi mahsulotlar).
+// Retsept birligi g/ml → ombor bazasi kg/litr (1000 ga bo'linadi).
+// Natija: [{ id, nom, emoji, birlik, qiymat }] — qiymat = ketadigan miqdor (baza birlikda).
+export function kunlikXomashyoSarfi(nonlar, ozIshlabQoplar) {
+  const agg = {};
+  (nonlar || []).forEach((n) => {
+    if (n.ozIshlab === false) return;
+    const qop = parseFloat((ozIshlabQoplar || {})[n.id]) || 0;
+    if (qop <= 0) return;
+    (n.mahsulotlar || []).forEach((m) => {
+      const om = OMBOR_MAYDONLAR.find((x) => x.id === m.id);
+      if (!om) return; // faqat ombordagi (tracked) mahsulotlar
+      const miq = (parseFloat(m.miqdor) || 0) * qop;
+      if (!agg[m.id]) agg[m.id] = { id: m.id, nom: om.nom, emoji: om.emoji, birlik: om.birlik, qiymat: 0 };
+      agg[m.id].qiymat += miq / 1000;
+    });
+  });
+  return Object.values(agg).filter((x) => x.qiymat > 0);
+}
+
 // Faol (to'lanmagan) qarzlar jami
 export function qarzJami(qarzlar) {
   const faol = (qarzlar || []).filter((q) => !q.tolangan);

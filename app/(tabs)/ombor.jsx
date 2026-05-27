@@ -1,6 +1,6 @@
 // "Ombor" ekrani — mavjud zaxira + "Yangi set kiritish" modali.
 import { useMemo, useState } from "react";
-import { View, Text, ScrollView, TextInput, StyleSheet, Alert } from "react-native";
+import { View, Text, ScrollView, TextInput, Pressable, StyleSheet, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 
@@ -17,13 +17,33 @@ import { OMBOR_MAYDONLAR } from "../../src/logic/konstantalar";
 const boshForma = () => Object.fromEntries(OMBOR_MAYDONLAR.map((m) => [m.id, ""]));
 
 export default function Ombor() {
-  const { omborlar, setOmborlar } = useApp();
+  const { omborlar, setOmborlar, omborSorovlar, setOmborSorovlar } = useApp();
 
   const [modalOchiq, setModalOchiq] = useState(false);
   const [forma, setForma] = useState(boshForma());
 
   const balans = useMemo(() => omborBalans(omborlar), [omborlar]);
   const setSoni = (omborlar || []).filter((h) => h.turi === "yangiset").length;
+
+  // So'rovnomani tasdiqlash — xomashyo ombordan AYRILADI (manfiy xarajat yozuvi).
+  const tasdiqlaSorov = (sorov) => {
+    const entry = {
+      id: Date.now(),
+      sana: new Date().toISOString().split("T")[0],
+      vaqt: Date.now(),
+      turi: "xarajat",
+      manba: sorov.manba,
+      maydonlar: (sorov.maydonlar || []).map((m) => ({ ...m, qiymat: -(parseFloat(m.qiymat) || 0) })),
+    };
+    setOmborlar((prev) => [entry, ...prev]);
+    setOmborSorovlar((prev) => (prev || []).filter((s) => s.id !== sorov.id));
+  };
+
+  const radEtSorov = (sorov) =>
+    Alert.alert("Rad etish", "Bu so'rovnomani rad etasizmi? Xomashyo ayrilmaydi.", [
+      { text: "Bekor", style: "cancel" },
+      { text: "Rad etish", style: "destructive", onPress: () => setOmborSorovlar((prev) => (prev || []).filter((s) => s.id !== sorov.id)) },
+    ]);
 
   const ochModal = () => { setForma(boshForma()); setModalOchiq(true); };
   const yopModal = () => setModalOchiq(false);
@@ -77,6 +97,39 @@ export default function Ombor() {
             })}
           </View>
         </Card>
+
+        {(omborSorovlar || []).length > 0 && (
+          <>
+            <View style={styles.secHead}>
+              <Ionicons name="documents-outline" size={15} color={C.sub} />
+              <Text style={styles.secTitle}>OMBOR SO'ROVNOMALARI</Text>
+              <Text style={styles.secCount}>{omborSorovlar.length} ta</Text>
+            </View>
+            {omborSorovlar.map((sorov) => (
+              <Card key={sorov.id} style={styles.sorov}>
+                <View style={styles.sorovHead}>
+                  <View style={styles.flex1}>
+                    <Text style={styles.sorovManba}>{sorov.manba}</Text>
+                    <Text style={styles.muted}>{sorov.sana} · ketadigan xomashyo</Text>
+                  </View>
+                  <Pressable accessibilityLabel="Rad etish" onPress={() => radEtSorov(sorov)} hitSlop={8} style={styles.radBtn}>
+                    <Ionicons name="close-outline" size={18} color={C.muted} />
+                  </Pressable>
+                </View>
+                <View style={styles.sorovList}>
+                  {sorov.maydonlar.map((m) => (
+                    <View key={m.id} style={styles.sorovRow}>
+                      <Text style={styles.sorovNom} numberOfLines={1}>{m.emoji} {m.nom}</Text>
+                      <Text style={styles.sorovVal}>− {zaxiraMatni(m.id, m.qiymat, m.birlik)}</Text>
+                    </View>
+                  ))}
+                </View>
+                <Btn onPress={() => tasdiqlaSorov(sorov)} icon="checkmark-outline">Tasdiqlash va chiqarish</Btn>
+              </Card>
+            ))}
+            <View style={styles.gap14} />
+          </>
+        )}
 
         <View style={styles.gap14} />
         <Btn color={C.blue} onPress={ochModal} icon="add-outline">Yangi set kiritish</Btn>
@@ -141,6 +194,19 @@ const styles = StyleSheet.create({
   cell:      { width: "48%", backgroundColor: C.surface, borderWidth: 1, borderColor: C.borderSoft, borderRadius: R.sm, paddingVertical: S[2], paddingHorizontal: S[3], flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
   cellNom:   { fontSize: 10, color: C.sub, fontWeight: "600", flexShrink: 1 },
   cellVal:   { fontSize: T.xs, fontWeight: "700", marginLeft: S[1] },
+
+  // So'rovnomalar
+  secHead:   { flexDirection: "row", alignItems: "center", gap: 6, marginTop: S[6], marginBottom: S[3] },
+  secTitle:  { fontSize: T.xs, color: C.sub, fontWeight: "700", letterSpacing: 1, flex: 1 },
+  secCount:  { fontSize: T.sm, color: C.sub, fontWeight: "700" },
+  sorov:     { marginBottom: S[3] },
+  sorovHead: { flexDirection: "row", alignItems: "flex-start", marginBottom: S[3] },
+  sorovManba:{ fontSize: T.md, fontWeight: "800", color: C.text },
+  radBtn:    { padding: 4 },
+  sorovList: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: C.borderSoft, paddingTop: S[3], marginBottom: S[3] },
+  sorovRow:  { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: S[2] },
+  sorovNom:  { fontSize: T.sm, color: C.text, flex: 1 },
+  sorovVal:  { fontSize: T.sm, fontWeight: "800", color: C.red, marginLeft: S[2] },
 
   // Modal
   modalHead:  { flexDirection: "row", alignItems: "center", gap: S[2], marginBottom: S[3] },

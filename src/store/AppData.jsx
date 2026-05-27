@@ -21,6 +21,7 @@ export function AppDataProvider({ children }) {
   const [optomlar, setOptomlar]                   = usePersistedState("nurnon:optomlar", []);
   const [kartalar, setKartalar]                   = usePersistedState("nurnon:kartalar", []);
   const [omborlar, setOmborlar]                   = usePersistedState("nurnon:omborlar", []);
+  const [omborSorovlar, setOmborSorovlar]         = usePersistedState("nurnon:omborSorovlar", []);
   const [hisobotlarTarixi, setHisobotlarTarixi]   = usePersistedState("nurnon:hisobotlarTarixi", []);
   const [tasdiqlanganKunlar, setTasdiqlanganKunlar] = usePersistedState("nurnon:tasdiqlanganKunlar", []);
   const [kunlikQoplar, setKunlikQoplar]           = usePersistedState("nurnon:kunlikQoplar", []);
@@ -62,6 +63,7 @@ export function AppDataProvider({ children }) {
     optomlar, setOptomlar,
     kartalar, setKartalar,
     omborlar, setOmborlar,
+    omborSorovlar, setOmborSorovlar,
     hisobotlarTarixi, setHisobotlarTarixi,
     tasdiqlanganKunlar, setTasdiqlanganKunlar,
     kunlikQoplar, setKunlikQoplar,
