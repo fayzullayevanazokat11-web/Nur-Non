@@ -223,7 +223,8 @@ export default function Markaz() {
         onClose={() => setQopOchiq(false)}
         onTasdiq={() => { setQopOchiq(false); setHisobotOchiq(true); }}
       />
-      <HisobotModal visible={hisobotOchiq} onClose={() => setHisobotOchiq(false)} />
+      {/* Hisobot yopilgach Karta bo'limi bo'shaydi (kunlik tasdiqdan keyin yangilanadi) */}
+      <HisobotModal visible={hisobotOchiq} onClose={() => { setHisobotOchiq(false); setKartalar([]); }} />
 
       {/* Universal modal: Qarz / Optom / Karta */}
       <Modal modalVisible={modalTur !== null} onClose={yopModal}>
