@@ -24,6 +24,11 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.nurnon.app"
     },
-    "plugins": ["expo-router"]
+    "plugins": ["expo-router"],
+    "extra": {
+      "eas": {
+        "projectId": "d1b6767d-2885-4d43-8182-7fd1c2b49ea9"
+      }
+    }
   }
 }
