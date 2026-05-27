@@ -8,7 +8,7 @@ export const C = {
   surface: "#FFFFFF",     // input/inset — oq (qaymoq karta ustida toza ko'rinadi)
   card: "#FBF6EC",        // bloklar — yumshoq qaymoq
   panel: "#F6EEDF",       // ichki band / chuqurroq qaymoq
-  border: "#EFE4D1", borderSoft: "#F4ECDD",  // juda yumshoq, past kontrast
+  border: "#E2D2B4", borderSoft: "#EDE2CF",  // sezilarli, lekin yumshoq chegara chizig'i
   accent: "#A0612A", accentDim: "#A0612A12", // jigarrang — FAQAT asosiy harakatlar (tugmalar) uchun
   // Semantik rollar — issiq palitra tonlari (qizil/yashil/ko'k YO'Q):
   red: "#3A1E08", redDim: "#3A1E080D",

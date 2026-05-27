@@ -81,7 +81,7 @@ export default function Markaz() {
   return (
     <SafeAreaView style={styles.safe} edges={["top"]}>
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-        <ScreenHeader eyebrow="Nonvoyxona №1" title="Bosh ko'rsatkichlar" subtitle="Bugungi ish ko'rsatkichlari" icon="home-outline" />
+        <ScreenHeader logo={require("../../assets/logo.jpg")} title="Bosh ko'rsatkichlar" subtitle="Bugungi ish ko'rsatkichlari" icon="home-outline" />
 
         <View style={styles.statsRow}>
           <StatTile label="Bugungi sof foyda" unit="so'm" value={formatSom(stats.sofFoyda)} color={stats.sofFoyda >= 0 ? C.green : C.red} icon="trending-up-outline" />

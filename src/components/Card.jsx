@@ -18,10 +18,10 @@ export function Card({ children, danger = false, accent = false, animate = true,
   }, [animate, v]);
 
   const variant = danger
-    ? { backgroundColor: C.red + "0D", borderWidth: 1, borderColor: C.red + "22" }
+    ? { backgroundColor: C.red + "0D", borderColor: C.red + "2E" }
     : accent
-    ? { backgroundColor: C.accent + "10", borderWidth: 1, borderColor: C.accent + "24" }
-    : { backgroundColor: C.card, borderWidth: 0 };
+    ? { backgroundColor: C.accent + "10", borderColor: C.accent + "33" }
+    : { backgroundColor: C.card, borderColor: C.border };
 
   const entrance = {
     opacity: v,
@@ -34,6 +34,7 @@ export function Card({ children, danger = false, accent = false, animate = true,
 const styles = StyleSheet.create({
   base: {
     borderRadius: R.lg,
+    borderWidth: 1.5,
     padding: S[5],
     ...shadow,
   },
