@@ -2,7 +2,6 @@
   "expo": {
     "name": "Nur-Non",
     "slug": "nur-non",
-    "owner": "nur-non",
     "version": "1.0.0",
     "scheme": "nurnon",
     "orientation": "portrait",
@@ -25,11 +24,6 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.nurnon.app"
     },
-    "plugins": ["expo-router"],
-    "extra": {
-      "eas": {
-        "projectId": "d1b6767d-2885-4d43-8182-7fd1c2b49ea9"
-      }
-    }
+    "plugins": ["expo-router"]
   }
 }
