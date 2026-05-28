@@ -90,8 +90,8 @@ export default function IshlabChiqarish() {
             <Text style={[styles.segTxt, tab === "assortiment" && styles.segTxtActive]}>Assortiment</Text>
           </Pressable>
           <Pressable style={[styles.seg, tab === "narx" && styles.segActive]} onPress={() => setTab("narx")}>
-            <Ionicons name="pricetags-outline" size={15} color={tab === "narx" ? "#FFF3E8" : C.sub} />
-            <Text style={[styles.segTxt, tab === "narx" && styles.segTxtActive]}>Mahsulot narxi</Text>
+            <Ionicons name="leaf-outline" size={15} color={tab === "narx" ? "#FFF3E8" : C.sub} />
+            <Text style={[styles.segTxt, tab === "narx" && styles.segTxtActive]}>Xomashyo</Text>
           </Pressable>
         </View>
         <View style={styles.gap14} />
