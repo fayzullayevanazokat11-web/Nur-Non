@@ -27,13 +27,13 @@ export const S = { 1: 4, 2: 8, 3: 12, 4: 16, 5: 20, 6: 24, 7: 32, 8: 40 };
 // Burchak radiuslari — yumshoqroq (premium)
 export const R = { sm: 14, md: 18, lg: 24, xl: 30, pill: 999 };
 
-// Yumshoq, tarqoq (diffused) iliq soya — bloklarga yengil chuqurlik beradi
+// Yumshoq iliq soya — yengil (ko'p kartali ro'yxatda scroll ravon bo'lishi uchun)
 export const shadow = {
   shadowColor: "#5A3A1A",
-  shadowOpacity: 0.10,
-  shadowRadius: 24,
-  shadowOffset: { width: 0, height: 10 },
-  elevation: 3,
+  shadowOpacity: 0.07,
+  shadowRadius: 10,
+  shadowOffset: { width: 0, height: 3 },
+  elevation: 2,
 };
 
 // Animatsiya — yagona ease-in-out konfiguratsiyasi

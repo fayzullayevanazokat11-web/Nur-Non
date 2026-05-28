@@ -36,7 +36,7 @@ export function ExpandableCard({ header, children, defaultOpen = false, style })
   const headOpacity = press.interpolate({ inputRange: [0, 1], outputRange: [1, 0.6] });
 
   return (
-    <Card style={[styles.card, style]}>
+    <Card animate={false} style={[styles.card, style]}>
       <Pressable onPress={toggle} onPressIn={() => animatePress(1)} onPressOut={() => animatePress(0)}>
         <Animated.View style={[styles.head, open ? styles.headOpen : styles.headClosed, { opacity: headOpacity }]}>
           <View style={styles.headLeft}>{header}</View>
