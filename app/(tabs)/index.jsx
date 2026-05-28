@@ -25,7 +25,7 @@ export default function Markaz() {
   const {
     nonlar, ishchilar, qarzlar, setQarzlar, optomlar, setOptomlar, kartalar, setKartalar,
     ozIshlabQoplar, tashqariSonlar, sotilmaganNon, mahsulotNarxlari,
-    hisobotlarTarixi, setHisobotlarTarixi,
+    hisobotlarTarixi, setHisobotlarTarixi, braklar, setBraklar,
   } = useApp();
 
   const ochirHisobot = (id) =>
@@ -35,8 +35,8 @@ export default function Markaz() {
     ]);
 
   const stats = useMemo(
-    () => hisoblaKunlik({ nonlar, ishchilar, ozIshlabQoplar, tashqariSonlar, sotilmaganNon, optomlar, qarzlar, mahsulotNarxlari }),
-    [nonlar, ishchilar, ozIshlabQoplar, tashqariSonlar, sotilmaganNon, optomlar, qarzlar, mahsulotNarxlari]
+    () => hisoblaKunlik({ nonlar, ishchilar, ozIshlabQoplar, tashqariSonlar, sotilmaganNon, optomlar, qarzlar, mahsulotNarxlari, braklar }),
+    [nonlar, ishchilar, ozIshlabQoplar, tashqariSonlar, sotilmaganNon, optomlar, qarzlar, mahsulotNarxlari, braklar]
   );
 
   const qarz = useMemo(() => qarzJami(qarzlar), [qarzlar]);
@@ -47,6 +47,30 @@ export default function Markaz() {
   const [forma, setForma] = useState(BOSH_FORMA);
   const [qopOchiq, setQopOchiq] = useState(false);
   const [hisobotOchiq, setHisobotOchiq] = useState(false);
+  const [brakModal, setBrakModal] = useState(false);
+  const [brakForma, setBrakForma] = useState({ ishchiId: null, nonNomi: "", soni: "" });
+
+  const qopIshchilar = (ishchilar || []).filter((w) => w.haqTuri === "qop" && w.holat === "Aktiv");
+  const brakIshchi = qopIshchilar.find((w) => w.id === brakForma.ishchiId);
+  const brakSumma = (parseFloat((brakIshchi?.nonNarxlari || {})[brakForma.nonNomi]) || 0) * (parseFloat(brakForma.soni) || 0);
+  const ochBrak = () => { setBrakForma({ ishchiId: null, nonNomi: "", soni: "" }); setBrakModal(true); };
+  const saqlaBrak = () => {
+    if (!brakIshchi || !brakForma.nonNomi || !(parseFloat(brakForma.soni) > 0)) {
+      Alert.alert("To'liq emas", "Ishchi, non turi va brak sonini kiriting.");
+      return;
+    }
+    setBraklar((prev) => [...prev, {
+      id: Date.now(), sana: localSana(), vaqt: Date.now(),
+      ishchiId: brakIshchi.id, ishchiIsm: brakIshchi.ism, nonNomi: brakForma.nonNomi,
+      soni: parseFloat(brakForma.soni), summa: brakSumma,
+    }]);
+    setBrakModal(false);
+  };
+  const ochirBrak = (id) =>
+    Alert.alert("O'chirish", "Bu brakni o'chirasizmi?", [
+      { text: "Bekor", style: "cancel" },
+      { text: "Ha", style: "destructive", onPress: () => setBraklar((p) => p.filter((b) => b.id !== id)) },
+    ]);
 
   const ochModal = (tur) => { setForma({ ...BOSH_FORMA, sana: localSana() }); setModalTur(tur); };
   const yopModal = () => setModalTur(null);
@@ -284,7 +308,82 @@ export default function Markaz() {
             </ExpandableCard>
           ))
         )}
+
+        {/* BRAK */}
+        <SectionHead icon="alert-circle-outline" nom="BRAK" sum={`${(braklar || []).length} ta`} color={C.red} style={{ marginTop: S[6] }} />
+        <Btn color={C.accent} onPress={ochBrak} icon="add-outline">Brak qo'shish</Btn>
+        <View style={styles.gap10} />
+        {(braklar || []).length === 0 ? <Text style={styles.bosh}>Hali brak yo'q</Text> : (
+          [...braklar].reverse().map((b) => (
+            <ExpandableCard
+              key={b.id}
+              style={styles.item}
+              header={
+                <View style={styles.mHead}>
+                  <Text style={[styles.itemIsm, styles.flex1]} numberOfLines={1}>{b.ishchiIsm}</Text>
+                  <Text style={[styles.itemSumma, { color: C.red }]} numberOfLines={1}>− {formatSom(b.summa)} so'm</Text>
+                </View>
+              }
+            >
+              <Text style={styles.itemIzoh}>{b.nonNomi} · {b.soni} qop brak</Text>
+              <Text style={styles.itemSana}>{b.sana}</Text>
+              <View style={styles.actions}>
+                <Pressable onPress={() => ochirBrak(b.id)} hitSlop={6} style={styles.actBtn}>
+                  <Ionicons name="trash-outline" size={16} color={C.red} />
+                  <Text style={[styles.actTxt, { color: C.red }]}> O'chirish</Text>
+                </Pressable>
+              </View>
+            </ExpandableCard>
+          ))
+        )}
       </ScrollView>
+
+      {/* Brak modali */}
+      <Modal modalVisible={brakModal} onClose={() => setBrakModal(false)}>
+        <View style={styles.modalHead}>
+          <Ionicons name="alert-circle-outline" size={20} color={C.sub} />
+          <Text style={styles.modalTitle}>Brak qo'shish</Text>
+        </View>
+        <ScrollView style={styles.formScroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+          <Text style={styles.inputLabel}>Ishchi (qopdan haq oladigan)</Text>
+          {qopIshchilar.length === 0 ? (
+            <Text style={styles.muted}>Qopdan haq oladigan aktiv ishchi yo'q.</Text>
+          ) : (
+            qopIshchilar.map((w) => (
+              <Pressable key={w.id} onPress={() => setBrakForma((p) => ({ ...p, ishchiId: w.id, nonNomi: "" }))} style={[styles.pickRow, brakForma.ishchiId === w.id && styles.pickRowActive]}>
+                <Ionicons name={brakForma.ishchiId === w.id ? "radio-button-on-outline" : "ellipse-outline"} size={16} color={brakForma.ishchiId === w.id ? C.accent : C.muted} />
+                <Text style={[styles.pickTxt, brakForma.ishchiId === w.id && styles.pickTxtActive]}>{w.ism}</Text>
+              </Pressable>
+            ))
+          )}
+
+          {brakIshchi && (
+            <>
+              <Text style={styles.inputLabel}>Non turi</Text>
+              {(brakIshchi.nonTurlari || []).map((nom) => (
+                <Pressable key={nom} onPress={() => setBrakForma((p) => ({ ...p, nonNomi: nom }))} style={[styles.pickRow, brakForma.nonNomi === nom && styles.pickRowActive]}>
+                  <Ionicons name={brakForma.nonNomi === nom ? "radio-button-on-outline" : "ellipse-outline"} size={16} color={brakForma.nonNomi === nom ? C.accent : C.muted} />
+                  <Text style={[styles.pickTxt, brakForma.nonNomi === nom && styles.pickTxtActive]}>{nom} · {formatSom((brakIshchi.nonNarxlari || {})[nom])} so'm/qop</Text>
+                </Pressable>
+              ))}
+
+              <Text style={styles.inputLabel}>Nechta qop brak</Text>
+              <TextInput value={brakForma.soni} onChangeText={(v) => setBrakForma((p) => ({ ...p, soni: v }))} placeholder="0" placeholderTextColor={C.muted} keyboardType="numeric" style={styles.input} />
+
+              {brakSumma > 0 && (
+                <View style={styles.preview}>
+                  <View style={styles.previewRow}><Text style={styles.previewLabel}>Haqdan ayriladi</Text><Text style={[styles.previewVal, { color: C.red }]}>− {formatSom(brakSumma)} so'm</Text></View>
+                </View>
+              )}
+            </>
+          )}
+        </ScrollView>
+        <View style={styles.gap12} />
+        <View style={styles.modalRow}>
+          <View style={styles.flex1}><Btn secondary onPress={() => setBrakModal(false)}>Bekor</Btn></View>
+          <View style={styles.flex1}><Btn color={C.accent} onPress={saqlaBrak}>Saqlash</Btn></View>
+        </View>
+      </Modal>
 
       {/* Kunlik qop hisobi modali → Tasdiqlashda yakuniy hisobot ochiladi */}
       <KunlikQopModal
@@ -449,6 +548,10 @@ const styles = StyleSheet.create({
   savatLine: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 4 },
   savatLNom: { flex: 1, fontSize: T.sm, color: C.text },
   savatLV:   { fontSize: T.xs, color: C.sub, fontWeight: "700", marginLeft: S[2] },
+  pickRow:   { flexDirection: "row", alignItems: "center", gap: S[2], borderWidth: 1, borderColor: C.border, borderRadius: R.md, paddingVertical: 11, paddingHorizontal: 12, marginBottom: S[2], backgroundColor: C.surface },
+  pickRowActive: { borderColor: C.accent, backgroundColor: C.accent + "0D" },
+  pickTxt:   { fontSize: T.sm, color: C.sub, fontWeight: "600", flexShrink: 1 },
+  pickTxtActive: { color: C.accent, fontWeight: "700" },
   preview:   { marginTop: S[3], backgroundColor: C.green + "0D", borderWidth: 1, borderColor: C.green + "2E", borderRadius: R.md, padding: S[3] },
   previewTitle: { fontSize: T.xs, color: C.sub, fontWeight: "600", marginBottom: S[2], letterSpacing: 0.3 },
   previewRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: S[1] },

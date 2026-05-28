@@ -38,7 +38,7 @@ function divertedByNon(optomlar, qarzlar) {
 // Kunlik ko'rsatkichlar (sof foyda, sotilgan, qop)
 export function hisoblaKunlik({
   nonlar = [], ishchilar = [], ozIshlabQoplar = {}, tashqariSonlar = {},
-  sotilmaganNon = {}, optomlar = [], qarzlar = [], mahsulotNarxlari = {},
+  sotilmaganNon = {}, optomlar = [], qarzlar = [], mahsulotNarxlari = {}, braklar = [],
 }) {
   const diverted = divertedByNon(optomlar, qarzlar);
   let jamiNon = 0, jamiQop = 0, jamiSotilmagan = 0, daromad = 0, xomashyo = 0;
@@ -81,13 +81,18 @@ export function hisoblaKunlik({
     .filter((w) => w.holat === "Aktiv" && w.haqTuri === "kunlik")
     .forEach((w) => { ishchiHaq += parseFloat(w.miqdor) || 0; });
 
+  // Brak: qopdan pul oladigan ishchining brak qilgan ishi haqidan ayriladi
+  const brakAyirma = (braklar || []).reduce((s, b) => s + (parseFloat(b.summa) || 0), 0);
+  ishchiHaq = Math.max(0, ishchiHaq - brakAyirma);
+
   const malumotBor = jamiQop > 0 || jamiNon > 0;
   const sofFoyda = malumotBor ? Math.round(daromad - xomashyo - ishchiHaq) : 0;
   const sotilganNon = Math.max(0, jamiNon - jamiSotilmagan);
 
   return {
     sofFoyda, jamiNon, jamiQop, sotilganNon,
-    daromad: Math.round(daromad), xomashyo: Math.round(xomashyo), ishchiHaq: Math.round(ishchiHaq),
+    daromad: Math.round(daromad), xomashyo: Math.round(xomashyo),
+    ishchiHaq: Math.round(ishchiHaq), brakAyirma: Math.round(brakAyirma),
   };
 }
 
