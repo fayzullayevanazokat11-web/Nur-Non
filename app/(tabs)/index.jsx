@@ -52,7 +52,14 @@ export default function Markaz() {
 
   const qopIshchilar = (ishchilar || []).filter((w) => w.haqTuri === "qop" && w.holat === "Aktiv");
   const brakIshchi = qopIshchilar.find((w) => w.id === brakForma.ishchiId);
-  const brakSumma = (parseFloat((brakIshchi?.nonNarxlari || {})[brakForma.nonNomi]) || 0) * (parseFloat(brakForma.soni) || 0);
+  // 1 dona non haqi = qop narxi / 1 qopdagi non soni
+  const donaHaqi = (w, nom) => {
+    const qopNarx = parseFloat((w?.nonNarxlari || {})[nom]) || 0;
+    const non = (nonlar || []).find((n) => n.nom === nom);
+    const son = parseFloat(non?.nonSoni) || 0;
+    return son > 0 ? qopNarx / son : 0;
+  };
+  const brakSumma = Math.round(donaHaqi(brakIshchi, brakForma.nonNomi) * (parseFloat(brakForma.soni) || 0));
   const ochBrak = () => { setBrakForma({ ishchiId: null, nonNomi: "", soni: "" }); setBrakModal(true); };
   const saqlaBrak = () => {
     if (!brakIshchi || !brakForma.nonNomi || !(parseFloat(brakForma.soni) > 0)) {
@@ -325,7 +332,7 @@ export default function Markaz() {
                 </View>
               }
             >
-              <Text style={styles.itemIzoh}>{b.nonNomi} · {b.soni} qop brak</Text>
+              <Text style={styles.itemIzoh}>{b.nonNomi} · {b.soni} dona brak</Text>
               <Text style={styles.itemSana}>{b.sana}</Text>
               <View style={styles.actions}>
                 <Pressable onPress={() => ochirBrak(b.id)} hitSlop={6} style={styles.actBtn}>
@@ -363,11 +370,11 @@ export default function Markaz() {
               {(brakIshchi.nonTurlari || []).map((nom) => (
                 <Pressable key={nom} onPress={() => setBrakForma((p) => ({ ...p, nonNomi: nom }))} style={[styles.pickRow, brakForma.nonNomi === nom && styles.pickRowActive]}>
                   <Ionicons name={brakForma.nonNomi === nom ? "radio-button-on-outline" : "ellipse-outline"} size={16} color={brakForma.nonNomi === nom ? C.accent : C.muted} />
-                  <Text style={[styles.pickTxt, brakForma.nonNomi === nom && styles.pickTxtActive]}>{nom} · {formatSom((brakIshchi.nonNarxlari || {})[nom])} so'm/qop</Text>
+                  <Text style={[styles.pickTxt, brakForma.nonNomi === nom && styles.pickTxtActive]}>{nom} · {formatSom(donaHaqi(brakIshchi, nom))} so'm/dona</Text>
                 </Pressable>
               ))}
 
-              <Text style={styles.inputLabel}>Nechta qop brak</Text>
+              <Text style={styles.inputLabel}>Nechta dona brak</Text>
               <TextInput value={brakForma.soni} onChangeText={(v) => setBrakForma((p) => ({ ...p, soni: v }))} placeholder="0" placeholderTextColor={C.muted} keyboardType="numeric" style={styles.input} />
 
               {brakSumma > 0 && (
