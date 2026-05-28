@@ -13,6 +13,15 @@ export function getQopTannarx(non, narxlar) {
   return (non.mahsulotlar || []).reduce((s, m) => s + getIngNarx(m, narxlar), 0);
 }
 
+// Bitta nondan qoladigan foyda: o'zimizniki → narx − (1 qop xomashyo / non soni);
+// tashqaridan → tashqariFoyda (to'g'ridan kiritilgan).
+export function donaFoyda(non, narxlar) {
+  if (non.ozIshlab === false) return parseFloat(non.tashqariFoyda) || 0;
+  const son = parseFloat(non.nonSoni) || 0;
+  if (son <= 0) return 0;
+  return Math.round((parseFloat(non.narx) || 0) - getQopTannarx(non, narxlar) / son);
+}
+
 // Bugun optom/qarz orqali ketgan nonlar (kunlik hisobdan ayriladi)
 function divertedByNon(optomlar, qarzlar) {
   const bugun = new Date().toISOString().split("T")[0];

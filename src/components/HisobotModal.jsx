@@ -17,7 +17,8 @@ export function HisobotModal({ visible, onClose }) {
   } = useApp();
 
   const data = useMemo(() => {
-    const bugun = new Date().toISOString().split("T")[0];
+    const d = new Date();
+    const bugun = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
     const kunlik = hisoblaKunlik({
       nonlar, ishchilar, ozIshlabQoplar, tashqariSonlar, sotilmaganNon, optomlar, qarzlar, mahsulotNarxlari,
     });
@@ -26,13 +27,14 @@ export function HisobotModal({ visible, onClose }) {
     const qarzB = (qarzlar || []).filter((q) => q.sana === bugun);
     const kartaB = (kartalar || []).filter((k) => k.sana === bugun);
     const optomSum = sum(optomB, "summa");
+    const optomFoyda = sum(optomB, "sofFoyda");
     const qarzSum = sum(qarzB, "summa");
     const kartaSum = sum(kartaB, "summa");
     const kartaFoyda = sum(kartaB, "sofFoyda");
     const kartaDona = sum(kartaB, "dona");
-    // Umumiy foyda = ishlab chiqarish sof foydasi + karta sof foydasi + optom savdo
-    const umumiy = kunlik.sofFoyda + kartaFoyda + optomSum;
-    return { bugun, kunlik, optomSum, optomSoni: optomB.length, qarzSum, qarzSoni: qarzB.length, kartaSum, kartaFoyda, kartaDona, kartaSoni: kartaB.length, umumiy };
+    // Umumiy foyda = ishlab chiqarish + karta sof foydasi + optom SOF FOYDASI (chegirma ayrilgan)
+    const umumiy = kunlik.sofFoyda + kartaFoyda + optomFoyda;
+    return { bugun, kunlik, optomSum, optomFoyda, optomSoni: optomB.length, qarzSum, qarzSoni: qarzB.length, kartaSum, kartaFoyda, kartaDona, kartaSoni: kartaB.length, umumiy };
   }, [nonlar, ishchilar, ozIshlabQoplar, tashqariSonlar, sotilmaganNon, qarzlar, optomlar, kartalar, mahsulotNarxlari]);
 
   return (
@@ -63,7 +65,8 @@ export function HisobotModal({ visible, onClose }) {
         {/* Optom */}
         <View style={[styles.block, { backgroundColor: C.blue + "0D", borderColor: C.blue + "2E" }]}>
           <Text style={[styles.blockHead, { color: C.blue }]}>Optom savdolar (bugun)</Text>
-          <Row label={`${data.optomSoni} ta savdo`} value={`${formatSom(data.optomSum)} so'm`} bold />
+          <Row label={`${data.optomSoni} ta savdo`} value={`${formatSom(data.optomSum)} so'm`} />
+          <Row label="Sof foyda (chegirma ayrilgan)" value={`${formatSom(data.optomFoyda)} so'm`} color={C.blue} bold />
         </View>
 
         {/* Qarz */}
@@ -78,7 +81,7 @@ export function HisobotModal({ visible, onClose }) {
           <Text style={styles.umumiyLabel}>UMUMIY FOYDA</Text>
           <Text style={[styles.umumiyVal, { color: data.umumiy >= 0 ? C.green : C.red }]}>{formatSom(data.umumiy)} so'm</Text>
           <Text style={styles.umumiyForm}>
-            Kunlik {formatSom(data.kunlik.sofFoyda)} + Karta {formatSom(data.kartaFoyda)} + Optom {formatSom(data.optomSum)}
+            Kunlik {formatSom(data.kunlik.sofFoyda)} + Karta {formatSom(data.kartaFoyda)} + Optom {formatSom(data.optomFoyda)}
           </Text>
         </View>
       </ScrollView>

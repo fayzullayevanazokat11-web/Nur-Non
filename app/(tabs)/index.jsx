@@ -13,9 +13,13 @@ import { ExpandableCard } from "../../src/components/ExpandableCard";
 import { KunlikQopModal } from "../../src/components/KunlikQopModal";
 import { HisobotModal } from "../../src/components/HisobotModal";
 import { C, T, S, R } from "../../src/theme";
-import { hisoblaKunlik, formatSom, qarzJami, optomJami, kartaJami, kartaHisob } from "../../src/logic/hisob";
+import { hisoblaKunlik, formatSom, qarzJami, optomJami, kartaJami, kartaHisob, donaFoyda } from "../../src/logic/hisob";
 
-const BOSH_FORMA = { ism: "", summa: "", izoh: "" };
+const BOSH_FORMA = { ism: "", summa: "", izoh: "", sana: "", savat: {}, donaChegirma: "", chegirma: "" };
+const localSana = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+};
 
 export default function Markaz() {
   const {
@@ -24,7 +28,11 @@ export default function Markaz() {
     hisobotlarTarixi, setHisobotlarTarixi,
   } = useApp();
 
-  const ochirHisobot = (id) => setHisobotlarTarixi((p) => p.filter((h) => h.id !== id));
+  const ochirHisobot = (id) =>
+    Alert.alert("O'chirish", "Shu sanadagi hisobotni o'chirasizmi?", [
+      { text: "Bekor", style: "cancel" },
+      { text: "Ha", style: "destructive", onPress: () => setHisobotlarTarixi((p) => p.filter((h) => h.id !== id)) },
+    ]);
 
   const stats = useMemo(
     () => hisoblaKunlik({ nonlar, ishchilar, ozIshlabQoplar, tashqariSonlar, sotilmaganNon, optomlar, qarzlar, mahsulotNarxlari }),
@@ -40,33 +48,63 @@ export default function Markaz() {
   const [qopOchiq, setQopOchiq] = useState(false);
   const [hisobotOchiq, setHisobotOchiq] = useState(false);
 
-  const ochModal = (tur) => { setForma(BOSH_FORMA); setModalTur(tur); };
+  const ochModal = (tur) => { setForma({ ...BOSH_FORMA, sana: localSana() }); setModalTur(tur); };
   const yopModal = () => setModalTur(null);
   const yangila = (k, v) => setForma((p) => ({ ...p, [k]: v }));
+  const yangilaSavat = (id, v) => setForma((p) => ({ ...p, savat: { ...p.savat, [id]: v } }));
 
   const kartaModal = modalTur === "karta";
   const qarzModal = modalTur === "qarz";
 
-  // Karta modali uchun jonli hisob: kiritilgan narxdan ~nechta non va sof foyda
+  // Karta modali uchun jonli hisob
   const preview = useMemo(
     () => (kartaModal ? kartaHisob(parseFloat(forma.summa) || 0, nonlar, mahsulotNarxlari) : null),
     [kartaModal, forma.summa, nonlar, mahsulotNarxlari]
   );
 
+  // Qarz/Optom savati jonli hisobi (non × soni → summa, foyda, chegirma)
+  const savatHisob = useMemo(() => {
+    let summa = 0, dona = 0, foyda = 0;
+    const items = [];
+    (nonlar || []).forEach((n) => {
+      const soni = parseInt(forma.savat[n.id]) || 0;
+      if (soni <= 0) return;
+      const narx = parseFloat(n.narx) || 0;
+      summa += soni * narx;
+      dona += soni;
+      foyda += soni * donaFoyda(n, mahsulotNarxlari);
+      items.push({ nonNomi: n.nom, soni, narx });
+    });
+    const dch = qarzModal ? 0 : (parseFloat(forma.donaChegirma) || 0);
+    const ch = parseFloat(forma.chegirma) || 0;
+    const jamiChegirma = dch * dona + ch;
+    return { summa, dona, foyda, items, jamiChegirma, yakSumma: Math.max(0, summa - jamiChegirma), yakFoyda: foyda - jamiChegirma };
+  }, [forma.savat, forma.donaChegirma, forma.chegirma, qarzModal, nonlar, mahsulotNarxlari]);
+
   const saqla = () => {
-    const summa = parseFloat(forma.summa) || 0;
-    const sana = new Date().toISOString().split("T")[0];
-    if (!summa || (!kartaModal && !forma.ism.trim())) {
-      Alert.alert("Maydonlar to'liq emas", kartaModal ? "Iltimos, summani kiriting." : "Iltimos, ism va summani kiriting.");
-      return;
-    }
-    if (modalTur === "qarz") {
-      setQarzlar((prev) => [...prev, { id: Date.now(), ism: forma.ism.trim(), summa, izoh: forma.izoh.trim(), sana, vaqt: Date.now(), tolangan: false, tolanganVaqt: null }]);
-    } else if (modalTur === "optom") {
-      setOptomlar((prev) => [...prev, { id: Date.now(), ism: forma.ism.trim(), summa, izoh: forma.izoh.trim(), sana, vaqt: Date.now() }]);
-    } else {
+    const sana = forma.sana || localSana();
+    if (kartaModal) {
+      const summa = parseFloat(forma.summa) || 0;
+      if (!summa) { Alert.alert("Maydon to'liq emas", "Iltimos, summani kiriting."); return; }
       const pv = kartaHisob(summa, nonlar, mahsulotNarxlari);
       setKartalar((prev) => [...prev, { id: Date.now(), summa, izoh: forma.izoh.trim(), sana, vaqt: Date.now(), dona: pv.dona, sofFoyda: pv.sofFoyda }]);
+      yopModal();
+      return;
+    }
+    if (!forma.ism.trim()) { Alert.alert("Ism kiritilmagan", "Iltimos, oluvchi ismini kiriting."); return; }
+    if (savatHisob.items.length === 0) { Alert.alert("Non tanlanmagan", "Kamida bitta non turidan soni kiriting."); return; }
+    if (modalTur === "qarz") {
+      setQarzlar((prev) => [...prev, {
+        id: Date.now(), ism: forma.ism.trim(), sana, vaqt: Date.now(),
+        savat: savatHisob.items, summa: savatHisob.yakSumma, chegirma: savatHisob.jamiChegirma,
+        izoh: forma.izoh.trim(), tolangan: false, tolanganVaqt: null,
+      }]);
+    } else {
+      setOptomlar((prev) => [...prev, {
+        id: Date.now(), ism: forma.ism.trim(), sana, vaqt: Date.now(),
+        savat: savatHisob.items, summa: savatHisob.yakSumma, chegirma: savatHisob.jamiChegirma,
+        sofFoyda: savatHisob.yakFoyda, izoh: forma.izoh.trim(),
+      }]);
     }
     yopModal();
   };
@@ -75,8 +113,6 @@ export default function Markaz() {
   const ochirQarz = (id) => setQarzlar((prev) => prev.filter((q) => q.id !== id));
   const ochirOptom = (id) => setOptomlar((prev) => prev.filter((o) => o.id !== id));
   const ochirKarta = (id) => setKartalar((prev) => prev.filter((k) => k.id !== id));
-
-  const akcent = qarzModal ? C.red : kartaModal ? C.green : C.blue;
 
   return (
     <SafeAreaView style={styles.safe} edges={["top"]}>
@@ -115,7 +151,25 @@ export default function Markaz() {
                 </View>
               }
             >
-              <Text style={styles.itemIzoh}>{h.jamiNon || 0} dona · {h.jamiQop || 0} qop · {h.sotilganNon || 0} sotilgan</Text>
+              <View style={styles.histWrap}>
+                {(h.nonlarSnapshot || nonlar).map((n) => {
+                  const oz = n.ozIshlab !== false;
+                  const q = oz ? (parseInt((h.ozIshlabQoplar || {})[n.id]) || 0) : (parseInt((h.tashqariSonlar || {})[n.id]) || 0);
+                  if (q <= 0) return null;
+                  return (
+                    <View key={n.id} style={styles.histRow}>
+                      <Text style={styles.histNom} numberOfLines={1}>{n.nom}</Text>
+                      <Text style={styles.histVal}>{q} {oz ? "qop" : "dona"}</Text>
+                    </View>
+                  );
+                })}
+                <View style={styles.histDiv} />
+                <View style={styles.histRow}><Text style={styles.histNom}>Daromad</Text><Text style={styles.histVal}>{formatSom(h.daromad)} so'm</Text></View>
+                <View style={styles.histRow}><Text style={styles.histNom}>Xomashyo</Text><Text style={styles.histVal}>{formatSom(h.xomashyo)} so'm</Text></View>
+                <View style={styles.histRow}><Text style={styles.histNom}>Ishchi haqi</Text><Text style={styles.histVal}>{formatSom(h.ishchiHaq)} so'm</Text></View>
+                <View style={styles.histRow}><Text style={styles.histNom}>Ishlab / sotilgan</Text><Text style={styles.histVal}>{h.jamiNon || 0} / {h.sotilganNon || 0} dona</Text></View>
+                <View style={styles.histRow}><Text style={styles.histNomB}>Sof foyda</Text><Text style={styles.histValB}>{formatSom(h.sofFoyda)} so'm</Text></View>
+              </View>
               <View style={styles.actions}>
                 <Pressable accessibilityLabel="O'chirish" onPress={() => ochirHisobot(h.id)} hitSlop={6} style={styles.actBtn}>
                   <Ionicons name="trash-outline" size={16} color={C.red} />
@@ -142,6 +196,13 @@ export default function Markaz() {
                 </View>
               }
             >
+              {(q.savat || []).map((s, i) => (
+                <View key={i} style={styles.savatLine}>
+                  <Text style={styles.savatLNom} numberOfLines={1}>{s.nonNomi}</Text>
+                  <Text style={styles.savatLV}>{s.soni} dona × {formatSom(s.narx)}</Text>
+                </View>
+              ))}
+              {q.chegirma > 0 ? <Text style={styles.itemIzoh}>Chegirma: {formatSom(q.chegirma)} so'm</Text> : null}
               {q.izoh ? <Text style={styles.itemIzoh}>{q.izoh}</Text> : null}
               <Text style={styles.itemSana}>{q.sana}</Text>
               <View style={styles.actions}>
@@ -176,6 +237,14 @@ export default function Markaz() {
                 </View>
               }
             >
+              {(o.savat || []).map((s, i) => (
+                <View key={i} style={styles.savatLine}>
+                  <Text style={styles.savatLNom} numberOfLines={1}>{s.nonNomi}</Text>
+                  <Text style={styles.savatLV}>{s.soni} dona × {formatSom(s.narx)}</Text>
+                </View>
+              ))}
+              {o.chegirma > 0 ? <Text style={styles.itemIzoh}>Chegirma: {formatSom(o.chegirma)} so'm</Text> : null}
+              <Text style={styles.itemIzoh}>Sof foyda: {formatSom(o.sofFoyda || 0)} so'm</Text>
               {o.izoh ? <Text style={styles.itemIzoh}>{o.izoh}</Text> : null}
               <Text style={styles.itemSana}>{o.sana}</Text>
               <View style={styles.actions}>
@@ -235,38 +304,66 @@ export default function Markaz() {
           </Text>
         </View>
         <ScrollView style={styles.formScroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
-          {!kartaModal && (
+          {kartaModal ? (
             <>
+              <Text style={styles.inputLabel}>Aniq narx (so'm) *</Text>
+              <TextInput value={forma.summa} onChangeText={(v) => yangila("summa", v)} placeholder="0" placeholderTextColor={C.muted} keyboardType="numeric" style={styles.input} />
+              <Text style={styles.inputLabel}>Izoh</Text>
+              <TextInput value={forma.izoh} onChangeText={(v) => yangila("izoh", v)} placeholder="Qo'shimcha izoh (ixtiyoriy)" placeholderTextColor={C.muted} multiline style={[styles.input, styles.inputMulti]} />
+              {(parseFloat(forma.summa) || 0) > 0 && (
+                <View style={styles.preview}>
+                  <Text style={styles.previewTitle}>Hisob (o'rtacha narx asosida)</Text>
+                  <View style={styles.previewRow}><Text style={styles.previewLabel}>≈ Nechta non</Text><Text style={styles.previewVal}>{preview.dona} dona</Text></View>
+                  <View style={styles.previewRow}><Text style={styles.previewLabel}>Sof foyda</Text><Text style={[styles.previewVal, { color: preview.sofFoyda >= 0 ? C.green : C.red }]}>{formatSom(preview.sofFoyda)} so'm</Text></View>
+                </View>
+              )}
+            </>
+          ) : (
+            <>
+              <Text style={styles.inputLabel}>Sana</Text>
+              <TextInput value={forma.sana} onChangeText={(v) => yangila("sana", v)} placeholder="2026-01-01" placeholderTextColor={C.muted} style={styles.input} />
+
               <Text style={styles.inputLabel}>{qarzModal ? "Qarz oluvchi *" : "Xaridor *"}</Text>
               <TextInput value={forma.ism} onChangeText={(v) => yangila("ism", v)} placeholder="Ism familiya" placeholderTextColor={C.muted} style={styles.input} />
+
+              <Text style={styles.inputLabel}>Non turlari (soni)</Text>
+              {(nonlar || []).map((n) => (
+                <View key={n.id} style={styles.savatRow}>
+                  <Text style={styles.savatNom} numberOfLines={1}>{n.nom}</Text>
+                  <Text style={styles.savatNarx}>{formatSom(n.narx)}</Text>
+                  <TextInput value={forma.savat[n.id] ?? ""} onChangeText={(v) => yangilaSavat(n.id, v)} placeholder="0" placeholderTextColor={C.muted} keyboardType="numeric" style={styles.savatInput} />
+                </View>
+              ))}
+
+              {!qarzModal && (
+                <>
+                  <Text style={styles.inputLabel}>Donadan tushirish (so'm/dona)</Text>
+                  <TextInput value={forma.donaChegirma} onChangeText={(v) => yangila("donaChegirma", v)} placeholder="0" placeholderTextColor={C.muted} keyboardType="numeric" style={styles.input} />
+                </>
+              )}
+              <Text style={styles.inputLabel}>{qarzModal ? "Chegirma (so'm, ixtiyoriy)" : "Umumiy chegirma (so'm)"}</Text>
+              <TextInput value={forma.chegirma} onChangeText={(v) => yangila("chegirma", v)} placeholder="0" placeholderTextColor={C.muted} keyboardType="numeric" style={styles.input} />
+
+              <Text style={styles.inputLabel}>Izoh</Text>
+              <TextInput value={forma.izoh} onChangeText={(v) => yangila("izoh", v)} placeholder="Qo'shimcha izoh (ixtiyoriy)" placeholderTextColor={C.muted} multiline style={[styles.input, styles.inputMulti]} />
+
+              <View style={styles.preview}>
+                <View style={styles.previewRow}><Text style={styles.previewLabel}>Jami ({savatHisob.dona} dona)</Text><Text style={styles.previewVal}>{formatSom(savatHisob.summa)} so'm</Text></View>
+                {savatHisob.jamiChegirma > 0 && (
+                  <View style={styles.previewRow}><Text style={styles.previewLabel}>Chegirma</Text><Text style={styles.previewVal}>− {formatSom(savatHisob.jamiChegirma)} so'm</Text></View>
+                )}
+                <View style={styles.previewRow}><Text style={styles.previewLabel}>{qarzModal ? "Qarz summasi" : "To'lov"}</Text><Text style={[styles.previewVal, { color: C.accent }]}>{formatSom(savatHisob.yakSumma)} so'm</Text></View>
+                {!qarzModal && (
+                  <View style={styles.previewRow}><Text style={styles.previewLabel}>Sof foyda (kunlikka)</Text><Text style={[styles.previewVal, { color: savatHisob.yakFoyda >= 0 ? C.green : C.red }]}>{formatSom(savatHisob.yakFoyda)} so'm</Text></View>
+                )}
+              </View>
             </>
-          )}
-
-          <Text style={styles.inputLabel}>{kartaModal ? "Aniq narx (so'm) *" : "Summa (so'm) *"}</Text>
-          <TextInput value={forma.summa} onChangeText={(v) => yangila("summa", v)} placeholder="0" placeholderTextColor={C.muted} keyboardType="numeric" style={styles.input} />
-
-          <Text style={styles.inputLabel}>Izoh</Text>
-          <TextInput value={forma.izoh} onChangeText={(v) => yangila("izoh", v)} placeholder="Qo'shimcha izoh (ixtiyoriy)" placeholderTextColor={C.muted} multiline style={[styles.input, styles.inputMulti]} />
-
-          {/* Karta uchun jonli hisob */}
-          {kartaModal && (parseFloat(forma.summa) || 0) > 0 && (
-            <View style={styles.preview}>
-              <Text style={styles.previewTitle}>Hisob (o'rtacha narx asosida)</Text>
-              <View style={styles.previewRow}>
-                <Text style={styles.previewLabel}>≈ Nechta non</Text>
-                <Text style={styles.previewVal}>{preview.dona} dona</Text>
-              </View>
-              <View style={styles.previewRow}>
-                <Text style={styles.previewLabel}>Xarajat ayrilib sof foyda</Text>
-                <Text style={[styles.previewVal, { color: preview.sofFoyda >= 0 ? C.green : C.red }]}>{formatSom(preview.sofFoyda)} so'm</Text>
-              </View>
-            </View>
           )}
         </ScrollView>
         <View style={styles.gap12} />
         <View style={styles.modalRow}>
           <View style={styles.flex1}><Btn secondary onPress={yopModal}>Bekor</Btn></View>
-          <View style={styles.flex1}><Btn color={akcent} onPress={saqla}>Saqlash</Btn></View>
+          <View style={styles.flex1}><Btn color={C.accent} onPress={saqla}>Saqlash</Btn></View>
         </View>
       </Modal>
     </SafeAreaView>
@@ -324,6 +421,13 @@ const styles = StyleSheet.create({
   itemIsm:   { fontSize: T.md, fontWeight: "700", color: C.text },
   itemIzoh:  { fontSize: T.sm, color: C.sub, marginTop: 2 },
   itemSana:  { fontSize: T.xs, color: C.muted, marginTop: 2 },
+  histWrap:  {},
+  histRow:   { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 5 },
+  histNom:   { flex: 1, fontSize: T.sm, color: C.sub },
+  histVal:   { fontSize: T.sm, color: C.text, fontWeight: "700", marginLeft: S[2] },
+  histNomB:  { flex: 1, fontSize: T.sm, color: C.text, fontWeight: "800" },
+  histValB:  { fontSize: T.md, color: C.accent, fontWeight: "800", marginLeft: S[2] },
+  histDiv:   { height: StyleSheet.hairlineWidth, backgroundColor: C.borderSoft, marginVertical: S[2] },
   itemSumma: { fontSize: T.md, fontWeight: "800", marginLeft: S[2] },
   actions:   { flexDirection: "row", justifyContent: "flex-end", gap: S[4], marginTop: S[3], borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: C.borderSoft, paddingTop: S[3] },
   actBtn:    { flexDirection: "row", alignItems: "center" },
@@ -338,6 +442,13 @@ const styles = StyleSheet.create({
   inputLabel: { fontSize: T.xs, color: C.sub, fontWeight: "600", marginBottom: 6, marginTop: S[1], letterSpacing: 0.3 },
   input:     { borderWidth: 1, borderColor: C.border, borderRadius: R.md, paddingVertical: 12, paddingHorizontal: 14, fontSize: T.md, color: C.text, backgroundColor: C.surface },
   inputMulti:{ minHeight: 64, textAlignVertical: "top" },
+  savatRow:  { flexDirection: "row", alignItems: "center", gap: S[2], marginBottom: S[2] },
+  savatNom:  { flex: 1, fontSize: T.sm, color: C.text },
+  savatNarx: { fontSize: T.xs, color: C.muted, width: 70, textAlign: "right" },
+  savatInput:{ width: 70, borderWidth: 1, borderColor: C.border, borderRadius: R.sm, paddingVertical: 8, paddingHorizontal: 10, fontSize: T.sm, color: C.text, backgroundColor: C.surface, textAlign: "right" },
+  savatLine: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 4 },
+  savatLNom: { flex: 1, fontSize: T.sm, color: C.text },
+  savatLV:   { fontSize: T.xs, color: C.sub, fontWeight: "700", marginLeft: S[2] },
   preview:   { marginTop: S[3], backgroundColor: C.green + "0D", borderWidth: 1, borderColor: C.green + "2E", borderRadius: R.md, padding: S[3] },
   previewTitle: { fontSize: T.xs, color: C.sub, fontWeight: "600", marginBottom: S[2], letterSpacing: 0.3 },
   previewRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: S[1] },
