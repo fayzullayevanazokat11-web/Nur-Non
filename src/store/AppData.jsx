@@ -56,7 +56,7 @@ export function AppDataProvider({ children }) {
   // Eng so'nggi qiymatlarni ushlab turuvchi ref (timer/AppState callbacklari uchun)
   const oxirgi = useRef({});
   oxirgi.current = {
-    nonlar, ishchilar, mahsulotNarxlari, optomlar, qarzlar,
+    nonlar, ishchilar, mahsulotNarxlari, optomlar, qarzlar, braklar,
     ozIshlabQoplar, tashqariSonlar, sotilmaganNon, resetVaqt, lastResetDate,
   };
 
@@ -75,7 +75,7 @@ export function AppDataProvider({ children }) {
     const r = hisoblaKunlik({
       nonlar: L.nonlar, ishchilar: L.ishchilar, ozIshlabQoplar: L.ozIshlabQoplar,
       tashqariSonlar: L.tashqariSonlar, sotilmaganNon: L.sotilmaganNon,
-      optomlar: L.optomlar, qarzlar: L.qarzlar, mahsulotNarxlari: L.mahsulotNarxlari,
+      optomlar: L.optomlar, qarzlar: L.qarzlar, mahsulotNarxlari: L.mahsulotNarxlari, braklar: L.braklar,
     });
     if (r.jamiNon > 0 || r.jamiQop > 0) {
       const ydate = localDateStr(new Date(now.getTime() - 86400000));
@@ -91,13 +91,15 @@ export function AppDataProvider({ children }) {
       setHisobotlarTarixi((prev) => [snap, ...(prev || []).filter((h) => h.sana !== ydate)]);
     }
     setOzIshlabQoplar({}); setTashqariSonlar({}); setSotilmaganNon({}); setKunlikQopSoni("");
+    setBraklar([]);
     setLastResetDate(bugun);
   };
 
   useEffect(() => {
     const t = setTimeout(resetTekshir, 1800); // hidratsiyadan keyin
+    const iv = setInterval(resetTekshir, 60000); // ilova ochiq turganda ham (har 1 daqiqa)
     const sub = AppState.addEventListener("change", (s) => { if (s === "active") resetTekshir(); });
-    return () => { clearTimeout(t); sub.remove(); };
+    return () => { clearTimeout(t); clearInterval(iv); sub.remove(); };
   }, []);
 
   // Avtomatik tozalash (hidratsiyadan keyin): karta/optom va to'langan qarz 7 kun,

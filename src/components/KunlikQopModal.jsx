@@ -13,7 +13,7 @@ const toStr = (obj) => Object.fromEntries(Object.entries(obj || {}).map(([k, v])
 
 export function KunlikQopModal({ visible, onClose, onTasdiq }) {
   const {
-    nonlar, ishchilar, optomlar, qarzlar, mahsulotNarxlari,
+    nonlar, ishchilar, optomlar, qarzlar, mahsulotNarxlari, braklar,
     ozIshlabQoplar, setOzIshlabQoplar, tashqariSonlar, setTashqariSonlar,
     sotilmaganNon, setSotilmaganNon, hisobotlarTarixi, setHisobotlarTarixi,
     setOmborSorovlar, resetVaqt, setResetVaqt,
@@ -40,10 +40,10 @@ export function KunlikQopModal({ visible, onClose, onTasdiq }) {
   // Jonli hisob (forma qiymatlari asosida)
   const r = useMemo(
     () => hisoblaKunlik({
-      nonlar, ishchilar, optomlar, qarzlar, mahsulotNarxlari,
+      nonlar, ishchilar, optomlar, qarzlar, mahsulotNarxlari, braklar,
       ozIshlabQoplar: fQop, tashqariSonlar: fTash, sotilmaganNon: fSot,
     }),
-    [fQop, fTash, fSot, nonlar, ishchilar, optomlar, qarzlar, mahsulotNarxlari]
+    [fQop, fTash, fSot, nonlar, ishchilar, optomlar, qarzlar, mahsulotNarxlari, braklar]
   );
 
   const kiritmalarniSaqla = () => {
@@ -150,6 +150,10 @@ export function KunlikQopModal({ visible, onClose, onTasdiq }) {
       <View style={styles.summary}>
         <SumRow label="Jami non" value={`${r.jamiNon} dona`} />
         <SumRow label="Sotilgan" value={`${r.sotilganNon} dona`} />
+        <SumRow label="Daromad" value={`${formatSom(r.daromad)} so'm`} />
+        <SumRow label="Xomashyo" value={`${formatSom(r.xomashyo)} so'm`} />
+        <SumRow label="Ishchi haqi" value={`${formatSom(r.ishchiHaq)} so'm`} />
+        {r.brakAyirma > 0 && <SumRow label="Brak (haqdan ayrildi)" value={`− ${formatSom(r.brakAyirma)} so'm`} />}
         <SumRow label="Bugungi sof foyda" value={`${formatSom(r.sofFoyda)} so'm`} bold color={r.sofFoyda >= 0 ? C.green : C.red} />
       </View>
 

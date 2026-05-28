@@ -11,7 +11,7 @@ import { hisoblaKunlik, formatSom } from "../logic/hisob";
 
 export function HisobotModal({ visible, onClose }) {
   const {
-    nonlar, ishchilar, mahsulotNarxlari,
+    nonlar, ishchilar, mahsulotNarxlari, braklar,
     ozIshlabQoplar, tashqariSonlar, sotilmaganNon,
     qarzlar, optomlar, kartalar,
   } = useApp();
@@ -20,7 +20,7 @@ export function HisobotModal({ visible, onClose }) {
     const d = new Date();
     const bugun = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
     const kunlik = hisoblaKunlik({
-      nonlar, ishchilar, ozIshlabQoplar, tashqariSonlar, sotilmaganNon, optomlar, qarzlar, mahsulotNarxlari,
+      nonlar, ishchilar, ozIshlabQoplar, tashqariSonlar, sotilmaganNon, optomlar, qarzlar, mahsulotNarxlari, braklar,
     });
     const sum = (arr, key) => (arr || []).reduce((s, x) => s + (parseFloat(x[key]) || 0), 0);
     const optomB = (optomlar || []).filter((o) => o.sana === bugun);
@@ -35,7 +35,7 @@ export function HisobotModal({ visible, onClose }) {
     // Umumiy foyda = ishlab chiqarish + karta sof foydasi + optom SOF FOYDASI (chegirma ayrilgan)
     const umumiy = kunlik.sofFoyda + kartaFoyda + optomFoyda;
     return { bugun, kunlik, optomSum, optomFoyda, optomSoni: optomB.length, qarzSum, qarzSoni: qarzB.length, kartaSum, kartaFoyda, kartaDona, kartaSoni: kartaB.length, umumiy };
-  }, [nonlar, ishchilar, ozIshlabQoplar, tashqariSonlar, sotilmaganNon, qarzlar, optomlar, kartalar, mahsulotNarxlari]);
+  }, [nonlar, ishchilar, ozIshlabQoplar, tashqariSonlar, sotilmaganNon, qarzlar, optomlar, kartalar, mahsulotNarxlari, braklar]);
 
   return (
     <Modal modalVisible={visible} onClose={onClose}>
