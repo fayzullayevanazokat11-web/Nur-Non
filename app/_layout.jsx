@@ -10,8 +10,9 @@ import { Splash } from "../src/components/Splash";
 
 export default function RootLayout() {
   const [splash, setSplash] = useState(true);
-  // Ionicons shriftini oldindan yuklash — aks holda native'da ikonkalar ko'rinmaydi
-  const [fontsLoaded] = useFonts(Ionicons.font);
+  // Ionicons shriftini fonда oldindan yuklaymiz (render'ни bloklamaymiz —
+  // aks holda shrift yuklanmasa oq ekran bo'lib qoladi).
+  useFonts(Ionicons.font);
 
   return (
     <SafeAreaProvider>
@@ -20,7 +21,7 @@ export default function RootLayout() {
         <Stack screenOptions={{ headerShown: false }}>
           <Stack.Screen name="(tabs)" />
         </Stack>
-        {(splash || !fontsLoaded) && <Splash onDone={() => setSplash(false)} />}
+        {splash && <Splash onDone={() => setSplash(false)} />}
       </AppDataProvider>
     </SafeAreaProvider>
   );
