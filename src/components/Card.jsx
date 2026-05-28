@@ -6,10 +6,12 @@ import { View, Animated, Easing, StyleSheet } from "react-native";
 import { C, R, S, shadow, ANIM } from "../theme";
 
 export function Card({ children, danger = false, accent = false, animate = true, style }) {
+  // Fon SHAFFOFMAS (opaque) — yarim-shaffof fon + elevation Android'да
+  // burchaklarda soya "sizib o'tishi" (qalin halo) artefaktini beradi.
   const variant = danger
-    ? { backgroundColor: C.red + "0D", borderColor: C.red + "2E" }
+    ? { backgroundColor: "#F8EDE7", borderColor: "#E8C9B6" }
     : accent
-    ? { backgroundColor: C.accent + "10", borderColor: C.accent + "33" }
+    ? { backgroundColor: "#F5EBDA", borderColor: "#E7D3B4" }
     : { backgroundColor: C.card, borderColor: C.border };
 
   if (!animate) {
