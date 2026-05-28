@@ -1,7 +1,7 @@
 // Kunlik qop hisobi — har non uchun qop/dona + sotilmagan kiritiladi,
 // jonli sof foyda ko'rsatiladi, "Tasdiqlash" hisobot snapshotini saqlaydi.
 import { useEffect, useMemo, useState } from "react";
-import { View, Text, ScrollView, TextInput, StyleSheet } from "react-native";
+import { View, Text, ScrollView, TextInput, StyleSheet, Alert } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useApp } from "../store/AppData";
 import { Modal } from "./Modal";
@@ -16,8 +16,13 @@ export function KunlikQopModal({ visible, onClose, onTasdiq }) {
     nonlar, ishchilar, optomlar, qarzlar, mahsulotNarxlari,
     ozIshlabQoplar, setOzIshlabQoplar, tashqariSonlar, setTashqariSonlar,
     sotilmaganNon, setSotilmaganNon, hisobotlarTarixi, setHisobotlarTarixi,
-    setOmborSorovlar,
+    setOmborSorovlar, resetVaqt, setResetVaqt,
   } = useApp();
+
+  const localSana = () => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  };
 
   const [fQop, setFQop] = useState({});
   const [fTash, setFTash] = useState({});
@@ -50,8 +55,15 @@ export function KunlikQopModal({ visible, onClose, onTasdiq }) {
   const saqla = () => { kiritmalarniSaqla(); onClose(); };
 
   const tasdiqla = () => {
+    Alert.alert("Tasdiqlash", "Kunlik hisobotni tasdiqlaysizmi?", [
+      { text: "Bekor", style: "cancel" },
+      { text: "Tasdiqlash", onPress: tasdiqlaBajar },
+    ]);
+  };
+
+  const tasdiqlaBajar = () => {
     kiritmalarniSaqla();
-    const sana = new Date().toISOString().split("T")[0];
+    const sana = localSana();
     const snapshot = {
       id: Date.now(),
       sana,
@@ -68,6 +80,7 @@ export function KunlikQopModal({ visible, onClose, onTasdiq }) {
       sofFoyda: r.sofFoyda,
       sotilganNon: r.sotilganNon,
       jamiQop: r.jamiQop,
+      jamiNon: r.jamiNon,
     };
     // Bir kunda bitta hisobot — o'sha sanani almashtiramiz
     setHisobotlarTarixi((prev) => [snapshot, ...(prev || []).filter((h) => h.sana !== sana)]);
@@ -89,6 +102,20 @@ export function KunlikQopModal({ visible, onClose, onTasdiq }) {
       <View style={styles.head}>
         <Ionicons name="calculator-outline" size={20} color={C.sub} />
         <Text style={styles.title}>Kunlik qop hisobi</Text>
+      </View>
+
+      <View style={styles.resetRow}>
+        <View style={styles.flex1}>
+          <Text style={styles.resetLbl}>Avtomatik reset vaqti</Text>
+          <Text style={styles.resetSub}>Shu vaqtдan keyin kunlik ma'lumot tarixga ko'chib, nollanadi</Text>
+        </View>
+        <TextInput
+          value={resetVaqt}
+          onChangeText={setResetVaqt}
+          placeholder="03:00"
+          placeholderTextColor={C.muted}
+          style={styles.resetInput}
+        />
       </View>
 
       <ScrollView style={styles.scroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
@@ -146,7 +173,11 @@ function SumRow({ label, value, bold, color = C.text }) {
 const styles = StyleSheet.create({
   head:    { flexDirection: "row", alignItems: "center", gap: S[2], marginBottom: S[3] },
   title:   { fontSize: T.lg, fontWeight: "800", color: C.text },
-  scroll:  { maxHeight: 360 },
+  resetRow:  { flexDirection: "row", alignItems: "center", gap: S[3], backgroundColor: C.panel, borderRadius: R.md, paddingVertical: S[2], paddingHorizontal: S[3], marginBottom: S[3] },
+  resetLbl:  { fontSize: T.sm, fontWeight: "700", color: C.text },
+  resetSub:  { fontSize: 10, color: C.muted, marginTop: 1 },
+  resetInput:{ width: 76, borderWidth: 1, borderColor: C.border, borderRadius: R.sm, paddingVertical: 8, paddingHorizontal: 10, fontSize: T.md, fontWeight: "700", color: C.text, backgroundColor: C.surface, textAlign: "center" },
+  scroll:  { maxHeight: 320 },
   nonRow:  { marginBottom: S[3], borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: C.borderSoft, paddingBottom: S[3] },
   nonNom:  { fontSize: T.md, fontWeight: "700", color: C.text, marginBottom: 6 },
   inputs:  { flexDirection: "row", gap: S[3] },

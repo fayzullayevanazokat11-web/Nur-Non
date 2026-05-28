@@ -7,8 +7,7 @@ export const SEED_ISHCHILAR = [
   { id: 4, ism: "Nigora opa",          lavozimId: "nonYopuvchi", lavozimCustom: "",                  haqTuri: "qop",    miqdor: 25000,  tel: "", holat: "Aktiv", tatilQaytishSana: "", tahrirSoni: 0, nonTurlari: ["Issiq non"],               nonNarxlari: { "Issiq non": 25000 } },
   { id: 5, ism: "Dilsora opa",         lavozimId: "checha",      lavozimCustom: "",                  haqTuri: "kunlik", miqdor: 200000, tel: "", holat: "Aktiv", tatilQaytishSana: "", tahrirSoni: 0, nonTurlari: [],                          nonNarxlari: {} },
   { id: 6, ism: "Surayyo opa",         lavozimId: "checha",      lavozimCustom: "",                  haqTuri: "kunlik", miqdor: 120000, tel: "", holat: "Aktiv", tatilQaytishSana: "", tahrirSoni: 0, nonTurlari: [],                          nonNarxlari: {} },
-  { id: 7, ism: "Diyor aka",           lavozimId: "nonYopuvchi", lavozimCustom: "Patirchi/Qora non", haqTuri: "qop",    miqdor: 75000,  tel: "", holat: "Aktiv", tatilQaytishSana: "", tahrirSoni: 0, nonTurlari: ["Patir", "Katta qora non"], nonNarxlari: { "Patir": 75000, "Katta qora non": 100000 } },
-  { id: 8, ism: "Sardor aka",          lavozimId: "nonYopuvchi", lavozimCustom: "Patirchi/Qora non", haqTuri: "qop",    miqdor: 75000,  tel: "", holat: "Aktiv", tatilQaytishSana: "", tahrirSoni: 0, nonTurlari: ["Patir", "Katta qora non"], nonNarxlari: { "Patir": 75000, "Katta qora non": 100000 } },
+  { id: 8, ism: "Diyor va Sardor",     lavozimId: "nonYopuvchi", lavozimCustom: "Patirchi/Qora non", haqTuri: "qop",    miqdor: 0,      tel: "", holat: "Aktiv", tatilQaytishSana: "", tahrirSoni: 0, nonTurlari: ["Patir", "Katta qora non"], nonNarxlari: { "Patir": 150000, "Katta qora non": 200000 } },
 ];
 
 export const SEED_NONLAR = [
