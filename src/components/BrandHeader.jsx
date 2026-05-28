@@ -3,7 +3,7 @@
 import { View, Text, Image, StyleSheet } from "react-native";
 import { C, T, S, R, shadow } from "../theme";
 
-const LOGO = require("../../assets/logo.png");
+const LOGO = require("../../assets/logo-tight.png");
 
 export function BrandHeader() {
   return (
@@ -39,7 +39,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  logo:  { width: 54, height: 54 },
+  logo:  { width: 50, height: 50 },
   flex1: { flex: 1 },
   title: { fontSize: 23, fontWeight: "800", color: "#FFF6EA", letterSpacing: -0.3 },
   sub:   { fontSize: T.sm, color: "#EBD8BF", marginTop: 2, fontWeight: "500" },

@@ -107,26 +107,26 @@ export function zaxiraMatni(id, qiymat, bazaBirlik) {
 }
 
 // Ombor balansi: set kirimlari − ayirish chiqimlari
-export function omborBalans(omborlar) {
+export function omborBalans(omborlar, maydonlar = OMBOR_MAYDONLAR) {
   const balans = {};
-  OMBOR_MAYDONLAR.forEach((m) => { balans[m.id] = { ...m, qiymat: 0 }; });
+  maydonlar.forEach((m) => { balans[m.id] = { ...m, qiymat: 0 }; });
   (omborlar || []).forEach((h) =>
     (h.maydonlar || []).forEach((m) => { if (balans[m.id]) balans[m.id].qiymat += parseFloat(m.qiymat) || 0; }));
   return Object.values(balans);
 }
 
-// Kunlik qop hisobidan kelib chiqadigan xomashyo sarfi (faqat ombordagi mahsulotlar).
+// Kunlik qop hisobidan kelib chiqadigan xomashyo sarfi (xomashyo ro'yxatidagi mahsulotlar).
 // Retsept birligi g/ml → ombor bazasi kg/litr (1000 ga bo'linadi).
 // Natija: [{ id, nom, emoji, birlik, qiymat }] — qiymat = ketadigan miqdor (baza birlikda).
-export function kunlikXomashyoSarfi(nonlar, ozIshlabQoplar) {
+export function kunlikXomashyoSarfi(nonlar, ozIshlabQoplar, maydonlar = OMBOR_MAYDONLAR) {
   const agg = {};
   (nonlar || []).forEach((n) => {
     if (n.ozIshlab === false) return;
     const qop = parseFloat((ozIshlabQoplar || {})[n.id]) || 0;
     if (qop <= 0) return;
     (n.mahsulotlar || []).forEach((m) => {
-      const om = OMBOR_MAYDONLAR.find((x) => x.id === m.id);
-      if (!om) return; // faqat ombordagi (tracked) mahsulotlar
+      const om = maydonlar.find((x) => x.id === m.id);
+      if (!om) return; // faqat xomashyo ro'yxatidagi mahsulotlar
       const miq = (parseFloat(m.miqdor) || 0) * qop;
       if (!agg[m.id]) agg[m.id] = { id: m.id, nom: om.nom, emoji: om.emoji, birlik: om.birlik, qiymat: 0 };
       agg[m.id].qiymat += miq / 1000;

@@ -25,9 +25,13 @@ export const OMBOR_MAYDONLAR = [
   { id: "jir",      nom: "Jir (hayvon yog')", birlik: "kg",   emoji: "🥓" },
   { id: "quruqSut", nom: "Quruq sut",         birlik: "kg",   emoji: "🥄" },
   { id: "achitqi",  nom: "Achitqi (Droja)",   birlik: "kg",   emoji: "🍞" },
-  { id: "shakar",   nom: "Shakar",            birlik: "kg",   emoji: "🍬" },
-  { id: "tuz",      nom: "Tuz",               birlik: "kg",   emoji: "🧂" },
+  { id: "shakar",   nom: "Shakar va tuz",     birlik: "kg",   emoji: "🍬" },
 ];
 
 // Un turlari qop'da, yog' plastik qutida ko'rsatiladi
 export const HISOBOT_UN_IDLAR = ["oqUn", "sariqUn", "qoraUn"];
+
+// Barcha xomashyo = asosiy (doimiy) + foydalanuvchi qo'shgan (custom)
+export function xomashyoRoyxati(custom) {
+  return [...OMBOR_MAYDONLAR, ...(custom || [])];
+}
