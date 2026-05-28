@@ -13,7 +13,7 @@ export const C = {
   // Semantik rollar — issiq palitra tonlari (qizil/yashil/ko'k YO'Q):
   red: "#3A1E08", redDim: "#3A1E080D",
   green: "#A0612A", greenDim: "#A0612A0D",
-  blue: "#8A7355", blueDim: "#8A73550D",
+  blue: "#A0612A", blueDim: "#A0612A0D",
   text: "#33200E",   // asosiy matn — iliq quyuq jigarrang
   sub: "#8A7458",    // ikkilamchi matn / dekorativ ikonkalar
   muted: "#B5A07E",  // uchlamchi / hint
@@ -27,13 +27,13 @@ export const S = { 1: 4, 2: 8, 3: 12, 4: 16, 5: 20, 6: 24, 7: 32, 8: 40 };
 // Burchak radiuslari — yumshoqroq (premium)
 export const R = { sm: 14, md: 18, lg: 24, xl: 30, pill: 999 };
 
-// Yumshoq iliq soya — yengil (ko'p kartali ro'yxatda scroll ravon bo'lishi uchun)
+// Juda yengil neytral soya — burchaklarda qalin halo bermaydi (chegara asosiy)
 export const shadow = {
-  shadowColor: "#5A3A1A",
-  shadowOpacity: 0.07,
-  shadowRadius: 10,
-  shadowOffset: { width: 0, height: 3 },
-  elevation: 2,
+  shadowColor: "#000000",
+  shadowOpacity: 0.05,
+  shadowRadius: 5,
+  shadowOffset: { width: 0, height: 1 },
+  elevation: 1,
 };
 
 // Animatsiya — yagona ease-in-out konfiguratsiyasi
