@@ -74,7 +74,7 @@ export default function Ombor() {
 
   return (
     <SafeAreaView style={styles.safe} edges={["top"]}>
-      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={true}>
         <ScreenHeader eyebrow="Zaxira" title="Ombor hisoboti" subtitle={`${setSoni} ta set kiritilgan`} icon="server-outline" />
 
         <Card accent>
@@ -174,7 +174,7 @@ export default function Ombor() {
         <ScrollView
           style={styles.formScroll}
           keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
+          showsVerticalScrollIndicator={true}
         >
           {OMBOR_MAYDONLAR.map((m) => {
             const katta = omborKattaBirlik(m.id);

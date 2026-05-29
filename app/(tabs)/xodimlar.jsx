@@ -78,7 +78,7 @@ export default function Xodimlar() {
 
   return (
     <SafeAreaView style={styles.safe} edges={["top"]}>
-      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={true}>
         <ScreenHeader eyebrow="Jamoa" title="Xodimlar" icon="people-outline" />
 
         <View style={styles.statsRow}>
@@ -153,7 +153,7 @@ export default function Xodimlar() {
           <Text style={styles.modalTitle}>{tahrirId ? "Xodimni tahrirlash" : "Yangi ishchi"}</Text>
         </View>
 
-        <ScrollView style={styles.formScroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+        <ScrollView style={styles.formScroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={true}>
           <Text style={styles.inputLabel}>Ism *</Text>
           <TextInput value={forma.ism} onChangeText={(v) => yangila("ism", v)} placeholder="Masalan: Akmal aka" placeholderTextColor={C.muted} style={styles.input} />
 

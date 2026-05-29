@@ -49,7 +49,7 @@ export default function Markaz() {
     ]);
   };
   const yakunlaBajar = () => {
-    const sana = localSana();
+    const sana = kunlikSana || localSana();
     const snap = {
       id: Date.now(), sana, vaqt: Date.now(),
       ozIshlabQoplar, tashqariSonlar, sotilmaganNon,
@@ -71,6 +71,7 @@ export default function Markaz() {
     setHisobotOchiq(false);
     setOzIshlabQoplar({}); setTashqariSonlar({}); setSotilmaganNon({});
     setKartalar([]); setBraklar([]);
+    setKunlikSana(localSana());
   };
 
   const ochirHisobot = (id) =>
@@ -93,24 +94,28 @@ export default function Markaz() {
   const [qopOchiq, setQopOchiq] = useState(false);
   const [hisobotOchiq, setHisobotOchiq] = useState(false);
   const [brakModal, setBrakModal] = useState(false);
-  const [brakForma, setBrakForma] = useState({ ishchiId: null, nonNomi: "", soni: "" });
+  const [brakForma, setBrakForma] = useState({ ishchiId: null, dona: {} });
+  const [kunlikSana, setKunlikSana] = useState(localSana());
 
   const qopIshchilar = (ishchilar || []).filter((w) => w.haqTuri === "qop" && w.holat === "Aktiv");
   const brakIshchi = qopIshchilar.find((w) => w.id === brakForma.ishchiId);
   // 1 dona brak narxi = nonning sotuv narxi (masalan 8 000 yoki 15 000)
   const donaNarxi = (nom) => parseFloat((nonlar || []).find((n) => n.nom === nom)?.narx) || 0;
-  const brakSumma = Math.round(donaNarxi(brakForma.nonNomi) * (parseFloat(brakForma.soni) || 0));
-  const ochBrak = () => { setBrakForma({ ishchiId: null, nonNomi: "", soni: "" }); setBrakModal(true); };
+  const brakSumma = (brakIshchi?.nonTurlari || []).reduce((s, nom) => s + donaNarxi(nom) * (parseFloat(brakForma.dona[nom]) || 0), 0);
+  const ochBrak = () => { setBrakForma({ ishchiId: null, dona: {} }); setBrakModal(true); };
+  const brakDona = (nom, v) => setBrakForma((p) => ({ ...p, dona: { ...p.dona, [nom]: v } }));
   const saqlaBrak = () => {
-    if (!brakIshchi || !brakForma.nonNomi || !(parseFloat(brakForma.soni) > 0)) {
-      Alert.alert("To'liq emas", "Ishchi, non turi va brak sonini kiriting.");
-      return;
-    }
-    setBraklar((prev) => [...prev, {
-      id: Date.now(), sana: localSana(), vaqt: Date.now(),
-      ishchiId: brakIshchi.id, ishchiIsm: brakIshchi.ism, nonNomi: brakForma.nonNomi,
-      soni: parseFloat(brakForma.soni), summa: brakSumma,
-    }]);
+    if (!brakIshchi) { Alert.alert("To'liq emas", "Ishchini tanlang."); return; }
+    const yozuvlar = (brakIshchi.nonTurlari || [])
+      .map((nom) => ({ nom, soni: parseFloat(brakForma.dona[nom]) || 0 }))
+      .filter((x) => x.soni > 0)
+      .map((x) => ({
+        id: Date.now() + Math.floor(Math.random() * 1000), sana: localSana(), vaqt: Date.now(),
+        ishchiId: brakIshchi.id, ishchiIsm: brakIshchi.ism, nonNomi: x.nom,
+        soni: x.soni, summa: Math.round(donaNarxi(x.nom) * x.soni),
+      }));
+    if (yozuvlar.length === 0) { Alert.alert("To'liq emas", "Kamida bitta non turidan brak sonini kiriting."); return; }
+    setBraklar((prev) => [...prev, ...yozuvlar]);
     setBrakModal(false);
   };
   const ochirBrak = (id) =>
@@ -187,7 +192,7 @@ export default function Markaz() {
 
   return (
     <SafeAreaView style={styles.safe} edges={["top"]}>
-      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={true}>
         <BrandHeader />
 
         <View style={styles.statsRow}>
@@ -201,7 +206,10 @@ export default function Markaz() {
             <Ionicons name="calculator-outline" size={18} color={C.sub} />
             <Text style={styles.cardTitle}>Kunlik qop hisobi</Text>
           </View>
-          <Text style={styles.muted}>Bugun: {localSana()} · {stats.jamiNon} dona ishlab chiqarildi</Text>
+          <Text style={styles.muted}>{stats.jamiNon} dona ishlab chiqarildi</Text>
+          <View style={styles.gap10} />
+          <Text style={styles.fieldLabel}>Hisobot sanasi</Text>
+          <DateField value={kunlikSana} onChange={setKunlikSana} />
           <View style={styles.gap10} />
           <Btn onPress={() => setQopOchiq(true)} icon="create-outline">Ma'lumot kiritish</Btn>
           <View style={styles.gap10} />
@@ -416,13 +424,13 @@ export default function Markaz() {
           <Ionicons name="alert-circle-outline" size={20} color={C.sub} />
           <Text style={styles.modalTitle}>Brak qo'shish</Text>
         </View>
-        <ScrollView style={styles.formScroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+        <ScrollView style={styles.formScroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={true}>
           <Text style={styles.inputLabel}>Ishchi (qopdan haq oladigan)</Text>
           {qopIshchilar.length === 0 ? (
             <Text style={styles.muted}>Qopdan haq oladigan aktiv ishchi yo'q.</Text>
           ) : (
             qopIshchilar.map((w) => (
-              <Pressable key={w.id} onPress={() => setBrakForma((p) => ({ ...p, ishchiId: w.id, nonNomi: "" }))} style={[styles.pickRow, brakForma.ishchiId === w.id && styles.pickRowActive]}>
+              <Pressable key={w.id} onPress={() => setBrakForma({ ishchiId: w.id, dona: {} })} style={[styles.pickRow, brakForma.ishchiId === w.id && styles.pickRowActive]}>
                 <Ionicons name={brakForma.ishchiId === w.id ? "radio-button-on-outline" : "ellipse-outline"} size={16} color={brakForma.ishchiId === w.id ? C.accent : C.muted} />
                 <Text style={[styles.pickTxt, brakForma.ishchiId === w.id && styles.pickTxtActive]}>{w.ism}</Text>
               </Pressable>
@@ -431,16 +439,14 @@ export default function Markaz() {
 
           {brakIshchi && (
             <>
-              <Text style={styles.inputLabel}>Non turi</Text>
+              <Text style={styles.inputLabel}>Qaysi nondan nechta dona brak</Text>
               {(brakIshchi.nonTurlari || []).map((nom) => (
-                <Pressable key={nom} onPress={() => setBrakForma((p) => ({ ...p, nonNomi: nom }))} style={[styles.pickRow, brakForma.nonNomi === nom && styles.pickRowActive]}>
-                  <Ionicons name={brakForma.nonNomi === nom ? "radio-button-on-outline" : "ellipse-outline"} size={16} color={brakForma.nonNomi === nom ? C.accent : C.muted} />
-                  <Text style={[styles.pickTxt, brakForma.nonNomi === nom && styles.pickTxtActive]}>{nom} · {formatSom(donaNarxi(nom))} so'm/dona</Text>
-                </Pressable>
+                <View key={nom} style={styles.savatRow}>
+                  <Text style={styles.savatNom} numberOfLines={1}>{nom}</Text>
+                  <Text style={styles.savatNarx}>{formatSom(donaNarxi(nom))}</Text>
+                  <TextInput value={brakForma.dona[nom] ?? ""} onChangeText={(v) => brakDona(nom, v)} placeholder="0" placeholderTextColor={C.muted} keyboardType="numeric" style={styles.savatInput} />
+                </View>
               ))}
-
-              <Text style={styles.inputLabel}>Nechta dona brak</Text>
-              <TextInput value={brakForma.soni} onChangeText={(v) => setBrakForma((p) => ({ ...p, soni: v }))} placeholder="0" placeholderTextColor={C.muted} keyboardType="numeric" style={styles.input} />
 
               {brakSumma > 0 && (
                 <View style={styles.preview}>
@@ -470,7 +476,7 @@ export default function Markaz() {
             {qarzModal ? "Yangi qarz" : kartaModal ? "Karta to'lovi" : "Yangi optom savdo"}
           </Text>
         </View>
-        <ScrollView style={styles.formScroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+        <ScrollView style={styles.formScroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={true}>
           {kartaModal ? (
             <>
               <Text style={styles.inputLabel}>Aniq narx (so'm) *</Text>
@@ -575,6 +581,7 @@ const styles = StyleSheet.create({
   block:     { marginBottom: S[5] },
   cardTitleRow:{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: S[1] },
   cardTitle: { fontSize: T.md, fontWeight: "700", color: C.text },
+  fieldLabel:{ fontSize: T.xs, color: C.sub, fontWeight: "600", marginBottom: 6, letterSpacing: 0.3 },
   haqRow:    { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: S[2] },
   haqNom:    { flex: 1, fontSize: T.sm, color: C.text },
   haqVal:    { fontSize: T.sm, color: C.accent, fontWeight: "800", marginLeft: S[2] },
