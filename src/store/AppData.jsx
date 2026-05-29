@@ -1,19 +1,9 @@
 // Butun ilova holati — har bir kolleksiya "nurnon:" prefiksi bilan AsyncStorage'da.
-import { createContext, useContext, useState, useEffect, useRef } from "react";
-import { AppState } from "react-native";
+import { createContext, useContext, useState, useEffect } from "react";
 import usePersistedState from "./usePersistedState";
 import { SEED_NONLAR, SEED_ISHCHILAR, SEED_MAHSULOT_NARXLARI } from "../logic/data";
-import { hisoblaKunlik } from "../logic/hisob";
 
 const AppDataContext = createContext(null);
-
-// Lokal (UTC emas) sana — YYYY-MM-DD
-function localDateStr(d = new Date()) {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
-}
 
 export function useApp() {
   const ctx = useContext(AppDataContext);
@@ -40,10 +30,6 @@ export function AppDataProvider({ children }) {
   const [gazNarx, setGazNarx]                     = usePersistedState("nurnon:gazNarx", "350000");
   const [elektroNarx, setElektroNarx]             = usePersistedState("nurnon:elektroNarx", "0");
 
-  // ── Avtomatik kunlik reset (lokal vaqt bo'yicha) ──
-  const [resetVaqt, setResetVaqt]                 = usePersistedState("nurnon:resetVaqt", "03:00");
-  const [lastResetDate, setLastResetDate]         = usePersistedState("nurnon:lastResetDate", "");
-
   // ── Kunlik kiritmalar (ham saqlanadi) ──
   const [ozIshlabQoplar, setOzIshlabQoplar]       = usePersistedState("nurnon:ozIshlabQoplar", {});
   const [tashqariSonlar, setTashqariSonlar]       = usePersistedState("nurnon:tashqariSonlar", {});
@@ -53,55 +39,6 @@ export function AppDataProvider({ children }) {
   // ── Vaqtinchalik oqim bayroqlari (saqlanmaydi) ──
   const [qopTasdiqlandi, setQopTasdiqlandi]       = useState(false);
   const [hisobotYopildi, setHisobotYopildi]       = useState(false);
-
-  // Eng so'nggi qiymatlarni ushlab turuvchi ref (timer/AppState callbacklari uchun)
-  const oxirgi = useRef({});
-  oxirgi.current = {
-    nonlar, ishchilar, mahsulotNarxlari, optomlar, qarzlar, braklar,
-    ozIshlabQoplar, tashqariSonlar, sotilmaganNon, resetVaqt, lastResetDate,
-  };
-
-  // Avtomatik kunlik arxivlash + reset (qurilmaning LOKAL vaqti bo'yicha).
-  // Belgilangan vaqtdan (masalan 03:00) o'tgan VA bugun hali reset bo'lmagan bo'lsa:
-  // joriy kunlik ma'lumotni Tarixga ko'chiradi va ko'rsatkichlarni nolga tushiradi.
-  const resetTekshir = () => {
-    const L = oxirgi.current;
-    const now = new Date();
-    const bugun = localDateStr(now);
-    if (L.lastResetDate === bugun) return;
-    const [rh, rm] = String(L.resetVaqt || "03:00").split(":");
-    const resetMin = (parseInt(rh, 10) || 3) * 60 + (parseInt(rm, 10) || 0);
-    if (now.getHours() * 60 + now.getMinutes() < resetMin) return;
-
-    const r = hisoblaKunlik({
-      nonlar: L.nonlar, ishchilar: L.ishchilar, ozIshlabQoplar: L.ozIshlabQoplar,
-      tashqariSonlar: L.tashqariSonlar, sotilmaganNon: L.sotilmaganNon,
-      optomlar: L.optomlar, qarzlar: L.qarzlar, mahsulotNarxlari: L.mahsulotNarxlari, braklar: L.braklar,
-    });
-    if (r.jamiNon > 0 || r.jamiQop > 0) {
-      const ydate = localDateStr(new Date(now.getTime() - 86400000));
-      const snap = {
-        id: Date.now(), sana: ydate, vaqt: now.getTime(), avto: true,
-        ozIshlabQoplar: L.ozIshlabQoplar, tashqariSonlar: L.tashqariSonlar, sotilmaganNon: L.sotilmaganNon,
-        nonlarSnapshot: JSON.parse(JSON.stringify(L.nonlar)),
-        ishchilarSnapshot: JSON.parse(JSON.stringify(L.ishchilar)),
-        mahsulotNarxlariSnapshot: JSON.parse(JSON.stringify(L.mahsulotNarxlari)),
-        daromad: r.daromad, xomashyo: r.xomashyo, ishchiHaq: r.ishchiHaq,
-        sofFoyda: r.sofFoyda, sotilganNon: r.sotilganNon, jamiQop: r.jamiQop, jamiNon: r.jamiNon,
-      };
-      setHisobotlarTarixi((prev) => [snap, ...(prev || []).filter((h) => h.sana !== ydate)]);
-    }
-    setOzIshlabQoplar({}); setTashqariSonlar({}); setSotilmaganNon({}); setKunlikQopSoni("");
-    setBraklar([]);
-    setLastResetDate(bugun);
-  };
-
-  useEffect(() => {
-    const t = setTimeout(resetTekshir, 1800); // hidratsiyadan keyin
-    const iv = setInterval(resetTekshir, 60000); // ilova ochiq turganda ham (har 1 daqiqa)
-    const sub = AppState.addEventListener("change", (s) => { if (s === "active") resetTekshir(); });
-    return () => { clearTimeout(t); clearInterval(iv); sub.remove(); };
-  }, []);
 
   // Avtomatik tozalash (hidratsiyadan keyin): karta/optom va to'langan qarz 7 kun,
   // kunlik hisobotlar 30 kun saqlanadi, so'ng o'chiriladi.
@@ -136,8 +73,6 @@ export function AppDataProvider({ children }) {
     braklar, setBraklar,
     gazNarx, setGazNarx,
     elektroNarx, setElektroNarx,
-    resetVaqt, setResetVaqt,
-    lastResetDate, setLastResetDate,
     ozIshlabQoplar, setOzIshlabQoplar,
     tashqariSonlar, setTashqariSonlar,
     sotilmaganNon, setSotilmaganNon,

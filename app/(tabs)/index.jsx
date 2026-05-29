@@ -12,8 +12,9 @@ import { BrandHeader } from "../../src/components/BrandHeader";
 import { ExpandableCard } from "../../src/components/ExpandableCard";
 import { KunlikQopModal } from "../../src/components/KunlikQopModal";
 import { HisobotModal } from "../../src/components/HisobotModal";
+import { DateField } from "../../src/components/DateField";
 import { C, T, S, R } from "../../src/theme";
-import { hisoblaKunlik, formatSom, qarzJami, optomJami, kartaJami, kartaHisob, donaFoyda } from "../../src/logic/hisob";
+import { hisoblaKunlik, formatSom, qarzJami, optomJami, kartaJami, kartaHisob, donaFoyda, ishchiHaqlari, kunlikXomashyoSarfi } from "../../src/logic/hisob";
 
 const BOSH_FORMA = { ism: "", summa: "", izoh: "", sana: "", savat: {}, donaChegirma: "", chegirma: "" };
 const localSana = () => {
@@ -24,9 +25,53 @@ const localSana = () => {
 export default function Markaz() {
   const {
     nonlar, ishchilar, qarzlar, setQarzlar, optomlar, setOptomlar, kartalar, setKartalar,
-    ozIshlabQoplar, tashqariSonlar, sotilmaganNon, mahsulotNarxlari,
+    ozIshlabQoplar, setOzIshlabQoplar, tashqariSonlar, setTashqariSonlar,
+    sotilmaganNon, setSotilmaganNon, mahsulotNarxlari, setOmborSorovlar,
     hisobotlarTarixi, setHisobotlarTarixi, braklar, setBraklar,
   } = useApp();
+
+  // Bugungi ishchilar haqi (jonli)
+  const bugungiHaq = useMemo(
+    () => ishchiHaqlari(nonlar, ishchilar, ozIshlabQoplar, braklar),
+    [nonlar, ishchilar, ozIshlabQoplar, braklar]
+  );
+
+  // Kunni yakunlash — tasdiq → tarixga snapshot + omborga so'rovnoma; hisobot ochiladi,
+  // yopilganda barcha kunlik ko'rsatkichlar nollanadi.
+  const kunniYakunla = () => {
+    if (!(stats.jamiNon > 0 || stats.jamiQop > 0)) {
+      Alert.alert("Ma'lumot yo'q", "Avval kunlik qop hisobiga ma'lumot kiriting.");
+      return;
+    }
+    Alert.alert("Kunni yakunlash", "Bugungi ma'lumot tarixga saqlanadi va ko'rsatkichlar nollanadi. Davom etasizmi?", [
+      { text: "Bekor", style: "cancel" },
+      { text: "Yakunlash", onPress: yakunlaBajar },
+    ]);
+  };
+  const yakunlaBajar = () => {
+    const sana = localSana();
+    const snap = {
+      id: Date.now(), sana, vaqt: Date.now(),
+      ozIshlabQoplar, tashqariSonlar, sotilmaganNon,
+      nonlarSnapshot: JSON.parse(JSON.stringify(nonlar)),
+      ishchilarSnapshot: JSON.parse(JSON.stringify(ishchilar)),
+      mahsulotNarxlariSnapshot: JSON.parse(JSON.stringify(mahsulotNarxlari)),
+      daromad: stats.daromad, xomashyo: stats.xomashyo, ishchiHaq: stats.ishchiHaq,
+      sofFoyda: stats.sofFoyda, sotilganNon: stats.sotilganNon, jamiQop: stats.jamiQop, jamiNon: stats.jamiNon,
+      ishchiHaqlari: bugungiHaq.list,
+    };
+    setHisobotlarTarixi((prev) => [snap, ...(prev || []).filter((h) => h.sana !== sana)]);
+    const sarf = kunlikXomashyoSarfi(nonlar, ozIshlabQoplar);
+    if (sarf.length > 0) {
+      setOmborSorovlar((prev) => [{ id: Date.now() + 1, sana, vaqt: Date.now(), manba: "Kunlik qop hisobi", maydonlar: sarf }, ...(prev || []).filter((s) => s.sana !== sana)]);
+    }
+    setHisobotOchiq(true);
+  };
+  const hisobotYop = () => {
+    setHisobotOchiq(false);
+    setOzIshlabQoplar({}); setTashqariSonlar({}); setSotilmaganNon({});
+    setKartalar([]); setBraklar([]);
+  };
 
   const ochirHisobot = (id) =>
     Alert.alert("O'chirish", "Shu sanadagi hisobotni o'chirasizmi?", [
@@ -156,10 +201,29 @@ export default function Markaz() {
             <Ionicons name="calculator-outline" size={18} color={C.sub} />
             <Text style={styles.cardTitle}>Kunlik qop hisobi</Text>
           </View>
-          <Text style={styles.muted}>{nonlar.length} xil non · {stats.jamiNon} dona ishlab chiqarildi</Text>
+          <Text style={styles.muted}>Bugun: {localSana()} · {stats.jamiNon} dona ishlab chiqarildi</Text>
           <View style={styles.gap10} />
           <Btn onPress={() => setQopOchiq(true)} icon="create-outline">Ma'lumot kiritish</Btn>
+          <View style={styles.gap10} />
+          <Btn secondary onPress={kunniYakunla} icon="checkmark-done-outline">Kunni yakunlash</Btn>
         </Card>
+
+        {/* BUGUNGI ISHCHILAR HAQI (jonli) */}
+        {bugungiHaq.list.length > 0 && (
+          <Card style={styles.block}>
+            <View style={styles.cardTitleRow}>
+              <Ionicons name="people-outline" size={18} color={C.sub} />
+              <Text style={styles.cardTitle}>Bugungi ishchilar haqi</Text>
+            </View>
+            <View style={styles.gap10} />
+            {bugungiHaq.list.map((w) => (
+              <View key={w.id} style={styles.haqRow}>
+                <Text style={styles.haqNom} numberOfLines={1}>{w.ism}{w.brak > 0 ? ` (brak −${formatSom(w.brak)})` : ""}</Text>
+                <Text style={styles.haqVal}>{formatSom(w.net)} so'm</Text>
+              </View>
+            ))}
+          </Card>
+        )}
 
         {/* KUNLIK HISOBOTLAR TARIXI (30 kun) */}
         <SectionHead icon="calendar-outline" nom="KUNLIK HISOBOTLAR (30 kun)" sum={`${(hisobotlarTarixi || []).length} ta`} color={C.accent} />
@@ -393,14 +457,10 @@ export default function Markaz() {
         </View>
       </Modal>
 
-      {/* Kunlik qop hisobi modali → Tasdiqlashda yakuniy hisobot ochiladi */}
-      <KunlikQopModal
-        visible={qopOchiq}
-        onClose={() => setQopOchiq(false)}
-        onTasdiq={() => { setQopOchiq(false); setHisobotOchiq(true); }}
-      />
-      {/* Hisobot yopilgach Karta bo'limi bo'shaydi (kunlik tasdiqdan keyin yangilanadi) */}
-      <HisobotModal visible={hisobotOchiq} onClose={() => { setHisobotOchiq(false); setKartalar([]); setBraklar([]); }} />
+      {/* Kunlik qop hisobi — faqat ma'lumot kiritish (kun bo'yi) */}
+      <KunlikQopModal visible={qopOchiq} onClose={() => setQopOchiq(false)} />
+      {/* Yakuniy hisobot — "Kunni yakunlash"da ochiladi; yopilganda ko'rsatkichlar nollanadi */}
+      <HisobotModal visible={hisobotOchiq} onClose={hisobotYop} />
 
       {/* Universal modal: Qarz / Optom / Karta */}
       <Modal modalVisible={modalTur !== null} onClose={yopModal}>
@@ -428,7 +488,8 @@ export default function Markaz() {
           ) : (
             <>
               <Text style={styles.inputLabel}>Sana</Text>
-              <TextInput value={forma.sana} onChangeText={(v) => yangila("sana", v)} placeholder="2026-01-01" placeholderTextColor={C.muted} style={styles.input} />
+              <DateField value={forma.sana} onChange={(v) => yangila("sana", v)} />
+              <View style={styles.gap10} />
 
               <Text style={styles.inputLabel}>{qarzModal ? "Qarz oluvchi *" : "Xaridor *"}</Text>
               <TextInput value={forma.ism} onChangeText={(v) => yangila("ism", v)} placeholder="Ism familiya" placeholderTextColor={C.muted} style={styles.input} />
@@ -514,6 +575,9 @@ const styles = StyleSheet.create({
   block:     { marginBottom: S[5] },
   cardTitleRow:{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: S[1] },
   cardTitle: { fontSize: T.md, fontWeight: "700", color: C.text },
+  haqRow:    { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: S[2] },
+  haqNom:    { flex: 1, fontSize: T.sm, color: C.text },
+  haqVal:    { fontSize: T.sm, color: C.accent, fontWeight: "800", marginLeft: S[2] },
   muted:     { fontSize: T.sm, color: C.sub },
 
   secHead:   { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: S[3] },
