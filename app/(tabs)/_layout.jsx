@@ -1,8 +1,18 @@
-// Pastki tab navigatsiya — 4 ta ekran.
+// Pastki tab navigatsiya — 4 ta ekran. Ikonkalar — maxsus rasmlar (tintColor bilan bo'yaladi).
 import { Tabs } from "expo-router";
-import { StyleSheet } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import { Image, StyleSheet } from "react-native";
 import { C } from "../../src/theme";
+
+const ICONS = {
+  markaz: require("../../assets/tabicons/markaz.png"),
+  ishlab: require("../../assets/tabicons/ishlab.png"),
+  xodimlar: require("../../assets/tabicons/xodimlar.png"),
+  ombor: require("../../assets/tabicons/ombor.png"),
+};
+
+const tabIcon = (key) => ({ color, size }) => (
+  <Image source={ICONS[key]} style={{ width: size, height: size, tintColor: color }} resizeMode="contain" />
+);
 
 export default function TabsLayout() {
   return (
@@ -16,35 +26,10 @@ export default function TabsLayout() {
         tabBarItemStyle: { paddingVertical: 4 },
       }}
     >
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: "Markaz",
-          tabBarIcon: ({ color, size }) => <Ionicons name="home-outline" size={size} color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="ishlab"
-        options={{
-          title: "Ishlab chiqarish",
-          tabBarLabel: "Ishlab",
-          tabBarIcon: ({ color, size }) => <Ionicons name="cube-outline" size={size} color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="xodimlar"
-        options={{
-          title: "Xodimlar",
-          tabBarIcon: ({ color, size }) => <Ionicons name="people-outline" size={size} color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="ombor"
-        options={{
-          title: "Ombor",
-          tabBarIcon: ({ color, size }) => <Ionicons name="server-outline" size={size} color={color} />,
-        }}
-      />
+      <Tabs.Screen name="index" options={{ title: "Markaz", tabBarIcon: tabIcon("markaz") }} />
+      <Tabs.Screen name="ishlab" options={{ title: "Ishlab chiqarish", tabBarLabel: "Ishlab", tabBarIcon: tabIcon("ishlab") }} />
+      <Tabs.Screen name="xodimlar" options={{ title: "Xodimlar", tabBarIcon: tabIcon("xodimlar") }} />
+      <Tabs.Screen name="ombor" options={{ title: "Ombor", tabBarIcon: tabIcon("ombor") }} />
     </Tabs>
   );
 }
