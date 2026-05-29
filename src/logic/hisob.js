@@ -84,22 +84,19 @@ export function hisoblaKunlik({
   };
 }
 
-// Ishchi haqi hisoblanadimi: Aktiv bo'lsa — ha; Ta'tilda bo'lsa, faqat qaytish
-// sanasi belgilangan va bugun o'sha sanadan o'tgan bo'lsa (ya'ni ta'tildan qaytgan).
-export function ishchiHisoblanadi(w, bugun) {
+// Ishchi haqi hisoblanadimi: faqat Aktiv bo'lsa hisoblanadi.
+// Ta'tilda bo'lsa kunlik ish haqi umuman hisoblanmaydi.
+export function ishchiHisoblanadi(w) {
   if (!w) return false;
-  if (w.holat === "Ta'tilda") return !!w.tatilQaytishSana && bugun >= w.tatilQaytishSana;
   return w.holat === "Aktiv";
 }
 
 // Har bir ishchining kunlik haqi taqsimoti (kunlik yoki qop bo'yicha) + brak ayirmasi.
-// Ta'tildagi ishchi qaytish sanasigacha hisoblanmaydi.
+// Ta'tildagi ishchi umuman hisoblanmaydi.
 // Qaytaradi: { list: [{ id, ism, haqTuri, gross, brak, net, detal:[{nom,qop,summa}] }], jami }
 export function ishchiHaqlari(nonlar, ishchilar, ozIshlabQoplar = {}, braklar = []) {
-  const b = new Date();
-  const bugun = `${b.getFullYear()}-${String(b.getMonth() + 1).padStart(2, "0")}-${String(b.getDate()).padStart(2, "0")}`;
   const list = [];
-  (ishchilar || []).filter((w) => ishchiHisoblanadi(w, bugun)).forEach((w) => {
+  (ishchilar || []).filter((w) => ishchiHisoblanadi(w)).forEach((w) => {
     let gross = 0;
     const detal = [];
     if (w.haqTuri === "qop") {
