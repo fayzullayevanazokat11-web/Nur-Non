@@ -1,15 +1,19 @@
 // Ekran sarlavhasi — eyebrow (TRACKED CAPS) + title + subtitle.
-// Ixtiyoriy `icon` — sarlavha yonida neytral (taupe) ikonka (jigarrang faqat tugmalar uchun).
-import { View, Text, StyleSheet } from "react-native";
+// `image` — bo'lim ikonkasi (maxsus rasm; har doim ko'rinadi). `icon` — Ionicons (zaxira).
+import { View, Text, Image, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { C, T, S, R } from "../theme";
 
-export function ScreenHeader({ eyebrow, title, subtitle, icon, style }) {
+export function ScreenHeader({ eyebrow, title, subtitle, icon, image, style }) {
   return (
     <View style={[styles.wrap, style]}>
       {eyebrow ? <Text style={styles.eyebrow}>{String(eyebrow).toUpperCase()}</Text> : null}
       <View style={styles.titleRow}>
-        {icon ? (
+        {image ? (
+          <View style={styles.iconBox}>
+            <Image source={image} style={styles.img} resizeMode="contain" />
+          </View>
+        ) : icon ? (
           <View style={styles.iconBox}>
             <Ionicons name={icon} size={20} color={C.sub} />
           </View>
@@ -26,7 +30,7 @@ const styles = StyleSheet.create({
   eyebrow:  { fontSize: 11, color: C.muted, fontWeight: "700", letterSpacing: 1.8 },
   titleRow: { flexDirection: "row", alignItems: "center", gap: S[3], marginTop: S[2] },
   iconBox:  { width: 42, height: 42, borderRadius: R.md, alignItems: "center", justifyContent: "center", backgroundColor: C.panel },
+  img:      { width: 24, height: 24, tintColor: C.sub },
   title:    { fontSize: T.xl, color: C.text, fontWeight: "800", letterSpacing: -0.6, lineHeight: T.xl + 4, flexShrink: 1 },
   subtitle: { fontSize: T.sm, color: C.sub, fontWeight: "500", marginTop: S[2], lineHeight: 19 },
 });
-

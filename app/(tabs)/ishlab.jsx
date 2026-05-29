@@ -13,6 +13,7 @@ import { Modal } from "../../src/components/Modal";
 import { ScreenHeader } from "../../src/components/ScreenHeader";
 import { ExpandableCard } from "../../src/components/ExpandableCard";
 import { MahsulotNarxi } from "../../src/components/MahsulotNarxi";
+import { ScrollBox } from "../../src/components/ScrollBox";
 import { xomashyoRoyxati } from "../../src/logic/konstantalar";
 import { C, T, S, R } from "../../src/theme";
 import { formatSom, getQopTannarx, getIngNarx } from "../../src/logic/hisob";
@@ -96,8 +97,8 @@ export default function IshlabChiqarish() {
 
   return (
     <SafeAreaView style={styles.safe} edges={["top"]}>
-      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={true}>
-        <ScreenHeader eyebrow="Assortiment" title="Ishlab chiqarish" subtitle={`${nonlar.length} xil non · ${aktivIshchi} aktiv xodim`} icon="cube-outline" />
+      <ScrollBox contentContainerStyle={styles.scroll}>
+        <ScreenHeader eyebrow="Assortiment" title="Ishlab chiqarish" subtitle={`${nonlar.length} xil non · ${aktivIshchi} aktiv xodim`} image={require("../../assets/tabicons/ishlab.png")} />
 
         <View style={styles.segment}>
           <Pressable style={[styles.seg, tab === "assortiment" && styles.segActive]} onPress={() => setTab("assortiment")}>
@@ -172,7 +173,7 @@ export default function IshlabChiqarish() {
             )}
           </>
         )}
-      </ScrollView>
+      </ScrollBox>
 
       {/* Qo'shish / Tahrirlash modali */}
       <Modal modalVisible={modalOchiq} onClose={yopModal}>
