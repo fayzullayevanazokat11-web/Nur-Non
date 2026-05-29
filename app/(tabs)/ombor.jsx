@@ -130,17 +130,12 @@ export default function Ombor() {
               );
             })}
           </View>
-          <Pressable
-            accessibilityLabel="Zaxirani nollash"
-            onPress={nollaZaxira}
-            disabled={!zaxiraBor}
-            hitSlop={6}
-            style={[styles.nollaBtn, !zaxiraBor && styles.nollaBtnOff]}
-          >
-            <Ionicons name="refresh-outline" size={15} color={zaxiraBor ? C.red : C.muted} />
-            <Text style={[styles.nollaTxt, { color: zaxiraBor ? C.red : C.muted }]}>Zaxirani nollash</Text>
-          </Pressable>
         </Card>
+
+        <View style={styles.gap10} />
+        <Btn secondary icon="refresh-outline" disabled={!zaxiraBor} onPress={nollaZaxira}>
+          Mavjud zaxirani nollash
+        </Btn>
 
         {(omborSorovlar || []).length > 0 && (
           <>
@@ -273,9 +268,6 @@ const styles = StyleSheet.create({
   cell:      { width: "100%", backgroundColor: C.surface, borderWidth: 1, borderColor: C.borderSoft, borderRadius: R.sm, paddingVertical: S[3], paddingHorizontal: S[4], flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
   cellNom:   { fontSize: T.sm, color: C.sub, fontWeight: "600", flexShrink: 1 },
   cellVal:   { fontSize: T.sm, fontWeight: "700", marginLeft: S[2] },
-  nollaBtn:  { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, marginTop: S[3], paddingVertical: S[2], borderRadius: R.sm, borderWidth: StyleSheet.hairlineWidth, borderColor: C.borderSoft },
-  nollaBtnOff: { opacity: 0.5 },
-  nollaTxt:  { fontSize: T.sm, fontWeight: "700" },
 
   // So'rovnomalar
   secHead:   { flexDirection: "row", alignItems: "center", gap: 6, marginTop: S[6], marginBottom: S[3] },
