@@ -13,6 +13,7 @@ import { ExpandableCard } from "../../src/components/ExpandableCard";
 import { KunlikQopModal } from "../../src/components/KunlikQopModal";
 import { HisobotModal } from "../../src/components/HisobotModal";
 import { DateField } from "../../src/components/DateField";
+import { ScrollBox } from "../../src/components/ScrollBox";
 import { C, T, S, R } from "../../src/theme";
 import { hisoblaKunlik, formatSom, qarzJami, optomJami, kartaJami, kartaHisob, donaFoyda, ishchiHaqlari, kunlikXomashyoSarfi } from "../../src/logic/hisob";
 
@@ -192,7 +193,7 @@ export default function Markaz() {
 
   return (
     <SafeAreaView style={styles.safe} edges={["top"]}>
-      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={true}>
+      <ScrollBox contentContainerStyle={styles.scroll}>
         <BrandHeader />
 
         <View style={styles.statsRow}>
@@ -416,7 +417,7 @@ export default function Markaz() {
             </ExpandableCard>
           ))
         )}
-      </ScrollView>
+      </ScrollBox>
 
       {/* Brak modali */}
       <Modal modalVisible={brakModal} onClose={() => setBrakModal(false)}>

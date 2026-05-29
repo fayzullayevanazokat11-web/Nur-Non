@@ -10,6 +10,7 @@ import { Btn } from "../../src/components/Btn";
 import { Modal } from "../../src/components/Modal";
 import { ScreenHeader } from "../../src/components/ScreenHeader";
 import { ExpandableCard } from "../../src/components/ExpandableCard";
+import { ScrollBox } from "../../src/components/ScrollBox";
 import { C, T, S, R } from "../../src/theme";
 import { omborBalans, zaxiraMatni, omborKattaBirlik } from "../../src/logic/hisob";
 import { OMBOR_MAYDONLAR } from "../../src/logic/konstantalar";
@@ -74,8 +75,8 @@ export default function Ombor() {
 
   return (
     <SafeAreaView style={styles.safe} edges={["top"]}>
-      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={true}>
-        <ScreenHeader eyebrow="Zaxira" title="Ombor hisoboti" subtitle={`${setSoni} ta set kiritilgan`} icon="server-outline" />
+      <ScrollBox contentContainerStyle={styles.scroll}>
+        <ScreenHeader eyebrow="Zaxira" title="Ombor hisoboti" subtitle={`${setSoni} ta set kiritilgan`} image={require("../../assets/tabicons/ombor.png")} />
 
         <Card accent>
           <View style={styles.cardTitleRow}>
@@ -162,7 +163,7 @@ export default function Ombor() {
             ))}
           </>
         )}
-      </ScrollView>
+      </ScrollBox>
 
       {/* Yangi set kiritish modali */}
       <Modal modalVisible={modalOchiq} onClose={yopModal}>

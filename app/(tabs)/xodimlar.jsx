@@ -11,6 +11,7 @@ import { Btn } from "../../src/components/Btn";
 import { Modal } from "../../src/components/Modal";
 import { ScreenHeader } from "../../src/components/ScreenHeader";
 import { ExpandableCard } from "../../src/components/ExpandableCard";
+import { ScrollBox } from "../../src/components/ScrollBox";
 import { Avatar } from "../../src/components/Avatar";
 import { C, T, S, R } from "../../src/theme";
 import { formatSom } from "../../src/logic/hisob";
@@ -78,8 +79,8 @@ export default function Xodimlar() {
 
   return (
     <SafeAreaView style={styles.safe} edges={["top"]}>
-      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={true}>
-        <ScreenHeader eyebrow="Jamoa" title="Xodimlar" icon="people-outline" />
+      <ScrollBox contentContainerStyle={styles.scroll}>
+        <ScreenHeader eyebrow="Jamoa" title="Xodimlar" image={require("../../assets/tabicons/xodimlar.png")} />
 
         <View style={styles.statsRow}>
           <Card style={styles.statTile}>
@@ -144,7 +145,7 @@ export default function Xodimlar() {
             );
           })
         )}
-      </ScrollView>
+      </ScrollBox>
 
       {/* Qo'shish / Tahrirlash modali */}
       <Modal modalVisible={modalOchiq} onClose={yopModal}>
