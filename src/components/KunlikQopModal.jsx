@@ -53,7 +53,7 @@ export function KunlikQopModal({ visible, onClose }) {
         <Text style={styles.title}>Kunlik qop hisobi</Text>
       </View>
 
-      <ScrollView style={styles.scroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+      <ScrollView style={styles.scroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={true}>
         {nonlar.map((n) => {
           const oz = n.ozIshlab !== false;
           return (

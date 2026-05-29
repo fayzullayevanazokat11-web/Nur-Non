@@ -46,7 +46,7 @@ export function HisobotModal({ visible, onClose }) {
       </View>
       <Text style={styles.sana}>{data.bugun}</Text>
 
-      <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
+      <ScrollView style={styles.scroll} showsVerticalScrollIndicator={true}>
         {/* Ishlab chiqarish (qop) */}
         <View style={[styles.block, { backgroundColor: C.accent + "0D", borderColor: C.accent + "2E" }]}>
           <Text style={styles.blockHead}>Ishlab chiqarish (kunlik qop)</Text>
