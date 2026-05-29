@@ -84,11 +84,22 @@ export function hisoblaKunlik({
   };
 }
 
+// Ishchi haqi hisoblanadimi: Aktiv bo'lsa — ha; Ta'tilda bo'lsa, faqat qaytish
+// sanasi belgilangan va bugun o'sha sanadan o'tgan bo'lsa (ya'ni ta'tildan qaytgan).
+export function ishchiHisoblanadi(w, bugun) {
+  if (!w) return false;
+  if (w.holat === "Ta'tilda") return !!w.tatilQaytishSana && bugun >= w.tatilQaytishSana;
+  return w.holat === "Aktiv";
+}
+
 // Har bir ishchining kunlik haqi taqsimoti (kunlik yoki qop bo'yicha) + brak ayirmasi.
+// Ta'tildagi ishchi qaytish sanasigacha hisoblanmaydi.
 // Qaytaradi: { list: [{ id, ism, haqTuri, gross, brak, net, detal:[{nom,qop,summa}] }], jami }
 export function ishchiHaqlari(nonlar, ishchilar, ozIshlabQoplar = {}, braklar = []) {
+  const b = new Date();
+  const bugun = `${b.getFullYear()}-${String(b.getMonth() + 1).padStart(2, "0")}-${String(b.getDate()).padStart(2, "0")}`;
   const list = [];
-  (ishchilar || []).filter((w) => w.holat === "Aktiv").forEach((w) => {
+  (ishchilar || []).filter((w) => ishchiHisoblanadi(w, bugun)).forEach((w) => {
     let gross = 0;
     const detal = [];
     if (w.haqTuri === "qop") {
@@ -103,7 +114,7 @@ export function ishchiHaqlari(nonlar, ishchilar, ozIshlabQoplar = {}, braklar = 
     } else {
       gross = parseFloat(w.miqdor) || 0;
     }
-    const brak = (braklar || []).filter((b) => b.ishchiId === w.id).reduce((s, b) => s + (parseFloat(b.summa) || 0), 0);
+    const brak = (braklar || []).filter((b2) => b2.ishchiId === w.id).reduce((s, b2) => s + (parseFloat(b2.summa) || 0), 0);
     const net = Math.max(0, gross - brak);
     if (gross > 0 || brak > 0) {
       list.push({ id: w.id, ism: w.ism, haqTuri: w.haqTuri || "kunlik", gross: Math.round(gross), brak: Math.round(brak), net: Math.round(net), detal });

@@ -46,6 +46,13 @@ export default function Ombor() {
       { text: "Rad etish", style: "destructive", onPress: () => setOmborSorovlar((prev) => (prev || []).filter((s) => s.id !== sorov.id)) },
     ]);
 
+  // Tasdiqlangan tarix yozuvini o'chirish (tasdiq bilan; balansga ta'sir qilmaydi).
+  const ochirTasdiq = (id) =>
+    Alert.alert("O'chirish", "Bu tasdiqlangan yozuvni tarixdan o'chirasizmi?", [
+      { text: "Bekor", style: "cancel" },
+      { text: "Ha", style: "destructive", onPress: () => setOmborTasdiqlar((prev) => (prev || []).filter((t) => t.id !== id)) },
+    ]);
+
   const ochModal = () => { setForma(boshForma()); setModalOchiq(true); };
   const yopModal = () => setModalOchiq(false);
   const yangila = (id, v) => setForma((p) => ({ ...p, [id]: v }));
@@ -159,6 +166,12 @@ export default function Ombor() {
                     <Text style={styles.sorovVal}>− {zaxiraMatni(m.id, m.qiymat, m.birlik)}</Text>
                   </View>
                 ))}
+                <View style={styles.tasdiqActions}>
+                  <Pressable onPress={() => ochirTasdiq(t.id)} hitSlop={6} style={styles.tasdiqDel}>
+                    <Ionicons name="trash-outline" size={16} color={C.red} />
+                    <Text style={[styles.tasdiqDelTxt, { color: C.red }]}> O'chirish</Text>
+                  </Pressable>
+                </View>
               </ExpandableCard>
             ))}
           </>
@@ -237,6 +250,9 @@ const styles = StyleSheet.create({
   sorovRow:  { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: S[2] },
   sorovNom:  { fontSize: T.sm, color: C.text, flex: 1 },
   sorovVal:  { fontSize: T.sm, fontWeight: "800", color: C.red, marginLeft: S[2] },
+  tasdiqActions:{ flexDirection: "row", justifyContent: "flex-end", marginTop: S[2], borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: C.borderSoft, paddingTop: S[2] },
+  tasdiqDel: { flexDirection: "row", alignItems: "center" },
+  tasdiqDelTxt: { fontSize: T.sm, fontWeight: "700" },
 
   // Modal
   modalHead:  { flexDirection: "row", alignItems: "center", gap: S[2], marginBottom: S[3] },
