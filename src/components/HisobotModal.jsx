@@ -7,7 +7,7 @@ import { useApp } from "../store/AppData";
 import { Modal } from "./Modal";
 import { Btn } from "./Btn";
 import { C, T, S, R } from "../theme";
-import { hisoblaKunlik, formatSom } from "../logic/hisob";
+import { hisoblaKunlik, formatSom, ishchiHaqlari } from "../logic/hisob";
 
 export function HisobotModal({ visible, onClose }) {
   const {
@@ -34,7 +34,8 @@ export function HisobotModal({ visible, onClose }) {
     const kartaDona = sum(kartaB, "dona");
     // Umumiy foyda = ishlab chiqarish + karta sof foydasi + optom SOF FOYDASI (chegirma ayrilgan)
     const umumiy = kunlik.sofFoyda + kartaFoyda + optomFoyda;
-    return { bugun, kunlik, optomSum, optomFoyda, optomSoni: optomB.length, qarzSum, qarzSoni: qarzB.length, kartaSum, kartaFoyda, kartaDona, kartaSoni: kartaB.length, umumiy };
+    const haq = ishchiHaqlari(nonlar, ishchilar, ozIshlabQoplar, braklar);
+    return { bugun, kunlik, optomSum, optomFoyda, optomSoni: optomB.length, qarzSum, qarzSoni: qarzB.length, kartaSum, kartaFoyda, kartaDona, kartaSoni: kartaB.length, umumiy, haqList: haq.list };
   }, [nonlar, ishchilar, ozIshlabQoplar, tashqariSonlar, sotilmaganNon, qarzlar, optomlar, kartalar, mahsulotNarxlari, braklar]);
 
   return (
@@ -75,6 +76,16 @@ export function HisobotModal({ visible, onClose }) {
           <Row label={`${data.qarzSoni} ta qarz`} value={`${formatSom(data.qarzSum)} so'm`} bold />
           <Text style={styles.note}>* Qarz alohida — hali to'lanmagan, umumiyga qo'shilmaydi</Text>
         </View>
+
+        {/* Ishchilar haqi */}
+        {data.haqList.length > 0 && (
+          <View style={[styles.block, { backgroundColor: "#F5EBDA", borderColor: "#E7D3B4" }]}>
+            <Text style={styles.blockHead}>Ishchilar haqi</Text>
+            {data.haqList.map((w) => (
+              <Row key={w.id} label={w.brak > 0 ? `${w.ism} (brak −${formatSom(w.brak)})` : w.ism} value={`${formatSom(w.net)} so'm`} bold />
+            ))}
+          </View>
+        )}
 
         {/* Umumiy */}
         <View style={styles.umumiy}>

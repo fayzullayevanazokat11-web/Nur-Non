@@ -7,7 +7,7 @@ import { useApp } from "../store/AppData";
 import { Modal } from "./Modal";
 import { Btn } from "./Btn";
 import { C, T, S, R } from "../theme";
-import { hisoblaKunlik, formatSom, kunlikXomashyoSarfi } from "../logic/hisob";
+import { hisoblaKunlik, formatSom, kunlikXomashyoSarfi, ishchiHaqlari } from "../logic/hisob";
 
 const toStr = (obj) => Object.fromEntries(Object.entries(obj || {}).map(([k, v]) => [k, String(v)]));
 
@@ -81,6 +81,7 @@ export function KunlikQopModal({ visible, onClose, onTasdiq }) {
       sotilganNon: r.sotilganNon,
       jamiQop: r.jamiQop,
       jamiNon: r.jamiNon,
+      ishchiHaqlari: ishchiHaqlari(nonlar, ishchilar, fQop, braklar).list,
     };
     // Bir kunda bitta hisobot — o'sha sanani almashtiramiz
     setHisobotlarTarixi((prev) => [snapshot, ...(prev || []).filter((h) => h.sana !== sana)]);

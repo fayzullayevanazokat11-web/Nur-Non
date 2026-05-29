@@ -69,21 +69,9 @@ export function hisoblaKunlik({
     }
   });
 
-  let ishchiHaq = 0;
-  nonlar.filter((n) => n.ozIshlab !== false).forEach((non) => {
-    const qopSoni = parseInt(ozIshlabQoplar[non.id]) || 0;
-    if (qopSoni <= 0) return;
-    (ishchilar || [])
-      .filter((w) => w.holat === "Aktiv" && w.haqTuri === "qop" && (w.nonTurlari || []).includes(non.nom))
-      .forEach((w) => { ishchiHaq += qopSoni * (parseFloat((w.nonNarxlari || {})[non.nom]) || parseFloat(w.miqdor) || 0); });
-  });
-  (ishchilar || [])
-    .filter((w) => w.holat === "Aktiv" && w.haqTuri === "kunlik")
-    .forEach((w) => { ishchiHaq += parseFloat(w.miqdor) || 0; });
-
-  // Brak: qopdan pul oladigan ishchining brak qilgan ishi haqidan ayriladi
-  const brakAyirma = (braklar || []).reduce((s, b) => s + (parseFloat(b.summa) || 0), 0);
-  ishchiHaq = Math.max(0, ishchiHaq - brakAyirma);
+  const haq = ishchiHaqlari(nonlar, ishchilar, ozIshlabQoplar, braklar);
+  const ishchiHaq = haq.jami;
+  const brakAyirma = haq.list.reduce((s, x) => s + (x.gross - x.net), 0);
 
   const malumotBor = jamiQop > 0 || jamiNon > 0;
   const sofFoyda = malumotBor ? Math.round(daromad - xomashyo - ishchiHaq) : 0;
@@ -96,7 +84,34 @@ export function hisoblaKunlik({
   };
 }
 
-// ── Ombor birliklari ──
+// Har bir ishchining kunlik haqi taqsimoti (kunlik yoki qop bo'yicha) + brak ayirmasi.
+// Qaytaradi: { list: [{ id, ism, haqTuri, gross, brak, net, detal:[{nom,qop,summa}] }], jami }
+export function ishchiHaqlari(nonlar, ishchilar, ozIshlabQoplar = {}, braklar = []) {
+  const list = [];
+  (ishchilar || []).filter((w) => w.holat === "Aktiv").forEach((w) => {
+    let gross = 0;
+    const detal = [];
+    if (w.haqTuri === "qop") {
+      (nonlar || []).filter((n) => n.ozIshlab !== false).forEach((n) => {
+        if (!(w.nonTurlari || []).includes(n.nom)) return;
+        const qop = parseInt((ozIshlabQoplar || {})[n.id]) || 0;
+        if (qop <= 0) return;
+        const rate = parseFloat((w.nonNarxlari || {})[n.nom]) || 0;
+        const s = qop * rate;
+        if (s > 0) { gross += s; detal.push({ nom: n.nom, qop, summa: Math.round(s) }); }
+      });
+    } else {
+      gross = parseFloat(w.miqdor) || 0;
+    }
+    const brak = (braklar || []).filter((b) => b.ishchiId === w.id).reduce((s, b) => s + (parseFloat(b.summa) || 0), 0);
+    const net = Math.max(0, gross - brak);
+    if (gross > 0 || brak > 0) {
+      list.push({ id: w.id, ism: w.ism, haqTuri: w.haqTuri || "kunlik", gross: Math.round(gross), brak: Math.round(brak), net: Math.round(net), detal });
+    }
+  });
+  return { list, jami: list.reduce((s, x) => s + x.net, 0) };
+}
+
 // un → qop (50 kg), yog' → plastik quti (5 litr). Baza birligi kg/litr.
 export function omborKattaBirlik(id) {
   if (HISOBOT_UN_IDLAR.includes(id)) return { birlik: "qop", faktor: 50 };

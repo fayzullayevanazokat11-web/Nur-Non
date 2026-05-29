@@ -32,6 +32,7 @@ export function AppDataProvider({ children }) {
   const [kartalar, setKartalar]                   = usePersistedState("nurnon:kartalar", []);
   const [omborlar, setOmborlar]                   = usePersistedState("nurnon:omborlar", []);
   const [omborSorovlar, setOmborSorovlar]         = usePersistedState("nurnon:omborSorovlar", []);
+  const [omborTasdiqlar, setOmborTasdiqlar]       = usePersistedState("nurnon:omborTasdiqlar", []);
   const [hisobotlarTarixi, setHisobotlarTarixi]   = usePersistedState("nurnon:hisobotlarTarixi", []);
   const [tasdiqlanganKunlar, setTasdiqlanganKunlar] = usePersistedState("nurnon:tasdiqlanganKunlar", []);
   const [kunlikQoplar, setKunlikQoplar]           = usePersistedState("nurnon:kunlikQoplar", []);
@@ -113,6 +114,7 @@ export function AppDataProvider({ children }) {
       setOptomlar((p) => p.filter((o) => yosh(o) < 7 * D));
       setQarzlar((p) => p.filter((q) => !q.tolangan || (now - (q.tolanganVaqt || now)) < 7 * D));
       setHisobotlarTarixi((p) => p.filter((h) => (now - (h.vaqt || now)) < 30 * D));
+      setOmborTasdiqlar((p) => p.filter((t) => (now - (t.vaqt || now)) < 30 * D));
     }, 1500);
     return () => clearTimeout(t);
   }, []);
@@ -127,6 +129,7 @@ export function AppDataProvider({ children }) {
     kartalar, setKartalar,
     omborlar, setOmborlar,
     omborSorovlar, setOmborSorovlar,
+    omborTasdiqlar, setOmborTasdiqlar,
     hisobotlarTarixi, setHisobotlarTarixi,
     tasdiqlanganKunlar, setTasdiqlanganKunlar,
     kunlikQoplar, setKunlikQoplar,
