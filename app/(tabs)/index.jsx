@@ -52,14 +52,9 @@ export default function Markaz() {
 
   const qopIshchilar = (ishchilar || []).filter((w) => w.haqTuri === "qop" && w.holat === "Aktiv");
   const brakIshchi = qopIshchilar.find((w) => w.id === brakForma.ishchiId);
-  // 1 dona non haqi = qop narxi / 1 qopdagi non soni
-  const donaHaqi = (w, nom) => {
-    const qopNarx = parseFloat((w?.nonNarxlari || {})[nom]) || 0;
-    const non = (nonlar || []).find((n) => n.nom === nom);
-    const son = parseFloat(non?.nonSoni) || 0;
-    return son > 0 ? qopNarx / son : 0;
-  };
-  const brakSumma = Math.round(donaHaqi(brakIshchi, brakForma.nonNomi) * (parseFloat(brakForma.soni) || 0));
+  // 1 dona brak narxi = nonning sotuv narxi (masalan 8 000 yoki 15 000)
+  const donaNarxi = (nom) => parseFloat((nonlar || []).find((n) => n.nom === nom)?.narx) || 0;
+  const brakSumma = Math.round(donaNarxi(brakForma.nonNomi) * (parseFloat(brakForma.soni) || 0));
   const ochBrak = () => { setBrakForma({ ishchiId: null, nonNomi: "", soni: "" }); setBrakModal(true); };
   const saqlaBrak = () => {
     if (!brakIshchi || !brakForma.nonNomi || !(parseFloat(brakForma.soni) > 0)) {
@@ -198,6 +193,12 @@ export default function Markaz() {
                 <View style={styles.histRow}><Text style={styles.histNom}>Daromad</Text><Text style={styles.histVal}>{formatSom(h.daromad)} so'm</Text></View>
                 <View style={styles.histRow}><Text style={styles.histNom}>Xomashyo</Text><Text style={styles.histVal}>{formatSom(h.xomashyo)} so'm</Text></View>
                 <View style={styles.histRow}><Text style={styles.histNom}>Ishchi haqi</Text><Text style={styles.histVal}>{formatSom(h.ishchiHaq)} so'm</Text></View>
+                {(h.ishchiHaqlari || []).map((w) => (
+                  <View key={w.id} style={styles.histSubRow}>
+                    <Text style={styles.histSubNom} numberOfLines={1}>· {w.ism}{w.brak > 0 ? ` (brak −${formatSom(w.brak)})` : ""}</Text>
+                    <Text style={styles.histSubVal}>{formatSom(w.net)} so'm</Text>
+                  </View>
+                ))}
                 <View style={styles.histRow}><Text style={styles.histNom}>Ishlab / sotilgan</Text><Text style={styles.histVal}>{h.jamiNon || 0} / {h.sotilganNon || 0} dona</Text></View>
                 <View style={styles.histRow}><Text style={styles.histNomB}>Sof foyda</Text><Text style={styles.histValB}>{formatSom(h.sofFoyda)} so'm</Text></View>
               </View>
@@ -370,7 +371,7 @@ export default function Markaz() {
               {(brakIshchi.nonTurlari || []).map((nom) => (
                 <Pressable key={nom} onPress={() => setBrakForma((p) => ({ ...p, nonNomi: nom }))} style={[styles.pickRow, brakForma.nonNomi === nom && styles.pickRowActive]}>
                   <Ionicons name={brakForma.nonNomi === nom ? "radio-button-on-outline" : "ellipse-outline"} size={16} color={brakForma.nonNomi === nom ? C.accent : C.muted} />
-                  <Text style={[styles.pickTxt, brakForma.nonNomi === nom && styles.pickTxtActive]}>{nom} · {formatSom(donaHaqi(brakIshchi, nom))} so'm/dona</Text>
+                  <Text style={[styles.pickTxt, brakForma.nonNomi === nom && styles.pickTxtActive]}>{nom} · {formatSom(donaNarxi(nom))} so'm/dona</Text>
                 </Pressable>
               ))}
 
@@ -399,7 +400,7 @@ export default function Markaz() {
         onTasdiq={() => { setQopOchiq(false); setHisobotOchiq(true); }}
       />
       {/* Hisobot yopilgach Karta bo'limi bo'shaydi (kunlik tasdiqdan keyin yangilanadi) */}
-      <HisobotModal visible={hisobotOchiq} onClose={() => { setHisobotOchiq(false); setKartalar([]); }} />
+      <HisobotModal visible={hisobotOchiq} onClose={() => { setHisobotOchiq(false); setKartalar([]); setBraklar([]); }} />
 
       {/* Universal modal: Qarz / Optom / Karta */}
       <Modal modalVisible={modalTur !== null} onClose={yopModal}>
@@ -531,6 +532,9 @@ const styles = StyleSheet.create({
   histRow:   { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 5 },
   histNom:   { flex: 1, fontSize: T.sm, color: C.sub },
   histVal:   { fontSize: T.sm, color: C.text, fontWeight: "700", marginLeft: S[2] },
+  histSubRow:{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 4, paddingLeft: S[2] },
+  histSubNom:{ flex: 1, fontSize: T.xs, color: C.muted },
+  histSubVal:{ fontSize: T.xs, color: C.sub, fontWeight: "700", marginLeft: S[2] },
   histNomB:  { flex: 1, fontSize: T.sm, color: C.text, fontWeight: "800" },
   histValB:  { fontSize: T.md, color: C.accent, fontWeight: "800", marginLeft: S[2] },
   histDiv:   { height: StyleSheet.hairlineWidth, backgroundColor: C.borderSoft, marginVertical: S[2] },

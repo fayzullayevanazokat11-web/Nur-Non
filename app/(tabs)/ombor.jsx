@@ -9,6 +9,7 @@ import { Card } from "../../src/components/Card";
 import { Btn } from "../../src/components/Btn";
 import { Modal } from "../../src/components/Modal";
 import { ScreenHeader } from "../../src/components/ScreenHeader";
+import { ExpandableCard } from "../../src/components/ExpandableCard";
 import { C, T, S, R } from "../../src/theme";
 import { omborBalans, zaxiraMatni, omborKattaBirlik } from "../../src/logic/hisob";
 import { OMBOR_MAYDONLAR } from "../../src/logic/konstantalar";
@@ -17,7 +18,7 @@ import { OMBOR_MAYDONLAR } from "../../src/logic/konstantalar";
 const boshForma = () => Object.fromEntries(OMBOR_MAYDONLAR.map((m) => [m.id, ""]));
 
 export default function Ombor() {
-  const { omborlar, setOmborlar, omborSorovlar, setOmborSorovlar } = useApp();
+  const { omborlar, setOmborlar, omborSorovlar, setOmborSorovlar, omborTasdiqlar, setOmborTasdiqlar } = useApp();
 
   const [modalOchiq, setModalOchiq] = useState(false);
   const [forma, setForma] = useState(boshForma());
@@ -25,17 +26,16 @@ export default function Ombor() {
   const balans = useMemo(() => omborBalans(omborlar), [omborlar]);
   const setSoni = (omborlar || []).filter((h) => h.turi === "yangiset").length;
 
-  // So'rovnomani tasdiqlash — xomashyo ombordan AYRILADI (manfiy xarajat yozuvi).
+  // So'rovnomani tasdiqlash — xomashyo ombordan AYRILADI (manfiy xarajat yozuvi)
+  // + "Tasdiqlangan" tarixiga yoziladi (30 kunda o'chadi).
   const tasdiqlaSorov = (sorov) => {
+    const sana = new Date().toISOString().split("T")[0];
     const entry = {
-      id: Date.now(),
-      sana: new Date().toISOString().split("T")[0],
-      vaqt: Date.now(),
-      turi: "xarajat",
-      manba: sorov.manba,
+      id: Date.now(), sana, vaqt: Date.now(), turi: "xarajat", manba: sorov.manba,
       maydonlar: (sorov.maydonlar || []).map((m) => ({ ...m, qiymat: -(parseFloat(m.qiymat) || 0) })),
     };
     setOmborlar((prev) => [entry, ...prev]);
+    setOmborTasdiqlar((prev) => [{ id: Date.now() + 1, sana, vaqt: Date.now(), manba: sorov.manba, maydonlar: sorov.maydonlar }, ...(prev || [])]);
     setOmborSorovlar((prev) => (prev || []).filter((s) => s.id !== sorov.id));
   };
 
@@ -133,6 +133,35 @@ export default function Ombor() {
 
         <View style={styles.gap14} />
         <Btn color={C.blue} onPress={ochModal} icon="add-outline">Yangi set kiritish</Btn>
+
+        {(omborTasdiqlar || []).length > 0 && (
+          <>
+            <View style={styles.secHead}>
+              <Ionicons name="checkmark-done-outline" size={15} color={C.sub} />
+              <Text style={styles.secTitle}>TASDIQLANGAN (30 kun)</Text>
+              <Text style={styles.secCount}>{omborTasdiqlar.length} ta</Text>
+            </View>
+            {omborTasdiqlar.map((t) => (
+              <ExpandableCard
+                key={t.id}
+                style={styles.sorov}
+                header={
+                  <View style={styles.flex1}>
+                    <Text style={styles.sorovManba}>{t.manba}</Text>
+                    <Text style={styles.muted}>{t.sana} · chiqarilgan xomashyo</Text>
+                  </View>
+                }
+              >
+                {(t.maydonlar || []).map((m) => (
+                  <View key={m.id} style={styles.sorovRow}>
+                    <Text style={styles.sorovNom} numberOfLines={1}>{m.emoji} {m.nom}</Text>
+                    <Text style={styles.sorovVal}>− {zaxiraMatni(m.id, m.qiymat, m.birlik)}</Text>
+                  </View>
+                ))}
+              </ExpandableCard>
+            ))}
+          </>
+        )}
       </ScrollView>
 
       {/* Yangi set kiritish modali */}
@@ -191,9 +220,9 @@ const styles = StyleSheet.create({
   muted:     { fontSize: T.sm, color: C.sub },
 
   grid:      { flexDirection: "row", flexWrap: "wrap", gap: S[2] },
-  cell:      { width: "48%", backgroundColor: C.surface, borderWidth: 1, borderColor: C.borderSoft, borderRadius: R.sm, paddingVertical: S[2], paddingHorizontal: S[3], flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-  cellNom:   { fontSize: 10, color: C.sub, fontWeight: "600", flexShrink: 1 },
-  cellVal:   { fontSize: T.xs, fontWeight: "700", marginLeft: S[1] },
+  cell:      { width: "100%", backgroundColor: C.surface, borderWidth: 1, borderColor: C.borderSoft, borderRadius: R.sm, paddingVertical: S[3], paddingHorizontal: S[4], flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+  cellNom:   { fontSize: T.sm, color: C.sub, fontWeight: "600", flexShrink: 1 },
+  cellVal:   { fontSize: T.sm, fontWeight: "700", marginLeft: S[2] },
 
   // So'rovnomalar
   secHead:   { flexDirection: "row", alignItems: "center", gap: 6, marginTop: S[6], marginBottom: S[3] },
