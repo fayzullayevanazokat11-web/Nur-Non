@@ -12,12 +12,13 @@ import { Modal } from "../../src/components/Modal";
 import { ScreenHeader } from "../../src/components/ScreenHeader";
 import { ExpandableCard } from "../../src/components/ExpandableCard";
 import { ScrollBox } from "../../src/components/ScrollBox";
+import { DateField } from "../../src/components/DateField";
 import { Avatar } from "../../src/components/Avatar";
 import { C, T, S, R } from "../../src/theme";
 import { formatSom } from "../../src/logic/hisob";
 import { LAVOZIMLAR, getLavozimLabel } from "../../src/logic/konstantalar";
 
-const BOSH_FORMA = { ism: "", lavozimId: LAVOZIMLAR[0].id, haqTuri: "kunlik", miqdor: "", nonNarx: {}, holat: "Aktiv" };
+const BOSH_FORMA = { ism: "", lavozimId: LAVOZIMLAR[0].id, haqTuri: "kunlik", miqdor: "", nonNarx: {}, holat: "Aktiv", tatilSana: "" };
 const HOLATLAR = ["Aktiv", "Ta'tilda"];
 
 export default function Xodimlar() {
@@ -40,6 +41,7 @@ export default function Xodimlar() {
     setForma({
       ism: w.ism, lavozimId: w.lavozimId, haqTuri: w.haqTuri || "kunlik",
       miqdor: String(w.miqdor || ""), nonNarx, holat: w.holat || "Aktiv",
+      tatilSana: w.tatilQaytishSana || "",
     });
     setTahrirId(w.id); setModalOchiq(true);
   };
@@ -62,7 +64,11 @@ export default function Xodimlar() {
     } else {
       qoshimcha = { haqTuri: "kunlik", miqdor: parseFloat(forma.miqdor) || 0, nonTurlari: [], nonNarxlari: {} };
     }
-    const asos = { ism: forma.ism.trim(), lavozimId: forma.lavozimId, holat: forma.holat, ...qoshimcha };
+    const asos = {
+      ism: forma.ism.trim(), lavozimId: forma.lavozimId, holat: forma.holat,
+      tatilQaytishSana: forma.holat === "Ta'tilda" ? forma.tatilSana : "",
+      ...qoshimcha,
+    };
     if (tahrirId) {
       setIshchilar((prev) => prev.map((w) => (w.id === tahrirId ? { ...w, ...asos } : w)));
     } else {
@@ -121,6 +127,9 @@ export default function Xodimlar() {
                   </View>
                   <Text style={styles.haq}>{qop ? "Qoplik" : `${formatSom(w.miqdor)} so'm/kun`}</Text>
                 </View>
+                {w.holat === "Ta'tilda" && w.tatilQaytishSana ? (
+                  <Text style={styles.tatil}>Ta'tildan qaytadi: {w.tatilQaytishSana}</Text>
+                ) : null}
                 {qop && nonlarRo.length > 0 && (
                   <View style={styles.haqWrap}>
                     {nonlarRo.map(([nom, narx]) => (
@@ -213,6 +222,14 @@ export default function Xodimlar() {
               );
             })}
           </View>
+
+          {forma.holat === "Ta'tilda" && (
+            <>
+              <Text style={styles.inputLabel}>Ta'tildan qaytish sanasi</Text>
+              <DateField value={forma.tatilSana} onChange={(v) => yangila("tatilSana", v)} />
+              <Text style={styles.hintSm}>Shu sanagacha kunlik ish haqi hisoblanmaydi.</Text>
+            </>
+          )}
         </ScrollView>
 
         <View style={styles.gap12} />
@@ -245,6 +262,8 @@ const styles = StyleSheet.create({
   statePill: { paddingVertical: 3, paddingHorizontal: 10, borderRadius: R.pill },
   stateTxt:  { fontSize: 11, fontWeight: "700", letterSpacing: 0.2 },
   haq:       { fontSize: T.sm, fontWeight: "800", color: C.accent },
+  tatil:     { fontSize: T.xs, color: C.muted, marginTop: 6 },
+  hintSm:    { fontSize: 11, color: C.muted, marginTop: 5 },
   haqWrap:   { marginTop: S[3], borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: C.borderSoft, paddingTop: S[2] },
   haqRow:    { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 5 },
   haqNom:    { flex: 1, fontSize: T.sm, color: C.text },
