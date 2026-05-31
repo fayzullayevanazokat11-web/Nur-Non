@@ -3,7 +3,7 @@
     "name": "Nur-Non",
     "slug": "nur-non",
     "owner": "nur-non",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "scheme": "nurnon",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
@@ -14,7 +14,7 @@
     "assetBundlePatterns": ["**/*"],
     "android": {
       "package": "com.nurnon.app",
-      "versionCode": 1,
+      "versionCode": 2,
       "backgroundColor": "#F2E6D5",
       "adaptiveIcon": {
         "foregroundImage": "./assets/icon.png",
