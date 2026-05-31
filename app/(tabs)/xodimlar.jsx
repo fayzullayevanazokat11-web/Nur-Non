@@ -83,6 +83,13 @@ export default function Xodimlar() {
       { text: "Ha", style: "destructive", onPress: () => setIshchilar((p) => p.filter((w) => w.id !== id)) },
     ]);
 
+  // Ta'tildagi xodimni darhol Aktivga o'tkazish (qaytish sanasi tozalanadi).
+  const tatildanQaytar = (w) =>
+    Alert.alert("Ta'tildan qaytdi", `${w.ism} ta'tildan qaytdimi? Holati Aktivga o'tkaziladi.`, [
+      { text: "Bekor", style: "cancel" },
+      { text: "Ha", onPress: () => setIshchilar((p) => p.map((x) => x.id === w.id ? { ...x, holat: "Aktiv", tatilQaytishSana: "" } : x)) },
+    ]);
+
   return (
     <SafeAreaView style={styles.safe} edges={["top"]}>
       <ScrollBox contentContainerStyle={styles.scroll}>
@@ -148,6 +155,12 @@ export default function Xodimlar() {
                   </View>
                 )}
                 <View style={styles.bodyActions}>
+                  {w.holat === "Ta'tilda" && (
+                    <Pressable accessibilityLabel="Ta'tildan qaytdi" onPress={() => tatildanQaytar(w)} hitSlop={8} style={styles.actBtn}>
+                      <Ionicons name="checkmark-circle-outline" size={16} color={C.green} />
+                      <Text style={[styles.actTxt, { color: C.green }]}> Ta'tildan qaytdi</Text>
+                    </Pressable>
+                  )}
                   <Pressable accessibilityLabel="Tahrirlash" onPress={() => ochTahrir(w)} hitSlop={8} style={styles.actBtn}>
                     <Ionicons name="create-outline" size={16} color={C.accent} />
                     <Text style={[styles.actTxt, { color: C.accent }]}> Tahrirlash</Text>
