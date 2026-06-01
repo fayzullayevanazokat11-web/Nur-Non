@@ -26,17 +26,46 @@ export default function Ombor() {
 
   const balans = useMemo(() => omborBalans(omborlar), [omborlar]);
   const setSoni = (omborlar || []).filter((h) => h.turi === "yangiset").length;
+  const zaxiraBor = balans.some((b) => Math.abs(b.qiymat) > 0.0001);
+
+  // Mavjud zaxirani NOLGA tenglashtirish — joriy balansni teskari yozuv bilan bekor qiladi.
+  const nollaZaxira = () => {
+    if (!zaxiraBor) {
+      Alert.alert("Bo'sh zaxira", "Mavjud zaxira allaqachon nol.");
+      return;
+    }
+    Alert.alert("Zaxirani nollash", "Mavjud zaxirani nolga tenglashtirasizmi? Bu amalni qaytarib bo'lmaydi.", [
+      { text: "Bekor", style: "cancel" },
+      {
+        text: "Nollash", style: "destructive", onPress: () => {
+          const entry = {
+            id: Date.now(),
+            sana: new Date().toISOString().split("T")[0],
+            vaqt: Date.now(),
+            turi: "nollash",
+            maydonlar: balans
+              .filter((b) => Math.abs(b.qiymat) > 0.0001)
+              .map((b) => ({ id: b.id, nom: b.nom, birlik: b.birlik, emoji: b.emoji, qiymat: -b.qiymat })),
+          };
+          setOmborlar((prev) => [entry, ...prev]);
+        },
+      },
+    ]);
+  };
 
   // So'rovnomani tasdiqlash — xomashyo ombordan AYRILADI (manfiy xarajat yozuvi)
   // + "Tasdiqlangan" tarixiga yoziladi (30 kunda o'chadi).
   const tasdiqlaSorov = (sorov) => {
     const sana = new Date().toISOString().split("T")[0];
+    const omborId = Date.now();
+    const tasdiqId = omborId + 1;
+    const vaqt = Date.now();
     const entry = {
-      id: Date.now(), sana, vaqt: Date.now(), turi: "xarajat", manba: sorov.manba,
+      id: omborId, sana, vaqt, turi: "xarajat", manba: sorov.manba, tasdiqId,
       maydonlar: (sorov.maydonlar || []).map((m) => ({ ...m, qiymat: -(parseFloat(m.qiymat) || 0) })),
     };
     setOmborlar((prev) => [entry, ...prev]);
-    setOmborTasdiqlar((prev) => [{ id: Date.now() + 1, sana, vaqt: Date.now(), manba: sorov.manba, maydonlar: sorov.maydonlar }, ...(prev || [])]);
+    setOmborTasdiqlar((prev) => [{ id: tasdiqId, omborId, sana, vaqt, manba: sorov.manba, maydonlar: sorov.maydonlar }, ...(prev || [])]);
     setOmborSorovlar((prev) => (prev || []).filter((s) => s.id !== sorov.id));
   };
 
@@ -46,12 +75,29 @@ export default function Ombor() {
       { text: "Rad etish", style: "destructive", onPress: () => setOmborSorovlar((prev) => (prev || []).filter((s) => s.id !== sorov.id)) },
     ]);
 
-  // Tasdiqlangan tarix yozuvini o'chirish (tasdiq bilan; balansga ta'sir qilmaydi).
-  const ochirTasdiq = (id) =>
-    Alert.alert("O'chirish", "Bu tasdiqlangan yozuvni tarixdan o'chirasizmi?", [
+  // Tasdiqlangan xarajatni BEKOR qilish — tarixdan o'chiriladi va
+  // mos manfiy xarajat omborlardan olib tashlanadi → xomashyo zaxiraga qaytadi.
+  const bekorTasdiq = (t) =>
+    Alert.alert("Bekor qilish", "Tasdiqlangan xarajatni bekor qilasizmi? Xomashyo zaxiraga qaytariladi.", [
       { text: "Bekor", style: "cancel" },
-      { text: "Ha", style: "destructive", onPress: () => setOmborTasdiqlar((prev) => (prev || []).filter((t) => t.id !== id)) },
+      { text: "Ha, bekor qil", style: "destructive", onPress: () => {
+        setOmborlar((prev) => prev.filter((h) => {
+          if (t.omborId) return h.id !== t.omborId;
+          // Eski yozuvlar uchun: manba va yaqin vaqt bo'yicha mos topish.
+          return !(h.turi === "xarajat" && h.manba === t.manba && Math.abs((h.vaqt || 0) - (t.vaqt || 0)) < 2000);
+        }));
+        setOmborTasdiqlar((prev) => (prev || []).filter((x) => x.id !== t.id));
+      }},
     ]);
+
+  // "Yangi set" yozuvini tarixdan o'chirish — balans avtomatik qayta hisoblanadi.
+  const ochirSetKirim = (id) =>
+    Alert.alert("O'chirish", "Bu set kirimini o'chirasizmi? Zaxiradan ayriladi.", [
+      { text: "Bekor", style: "cancel" },
+      { text: "Ha", style: "destructive", onPress: () => setOmborlar((prev) => prev.filter((h) => h.id !== id)) },
+    ]);
+
+  const setKirimlari = (omborlar || []).filter((h) => h.turi === "yangiset").slice(0, 10);
 
   const ochModal = () => { setForma(boshForma()); setModalOchiq(true); };
   const yopModal = () => setModalOchiq(false);
@@ -105,6 +151,11 @@ export default function Ombor() {
             })}
           </View>
         </Card>
+
+        <View style={styles.gap10} />
+        <Btn secondary icon="refresh-outline" disabled={!zaxiraBor} onPress={nollaZaxira}>
+          Mavjud zaxirani nollash
+        </Btn>
 
         {(omborSorovlar || []).length > 0 && (
           <>
@@ -167,7 +218,42 @@ export default function Ombor() {
                   </View>
                 ))}
                 <View style={styles.tasdiqActions}>
-                  <Pressable onPress={() => ochirTasdiq(t.id)} hitSlop={6} style={styles.tasdiqDel}>
+                  <Pressable onPress={() => bekorTasdiq(t)} hitSlop={6} style={styles.tasdiqDel}>
+                    <Ionicons name="arrow-undo-outline" size={16} color={C.red} />
+                    <Text style={[styles.tasdiqDelTxt, { color: C.red }]}> Bekor qilish</Text>
+                  </Pressable>
+                </View>
+              </ExpandableCard>
+            ))}
+          </>
+        )}
+
+        {setKirimlari.length > 0 && (
+          <>
+            <View style={styles.secHead}>
+              <Ionicons name="cube-outline" size={15} color={C.sub} />
+              <Text style={styles.secTitle}>OXIRGI SET KIRIMLARI</Text>
+              <Text style={styles.secCount}>{setKirimlari.length} ta</Text>
+            </View>
+            {setKirimlari.map((h) => (
+              <ExpandableCard
+                key={h.id}
+                style={styles.sorov}
+                header={
+                  <View style={styles.flex1}>
+                    <Text style={styles.sorovManba}>Yangi set</Text>
+                    <Text style={styles.muted}>{h.sana} · keltirilgan xomashyo</Text>
+                  </View>
+                }
+              >
+                {(h.maydonlar || []).filter((m) => (parseFloat(m.qiymat) || 0) > 0).map((m) => (
+                  <View key={m.id} style={styles.sorovRow}>
+                    <Text style={styles.sorovNom} numberOfLines={1}>{m.nom}</Text>
+                    <Text style={[styles.sorovVal, { color: C.green }]}>+ {zaxiraMatni(m.id, m.qiymat, m.birlik)}</Text>
+                  </View>
+                ))}
+                <View style={styles.tasdiqActions}>
+                  <Pressable onPress={() => ochirSetKirim(h.id)} hitSlop={6} style={styles.tasdiqDel}>
                     <Ionicons name="trash-outline" size={16} color={C.red} />
                     <Text style={[styles.tasdiqDelTxt, { color: C.red }]}> O'chirish</Text>
                   </Pressable>

@@ -83,6 +83,13 @@ export default function Xodimlar() {
       { text: "Ha", style: "destructive", onPress: () => setIshchilar((p) => p.filter((w) => w.id !== id)) },
     ]);
 
+  // Ta'tildagi xodimni darhol Aktivga o'tkazish (qaytish sanasi tozalanadi).
+  const tatildanQaytar = (w) =>
+    Alert.alert("Ta'tildan qaytdi", `${w.ism} ta'tildan qaytdimi? Holati Aktivga o'tkaziladi.`, [
+      { text: "Bekor", style: "cancel" },
+      { text: "Ha", onPress: () => setIshchilar((p) => p.map((x) => x.id === w.id ? { ...x, holat: "Aktiv", tatilQaytishSana: "" } : x)) },
+    ]);
+
   return (
     <SafeAreaView style={styles.safe} edges={["top"]}>
       <ScrollBox contentContainerStyle={styles.scroll}>
@@ -118,12 +125,19 @@ export default function Xodimlar() {
                       <Text style={styles.ism}>{w.ism}</Text>
                       <Text style={styles.lavozim}>{getLavozimLabel(w)}</Text>
                     </View>
+                    {w.holat === "Ta'tilda" && (
+                      <View style={styles.tatilBadge}>
+                        <Ionicons name="airplane-outline" size={12} color={C.accent} />
+                        <Text style={styles.tatilBadgeTxt}>Ta'tilda</Text>
+                      </View>
+                    )}
                   </View>
                 }
               >
                 <View style={styles.bodyTop}>
-                  <View style={[styles.statePill, { backgroundColor: (w.holat === "Aktiv" ? C.green : C.muted) + "14" }]}>
-                    <Text style={[styles.stateTxt, { color: w.holat === "Aktiv" ? C.green : C.sub }]}>{w.holat}</Text>
+                  <View style={[styles.statePill, { backgroundColor: (w.holat === "Aktiv" ? C.green : C.accent) + "14" }]}>
+                    {w.holat === "Ta'tilda" && <Ionicons name="airplane-outline" size={12} color={C.accent} />}
+                    <Text style={[styles.stateTxt, { color: w.holat === "Aktiv" ? C.green : C.accent }]}>{w.holat}</Text>
                   </View>
                   <Text style={styles.haq}>{qop ? "Qoplik" : `${formatSom(w.miqdor)} so'm/kun`}</Text>
                 </View>
@@ -141,6 +155,12 @@ export default function Xodimlar() {
                   </View>
                 )}
                 <View style={styles.bodyActions}>
+                  {w.holat === "Ta'tilda" && (
+                    <Pressable accessibilityLabel="Ta'tildan qaytdi" onPress={() => tatildanQaytar(w)} hitSlop={8} style={styles.actBtn}>
+                      <Ionicons name="checkmark-circle-outline" size={16} color={C.green} />
+                      <Text style={[styles.actTxt, { color: C.green }]}> Ta'tildan qaytdi</Text>
+                    </Pressable>
+                  )}
                   <Pressable accessibilityLabel="Tahrirlash" onPress={() => ochTahrir(w)} hitSlop={8} style={styles.actBtn}>
                     <Ionicons name="create-outline" size={16} color={C.accent} />
                     <Text style={[styles.actTxt, { color: C.accent }]}> Tahrirlash</Text>
@@ -227,7 +247,7 @@ export default function Xodimlar() {
             <>
               <Text style={styles.inputLabel}>Ta'tildan qaytish sanasi</Text>
               <DateField value={forma.tatilSana} onChange={(v) => yangila("tatilSana", v)} />
-              <Text style={styles.hintSm}>Shu sanagacha kunlik ish haqi hisoblanmaydi.</Text>
+              <Text style={styles.hintSm}>Ta'tilda bo'lsa kunlik ish haqi hisoblanmaydi.</Text>
             </>
           )}
         </ScrollView>
@@ -259,8 +279,10 @@ const styles = StyleSheet.create({
   ism:       { fontSize: T.md, fontWeight: "700", color: C.text },
   lavozim:   { fontSize: T.sm, color: C.sub, marginTop: 1 },
   bodyTop:   { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-  statePill: { paddingVertical: 3, paddingHorizontal: 10, borderRadius: R.pill },
+  statePill: { flexDirection: "row", alignItems: "center", gap: 4, paddingVertical: 3, paddingHorizontal: 10, borderRadius: R.pill },
   stateTxt:  { fontSize: 11, fontWeight: "700", letterSpacing: 0.2 },
+  tatilBadge:{ flexDirection: "row", alignItems: "center", gap: 4, backgroundColor: C.accent + "14", paddingVertical: 3, paddingHorizontal: 8, borderRadius: R.pill },
+  tatilBadgeTxt: { fontSize: 10, fontWeight: "700", color: C.accent, letterSpacing: 0.2 },
   haq:       { fontSize: T.sm, fontWeight: "800", color: C.accent },
   tatil:     { fontSize: T.xs, color: C.muted, marginTop: 6 },
   hintSm:    { fontSize: 11, color: C.muted, marginTop: 5 },

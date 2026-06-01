@@ -46,9 +46,20 @@ export function DateField({ value, onChange, label }) {
 
       <Modal modalVisible={ochiq} onClose={() => setOchiq(false)}>
         <View style={styles.head}>
-          <Pressable onPress={() => oyOzgartir(-1)} hitSlop={10} style={styles.nav}><Ionicons name="chevron-back" size={20} color={C.text} /></Pressable>
-          <Text style={styles.title}>{OYLAR[oy]} {yil}</Text>
-          <Pressable onPress={() => oyOzgartir(1)} hitSlop={10} style={styles.nav}><Ionicons name="chevron-forward" size={20} color={C.text} /></Pressable>
+          <Text style={styles.headLabel}>Yil</Text>
+          <View style={styles.navRow}>
+            <Pressable onPress={() => setYil(yil - 1)} hitSlop={10} style={styles.navBtn}><Ionicons name="chevron-back" size={22} color={C.accent} /></Pressable>
+            <Text style={styles.navTitle}>{yil}</Text>
+            <Pressable onPress={() => setYil(yil + 1)} hitSlop={10} style={styles.navBtn}><Ionicons name="chevron-forward" size={22} color={C.accent} /></Pressable>
+          </View>
+        </View>
+        <View style={styles.head}>
+          <Text style={styles.headLabel}>Oy</Text>
+          <View style={styles.navRow}>
+            <Pressable onPress={() => oyOzgartir(-1)} hitSlop={10} style={styles.navBtn}><Ionicons name="chevron-back" size={22} color={C.accent} /></Pressable>
+            <Text style={styles.navTitle}>{OYLAR[oy]}</Text>
+            <Pressable onPress={() => oyOzgartir(1)} hitSlop={10} style={styles.navBtn}><Ionicons name="chevron-forward" size={22} color={C.accent} /></Pressable>
+          </View>
         </View>
 
         <View style={styles.hafta}>
@@ -80,9 +91,11 @@ export function DateField({ value, onChange, label }) {
 const styles = StyleSheet.create({
   field:    { flexDirection: "row", alignItems: "center", gap: S[2], borderWidth: 1, borderColor: C.border, borderRadius: R.md, paddingVertical: 12, paddingHorizontal: 14, backgroundColor: C.surface },
   fieldTxt: { flex: 1, fontSize: T.md, color: C.text, fontWeight: "600" },
-  head:     { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: S[3] },
-  nav:      { padding: 6 },
-  title:    { fontSize: T.md, fontWeight: "800", color: C.text },
+  head:     { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: S[2] },
+  headLabel:{ fontSize: T.xs, color: C.sub, fontWeight: "700", letterSpacing: 0.5, textTransform: "uppercase" },
+  navRow:   { flexDirection: "row", alignItems: "center", gap: S[2] },
+  navBtn:   { width: 36, height: 36, alignItems: "center", justifyContent: "center", borderRadius: R.sm, backgroundColor: C.accent + "14" },
+  navTitle: { fontSize: T.md, fontWeight: "800", color: C.text, minWidth: 90, textAlign: "center" },
   hafta:    { flexDirection: "row", marginBottom: S[2] },
   haftaTxt: { flex: 1, textAlign: "center", fontSize: 11, color: C.muted, fontWeight: "700" },
   grid:     { flexDirection: "row", flexWrap: "wrap" },
