@@ -18,8 +18,12 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <AppDataProvider>
         <StatusBar style={splash ? "light" : "dark"} />
-        <Stack screenOptions={{ headerShown: false }}>
+        <Stack screenOptions={{ headerShown: false, animation: "slide_from_right" }}>
           <Stack.Screen name="(tabs)" />
+          <Stack.Screen name="qarzlar" />
+          <Stack.Screen name="optom" />
+          <Stack.Screen name="karta" />
+          <Stack.Screen name="brak" />
         </Stack>
         {splash && <Splash onDone={() => setSplash(false)} />}
       </AppDataProvider>

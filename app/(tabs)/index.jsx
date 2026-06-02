@@ -1,13 +1,13 @@
-// "Markaz" ekrani — kunlik ko'rsatkichlar + Qarz / Optom / Karta to'lovlari.
+// "Markaz" ekrani — kunlik ko'rsatkichlar + 2x2 navigatsiya grid (Qarz/Optom/Karta/Brak).
 import { useMemo, useState } from "react";
-import { View, Text, ScrollView, Pressable, TextInput, StyleSheet, Alert } from "react-native";
+import { View, Text, Pressable, StyleSheet, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
 
 import { useApp } from "../../src/store/AppData";
 import { Card } from "../../src/components/Card";
 import { Btn } from "../../src/components/Btn";
-import { Modal } from "../../src/components/Modal";
 import { BrandHeader } from "../../src/components/BrandHeader";
 import { ExpandableCard } from "../../src/components/ExpandableCard";
 import { KunlikQopModal } from "../../src/components/KunlikQopModal";
@@ -15,9 +15,8 @@ import { HisobotModal } from "../../src/components/HisobotModal";
 import { DateField } from "../../src/components/DateField";
 import { ScrollBox } from "../../src/components/ScrollBox";
 import { C, T, S, R } from "../../src/theme";
-import { hisoblaKunlik, formatSom, qarzJami, optomJami, kartaJami, kartaHisob, donaFoyda, ishchiHaqlari, kunlikXomashyoSarfi } from "../../src/logic/hisob";
+import { hisoblaKunlik, formatSom, qarzJami, optomJami, kartaJami, ishchiHaqlari, kunlikXomashyoSarfi } from "../../src/logic/hisob";
 
-const BOSH_FORMA = { ism: "", summa: "", izoh: "", sana: "", savat: {}, donaChegirma: "", chegirma: "" };
 const localSana = () => {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
@@ -25,21 +24,32 @@ const localSana = () => {
 
 export default function Markaz() {
   const {
-    nonlar, ishchilar, qarzlar, setQarzlar, optomlar, setOptomlar, kartalar, setKartalar,
+    nonlar, ishchilar, qarzlar, optomlar, kartalar, setKartalar,
     ozIshlabQoplar, setOzIshlabQoplar, tashqariSonlar, setTashqariSonlar,
     sotilmaganNon, setSotilmaganNon, mahsulotNarxlari, setOmborSorovlar,
     hisobotlarTarixi, setHisobotlarTarixi, braklar, setBraklar,
     boshlangichQoldiq, setBoshlangichQoldiq, qoldaYaroqsiz, setQoldaYaroqsiz,
   } = useApp();
 
-  // Bugungi ishchilar haqi (jonli)
+  const [qopOchiq, setQopOchiq] = useState(false);
+  const [hisobotOchiq, setHisobotOchiq] = useState(false);
+  const [kunlikSana, setKunlikSana] = useState(localSana());
+
+  const stats = useMemo(
+    () => hisoblaKunlik({ nonlar, ishchilar, ozIshlabQoplar, tashqariSonlar, sotilmaganNon, optomlar, qarzlar, mahsulotNarxlari, braklar, boshlangichQoldiq, qoldaYaroqsiz }),
+    [nonlar, ishchilar, ozIshlabQoplar, tashqariSonlar, sotilmaganNon, optomlar, qarzlar, mahsulotNarxlari, braklar, boshlangichQoldiq, qoldaYaroqsiz]
+  );
   const bugungiHaq = useMemo(
     () => ishchiHaqlari(nonlar, ishchilar, ozIshlabQoplar, braklar),
     [nonlar, ishchilar, ozIshlabQoplar, braklar]
   );
 
-  // Kunni yakunlash — tasdiq → tarixga snapshot + omborga so'rovnoma; hisobot ochiladi,
-  // yopilganda barcha kunlik ko'rsatkichlar nollanadi.
+  const qarz = useMemo(() => qarzJami(qarzlar), [qarzlar]);
+  const optom = useMemo(() => optomJami(optomlar), [optomlar]);
+  const karta = useMemo(() => kartaJami(kartalar), [kartalar]);
+  const brakSumma = useMemo(() => (braklar || []).reduce((s, b) => s + (parseFloat(b.summa) || 0), 0), [braklar]);
+
+  // Kunni yakunlash → tarix snapshot + ombor so'rovnomasi + hisobot modal.
   const kunniYakunla = () => {
     if (!(stats.jamiNon > 0 || stats.jamiQop > 0)) {
       Alert.alert("Ma'lumot yo'q", "Avval kunlik qop hisobiga ma'lumot kiriting.");
@@ -72,130 +82,17 @@ export default function Markaz() {
   };
   const hisobotYop = () => {
     setHisobotOchiq(false);
-    // Kun oxiri qoldiq (sotilmaganNon) → ertangi tonggi zaxira (boshlangichQoldiq).
-    // Yaroqsizlar yo'qoladi (kunlik foydaga ta'sir qilgan).
+    // Kun oxiri qoldiq → ertangi tonggi zaxiraga ko'chadi.
     setBoshlangichQoldiq(sotilmaganNon || {});
     setSotilmaganNon({});
     setOzIshlabQoplar({}); setTashqariSonlar({}); setQoldaYaroqsiz({});
     setKartalar([]); setBraklar([]);
     setKunlikSana(localSana());
   };
-
-  const ochirHisobot = (id) =>
-    Alert.alert("O'chirish", "Shu sanadagi hisobotni o'chirasizmi?", [
-      { text: "Bekor", style: "cancel" },
-      { text: "Ha", style: "destructive", onPress: () => setHisobotlarTarixi((p) => p.filter((h) => h.id !== id)) },
-    ]);
-
-  const stats = useMemo(
-    () => hisoblaKunlik({ nonlar, ishchilar, ozIshlabQoplar, tashqariSonlar, sotilmaganNon, optomlar, qarzlar, mahsulotNarxlari, braklar, boshlangichQoldiq, qoldaYaroqsiz }),
-    [nonlar, ishchilar, ozIshlabQoplar, tashqariSonlar, sotilmaganNon, optomlar, qarzlar, mahsulotNarxlari, braklar, boshlangichQoldiq, qoldaYaroqsiz]
-  );
-
-  const qarz = useMemo(() => qarzJami(qarzlar), [qarzlar]);
-  const optom = useMemo(() => optomJami(optomlar), [optomlar]);
-  const karta = useMemo(() => kartaJami(kartalar), [kartalar]);
-
-  const [modalTur, setModalTur] = useState(null);
-  const [forma, setForma] = useState(BOSH_FORMA);
-  const [qopOchiq, setQopOchiq] = useState(false);
-  const [hisobotOchiq, setHisobotOchiq] = useState(false);
-  const [brakModal, setBrakModal] = useState(false);
-  const [brakForma, setBrakForma] = useState({ ishchiId: null, dona: {} });
-  const [kunlikSana, setKunlikSana] = useState(localSana());
-
-  const qopIshchilar = (ishchilar || []).filter((w) => w.haqTuri === "qop" && w.holat === "Aktiv");
-  const brakIshchi = qopIshchilar.find((w) => w.id === brakForma.ishchiId);
-  // 1 dona brak narxi = nonning sotuv narxi (masalan 8 000 yoki 15 000)
-  const donaNarxi = (nom) => parseFloat((nonlar || []).find((n) => n.nom === nom)?.narx) || 0;
-  const brakSumma = (brakIshchi?.nonTurlari || []).reduce((s, nom) => s + donaNarxi(nom) * (parseFloat(brakForma.dona[nom]) || 0), 0);
-  const ochBrak = () => { setBrakForma({ ishchiId: null, dona: {} }); setBrakModal(true); };
-  const brakDona = (nom, v) => setBrakForma((p) => ({ ...p, dona: { ...p.dona, [nom]: v } }));
-  const saqlaBrak = () => {
-    if (!brakIshchi) { Alert.alert("To'liq emas", "Ishchini tanlang."); return; }
-    const yozuvlar = (brakIshchi.nonTurlari || [])
-      .map((nom) => ({ nom, soni: parseFloat(brakForma.dona[nom]) || 0 }))
-      .filter((x) => x.soni > 0)
-      .map((x) => ({
-        id: Date.now() + Math.floor(Math.random() * 1000), sana: localSana(), vaqt: Date.now(),
-        ishchiId: brakIshchi.id, ishchiIsm: brakIshchi.ism, nonNomi: x.nom,
-        soni: x.soni, summa: Math.round(donaNarxi(x.nom) * x.soni),
-      }));
-    if (yozuvlar.length === 0) { Alert.alert("To'liq emas", "Kamida bitta non turidan brak sonini kiriting."); return; }
-    setBraklar((prev) => [...prev, ...yozuvlar]);
-    setBrakModal(false);
-  };
-  const ochirBrak = (id) =>
-    Alert.alert("O'chirish", "Bu brakni o'chirasizmi?", [
-      { text: "Bekor", style: "cancel" },
-      { text: "Ha", style: "destructive", onPress: () => setBraklar((p) => p.filter((b) => b.id !== id)) },
-    ]);
-
-  const ochModal = (tur) => { setForma({ ...BOSH_FORMA, sana: localSana() }); setModalTur(tur); };
-  const yopModal = () => setModalTur(null);
-  const yangila = (k, v) => setForma((p) => ({ ...p, [k]: v }));
-  const yangilaSavat = (id, v) => setForma((p) => ({ ...p, savat: { ...p.savat, [id]: v } }));
-
-  const kartaModal = modalTur === "karta";
-  const qarzModal = modalTur === "qarz";
-
-  // Karta modali uchun jonli hisob
-  const preview = useMemo(
-    () => (kartaModal ? kartaHisob(parseFloat(forma.summa) || 0, nonlar, mahsulotNarxlari) : null),
-    [kartaModal, forma.summa, nonlar, mahsulotNarxlari]
-  );
-
-  // Qarz/Optom savati jonli hisobi (non × soni → summa, foyda, chegirma)
-  const savatHisob = useMemo(() => {
-    let summa = 0, dona = 0, foyda = 0;
-    const items = [];
-    (nonlar || []).forEach((n) => {
-      const soni = parseInt(forma.savat[n.id]) || 0;
-      if (soni <= 0) return;
-      const narx = parseFloat(n.narx) || 0;
-      summa += soni * narx;
-      dona += soni;
-      foyda += soni * donaFoyda(n, mahsulotNarxlari);
-      items.push({ nonNomi: n.nom, soni, narx });
-    });
-    const dch = qarzModal ? 0 : (parseFloat(forma.donaChegirma) || 0);
-    const ch = parseFloat(forma.chegirma) || 0;
-    const jamiChegirma = dch * dona + ch;
-    return { summa, dona, foyda, items, jamiChegirma, yakSumma: Math.max(0, summa - jamiChegirma), yakFoyda: foyda - jamiChegirma };
-  }, [forma.savat, forma.donaChegirma, forma.chegirma, qarzModal, nonlar, mahsulotNarxlari]);
-
-  const saqla = () => {
-    const sana = forma.sana || localSana();
-    if (kartaModal) {
-      const summa = parseFloat(forma.summa) || 0;
-      if (!summa) { Alert.alert("Maydon to'liq emas", "Iltimos, summani kiriting."); return; }
-      const pv = kartaHisob(summa, nonlar, mahsulotNarxlari);
-      setKartalar((prev) => [...prev, { id: Date.now(), summa, izoh: forma.izoh.trim(), sana, vaqt: Date.now(), dona: pv.dona, sofFoyda: pv.sofFoyda }]);
-      yopModal();
-      return;
-    }
-    if (!forma.ism.trim()) { Alert.alert("Ism kiritilmagan", "Iltimos, oluvchi ismini kiriting."); return; }
-    if (savatHisob.items.length === 0) { Alert.alert("Non tanlanmagan", "Kamida bitta non turidan soni kiriting."); return; }
-    if (modalTur === "qarz") {
-      setQarzlar((prev) => [...prev, {
-        id: Date.now(), ism: forma.ism.trim(), sana, vaqt: Date.now(),
-        savat: savatHisob.items, summa: savatHisob.yakSumma, chegirma: savatHisob.jamiChegirma,
-        izoh: forma.izoh.trim(), tolangan: false, tolanganVaqt: null,
-      }]);
-    } else {
-      setOptomlar((prev) => [...prev, {
-        id: Date.now(), ism: forma.ism.trim(), sana, vaqt: Date.now(),
-        savat: savatHisob.items, summa: savatHisob.yakSumma, chegirma: savatHisob.jamiChegirma,
-        sofFoyda: savatHisob.yakFoyda, izoh: forma.izoh.trim(),
-      }]);
-    }
-    yopModal();
-  };
-
-  const tolaQarz = (id) => setQarzlar((prev) => prev.map((q) => q.id === id ? { ...q, tolangan: true, tolanganVaqt: Date.now() } : q));
-  const ochirQarz = (id) => setQarzlar((prev) => prev.filter((q) => q.id !== id));
-  const ochirOptom = (id) => setOptomlar((prev) => prev.filter((o) => o.id !== id));
-  const ochirKarta = (id) => setKartalar((prev) => prev.filter((k) => k.id !== id));
+  const ochirHisobot = (id) => Alert.alert("O'chirish", "Shu sanadagi hisobotni o'chirasizmi?", [
+    { text: "Bekor", style: "cancel" },
+    { text: "Ha", style: "destructive", onPress: () => setHisobotlarTarixi((p) => p.filter((h) => h.id !== id)) },
+  ]);
 
   return (
     <SafeAreaView style={styles.safe} edges={["top"]}>
@@ -226,6 +123,36 @@ export default function Markaz() {
           <Btn secondary onPress={kunniYakunla} icon="checkmark-done-outline">Kunni yakunlash</Btn>
         </Card>
 
+        {/* 2×2 navigatsiya grid — har kvadrat o'z sub-ekraniga olib o'tadi */}
+        <View style={styles.gridRow}>
+          <NavTile
+            icon="receipt-outline" tint={C.red}
+            label="Qarzlar"
+            sub={`${formatSom(qarz.summa)} so'm • ${qarz.soni} ta`}
+            onPress={() => router.push("/qarzlar")}
+          />
+          <NavTile
+            icon="storefront-outline" tint={C.accent}
+            label="Optom"
+            sub={`${formatSom(optom.summa)} so'm • ${optom.soni} ta`}
+            onPress={() => router.push("/optom")}
+          />
+        </View>
+        <View style={styles.gridRow}>
+          <NavTile
+            icon="card-outline" tint={C.green}
+            label="Karta"
+            sub={`${formatSom(karta.summa)} so'm • ${karta.soni} ta`}
+            onPress={() => router.push("/karta")}
+          />
+          <NavTile
+            icon="alert-circle-outline" tint={C.red}
+            label="Brak"
+            sub={`${formatSom(brakSumma)} so'm • ${(braklar || []).length} ta`}
+            onPress={() => router.push("/brak")}
+          />
+        </View>
+
         {/* BUGUNGI ISHCHILAR HAQI (jonli) */}
         {bugungiHaq.list.length > 0 && (
           <Card style={styles.block}>
@@ -244,7 +171,13 @@ export default function Markaz() {
         )}
 
         {/* KUNLIK HISOBOTLAR TARIXI (30 kun) */}
-        <SectionHead icon="calendar-outline" nom="KUNLIK HISOBOTLAR (30 kun)" sum={`${(hisobotlarTarixi || []).length} ta`} color={C.accent} />
+        <View style={styles.secHead}>
+          <View style={styles.secHeadLeft}>
+            <Ionicons name="calendar-outline" size={13} color={C.sub} />
+            <Text style={styles.section}>KUNLIK HISOBOTLAR (30 kun)</Text>
+          </View>
+          <Text style={[styles.secSum, { color: C.accent }]}>{(hisobotlarTarixi || []).length} ta</Text>
+        </View>
         {(hisobotlarTarixi || []).length === 0 ? (
           <Text style={styles.bosh}>Hali hisobot yo'q</Text>
         ) : (
@@ -293,276 +226,11 @@ export default function Markaz() {
             </ExpandableCard>
           ))
         )}
-
-        {/* QARZ */}
-        <SectionHead icon="pricetag-outline" nom="QARZLAR" sum={`${formatSom(qarz.summa)} so'm · ${qarz.soni} ta`} color={C.red} style={{ marginTop: S[6] }} />
-        <Btn color={C.accent} onPress={() => ochModal("qarz")} icon="add-outline">Qarz qo'shish</Btn>
-        <View style={styles.gap10} />
-        {(qarzlar || []).length === 0 ? <Text style={styles.bosh}>Hali qarz yo'q</Text> : (
-          [...qarzlar].reverse().map((q) => (
-            <ExpandableCard
-              key={q.id}
-              style={styles.item}
-              header={
-                <View style={styles.mHead}>
-                  <Text style={[styles.itemIsm, styles.flex1]} numberOfLines={1}>{q.ism}{q.tolangan ? "  · to'landi" : ""}</Text>
-                  <Text style={[styles.itemSumma, { color: q.tolangan ? C.muted : C.red }]} numberOfLines={1}>{formatSom(q.summa)} so'm</Text>
-                </View>
-              }
-            >
-              {(q.savat || []).map((s, i) => (
-                <View key={i} style={styles.savatLine}>
-                  <Text style={styles.savatLNom} numberOfLines={1}>{s.nonNomi}</Text>
-                  <Text style={styles.savatLV}>{s.soni} dona × {formatSom(s.narx)}</Text>
-                </View>
-              ))}
-              {q.chegirma > 0 ? <Text style={styles.itemIzoh}>Chegirma: {formatSom(q.chegirma)} so'm</Text> : null}
-              {q.izoh ? <Text style={styles.itemIzoh}>{q.izoh}</Text> : null}
-              <Text style={styles.itemSana}>{q.sana}</Text>
-              <View style={styles.actions}>
-                {!q.tolangan && (
-                  <Pressable onPress={() => tolaQarz(q.id)} hitSlop={6} style={styles.actBtn}>
-                    <Ionicons name="checkmark" size={15} color={C.accent} />
-                    <Text style={[styles.actTxt, { color: C.accent }]}> To'landi</Text>
-                  </Pressable>
-                )}
-                <Pressable onPress={() => ochirQarz(q.id)} hitSlop={6} style={styles.actBtn}>
-                  <Ionicons name="trash-outline" size={16} color={C.red} />
-                  <Text style={[styles.actTxt, { color: C.red }]}> O'chirish</Text>
-                </Pressable>
-              </View>
-            </ExpandableCard>
-          ))
-        )}
-
-        {/* OPTOM */}
-        <SectionHead icon="cube-outline" nom="OPTOM SAVDOLAR" sum={`${formatSom(optom.summa)} so'm · ${optom.soni} ta`} color={C.blue} style={{ marginTop: S[6] }} />
-        <Btn color={C.accent} onPress={() => ochModal("optom")} icon="add-outline">Xarid qo'shish</Btn>
-        <View style={styles.gap10} />
-        {(optomlar || []).length === 0 ? <Text style={styles.bosh}>Hali optom savdo yo'q</Text> : (
-          [...optomlar].reverse().map((o) => (
-            <ExpandableCard
-              key={o.id}
-              style={styles.item}
-              header={
-                <View style={styles.mHead}>
-                  <Text style={[styles.itemIsm, styles.flex1]} numberOfLines={1}>{o.ism}</Text>
-                  <Text style={[styles.itemSumma, { color: C.blue }]} numberOfLines={1}>{formatSom(o.summa)} so'm</Text>
-                </View>
-              }
-            >
-              {(o.savat || []).map((s, i) => (
-                <View key={i} style={styles.savatLine}>
-                  <Text style={styles.savatLNom} numberOfLines={1}>{s.nonNomi}</Text>
-                  <Text style={styles.savatLV}>{s.soni} dona × {formatSom(s.narx)}</Text>
-                </View>
-              ))}
-              {o.chegirma > 0 ? <Text style={styles.itemIzoh}>Chegirma: {formatSom(o.chegirma)} so'm</Text> : null}
-              <Text style={styles.itemIzoh}>Sof foyda: {formatSom(o.sofFoyda || 0)} so'm</Text>
-              {o.izoh ? <Text style={styles.itemIzoh}>{o.izoh}</Text> : null}
-              <Text style={styles.itemSana}>{o.sana}</Text>
-              <View style={styles.actions}>
-                <Pressable onPress={() => ochirOptom(o.id)} hitSlop={6} style={styles.actBtn}>
-                  <Ionicons name="trash-outline" size={16} color={C.red} />
-                  <Text style={[styles.actTxt, { color: C.red }]}> O'chirish</Text>
-                </Pressable>
-              </View>
-            </ExpandableCard>
-          ))
-        )}
-
-        {/* KARTA */}
-        <SectionHead icon="card-outline" nom="KARTA TO'LOVLARI" sum={`${formatSom(karta.summa)} so'm · ${karta.soni} ta`} color={C.green} style={{ marginTop: S[6] }} />
-        <Btn color={C.accent} onPress={() => ochModal("karta")} icon="card-outline">Karta to'lovi</Btn>
-        <View style={styles.gap10} />
-        {(kartalar || []).length === 0 ? <Text style={styles.bosh}>Hali karta to'lovi yo'q</Text> : (
-          [...kartalar].reverse().map((k) => (
-            <ExpandableCard
-              key={k.id}
-              style={styles.item}
-              header={
-                <View style={styles.mHead}>
-                  <Text style={[styles.itemIsm, styles.flex1]} numberOfLines={1}>{k.izoh || "Karta to'lovi"}</Text>
-                  <Text style={[styles.itemSumma, { color: C.green }]} numberOfLines={1}>{formatSom(k.summa)} so'm</Text>
-                </View>
-              }
-            >
-              <Text style={styles.itemIzoh}>≈ {k.dona} dona non · sof foyda {formatSom(k.sofFoyda)} so'm</Text>
-              <Text style={styles.itemSana}>{k.sana}</Text>
-              <View style={styles.actions}>
-                <Pressable onPress={() => ochirKarta(k.id)} hitSlop={6} style={styles.actBtn}>
-                  <Ionicons name="trash-outline" size={16} color={C.red} />
-                  <Text style={[styles.actTxt, { color: C.red }]}> O'chirish</Text>
-                </Pressable>
-              </View>
-            </ExpandableCard>
-          ))
-        )}
-
-        {/* BRAK */}
-        <SectionHead icon="alert-circle-outline" nom="BRAK" sum={`${(braklar || []).length} ta`} color={C.red} style={{ marginTop: S[6] }} />
-        <Btn color={C.accent} onPress={ochBrak} icon="add-outline">Brak qo'shish</Btn>
-        <View style={styles.gap10} />
-        {(braklar || []).length === 0 ? <Text style={styles.bosh}>Hali brak yo'q</Text> : (
-          [...braklar].reverse().map((b) => (
-            <ExpandableCard
-              key={b.id}
-              style={styles.item}
-              header={
-                <View style={styles.mHead}>
-                  <Text style={[styles.itemIsm, styles.flex1]} numberOfLines={1}>{b.ishchiIsm}</Text>
-                  <Text style={[styles.itemSumma, { color: C.red }]} numberOfLines={1}>− {formatSom(b.summa)} so'm</Text>
-                </View>
-              }
-            >
-              <Text style={styles.itemIzoh}>{b.nonNomi} · {b.soni} dona brak</Text>
-              <Text style={styles.itemSana}>{b.sana}</Text>
-              <View style={styles.actions}>
-                <Pressable onPress={() => ochirBrak(b.id)} hitSlop={6} style={styles.actBtn}>
-                  <Ionicons name="trash-outline" size={16} color={C.red} />
-                  <Text style={[styles.actTxt, { color: C.red }]}> O'chirish</Text>
-                </Pressable>
-              </View>
-            </ExpandableCard>
-          ))
-        )}
       </ScrollBox>
 
-      {/* Brak modali */}
-      <Modal modalVisible={brakModal} onClose={() => setBrakModal(false)}>
-        <View style={styles.modalHead}>
-          <Ionicons name="alert-circle-outline" size={20} color={C.sub} />
-          <Text style={styles.modalTitle}>Brak qo'shish</Text>
-        </View>
-        <ScrollView style={styles.formScroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={true}>
-          <Text style={styles.inputLabel}>Ishchi (qopdan haq oladigan)</Text>
-          {qopIshchilar.length === 0 ? (
-            <Text style={styles.muted}>Qopdan haq oladigan aktiv ishchi yo'q.</Text>
-          ) : (
-            qopIshchilar.map((w) => (
-              <Pressable key={w.id} onPress={() => setBrakForma({ ishchiId: w.id, dona: {} })} style={[styles.pickRow, brakForma.ishchiId === w.id && styles.pickRowActive]}>
-                <Ionicons name={brakForma.ishchiId === w.id ? "radio-button-on-outline" : "ellipse-outline"} size={16} color={brakForma.ishchiId === w.id ? C.accent : C.muted} />
-                <Text style={[styles.pickTxt, brakForma.ishchiId === w.id && styles.pickTxtActive]}>{w.ism}</Text>
-              </Pressable>
-            ))
-          )}
-
-          {brakIshchi && (
-            <>
-              <Text style={styles.inputLabel}>Qaysi nondan nechta dona brak</Text>
-              {(brakIshchi.nonTurlari || []).map((nom) => (
-                <View key={nom} style={styles.savatRow}>
-                  <Text style={styles.savatNom} numberOfLines={1}>{nom}</Text>
-                  <Text style={styles.savatNarx}>{formatSom(donaNarxi(nom))}</Text>
-                  <TextInput value={brakForma.dona[nom] ?? ""} onChangeText={(v) => brakDona(nom, v)} placeholder="0" placeholderTextColor={C.muted} keyboardType="numeric" style={styles.savatInput} />
-                </View>
-              ))}
-
-              {brakSumma > 0 && (
-                <View style={styles.preview}>
-                  <View style={styles.previewRow}><Text style={styles.previewLabel}>Haqdan ayriladi</Text><Text style={[styles.previewVal, { color: C.red }]}>− {formatSom(brakSumma)} so'm</Text></View>
-                </View>
-              )}
-            </>
-          )}
-        </ScrollView>
-        <View style={styles.gap12} />
-        <View style={styles.modalRow}>
-          <View style={styles.flex1}><Btn secondary onPress={() => setBrakModal(false)}>Bekor</Btn></View>
-          <View style={styles.flex1}><Btn color={C.accent} onPress={saqlaBrak}>Saqlash</Btn></View>
-        </View>
-      </Modal>
-
-      {/* Kunlik qop hisobi — faqat ma'lumot kiritish (kun bo'yi) */}
       <KunlikQopModal visible={qopOchiq} onClose={() => setQopOchiq(false)} />
-      {/* Yakuniy hisobot — "Kunni yakunlash"da ochiladi; yopilganda ko'rsatkichlar nollanadi */}
       <HisobotModal visible={hisobotOchiq} onClose={hisobotYop} />
-
-      {/* Universal modal: Qarz / Optom / Karta */}
-      <Modal modalVisible={modalTur !== null} onClose={yopModal}>
-        <View style={styles.modalHead}>
-          <Ionicons name={qarzModal ? "pricetag-outline" : kartaModal ? "card-outline" : "cube-outline"} size={20} color={C.sub} />
-          <Text style={styles.modalTitle}>
-            {qarzModal ? "Yangi qarz" : kartaModal ? "Karta to'lovi" : "Yangi optom savdo"}
-          </Text>
-        </View>
-        <ScrollView style={styles.formScroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={true}>
-          {kartaModal ? (
-            <>
-              <Text style={styles.inputLabel}>Aniq narx (so'm) *</Text>
-              <TextInput value={forma.summa} onChangeText={(v) => yangila("summa", v)} placeholder="0" placeholderTextColor={C.muted} keyboardType="numeric" style={styles.input} />
-              <Text style={styles.inputLabel}>Izoh</Text>
-              <TextInput value={forma.izoh} onChangeText={(v) => yangila("izoh", v)} placeholder="Qo'shimcha izoh (ixtiyoriy)" placeholderTextColor={C.muted} multiline style={[styles.input, styles.inputMulti]} />
-              {(parseFloat(forma.summa) || 0) > 0 && (
-                <View style={styles.preview}>
-                  <Text style={styles.previewTitle}>Hisob (o'rtacha narx asosida)</Text>
-                  <View style={styles.previewRow}><Text style={styles.previewLabel}>≈ Nechta non</Text><Text style={styles.previewVal}>{preview.dona} dona</Text></View>
-                  <View style={styles.previewRow}><Text style={styles.previewLabel}>Sof foyda</Text><Text style={[styles.previewVal, { color: preview.sofFoyda >= 0 ? C.green : C.red }]}>{formatSom(preview.sofFoyda)} so'm</Text></View>
-                </View>
-              )}
-            </>
-          ) : (
-            <>
-              <Text style={styles.inputLabel}>Sana</Text>
-              <DateField value={forma.sana} onChange={(v) => yangila("sana", v)} />
-              <View style={styles.gap10} />
-
-              <Text style={styles.inputLabel}>{qarzModal ? "Qarz oluvchi *" : "Xaridor *"}</Text>
-              <TextInput value={forma.ism} onChangeText={(v) => yangila("ism", v)} placeholder="Ism familiya" placeholderTextColor={C.muted} style={styles.input} />
-
-              <Text style={styles.inputLabel}>Non turlari (soni)</Text>
-              {(nonlar || []).map((n) => (
-                <View key={n.id} style={styles.savatRow}>
-                  <Text style={styles.savatNom} numberOfLines={1}>{n.nom}</Text>
-                  <Text style={styles.savatNarx}>{formatSom(n.narx)}</Text>
-                  <TextInput value={forma.savat[n.id] ?? ""} onChangeText={(v) => yangilaSavat(n.id, v)} placeholder="0" placeholderTextColor={C.muted} keyboardType="numeric" style={styles.savatInput} />
-                </View>
-              ))}
-
-              {!qarzModal && (
-                <>
-                  <Text style={styles.inputLabel}>Donadan tushirish (so'm/dona)</Text>
-                  <TextInput value={forma.donaChegirma} onChangeText={(v) => yangila("donaChegirma", v)} placeholder="0" placeholderTextColor={C.muted} keyboardType="numeric" style={styles.input} />
-                </>
-              )}
-              <Text style={styles.inputLabel}>{qarzModal ? "Chegirma (so'm, ixtiyoriy)" : "Umumiy chegirma (so'm)"}</Text>
-              <TextInput value={forma.chegirma} onChangeText={(v) => yangila("chegirma", v)} placeholder="0" placeholderTextColor={C.muted} keyboardType="numeric" style={styles.input} />
-
-              <Text style={styles.inputLabel}>Izoh</Text>
-              <TextInput value={forma.izoh} onChangeText={(v) => yangila("izoh", v)} placeholder="Qo'shimcha izoh (ixtiyoriy)" placeholderTextColor={C.muted} multiline style={[styles.input, styles.inputMulti]} />
-
-              <View style={styles.preview}>
-                <View style={styles.previewRow}><Text style={styles.previewLabel}>Jami ({savatHisob.dona} dona)</Text><Text style={styles.previewVal}>{formatSom(savatHisob.summa)} so'm</Text></View>
-                {savatHisob.jamiChegirma > 0 && (
-                  <View style={styles.previewRow}><Text style={styles.previewLabel}>Chegirma</Text><Text style={styles.previewVal}>− {formatSom(savatHisob.jamiChegirma)} so'm</Text></View>
-                )}
-                <View style={styles.previewRow}><Text style={styles.previewLabel}>{qarzModal ? "Qarz summasi" : "To'lov"}</Text><Text style={[styles.previewVal, { color: C.accent }]}>{formatSom(savatHisob.yakSumma)} so'm</Text></View>
-                {!qarzModal && (
-                  <View style={styles.previewRow}><Text style={styles.previewLabel}>Sof foyda (kunlikka)</Text><Text style={[styles.previewVal, { color: savatHisob.yakFoyda >= 0 ? C.green : C.red }]}>{formatSom(savatHisob.yakFoyda)} so'm</Text></View>
-                )}
-              </View>
-            </>
-          )}
-        </ScrollView>
-        <View style={styles.gap12} />
-        <View style={styles.modalRow}>
-          <View style={styles.flex1}><Btn secondary onPress={yopModal}>Bekor</Btn></View>
-          <View style={styles.flex1}><Btn color={C.accent} onPress={saqla}>Saqlash</Btn></View>
-        </View>
-      </Modal>
     </SafeAreaView>
-  );
-}
-
-function SectionHead({ icon, nom, sum, color, style }) {
-  return (
-    <View style={[styles.secHead, style]}>
-      <View style={styles.secHeadLeft}>
-        <Ionicons name={icon} size={13} color={C.sub} />
-        <Text style={styles.section}>{nom}</Text>
-      </View>
-      <Text style={[styles.secSum, { color }]}>{sum}</Text>
-    </View>
   );
 }
 
@@ -579,6 +247,22 @@ function StatTile({ label, value, unit, color, icon }) {
   );
 }
 
+function NavTile({ icon, tint, label, sub, onPress }) {
+  return (
+    <Pressable
+      onPress={onPress}
+      android_ripple={{ color: tint + "1A", borderless: false }}
+      style={({ pressed }) => [styles.navTile, pressed && styles.navTilePressed]}
+    >
+      <View style={[styles.navIcon, { backgroundColor: tint + "14" }]}>
+        <Ionicons name={icon} size={22} color={tint} />
+      </View>
+      <Text style={styles.navLabel}>{label}</Text>
+      <Text style={styles.navSub} numberOfLines={1}>{sub}</Text>
+    </Pressable>
+  );
+}
+
 const styles = StyleSheet.create({
   safe:      { flex: 1, backgroundColor: C.bg },
   scroll:    { padding: S[5], paddingBottom: S[8] },
@@ -592,23 +276,35 @@ const styles = StyleSheet.create({
   cardTitleRow:{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: S[1] },
   cardTitle: { fontSize: T.md, fontWeight: "700", color: C.text },
   fieldLabel:{ fontSize: T.xs, color: C.sub, fontWeight: "600", marginBottom: 6, letterSpacing: 0.3 },
+  muted:     { fontSize: T.sm, color: C.sub },
+  gap10:     { height: S[3] },
+
+  // 2x2 grid
+  gridRow:   { flexDirection: "row", gap: S[3], marginBottom: S[3] },
+  navTile:   { flex: 1, aspectRatio: 1, backgroundColor: C.card, borderRadius: R.lg, padding: S[4], justifyContent: "space-between", borderWidth: StyleSheet.hairlineWidth, borderColor: C.borderSoft },
+  navTilePressed: { opacity: 0.7, transform: [{ scale: 0.98 }] },
+  navIcon:   { width: 40, height: 40, borderRadius: R.md, alignItems: "center", justifyContent: "center" },
+  navLabel:  { fontSize: T.md, fontWeight: "800", color: C.text, letterSpacing: -0.2, marginTop: S[2] },
+  navSub:    { fontSize: 11, color: C.muted, fontWeight: "600", marginTop: 2 },
+
+  // Bugungi ishchilar haqi
   haqRow:    { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: S[2] },
   haqNom:    { flex: 1, fontSize: T.sm, color: C.text },
   haqVal:    { fontSize: T.sm, color: C.accent, fontWeight: "800", marginLeft: S[2] },
-  muted:     { fontSize: T.sm, color: C.sub },
 
-  secHead:   { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: S[3] },
+  // Tarix sec head
+  secHead:   { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: S[3], marginTop: S[5] },
   secHeadLeft:{ flexDirection: "row", alignItems: "center", gap: 6 },
   section:   { fontSize: T.xs, color: C.sub, fontWeight: "700", letterSpacing: 1 },
   secSum:    { fontSize: T.sm, fontWeight: "700" },
   bosh:      { fontSize: T.sm, color: C.muted, paddingVertical: S[2] },
 
+  // Tarix item
   item:      { marginBottom: S[3] },
   mHead:     { flexDirection: "row", justifyContent: "space-between", alignItems: "center", gap: S[2] },
   flex1:     { flex: 1 },
   itemIsm:   { fontSize: T.md, fontWeight: "700", color: C.text },
-  itemIzoh:  { fontSize: T.sm, color: C.sub, marginTop: 2 },
-  itemSana:  { fontSize: T.xs, color: C.muted, marginTop: 2 },
+  itemSumma: { fontSize: T.md, fontWeight: "800", marginLeft: S[2] },
   histWrap:  {},
   histRow:   { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 5 },
   histNom:   { flex: 1, fontSize: T.sm, color: C.sub },
@@ -619,35 +315,7 @@ const styles = StyleSheet.create({
   histNomB:  { flex: 1, fontSize: T.sm, color: C.text, fontWeight: "800" },
   histValB:  { fontSize: T.md, color: C.accent, fontWeight: "800", marginLeft: S[2] },
   histDiv:   { height: StyleSheet.hairlineWidth, backgroundColor: C.borderSoft, marginVertical: S[2] },
-  itemSumma: { fontSize: T.md, fontWeight: "800", marginLeft: S[2] },
   actions:   { flexDirection: "row", justifyContent: "flex-end", gap: S[4], marginTop: S[3], borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: C.borderSoft, paddingTop: S[3] },
   actBtn:    { flexDirection: "row", alignItems: "center" },
   actTxt:    { fontSize: T.sm, fontWeight: "700" },
-  gap10:     { height: S[3] },
-  gap12:     { height: S[3] },
-
-  // Modal
-  modalHead:  { flexDirection: "row", alignItems: "center", gap: S[2], marginBottom: S[3] },
-  modalTitle: { fontSize: T.lg, fontWeight: "800", color: C.text },
-  formScroll: { maxHeight: 400 },
-  inputLabel: { fontSize: T.xs, color: C.sub, fontWeight: "600", marginBottom: 6, marginTop: S[1], letterSpacing: 0.3 },
-  input:     { borderWidth: 1, borderColor: C.border, borderRadius: R.md, paddingVertical: 12, paddingHorizontal: 14, fontSize: T.md, color: C.text, backgroundColor: C.surface },
-  inputMulti:{ minHeight: 64, textAlignVertical: "top" },
-  savatRow:  { flexDirection: "row", alignItems: "center", gap: S[2], marginBottom: S[2] },
-  savatNom:  { flex: 1, fontSize: T.sm, color: C.text },
-  savatNarx: { fontSize: T.xs, color: C.muted, width: 70, textAlign: "right" },
-  savatInput:{ width: 70, borderWidth: 1, borderColor: C.border, borderRadius: R.sm, paddingVertical: 8, paddingHorizontal: 10, fontSize: T.sm, color: C.text, backgroundColor: C.surface, textAlign: "right" },
-  savatLine: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 4 },
-  savatLNom: { flex: 1, fontSize: T.sm, color: C.text },
-  savatLV:   { fontSize: T.xs, color: C.sub, fontWeight: "700", marginLeft: S[2] },
-  pickRow:   { flexDirection: "row", alignItems: "center", gap: S[2], borderWidth: 1, borderColor: C.border, borderRadius: R.md, paddingVertical: 11, paddingHorizontal: 12, marginBottom: S[2], backgroundColor: C.surface },
-  pickRowActive: { borderColor: C.accent, backgroundColor: C.accent + "0D" },
-  pickTxt:   { fontSize: T.sm, color: C.sub, fontWeight: "600", flexShrink: 1 },
-  pickTxtActive: { color: C.accent, fontWeight: "700" },
-  preview:   { marginTop: S[3], backgroundColor: C.green + "0D", borderWidth: 1, borderColor: C.green + "2E", borderRadius: R.md, padding: S[3] },
-  previewTitle: { fontSize: T.xs, color: C.sub, fontWeight: "600", marginBottom: S[2], letterSpacing: 0.3 },
-  previewRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: S[1] },
-  previewLabel: { fontSize: T.sm, color: C.sub },
-  previewVal: { fontSize: T.md, fontWeight: "800", color: C.text },
-  modalRow:  { flexDirection: "row", gap: S[3] },
 });
