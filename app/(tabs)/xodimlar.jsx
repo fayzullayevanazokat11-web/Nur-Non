@@ -18,7 +18,7 @@ import { C, T, S, R } from "../../src/theme";
 import { formatSom } from "../../src/logic/hisob";
 import { LAVOZIMLAR, getLavozimLabel } from "../../src/logic/konstantalar";
 
-const BOSH_FORMA = { ism: "", lavozimId: LAVOZIMLAR[0].id, haqTuri: "kunlik", miqdor: "", nonNarx: {}, holat: "Aktiv", tatilSana: "" };
+const BOSH_FORMA = { ism: "", lavozimId: LAVOZIMLAR[0].id, lavozimCustom: "", haqTuri: "kunlik", miqdor: "", nonNarx: {}, holat: "Aktiv", tatilSana: "" };
 const HOLATLAR = ["Aktiv", "Ta'tilda"];
 
 export default function Xodimlar() {
@@ -39,7 +39,8 @@ export default function Xodimlar() {
     const nonNarx = {};
     Object.entries(w.nonNarxlari || {}).forEach(([nom, narx]) => { nonNarx[nom] = String(narx); });
     setForma({
-      ism: w.ism, lavozimId: w.lavozimId, haqTuri: w.haqTuri || "kunlik",
+      ism: w.ism, lavozimId: w.lavozimId, lavozimCustom: w.lavozimCustom || "",
+      haqTuri: w.haqTuri || "kunlik",
       miqdor: String(w.miqdor || ""), nonNarx, holat: w.holat || "Aktiv",
       tatilSana: w.tatilQaytishSana || "",
     });
@@ -50,6 +51,10 @@ export default function Xodimlar() {
   const saqla = () => {
     if (!forma.ism.trim()) {
       Alert.alert("Ism kiritilmagan", "Iltimos, xodim ismini kiriting.");
+      return;
+    }
+    if (forma.lavozimId === "boshqasi" && !forma.lavozimCustom.trim()) {
+      Alert.alert("Lavozim kiritilmagan", "Iltimos, lavozim nomini kiriting.");
       return;
     }
     let qoshimcha;
@@ -65,14 +70,16 @@ export default function Xodimlar() {
       qoshimcha = { haqTuri: "kunlik", miqdor: parseFloat(forma.miqdor) || 0, nonTurlari: [], nonNarxlari: {} };
     }
     const asos = {
-      ism: forma.ism.trim(), lavozimId: forma.lavozimId, holat: forma.holat,
+      ism: forma.ism.trim(), lavozimId: forma.lavozimId,
+      lavozimCustom: forma.lavozimId === "boshqasi" ? forma.lavozimCustom.trim() : "",
+      holat: forma.holat,
       tatilQaytishSana: forma.holat === "Ta'tilda" ? forma.tatilSana : "",
       ...qoshimcha,
     };
     if (tahrirId) {
       setIshchilar((prev) => prev.map((w) => (w.id === tahrirId ? { ...w, ...asos } : w)));
     } else {
-      setIshchilar((prev) => [...prev, { id: Date.now(), lavozimCustom: "", tel: "", tatilQaytishSana: "", tahrirSoni: 0, ...asos }]);
+      setIshchilar((prev) => [...prev, { id: Date.now(), tel: "", tatilQaytishSana: "", tahrirSoni: 0, ...asos }]);
     }
     yopModal();
   };
@@ -199,6 +206,19 @@ export default function Xodimlar() {
               );
             })}
           </View>
+
+          {forma.lavozimId === "boshqasi" && (
+            <>
+              <Text style={styles.inputLabel}>Lavozim nomi *</Text>
+              <TextInput
+                value={forma.lavozimCustom}
+                onChangeText={(v) => yangila("lavozimCustom", v)}
+                placeholder="Masalan: Yetkazib beruvchi"
+                placeholderTextColor={C.muted}
+                style={styles.input}
+              />
+            </>
+          )}
 
           <Text style={styles.inputLabel}>Haq turi</Text>
           <View style={styles.turRow}>
