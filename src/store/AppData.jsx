@@ -38,6 +38,8 @@ export function AppDataProvider({ children }) {
   // Partiyaviy inventarizatsiya: kechagi qoldiq (bugungi tonggi zaxira) + bugungi qo'lda yaroqsizlar.
   const [boshlangichQoldiq, setBoshlangichQoldiq] = usePersistedState("nurnon:boshlangichQoldiq", {});
   const [qoldaYaroqsiz, setQoldaYaroqsiz]         = usePersistedState("nurnon:qoldaYaroqsiz", {});
+  // Kunlik qo'shimcha xarajatlar (7 kun saqlanadi, kunlik sof foydadan ayriladi)
+  const [kunlikXarajatlar, setKunlikXarajatlar]   = usePersistedState("nurnon:kunlikXarajatlar", []);
 
   // ── Vaqtinchalik oqim bayroqlari (saqlanmaydi) ──
   const [qopTasdiqlandi, setQopTasdiqlandi]       = useState(false);
@@ -55,6 +57,7 @@ export function AppDataProvider({ children }) {
       setQarzlar((p) => p.filter((q) => !q.tolangan || (now - (q.tolanganVaqt || now)) < 7 * D));
       setHisobotlarTarixi((p) => p.filter((h) => (now - (h.vaqt || now)) < 30 * D));
       setOmborTasdiqlar((p) => p.filter((t) => (now - (t.vaqt || now)) < 30 * D));
+      setKunlikXarajatlar((p) => p.filter((x) => (now - (x.vaqt || now)) < 7 * D));
     }, 1500);
     return () => clearTimeout(t);
   }, []);
@@ -82,6 +85,7 @@ export function AppDataProvider({ children }) {
     kunlikQopSoni, setKunlikQopSoni,
     boshlangichQoldiq, setBoshlangichQoldiq,
     qoldaYaroqsiz, setQoldaYaroqsiz,
+    kunlikXarajatlar, setKunlikXarajatlar,
     qopTasdiqlandi, setQopTasdiqlandi,
     hisobotYopildi, setHisobotYopildi,
   };

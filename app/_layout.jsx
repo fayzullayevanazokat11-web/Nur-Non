@@ -1,4 +1,6 @@
 // Ildiz layout: AppDataProvider butun ilovani o'rab turadi.
+// Ikonka shriftlari (Ionicons) to'liq yuklanmaguncha asosiy navigator render
+// qilinmaydi — shu tariqa har bir ikonka kafolatlangan ko'rinadi.
 import { useState } from "react";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
@@ -10,22 +12,24 @@ import { Splash } from "../src/components/Splash";
 
 export default function RootLayout() {
   const [splash, setSplash] = useState(true);
-  // Ionicons shriftini fonда oldindan yuklaymiz (render'ни bloklamaymiz —
-  // aks holda shrift yuklanmasa oq ekran bo'lib qoladi).
-  useFonts(Ionicons.font);
+  const [fontsLoaded] = useFonts(Ionicons.font);
+  const tayyor = fontsLoaded && !splash;
 
   return (
     <SafeAreaProvider>
       <AppDataProvider>
-        <StatusBar style={splash ? "light" : "dark"} />
-        <Stack screenOptions={{ headerShown: false, animation: "slide_from_right" }}>
-          <Stack.Screen name="(tabs)" />
-          <Stack.Screen name="qarzlar" />
-          <Stack.Screen name="optom" />
-          <Stack.Screen name="karta" />
-          <Stack.Screen name="brak" />
-        </Stack>
-        {splash && <Splash onDone={() => setSplash(false)} />}
+        <StatusBar style={tayyor ? "dark" : "light"} />
+        {tayyor && (
+          <Stack screenOptions={{ headerShown: false, animation: "slide_from_right" }}>
+            <Stack.Screen name="(tabs)" />
+            <Stack.Screen name="qarzlar" />
+            <Stack.Screen name="optom" />
+            <Stack.Screen name="karta" />
+            <Stack.Screen name="brak" />
+            <Stack.Screen name="xarajat" />
+          </Stack>
+        )}
+        {!tayyor && <Splash onDone={() => setSplash(false)} />}
       </AppDataProvider>
     </SafeAreaProvider>
   );

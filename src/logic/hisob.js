@@ -42,7 +42,7 @@ function divertedByNon(optomlar, qarzlar) {
 export function hisoblaKunlik({
   nonlar = [], ishchilar = [], ozIshlabQoplar = {}, tashqariSonlar = {},
   sotilmaganNon = {}, optomlar = [], qarzlar = [], mahsulotNarxlari = {}, braklar = [],
-  boshlangichQoldiq = {}, qoldaYaroqsiz = {},
+  boshlangichQoldiq = {}, qoldaYaroqsiz = {}, kunlikXarajatlar = [],
 }) {
   const diverted = divertedByNon(optomlar, qarzlar);
   let jamiNon = 0, jamiQop = 0, jamiBoshlang = 0, jamiQoldiq = 0, jamiYaroqsiz = 0;
@@ -85,8 +85,14 @@ export function hisoblaKunlik({
   const ishchiHaq = haq.jami;
   const brakAyirma = haq.list.reduce((s, x) => s + (x.gross - x.net), 0);
 
-  const malumotBor = jamiQop > 0 || jamiNon > 0 || jamiBoshlang > 0;
-  const sofFoyda = malumotBor ? Math.round(daromad - xomashyo - ishchiHaq) : 0;
+  // Bugungi qo'shimcha xarajatlar (faqat bugungi sana — sof foydadan ayriladi)
+  const bugun = new Date().toISOString().split("T")[0];
+  const xarajatJami = (kunlikXarajatlar || [])
+    .filter((x) => x.sana === bugun)
+    .reduce((s, x) => s + (parseFloat(x.summa) || 0), 0);
+
+  const malumotBor = jamiQop > 0 || jamiNon > 0 || jamiBoshlang > 0 || xarajatJami > 0;
+  const sofFoyda = malumotBor ? Math.round(daromad - xomashyo - ishchiHaq - xarajatJami) : 0;
   // Bugun sotilgan jami (retail + diverted), boshlang va ishlab dan
   const sotilganNon = Math.max(0, jamiBoshlang + jamiNon - jamiQoldiq - jamiYaroqsiz);
 
@@ -95,6 +101,7 @@ export function hisoblaKunlik({
     jamiBoshlang, jamiQoldiq, jamiYaroqsiz,
     daromad: Math.round(daromad), xomashyo: Math.round(xomashyo),
     ishchiHaq: Math.round(ishchiHaq), brakAyirma: Math.round(brakAyirma),
+    xarajatJami: Math.round(xarajatJami),
   };
 }
 

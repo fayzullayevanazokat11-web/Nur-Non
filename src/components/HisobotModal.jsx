@@ -13,7 +13,7 @@ export function HisobotModal({ visible, onClose }) {
   const {
     nonlar, ishchilar, mahsulotNarxlari, braklar,
     ozIshlabQoplar, tashqariSonlar, sotilmaganNon,
-    boshlangichQoldiq, qoldaYaroqsiz,
+    boshlangichQoldiq, qoldaYaroqsiz, kunlikXarajatlar,
     qarzlar, optomlar, kartalar,
   } = useApp();
 
@@ -22,8 +22,10 @@ export function HisobotModal({ visible, onClose }) {
     const bugun = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
     const kunlik = hisoblaKunlik({
       nonlar, ishchilar, ozIshlabQoplar, tashqariSonlar, sotilmaganNon, optomlar, qarzlar, mahsulotNarxlari, braklar,
-      boshlangichQoldiq, qoldaYaroqsiz,
+      boshlangichQoldiq, qoldaYaroqsiz, kunlikXarajatlar,
     });
+    const xarajatBugun = (kunlikXarajatlar || []).filter((x) => x.sana === bugun);
+    const xarajatSum = xarajatBugun.reduce((s, x) => s + (parseFloat(x.summa) || 0), 0);
     const qoldiqlar = qoldiqlarHisobi(nonlar, {
       boshlangichQoldiq, ozIshlabQoplar, tashqariSonlar, qoldaYaroqsiz, sotilmaganNon, optomlar, qarzlar,
     }).filter((q) => q.jamiZaxira > 0 || q.qoldiq > 0 || q.yaroqsiz > 0);
@@ -40,8 +42,8 @@ export function HisobotModal({ visible, onClose }) {
     // Umumiy foyda = ishlab chiqarish + karta sof foydasi + optom SOF FOYDASI (chegirma ayrilgan)
     const umumiy = kunlik.sofFoyda + kartaFoyda + optomFoyda;
     const haq = ishchiHaqlari(nonlar, ishchilar, ozIshlabQoplar, braklar);
-    return { bugun, kunlik, qoldiqlar, optomSum, optomFoyda, optomSoni: optomB.length, qarzSum, qarzSoni: qarzB.length, kartaSum, kartaFoyda, kartaDona, kartaSoni: kartaB.length, umumiy, haqList: haq.list };
-  }, [nonlar, ishchilar, ozIshlabQoplar, tashqariSonlar, sotilmaganNon, qarzlar, optomlar, kartalar, mahsulotNarxlari, braklar, boshlangichQoldiq, qoldaYaroqsiz]);
+    return { bugun, kunlik, qoldiqlar, xarajatBugun, xarajatSum, optomSum, optomFoyda, optomSoni: optomB.length, qarzSum, qarzSoni: qarzB.length, kartaSum, kartaFoyda, kartaDona, kartaSoni: kartaB.length, umumiy, haqList: haq.list };
+  }, [nonlar, ishchilar, ozIshlabQoplar, tashqariSonlar, sotilmaganNon, qarzlar, optomlar, kartalar, mahsulotNarxlari, braklar, boshlangichQoldiq, qoldaYaroqsiz, kunlikXarajatlar]);
 
   return (
     <Modal modalVisible={visible} onClose={onClose}>
@@ -100,6 +102,17 @@ export function HisobotModal({ visible, onClose }) {
           <Row label={`${data.qarzSoni} ta qarz`} value={`${formatSom(data.qarzSum)} so'm`} bold />
           <Text style={styles.note}>* Qarz alohida — hali to'lanmagan, umumiyga qo'shilmaydi</Text>
         </View>
+
+        {/* Qo'shimcha xarajatlar (bugun) */}
+        {data.xarajatBugun.length > 0 && (
+          <View style={[styles.block, { backgroundColor: C.red + "0D", borderColor: C.red + "26" }]}>
+            <Text style={[styles.blockHead, { color: C.red }]}>Qo'shimcha xarajatlar (bugun)</Text>
+            {data.xarajatBugun.map((x) => (
+              <Row key={x.id} label={x.izoh} value={`− ${formatSom(x.summa)} so'm`} color={C.red} />
+            ))}
+            <Row label="Jami" value={`− ${formatSom(data.xarajatSum)} so'm`} color={C.red} bold />
+          </View>
+        )}
 
         {/* Ishchilar haqi */}
         {data.haqList.length > 0 && (

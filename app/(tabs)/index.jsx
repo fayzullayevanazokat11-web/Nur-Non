@@ -29,6 +29,7 @@ export default function Markaz() {
     sotilmaganNon, setSotilmaganNon, mahsulotNarxlari, setOmborSorovlar,
     hisobotlarTarixi, setHisobotlarTarixi, braklar, setBraklar,
     boshlangichQoldiq, setBoshlangichQoldiq, qoldaYaroqsiz, setQoldaYaroqsiz,
+    kunlikXarajatlar,
   } = useApp();
 
   const [qopOchiq, setQopOchiq] = useState(false);
@@ -36,8 +37,8 @@ export default function Markaz() {
   const [kunlikSana, setKunlikSana] = useState(localSana());
 
   const stats = useMemo(
-    () => hisoblaKunlik({ nonlar, ishchilar, ozIshlabQoplar, tashqariSonlar, sotilmaganNon, optomlar, qarzlar, mahsulotNarxlari, braklar, boshlangichQoldiq, qoldaYaroqsiz }),
-    [nonlar, ishchilar, ozIshlabQoplar, tashqariSonlar, sotilmaganNon, optomlar, qarzlar, mahsulotNarxlari, braklar, boshlangichQoldiq, qoldaYaroqsiz]
+    () => hisoblaKunlik({ nonlar, ishchilar, ozIshlabQoplar, tashqariSonlar, sotilmaganNon, optomlar, qarzlar, mahsulotNarxlari, braklar, boshlangichQoldiq, qoldaYaroqsiz, kunlikXarajatlar }),
+    [nonlar, ishchilar, ozIshlabQoplar, tashqariSonlar, sotilmaganNon, optomlar, qarzlar, mahsulotNarxlari, braklar, boshlangichQoldiq, qoldaYaroqsiz, kunlikXarajatlar]
   );
   const bugungiHaq = useMemo(
     () => ishchiHaqlari(nonlar, ishchilar, ozIshlabQoplar, braklar),
@@ -48,6 +49,14 @@ export default function Markaz() {
   const optom = useMemo(() => optomJami(optomlar), [optomlar]);
   const karta = useMemo(() => kartaJami(kartalar), [kartalar]);
   const brakSumma = useMemo(() => (braklar || []).reduce((s, b) => s + (parseFloat(b.summa) || 0), 0), [braklar]);
+  const xarajatBugun = useMemo(() => {
+    const bugun = localSana();
+    return (kunlikXarajatlar || []).filter((x) => x.sana === bugun).reduce((s, x) => s + (parseFloat(x.summa) || 0), 0);
+  }, [kunlikXarajatlar]);
+  const xarajatSoni = useMemo(() => {
+    const bugun = localSana();
+    return (kunlikXarajatlar || []).filter((x) => x.sana === bugun).length;
+  }, [kunlikXarajatlar]);
 
   // Kunni yakunlash → tarix snapshot + ombor so'rovnomasi + hisobot modal.
   const kunniYakunla = () => {
@@ -152,6 +161,23 @@ export default function Markaz() {
             onPress={() => router.push("/brak")}
           />
         </View>
+
+        {/* Kunlik qo'shimcha xarajatlar — vertikal nav tugma */}
+        <Pressable
+          accessibilityLabel="Kunlik qo'shimcha xarajatlar"
+          onPress={() => router.push("/xarajat")}
+          android_ripple={{ color: C.accent + "1A" }}
+          style={({ pressed }) => [styles.xarajatBtn, pressed && styles.xarajatBtnPressed]}
+        >
+          <View style={[styles.navIcon, { backgroundColor: C.accent + "14" }]}>
+            <Ionicons name="cash-outline" size={22} color={C.accent} />
+          </View>
+          <View style={styles.flex1}>
+            <Text style={styles.xarajatLabel}>Kunlik qo'shimcha xarajatlar</Text>
+            <Text style={styles.xarajatSub}>Bugun: {formatSom(xarajatBugun)} so'm • {xarajatSoni} ta</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={18} color={C.muted} />
+        </Pressable>
 
         {/* BUGUNGI ISHCHILAR HAQI (jonli) */}
         {bugungiHaq.list.length > 0 && (
@@ -286,6 +312,12 @@ const styles = StyleSheet.create({
   navIcon:   { width: 40, height: 40, borderRadius: R.md, alignItems: "center", justifyContent: "center" },
   navLabel:  { fontSize: T.md, fontWeight: "800", color: C.text, letterSpacing: -0.2, marginTop: S[2] },
   navSub:    { fontSize: 11, color: C.muted, fontWeight: "600", marginTop: 2 },
+
+  // Vertikal "Kunlik qo'shimcha xarajatlar" tugmasi
+  xarajatBtn: { flexDirection: "row", alignItems: "center", gap: S[3], backgroundColor: C.card, borderRadius: R.lg, padding: S[4], borderWidth: StyleSheet.hairlineWidth, borderColor: C.borderSoft, marginTop: S[1], marginBottom: S[3] },
+  xarajatBtnPressed: { opacity: 0.75, transform: [{ scale: 0.99 }] },
+  xarajatLabel: { fontSize: T.md, fontWeight: "800", color: C.text, letterSpacing: -0.2 },
+  xarajatSub:   { fontSize: 11, color: C.muted, fontWeight: "600", marginTop: 2 },
 
   // Bugungi ishchilar haqi
   haqRow:    { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: S[2] },
