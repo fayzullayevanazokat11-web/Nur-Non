@@ -7,12 +7,13 @@ import { useApp } from "../store/AppData";
 import { Modal } from "./Modal";
 import { Btn } from "./Btn";
 import { C, T, S, R } from "../theme";
-import { hisoblaKunlik, formatSom, ishchiHaqlari } from "../logic/hisob";
+import { hisoblaKunlik, qoldiqlarHisobi, formatSom, ishchiHaqlari } from "../logic/hisob";
 
 export function HisobotModal({ visible, onClose }) {
   const {
     nonlar, ishchilar, mahsulotNarxlari, braklar,
     ozIshlabQoplar, tashqariSonlar, sotilmaganNon,
+    boshlangichQoldiq, qoldaYaroqsiz,
     qarzlar, optomlar, kartalar,
   } = useApp();
 
@@ -21,7 +22,11 @@ export function HisobotModal({ visible, onClose }) {
     const bugun = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
     const kunlik = hisoblaKunlik({
       nonlar, ishchilar, ozIshlabQoplar, tashqariSonlar, sotilmaganNon, optomlar, qarzlar, mahsulotNarxlari, braklar,
+      boshlangichQoldiq, qoldaYaroqsiz,
     });
+    const qoldiqlar = qoldiqlarHisobi(nonlar, {
+      boshlangichQoldiq, ozIshlabQoplar, tashqariSonlar, qoldaYaroqsiz, sotilmaganNon, optomlar, qarzlar,
+    }).filter((q) => q.jamiZaxira > 0 || q.qoldiq > 0 || q.yaroqsiz > 0);
     const sum = (arr, key) => (arr || []).reduce((s, x) => s + (parseFloat(x[key]) || 0), 0);
     const optomB = (optomlar || []).filter((o) => o.sana === bugun);
     const qarzB = (qarzlar || []).filter((q) => q.sana === bugun);
@@ -35,8 +40,8 @@ export function HisobotModal({ visible, onClose }) {
     // Umumiy foyda = ishlab chiqarish + karta sof foydasi + optom SOF FOYDASI (chegirma ayrilgan)
     const umumiy = kunlik.sofFoyda + kartaFoyda + optomFoyda;
     const haq = ishchiHaqlari(nonlar, ishchilar, ozIshlabQoplar, braklar);
-    return { bugun, kunlik, optomSum, optomFoyda, optomSoni: optomB.length, qarzSum, qarzSoni: qarzB.length, kartaSum, kartaFoyda, kartaDona, kartaSoni: kartaB.length, umumiy, haqList: haq.list };
-  }, [nonlar, ishchilar, ozIshlabQoplar, tashqariSonlar, sotilmaganNon, qarzlar, optomlar, kartalar, mahsulotNarxlari, braklar]);
+    return { bugun, kunlik, qoldiqlar, optomSum, optomFoyda, optomSoni: optomB.length, qarzSum, qarzSoni: qarzB.length, kartaSum, kartaFoyda, kartaDona, kartaSoni: kartaB.length, umumiy, haqList: haq.list };
+  }, [nonlar, ishchilar, ozIshlabQoplar, tashqariSonlar, sotilmaganNon, qarzlar, optomlar, kartalar, mahsulotNarxlari, braklar, boshlangichQoldiq, qoldaYaroqsiz]);
 
   return (
     <Modal modalVisible={visible} onClose={onClose}>
@@ -50,10 +55,29 @@ export function HisobotModal({ visible, onClose }) {
         {/* Ishlab chiqarish (qop) */}
         <View style={[styles.block, { backgroundColor: C.accent + "0D", borderColor: C.accent + "2E" }]}>
           <Text style={styles.blockHead}>Ishlab chiqarish (kunlik qop)</Text>
-          <Row label="Ishlab chiqarilgan" value={`${data.kunlik.jamiNon} dona`} />
+          <Row label="Tonggi qoldiq" value={`${data.kunlik.jamiBoshlang} dona`} />
+          <Row label="Bugungi ishlab" value={`${data.kunlik.jamiNon} dona`} />
           <Row label="Sotilgan" value={`${data.kunlik.sotilganNon} dona`} />
+          <Row label="Yaroqsiz" value={`${data.kunlik.jamiYaroqsiz} dona`} color={data.kunlik.jamiYaroqsiz > 0 ? C.red : C.text} />
+          <Row label="Ertangi qoldiq" value={`${data.kunlik.jamiQoldiq} dona`} color={C.accent} bold />
           <Row label="Sof foyda" value={`${formatSom(data.kunlik.sofFoyda)} so'm`} color={data.kunlik.sofFoyda >= 0 ? C.green : C.red} bold />
         </View>
+
+        {/* Partiyaviy zaxira tafsiloti */}
+        {data.qoldiqlar.length > 0 && (
+          <View style={[styles.block, { backgroundColor: C.surface }]}>
+            <Text style={styles.blockHead}>Zaxira tafsiloti (FIFO)</Text>
+            {data.qoldiqlar.map((q) => (
+              <View key={q.id} style={styles.qoldiqRow}>
+                <Text style={styles.qoldiqNom} numberOfLines={1}>{q.nom}</Text>
+                <Text style={styles.qoldiqDet}>
+                  {q.boshlang}+{q.ishlab} − {q.jamiSotilgan}{q.yaroqsiz > 0 ? ` − ${q.yaroqsiz} yar.` : ""} = <Text style={{ color: C.accent, fontWeight: "800" }}>{q.qoldiq}</Text>
+                </Text>
+              </View>
+            ))}
+            <Text style={styles.qoldiqHint}>* "Ertangi qoldiq" ertangi tonggi zaxiraga ko'chiriladi.</Text>
+          </View>
+        )}
 
         {/* Karta */}
         <View style={[styles.block, { backgroundColor: C.green + "0D", borderColor: C.green + "2E" }]}>
@@ -123,6 +147,10 @@ const styles = StyleSheet.create({
   rowLabel:  { fontSize: T.sm, color: C.sub },
   rowVal:    { fontSize: T.sm },
   note:      { fontSize: 11, color: C.muted, marginTop: S[1] },
+  qoldiqRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 4 },
+  qoldiqNom: { fontSize: T.sm, color: C.text, flex: 1 },
+  qoldiqDet: { fontSize: T.sm, color: C.sub, marginLeft: S[2] },
+  qoldiqHint:{ fontSize: 10, color: C.muted, marginTop: S[1], fontStyle: "italic" },
   umumiy:    { borderRadius: R.md, borderWidth: 1, borderColor: C.accent + "2E", padding: S[4], backgroundColor: C.accent + "0D", alignItems: "center", marginTop: S[1] },
   umumiyLabel: { fontSize: T.xs, color: C.sub, fontWeight: "700", letterSpacing: 1 },
   umumiyVal: { fontSize: T.xxl, fontWeight: "800", marginTop: S[1], letterSpacing: -0.5 },

@@ -29,6 +29,7 @@ export default function Markaz() {
     ozIshlabQoplar, setOzIshlabQoplar, tashqariSonlar, setTashqariSonlar,
     sotilmaganNon, setSotilmaganNon, mahsulotNarxlari, setOmborSorovlar,
     hisobotlarTarixi, setHisobotlarTarixi, braklar, setBraklar,
+    boshlangichQoldiq, setBoshlangichQoldiq, qoldaYaroqsiz, setQoldaYaroqsiz,
   } = useApp();
 
   // Bugungi ishchilar haqi (jonli)
@@ -53,12 +54,13 @@ export default function Markaz() {
     const sana = kunlikSana || localSana();
     const snap = {
       id: Date.now(), sana, vaqt: Date.now(),
-      ozIshlabQoplar, tashqariSonlar, sotilmaganNon,
+      boshlangichQoldiq, ozIshlabQoplar, tashqariSonlar, qoldaYaroqsiz, sotilmaganNon,
       nonlarSnapshot: JSON.parse(JSON.stringify(nonlar)),
       ishchilarSnapshot: JSON.parse(JSON.stringify(ishchilar)),
       mahsulotNarxlariSnapshot: JSON.parse(JSON.stringify(mahsulotNarxlari)),
       daromad: stats.daromad, xomashyo: stats.xomashyo, ishchiHaq: stats.ishchiHaq,
       sofFoyda: stats.sofFoyda, sotilganNon: stats.sotilganNon, jamiQop: stats.jamiQop, jamiNon: stats.jamiNon,
+      jamiBoshlang: stats.jamiBoshlang, jamiQoldiq: stats.jamiQoldiq, jamiYaroqsiz: stats.jamiYaroqsiz,
       ishchiHaqlari: bugungiHaq.list,
     };
     setHisobotlarTarixi((prev) => [snap, ...(prev || []).filter((h) => h.sana !== sana)]);
@@ -70,7 +72,11 @@ export default function Markaz() {
   };
   const hisobotYop = () => {
     setHisobotOchiq(false);
-    setOzIshlabQoplar({}); setTashqariSonlar({}); setSotilmaganNon({});
+    // Kun oxiri qoldiq (sotilmaganNon) → ertangi tonggi zaxira (boshlangichQoldiq).
+    // Yaroqsizlar yo'qoladi (kunlik foydaga ta'sir qilgan).
+    setBoshlangichQoldiq(sotilmaganNon || {});
+    setSotilmaganNon({});
+    setOzIshlabQoplar({}); setTashqariSonlar({}); setQoldaYaroqsiz({});
     setKartalar([]); setBraklar([]);
     setKunlikSana(localSana());
   };
@@ -82,8 +88,8 @@ export default function Markaz() {
     ]);
 
   const stats = useMemo(
-    () => hisoblaKunlik({ nonlar, ishchilar, ozIshlabQoplar, tashqariSonlar, sotilmaganNon, optomlar, qarzlar, mahsulotNarxlari, braklar }),
-    [nonlar, ishchilar, ozIshlabQoplar, tashqariSonlar, sotilmaganNon, optomlar, qarzlar, mahsulotNarxlari, braklar]
+    () => hisoblaKunlik({ nonlar, ishchilar, ozIshlabQoplar, tashqariSonlar, sotilmaganNon, optomlar, qarzlar, mahsulotNarxlari, braklar, boshlangichQoldiq, qoldaYaroqsiz }),
+    [nonlar, ishchilar, ozIshlabQoplar, tashqariSonlar, sotilmaganNon, optomlar, qarzlar, mahsulotNarxlari, braklar, boshlangichQoldiq, qoldaYaroqsiz]
   );
 
   const qarz = useMemo(() => qarzJami(qarzlar), [qarzlar]);
@@ -207,7 +213,10 @@ export default function Markaz() {
             <Ionicons name="calculator-outline" size={18} color={C.sub} />
             <Text style={styles.cardTitle}>Kunlik qop hisobi</Text>
           </View>
-          <Text style={styles.muted}>{stats.jamiNon} dona ishlab chiqarildi</Text>
+          <Text style={styles.muted}>
+            {stats.jamiBoshlang > 0 ? `${stats.jamiBoshlang} dona tonggi qoldiq · ` : ""}
+            {stats.jamiNon} dona ishlab chiqarildi
+          </Text>
           <View style={styles.gap10} />
           <Text style={styles.fieldLabel}>Hisobot sanasi</Text>
           <DateField value={kunlikSana} onChange={setKunlikSana} />

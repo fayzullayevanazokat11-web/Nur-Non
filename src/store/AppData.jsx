@@ -35,6 +35,9 @@ export function AppDataProvider({ children }) {
   const [tashqariSonlar, setTashqariSonlar]       = usePersistedState("nurnon:tashqariSonlar", {});
   const [sotilmaganNon, setSotilmaganNon]         = usePersistedState("nurnon:sotilmaganNon", {});
   const [kunlikQopSoni, setKunlikQopSoni]         = usePersistedState("nurnon:kunlikQopSoni", "");
+  // Partiyaviy inventarizatsiya: kechagi qoldiq (bugungi tonggi zaxira) + bugungi qo'lda yaroqsizlar.
+  const [boshlangichQoldiq, setBoshlangichQoldiq] = usePersistedState("nurnon:boshlangichQoldiq", {});
+  const [qoldaYaroqsiz, setQoldaYaroqsiz]         = usePersistedState("nurnon:qoldaYaroqsiz", {});
 
   // ── Vaqtinchalik oqim bayroqlari (saqlanmaydi) ──
   const [qopTasdiqlandi, setQopTasdiqlandi]       = useState(false);
@@ -77,6 +80,8 @@ export function AppDataProvider({ children }) {
     tashqariSonlar, setTashqariSonlar,
     sotilmaganNon, setSotilmaganNon,
     kunlikQopSoni, setKunlikQopSoni,
+    boshlangichQoldiq, setBoshlangichQoldiq,
+    qoldaYaroqsiz, setQoldaYaroqsiz,
     qopTasdiqlandi, setQopTasdiqlandi,
     hisobotYopildi, setHisobotYopildi,
   };

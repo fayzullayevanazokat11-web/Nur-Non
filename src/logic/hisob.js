@@ -35,34 +35,46 @@ function divertedByNon(optomlar, qarzlar) {
   return map;
 }
 
-// Kunlik ko'rsatkichlar (sof foyda, sotilgan, qop)
+// Kunlik ko'rsatkichlar (sof foyda, sotilgan, qop).
+// Partiyaviy inventarizatsiya: boshlangichQoldiq (kechagi) + bugungi ishlab chiqarish
+// − sotilganlar − qoldaYaroqsiz = ertangi qoldiq (sotilmaganNon).
+// FIFO: jami sonda nazarda tutiladi (boshlang -> ishlab tartibida sotilganlar).
 export function hisoblaKunlik({
   nonlar = [], ishchilar = [], ozIshlabQoplar = {}, tashqariSonlar = {},
   sotilmaganNon = {}, optomlar = [], qarzlar = [], mahsulotNarxlari = {}, braklar = [],
+  boshlangichQoldiq = {}, qoldaYaroqsiz = {},
 }) {
   const diverted = divertedByNon(optomlar, qarzlar);
-  let jamiNon = 0, jamiQop = 0, jamiSotilmagan = 0, daromad = 0, xomashyo = 0;
+  let jamiNon = 0, jamiQop = 0, jamiBoshlang = 0, jamiQoldiq = 0, jamiYaroqsiz = 0;
+  let daromad = 0, xomashyo = 0;
 
   nonlar.forEach((non) => {
     const norma = parseFloat(non.nonSoni) || 0;
     const narx = parseFloat(non.narx) || 0;
-    const sotilmaganShu = parseInt(sotilmaganNon[non.id]) || 0;
+    const boshlang = parseInt(boshlangichQoldiq[non.id]) || 0;
+    const yaroqsiz = parseInt(qoldaYaroqsiz[non.id]) || 0;
+    const qoldiq = parseInt(sotilmaganNon[non.id]) || 0; // kun oxiri qoldiq = ertangi boshlang'ich
     const divertedShu = diverted[non.nom] || 0;
-    jamiSotilmagan += sotilmaganShu;
+    jamiBoshlang += boshlang;
+    jamiQoldiq += qoldiq;
+    jamiYaroqsiz += yaroqsiz;
 
     if (non.ozIshlab !== false) {
       const qopSoni = parseInt(ozIshlabQoplar[non.id]) || 0;
       const ishlab = qopSoni * norma;
       jamiQop += qopSoni; jamiNon += ishlab;
-      const retailSold = Math.max(0, ishlab - sotilmaganShu - divertedShu);
+      // Sotilgan retail = umumiy zaxira − chiqimlar (yaroqsiz, qoldiq, diverted)
+      const retailSold = Math.max(0, boshlang + ishlab - yaroqsiz - qoldiq - divertedShu);
       daromad += retailSold * narx;
-      const perBreadCost = norma > 0 ? getQopTannarx(non, mahsulotNarxlari) / norma : 0;
-      xomashyo += qopSoni * getQopTannarx(non, mahsulotNarxlari)
-        - Math.min(divertedShu, ishlab) * perBreadCost;
+      const qopTannarx = getQopTannarx(non, mahsulotNarxlari);
+      const perBreadCost = norma > 0 ? qopTannarx / norma : 0;
+      // Bugungi xomashyo: faqat bugun pishirilgan qop (kechagi qoldiq tannarxi kecha hisoblangan).
+      // Diverted (optom/qarz) tannarxi alohida hisoblanadi — kunlikdan ayirib qo'yiladi.
+      xomashyo += qopSoni * qopTannarx - Math.min(divertedShu, ishlab) * perBreadCost;
     } else {
       const olingan = parseInt(tashqariSonlar[non.id]) || 0;
       jamiNon += olingan;
-      const retailSold = Math.max(0, olingan - sotilmaganShu - divertedShu);
+      const retailSold = Math.max(0, boshlang + olingan - yaroqsiz - qoldiq - divertedShu);
       daromad += retailSold * narx;
       const tannarx = Math.max(0, narx - (parseFloat(non.tashqariFoyda) || 2000));
       xomashyo += (olingan - Math.min(divertedShu, olingan)) * tannarx;
@@ -73,15 +85,45 @@ export function hisoblaKunlik({
   const ishchiHaq = haq.jami;
   const brakAyirma = haq.list.reduce((s, x) => s + (x.gross - x.net), 0);
 
-  const malumotBor = jamiQop > 0 || jamiNon > 0;
+  const malumotBor = jamiQop > 0 || jamiNon > 0 || jamiBoshlang > 0;
   const sofFoyda = malumotBor ? Math.round(daromad - xomashyo - ishchiHaq) : 0;
-  const sotilganNon = Math.max(0, jamiNon - jamiSotilmagan);
+  // Bugun sotilgan jami (retail + diverted), boshlang va ishlab dan
+  const sotilganNon = Math.max(0, jamiBoshlang + jamiNon - jamiQoldiq - jamiYaroqsiz);
 
   return {
     sofFoyda, jamiNon, jamiQop, sotilganNon,
+    jamiBoshlang, jamiQoldiq, jamiYaroqsiz,
     daromad: Math.round(daromad), xomashyo: Math.round(xomashyo),
     ishchiHaq: Math.round(ishchiHaq), brakAyirma: Math.round(brakAyirma),
   };
+}
+
+// Har non uchun partiyaviy zaxira tafsiloti: boshlang + ishlab − sotilgan − yaroqsiz − qoldiq.
+// FIFO ko'rinishi (boshlang avval, keyin bugungi). Sotilgan tafsiloti: avval boshlang,
+// keyin ishlab partiyasidan ketadi.
+export function qoldiqlarHisobi(nonlar, { boshlangichQoldiq = {}, ozIshlabQoplar = {}, tashqariSonlar = {}, qoldaYaroqsiz = {}, sotilmaganNon = {}, optomlar = [], qarzlar = [] } = {}) {
+  const diverted = divertedByNon(optomlar, qarzlar);
+  return (nonlar || []).map((non) => {
+    const norma = parseFloat(non.nonSoni) || 0;
+    const oz = non.ozIshlab !== false;
+    const boshlang = parseInt(boshlangichQoldiq[non.id]) || 0;
+    const ishlab = oz ? (parseInt(ozIshlabQoplar[non.id]) || 0) * norma : (parseInt(tashqariSonlar[non.id]) || 0);
+    const yaroqsiz = parseInt(qoldaYaroqsiz[non.id]) || 0;
+    const qoldiq = parseInt(sotilmaganNon[non.id]) || 0;
+    const divertedShu = diverted[non.nom] || 0;
+    const jamiZaxira = boshlang + ishlab;
+    const jamiSotilgan = Math.max(0, jamiZaxira - yaroqsiz - qoldiq); // retail + diverted
+    const retailSold = Math.max(0, jamiSotilgan - divertedShu);
+    // FIFO: avval boshlang partiyasidan ketadi
+    const boshlangdanSotilgan = Math.min(boshlang, jamiSotilgan);
+    const ishlabdanSotilgan = jamiSotilgan - boshlangdanSotilgan;
+    return {
+      id: non.id, nom: non.nom, oz,
+      boshlang, ishlab, yaroqsiz, qoldiq, divertedShu,
+      jamiZaxira, jamiSotilgan, retailSold,
+      boshlangdanSotilgan, ishlabdanSotilgan,
+    };
+  });
 }
 
 // Ishchi haqi hisoblanadimi: faqat Aktiv bo'lsa hisoblanadi.
