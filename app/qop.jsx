@@ -1,0 +1,298 @@
+// Kunlik qop hisobi — TO'LIQ sahifa: hisobot sanasi, per-non kiritish (boshlang
+// qoldiq, qop, yaroqsiz, kun oxiri qoldiq), FIFO tafsiloti, ishchilar haqi,
+// moliyaviy xulosa va "Saqlash" / "Kunni yakunlash" tugmalari.
+import { useEffect, useMemo, useState } from "react";
+import { View, Text, ScrollView, Pressable, TextInput, StyleSheet, Alert } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
+
+import { useApp } from "../src/store/AppData";
+import { Card } from "../src/components/Card";
+import { Btn } from "../src/components/Btn";
+import { DateField } from "../src/components/DateField";
+import { HisobotModal } from "../src/components/HisobotModal";
+import { ScrollBox } from "../src/components/ScrollBox";
+import { C, T, S, R } from "../src/theme";
+import { hisoblaKunlik, qoldiqlarHisobi, ishchiHaqlari, kunlikXomashyoSarfi, formatSom } from "../src/logic/hisob";
+
+const toStr = (obj) => Object.fromEntries(Object.entries(obj || {}).map(([k, v]) => [k, String(v)]));
+const localSana = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+};
+
+export default function Qop() {
+  const {
+    nonlar, ishchilar, optomlar, qarzlar, mahsulotNarxlari, braklar,
+    ozIshlabQoplar, setOzIshlabQoplar, tashqariSonlar, setTashqariSonlar,
+    sotilmaganNon, setSotilmaganNon,
+    boshlangichQoldiq, setBoshlangichQoldiq, qoldaYaroqsiz, setQoldaYaroqsiz,
+    kunlikXarajatlar, kartalar, setKartalar, setBraklar,
+    setHisobotlarTarixi, setOmborSorovlar,
+  } = useApp();
+
+  const [kunlikSana, setKunlikSana] = useState(localSana());
+  const [hisobotOchiq, setHisobotOchiq] = useState(false);
+  const [fQop, setFQop] = useState(toStr(ozIshlabQoplar));
+  const [fTash, setFTash] = useState(toStr(tashqariSonlar));
+  const [fSot, setFSot] = useState(toStr(sotilmaganNon));
+  const [fYaroqsiz, setFYaroqsiz] = useState(toStr(qoldaYaroqsiz));
+  const [tegildi, setTegildi] = useState(false);
+
+  // Boshqa joydan yangilansa, joriy formani yangilab turamiz (faqat formaga tegilmasa)
+  useEffect(() => { if (!tegildi) setFQop(toStr(ozIshlabQoplar)); }, [ozIshlabQoplar]);
+  useEffect(() => { if (!tegildi) setFTash(toStr(tashqariSonlar)); }, [tashqariSonlar]);
+  useEffect(() => { if (!tegildi) setFSot(toStr(sotilmaganNon)); }, [sotilmaganNon]);
+  useEffect(() => { if (!tegildi) setFYaroqsiz(toStr(qoldaYaroqsiz)); }, [qoldaYaroqsiz]);
+
+  const formaTeg = (setter, key, val) => { setTegildi(true); setter((p) => ({ ...p, [key]: val })); };
+
+  const args = {
+    nonlar, ishchilar, optomlar, qarzlar, mahsulotNarxlari, braklar,
+    ozIshlabQoplar: fQop, tashqariSonlar: fTash, sotilmaganNon: fSot,
+    boshlangichQoldiq, qoldaYaroqsiz: fYaroqsiz, kunlikXarajatlar,
+  };
+  const stats = useMemo(() => hisoblaKunlik(args), [fQop, fTash, fSot, fYaroqsiz, nonlar, ishchilar, optomlar, qarzlar, mahsulotNarxlari, braklar, boshlangichQoldiq, kunlikXarajatlar]);
+  const qoldiqlar = useMemo(() => qoldiqlarHisobi(nonlar, args), [fQop, fTash, fSot, fYaroqsiz, nonlar, boshlangichQoldiq, optomlar, qarzlar]);
+  const haq = useMemo(() => ishchiHaqlari(nonlar, ishchilar, fQop, braklar), [nonlar, ishchilar, fQop, braklar]);
+
+  const saqla = () => {
+    setOzIshlabQoplar(fQop);
+    setTashqariSonlar(fTash);
+    setSotilmaganNon(fSot);
+    setQoldaYaroqsiz(fYaroqsiz);
+    setTegildi(false);
+    Alert.alert("Saqlandi", "Kunlik kiritmalar saqlandi.");
+  };
+
+  const kunniYakunla = () => {
+    if (!(stats.jamiNon > 0 || stats.jamiQop > 0)) {
+      Alert.alert("Ma'lumot yo'q", "Avval kunlik qop hisobiga ma'lumot kiriting.");
+      return;
+    }
+    Alert.alert("Kunni yakunlash", "Bugungi ma'lumot tarixga saqlanadi va ko'rsatkichlar nollanadi. Davom etasizmi?", [
+      { text: "Bekor", style: "cancel" },
+      { text: "Yakunlash", onPress: () => {
+        // Avval formani saqlaymiz (snapshot uchun)
+        setOzIshlabQoplar(fQop); setTashqariSonlar(fTash); setSotilmaganNon(fSot); setQoldaYaroqsiz(fYaroqsiz);
+        setTegildi(false);
+        const sana = kunlikSana || localSana();
+        const snap = {
+          id: Date.now(), sana, vaqt: Date.now(),
+          boshlangichQoldiq, ozIshlabQoplar: fQop, tashqariSonlar: fTash, qoldaYaroqsiz: fYaroqsiz, sotilmaganNon: fSot,
+          nonlarSnapshot: JSON.parse(JSON.stringify(nonlar)),
+          ishchilarSnapshot: JSON.parse(JSON.stringify(ishchilar)),
+          mahsulotNarxlariSnapshot: JSON.parse(JSON.stringify(mahsulotNarxlari)),
+          daromad: stats.daromad, xomashyo: stats.xomashyo, ishchiHaq: stats.ishchiHaq,
+          sofFoyda: stats.sofFoyda, sotilganNon: stats.sotilganNon, jamiQop: stats.jamiQop, jamiNon: stats.jamiNon,
+          jamiBoshlang: stats.jamiBoshlang, jamiQoldiq: stats.jamiQoldiq, jamiYaroqsiz: stats.jamiYaroqsiz,
+          xarajatJami: stats.xarajatJami, ishchiHaqlari: haq.list,
+        };
+        setHisobotlarTarixi((prev) => [snap, ...(prev || []).filter((h) => h.sana !== sana)]);
+        const sarf = kunlikXomashyoSarfi(nonlar, fQop);
+        if (sarf.length > 0) {
+          setOmborSorovlar((prev) => [{ id: Date.now() + 1, sana, vaqt: Date.now(), manba: "Kunlik qop hisobi", maydonlar: sarf }, ...(prev || []).filter((s) => s.sana !== sana)]);
+        }
+        setHisobotOchiq(true);
+      }},
+    ]);
+  };
+
+  const hisobotYop = () => {
+    setHisobotOchiq(false);
+    // Kun oxiri qoldiq → ertangi tonggi zaxiraga ko'chadi
+    setBoshlangichQoldiq(fSot || {});
+    setSotilmaganNon({}); setOzIshlabQoplar({}); setTashqariSonlar({}); setQoldaYaroqsiz({});
+    setKartalar([]); setBraklar([]);
+    setFQop({}); setFTash({}); setFSot({}); setFYaroqsiz({});
+    setKunlikSana(localSana());
+    router.back();
+  };
+
+  return (
+    <SafeAreaView style={styles.safe} edges={["top"]}>
+      <ScrollBox contentContainerStyle={styles.scroll}>
+        <Pressable accessibilityLabel="Orqaga" onPress={() => router.back()} hitSlop={8} style={styles.backBtn}>
+          <Ionicons name="chevron-back" size={20} color={C.text} />
+          <Text style={styles.backTxt}>Markaz</Text>
+        </Pressable>
+
+        <View style={styles.titleRow}>
+          <View style={styles.iconBox}><Ionicons name="calculator-outline" size={22} color={C.accent} /></View>
+          <View style={styles.flex1}>
+            <Text style={styles.eyebrow}>KUNLIK HISOB</Text>
+            <Text style={styles.title}>Kunlik qop hisobi</Text>
+            <Text style={styles.subtitle}>{stats.jamiQop} qop · {stats.jamiNon} dona ishlab</Text>
+          </View>
+        </View>
+
+        {/* Hisobot sanasi */}
+        <Card accent style={styles.card}>
+          <Text style={styles.fieldLabel}>Hisobot sanasi</Text>
+          <DateField value={kunlikSana} onChange={setKunlikSana} />
+        </Card>
+
+        {/* Per-non kiritish */}
+        <Card style={styles.card}>
+          <View style={styles.cardTitleRow}>
+            <Ionicons name="layers-outline" size={18} color={C.sub} />
+            <Text style={styles.cardTitle}>Non turlari bo'yicha</Text>
+          </View>
+          <View style={styles.gap10} />
+          {nonlar.map((n) => {
+            const oz = n.ozIshlab !== false;
+            const q = qoldiqlar.find((x) => x.id === n.id) || {};
+            return (
+              <View key={n.id} style={styles.nonRow}>
+                <View style={styles.nonHead}>
+                  <Text style={styles.nonNom} numberOfLines={1}>{n.nom}</Text>
+                  {q.boshlang > 0 && (
+                    <View style={styles.boshlangPill}>
+                      <Ionicons name="archive-outline" size={11} color={C.accent} />
+                      <Text style={styles.boshlangTxt}> Tonggi: {q.boshlang}</Text>
+                    </View>
+                  )}
+                </View>
+                <View style={styles.inputs}>
+                  <Field label={oz ? "Qop" : "Dona"}
+                    value={(oz ? fQop : fTash)[n.id] ?? ""}
+                    onChange={(v) => oz ? formaTeg(setFQop, n.id, v) : formaTeg(setFTash, n.id, v)} />
+                  <Field label="Yaroqsiz"
+                    value={fYaroqsiz[n.id] ?? ""}
+                    onChange={(v) => formaTeg(setFYaroqsiz, n.id, v)} />
+                  <Field label="Kun oxiri qoldiq"
+                    value={fSot[n.id] ?? ""}
+                    onChange={(v) => formaTeg(setFSot, n.id, v)} />
+                </View>
+                {(q.jamiZaxira > 0 || q.boshlang > 0) && (
+                  <Text style={styles.flow}>
+                    {q.boshlang} + {q.ishlab} = {q.jamiZaxira} · Sotilgan {q.jamiSotilgan}{q.divertedShu > 0 ? ` (${q.divertedShu} optom/qarz)` : ""}{q.yaroqsiz > 0 ? ` · Yaroqsiz ${q.yaroqsiz}` : ""}
+                  </Text>
+                )}
+              </View>
+            );
+          })}
+          <Btn onPress={saqla} icon="save-outline">Saqlash</Btn>
+        </Card>
+
+        {/* Umumiy son hisoboti */}
+        <Card style={styles.card}>
+          <View style={styles.cardTitleRow}>
+            <Ionicons name="cube-outline" size={18} color={C.sub} />
+            <Text style={styles.cardTitle}>Umumiy son</Text>
+          </View>
+          <View style={styles.gap10} />
+          <Row label="Tonggi qoldiq" value={`${stats.jamiBoshlang} dona`} />
+          <Row label="Bugungi ishlab" value={`${stats.jamiNon} dona`} />
+          <Row label="Sotilgan" value={`${stats.sotilganNon} dona`} />
+          <Row label="Yaroqsiz" value={`${stats.jamiYaroqsiz} dona`} color={stats.jamiYaroqsiz > 0 ? C.red : C.text} />
+          <Row label="Ertangi qoldiq" value={`${stats.jamiQoldiq} dona`} color={C.accent} bold />
+        </Card>
+
+        {/* Moliyaviy xulosa */}
+        <Card style={styles.card}>
+          <View style={styles.cardTitleRow}>
+            <Ionicons name="cash-outline" size={18} color={C.sub} />
+            <Text style={styles.cardTitle}>Moliyaviy xulosa</Text>
+          </View>
+          <View style={styles.gap10} />
+          <Row label="Daromad" value={`${formatSom(stats.daromad)} so'm`} />
+          <Row label="Xomashyo" value={`${formatSom(stats.xomashyo)} so'm`} />
+          <Row label="Ishchi haqi" value={`${formatSom(stats.ishchiHaq)} so'm`} />
+          {stats.xarajatJami > 0 && (
+            <Row label="Qo'shimcha xarajat (bugun)" value={`− ${formatSom(stats.xarajatJami)} so'm`} color={C.red} />
+          )}
+          <View style={styles.divider} />
+          <Row label="Sof foyda" value={`${formatSom(stats.sofFoyda)} so'm`} color={stats.sofFoyda >= 0 ? C.green : C.red} bold big />
+        </Card>
+
+        {/* Ishchilar haqi */}
+        {haq.list.length > 0 && (
+          <Card style={styles.card}>
+            <View style={styles.cardTitleRow}>
+              <Ionicons name="people-outline" size={18} color={C.sub} />
+              <Text style={styles.cardTitle}>Ishchilar haqi (jonli)</Text>
+            </View>
+            <View style={styles.gap10} />
+            {haq.list.map((w) => (
+              <View key={w.id} style={styles.haqRow}>
+                <Text style={styles.haqNom} numberOfLines={1}>{w.ism}{w.brak > 0 ? ` (brak −${formatSom(w.brak)})` : ""}</Text>
+                <Text style={styles.haqVal}>{formatSom(w.net)} so'm</Text>
+              </View>
+            ))}
+          </Card>
+        )}
+
+        <Btn secondary onPress={kunniYakunla} icon="checkmark-done-outline">Kunni yakunlash</Btn>
+        <View style={styles.gap14} />
+      </ScrollBox>
+
+      <HisobotModal visible={hisobotOchiq} onClose={hisobotYop} />
+    </SafeAreaView>
+  );
+}
+
+function Field({ label, value, onChange }) {
+  return (
+    <View style={styles.col}>
+      <Text style={styles.lbl}>{label}</Text>
+      <TextInput
+        value={value}
+        onChangeText={onChange}
+        keyboardType="numeric"
+        placeholder="0"
+        placeholderTextColor={C.muted}
+        style={styles.input}
+      />
+    </View>
+  );
+}
+
+function Row({ label, value, color = C.text, bold, big }) {
+  return (
+    <View style={styles.row}>
+      <Text style={styles.rowLabel}>{label}</Text>
+      <Text style={[styles.rowVal, { color, fontWeight: bold ? "800" : "600", fontSize: big ? T.lg : T.md }]}>{value}</Text>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  safe: { flex: 1, backgroundColor: C.bg },
+  scroll: { padding: S[5], paddingBottom: S[8] },
+  backBtn: { flexDirection: "row", alignItems: "center", gap: 4, marginBottom: S[3] },
+  backTxt: { fontSize: T.sm, color: C.sub, fontWeight: "600" },
+  titleRow: { flexDirection: "row", alignItems: "center", gap: S[3], marginBottom: S[5] },
+  iconBox: { width: 44, height: 44, borderRadius: R.md, alignItems: "center", justifyContent: "center", backgroundColor: C.accent + "14" },
+  flex1: { flex: 1 },
+  eyebrow: { fontSize: 11, color: C.muted, fontWeight: "700", letterSpacing: 1.8 },
+  title: { fontSize: T.xl, color: C.text, fontWeight: "800", letterSpacing: -0.6, marginTop: 2 },
+  subtitle: { fontSize: T.sm, color: C.sub, fontWeight: "500", marginTop: 3 },
+  card: { marginBottom: S[4] },
+  cardTitleRow: { flexDirection: "row", alignItems: "center", gap: 6 },
+  cardTitle: { fontSize: T.md, fontWeight: "700", color: C.text },
+  fieldLabel: { fontSize: T.xs, color: C.sub, fontWeight: "600", marginBottom: 6, letterSpacing: 0.3 },
+  gap10: { height: S[3] },
+  gap14: { height: S[4] },
+
+  nonRow: { marginBottom: S[3], paddingBottom: S[3], borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: C.borderSoft },
+  nonHead: { flexDirection: "row", alignItems: "center", gap: S[2], marginBottom: 6, flexWrap: "wrap" },
+  nonNom: { fontSize: T.md, fontWeight: "700", color: C.text },
+  boshlangPill: { flexDirection: "row", alignItems: "center", paddingHorizontal: 8, paddingVertical: 2, borderRadius: R.pill, backgroundColor: C.accent + "14" },
+  boshlangTxt: { fontSize: 11, color: C.accent, fontWeight: "700" },
+  inputs: { flexDirection: "row", gap: S[2] },
+  col: { flex: 1 },
+  lbl: { fontSize: 10, color: C.sub, fontWeight: "700", marginBottom: 4, letterSpacing: 0.3, textTransform: "uppercase" },
+  input: { borderWidth: 1, borderColor: C.border, borderRadius: R.sm, paddingVertical: 9, paddingHorizontal: 10, fontSize: T.sm, color: C.text, backgroundColor: C.surface, textAlign: "center" },
+  flow: { fontSize: 11, color: C.muted, marginTop: 6, lineHeight: 15 },
+
+  row: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 6 },
+  rowLabel: { flex: 1, fontSize: T.sm, color: C.sub },
+  rowVal: { color: C.text, marginLeft: S[2] },
+  divider: { height: StyleSheet.hairlineWidth, backgroundColor: C.borderSoft, marginVertical: S[2] },
+
+  haqRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: S[2] },
+  haqNom: { flex: 1, fontSize: T.sm, color: C.text },
+  haqVal: { fontSize: T.sm, color: C.accent, fontWeight: "800", marginLeft: S[2] },
+});

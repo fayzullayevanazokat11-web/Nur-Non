@@ -1,5 +1,6 @@
-// "Markaz" ekrani — kunlik ko'rsatkichlar + 2x2 navigatsiya grid (Qarz/Optom/Karta/Brak).
-import { useMemo, useState } from "react";
+// "Markaz" ekrani — kunlik ko'rsatkichlar + navigatsiya tugmalari (qop hisobi,
+// 2x2 grid: Qarz/Optom/Karta/Brak, qo'shimcha xarajatlar) + hisobotlar tarixi.
+import { useMemo } from "react";
 import { View, Text, Pressable, StyleSheet, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -7,15 +8,12 @@ import { router } from "expo-router";
 
 import { useApp } from "../../src/store/AppData";
 import { Card } from "../../src/components/Card";
-import { Btn } from "../../src/components/Btn";
 import { BrandHeader } from "../../src/components/BrandHeader";
 import { ExpandableCard } from "../../src/components/ExpandableCard";
-import { KunlikQopModal } from "../../src/components/KunlikQopModal";
-import { HisobotModal } from "../../src/components/HisobotModal";
-import { DateField } from "../../src/components/DateField";
 import { ScrollBox } from "../../src/components/ScrollBox";
 import { C, T, S, R } from "../../src/theme";
-import { hisoblaKunlik, formatSom, qarzJami, optomJami, kartaJami, ishchiHaqlari, kunlikXomashyoSarfi } from "../../src/logic/hisob";
+import { hisoblaKunlik, formatSom, qarzJami, optomJami, kartaJami, ishchiHaqlari } from "../../src/logic/hisob";
+// Note: KunlikQopModal va HisobotModal endi app/qop.jsx ichida ishlatiladi.
 
 const localSana = () => {
   const d = new Date();
@@ -24,17 +22,11 @@ const localSana = () => {
 
 export default function Markaz() {
   const {
-    nonlar, ishchilar, qarzlar, optomlar, kartalar, setKartalar,
-    ozIshlabQoplar, setOzIshlabQoplar, tashqariSonlar, setTashqariSonlar,
-    sotilmaganNon, setSotilmaganNon, mahsulotNarxlari, setOmborSorovlar,
-    hisobotlarTarixi, setHisobotlarTarixi, braklar, setBraklar,
-    boshlangichQoldiq, setBoshlangichQoldiq, qoldaYaroqsiz, setQoldaYaroqsiz,
-    kunlikXarajatlar,
+    nonlar, ishchilar, qarzlar, optomlar, kartalar,
+    ozIshlabQoplar, tashqariSonlar, sotilmaganNon, mahsulotNarxlari,
+    hisobotlarTarixi, setHisobotlarTarixi, braklar,
+    boshlangichQoldiq, qoldaYaroqsiz, kunlikXarajatlar,
   } = useApp();
-
-  const [qopOchiq, setQopOchiq] = useState(false);
-  const [hisobotOchiq, setHisobotOchiq] = useState(false);
-  const [kunlikSana, setKunlikSana] = useState(localSana());
 
   const stats = useMemo(
     () => hisoblaKunlik({ nonlar, ishchilar, ozIshlabQoplar, tashqariSonlar, sotilmaganNon, optomlar, qarzlar, mahsulotNarxlari, braklar, boshlangichQoldiq, qoldaYaroqsiz, kunlikXarajatlar }),
@@ -58,46 +50,6 @@ export default function Markaz() {
     return (kunlikXarajatlar || []).filter((x) => x.sana === bugun).length;
   }, [kunlikXarajatlar]);
 
-  // Kunni yakunlash → tarix snapshot + ombor so'rovnomasi + hisobot modal.
-  const kunniYakunla = () => {
-    if (!(stats.jamiNon > 0 || stats.jamiQop > 0)) {
-      Alert.alert("Ma'lumot yo'q", "Avval kunlik qop hisobiga ma'lumot kiriting.");
-      return;
-    }
-    Alert.alert("Kunni yakunlash", "Bugungi ma'lumot tarixga saqlanadi va ko'rsatkichlar nollanadi. Davom etasizmi?", [
-      { text: "Bekor", style: "cancel" },
-      { text: "Yakunlash", onPress: yakunlaBajar },
-    ]);
-  };
-  const yakunlaBajar = () => {
-    const sana = kunlikSana || localSana();
-    const snap = {
-      id: Date.now(), sana, vaqt: Date.now(),
-      boshlangichQoldiq, ozIshlabQoplar, tashqariSonlar, qoldaYaroqsiz, sotilmaganNon,
-      nonlarSnapshot: JSON.parse(JSON.stringify(nonlar)),
-      ishchilarSnapshot: JSON.parse(JSON.stringify(ishchilar)),
-      mahsulotNarxlariSnapshot: JSON.parse(JSON.stringify(mahsulotNarxlari)),
-      daromad: stats.daromad, xomashyo: stats.xomashyo, ishchiHaq: stats.ishchiHaq,
-      sofFoyda: stats.sofFoyda, sotilganNon: stats.sotilganNon, jamiQop: stats.jamiQop, jamiNon: stats.jamiNon,
-      jamiBoshlang: stats.jamiBoshlang, jamiQoldiq: stats.jamiQoldiq, jamiYaroqsiz: stats.jamiYaroqsiz,
-      ishchiHaqlari: bugungiHaq.list,
-    };
-    setHisobotlarTarixi((prev) => [snap, ...(prev || []).filter((h) => h.sana !== sana)]);
-    const sarf = kunlikXomashyoSarfi(nonlar, ozIshlabQoplar);
-    if (sarf.length > 0) {
-      setOmborSorovlar((prev) => [{ id: Date.now() + 1, sana, vaqt: Date.now(), manba: "Kunlik qop hisobi", maydonlar: sarf }, ...(prev || []).filter((s) => s.sana !== sana)]);
-    }
-    setHisobotOchiq(true);
-  };
-  const hisobotYop = () => {
-    setHisobotOchiq(false);
-    // Kun oxiri qoldiq → ertangi tonggi zaxiraga ko'chadi.
-    setBoshlangichQoldiq(sotilmaganNon || {});
-    setSotilmaganNon({});
-    setOzIshlabQoplar({}); setTashqariSonlar({}); setQoldaYaroqsiz({});
-    setKartalar([]); setBraklar([]);
-    setKunlikSana(localSana());
-  };
   const ochirHisobot = (id) => Alert.alert("O'chirish", "Shu sanadagi hisobotni o'chirasizmi?", [
     { text: "Bekor", style: "cancel" },
     { text: "Ha", style: "destructive", onPress: () => setHisobotlarTarixi((p) => p.filter((h) => h.id !== id)) },
@@ -114,23 +66,25 @@ export default function Markaz() {
           <StatTile label="Kunlik qop" unit="qop" value={String(stats.jamiQop)} color={C.accent} icon="layers-outline" />
         </View>
 
-        <Card accent style={styles.block}>
-          <View style={styles.cardTitleRow}>
-            <Ionicons name="calculator-outline" size={18} color={C.sub} />
-            <Text style={styles.cardTitle}>Kunlik qop hisobi</Text>
+        {/* Kunlik qop hisobi — alohida sahifaga olib boradi (to'liq tafsilot bilan) */}
+        <Pressable
+          accessibilityLabel="Kunlik qop hisobi"
+          onPress={() => router.push("/qop")}
+          android_ripple={{ color: C.accent + "1A" }}
+          style={({ pressed }) => [styles.xarajatBtn, styles.qopBtn, pressed && styles.xarajatBtnPressed]}
+        >
+          <View style={[styles.navIcon, { backgroundColor: C.accent + "14" }]}>
+            <Ionicons name="calculator-outline" size={22} color={C.accent} />
           </View>
-          <Text style={styles.muted}>
-            {stats.jamiBoshlang > 0 ? `${stats.jamiBoshlang} dona tonggi qoldiq · ` : ""}
-            {stats.jamiNon} dona ishlab chiqarildi
-          </Text>
-          <View style={styles.gap10} />
-          <Text style={styles.fieldLabel}>Hisobot sanasi</Text>
-          <DateField value={kunlikSana} onChange={setKunlikSana} />
-          <View style={styles.gap10} />
-          <Btn onPress={() => setQopOchiq(true)} icon="create-outline">Ma'lumot kiritish</Btn>
-          <View style={styles.gap10} />
-          <Btn secondary onPress={kunniYakunla} icon="checkmark-done-outline">Kunni yakunlash</Btn>
-        </Card>
+          <View style={styles.flex1}>
+            <Text style={styles.xarajatLabel}>Kunlik qop hisobi</Text>
+            <Text style={styles.xarajatSub}>
+              {stats.jamiBoshlang > 0 ? `${stats.jamiBoshlang} tonggi · ` : ""}
+              {stats.jamiQop} qop · {stats.jamiNon} dona ishlab
+            </Text>
+          </View>
+          <Ionicons name="chevron-forward" size={18} color={C.muted} />
+        </Pressable>
 
         {/* 2×2 navigatsiya grid — har kvadrat o'z sub-ekraniga olib o'tadi */}
         <View style={styles.gridRow}>
@@ -254,8 +208,6 @@ export default function Markaz() {
         )}
       </ScrollBox>
 
-      <KunlikQopModal visible={qopOchiq} onClose={() => setQopOchiq(false)} />
-      <HisobotModal visible={hisobotOchiq} onClose={hisobotYop} />
     </SafeAreaView>
   );
 }
@@ -313,9 +265,10 @@ const styles = StyleSheet.create({
   navLabel:  { fontSize: T.md, fontWeight: "800", color: C.text, letterSpacing: -0.2, marginTop: S[2] },
   navSub:    { fontSize: 11, color: C.muted, fontWeight: "600", marginTop: 2 },
 
-  // Vertikal "Kunlik qo'shimcha xarajatlar" tugmasi
+  // Vertikal nav tugmalari (Qop hisobi, Xarajatlar)
   xarajatBtn: { flexDirection: "row", alignItems: "center", gap: S[3], backgroundColor: C.card, borderRadius: R.lg, padding: S[4], borderWidth: StyleSheet.hairlineWidth, borderColor: C.borderSoft, marginTop: S[1], marginBottom: S[3] },
   xarajatBtnPressed: { opacity: 0.75, transform: [{ scale: 0.99 }] },
+  qopBtn:    { marginBottom: S[5] },
   xarajatLabel: { fontSize: T.md, fontWeight: "800", color: C.text, letterSpacing: -0.2 },
   xarajatSub:   { fontSize: 11, color: C.muted, fontWeight: "600", marginTop: 2 },
 

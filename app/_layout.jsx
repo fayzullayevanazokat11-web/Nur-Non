@@ -27,6 +27,7 @@ export default function RootLayout() {
             <Stack.Screen name="karta" />
             <Stack.Screen name="brak" />
             <Stack.Screen name="xarajat" />
+            <Stack.Screen name="qop" />
           </Stack>
         )}
         {!tayyor && <Splash onDone={() => setSplash(false)} />}
