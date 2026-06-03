@@ -1,8 +1,8 @@
-// Scroll konteyneri — o'ng chetда doim ko'rinadigan, SUDRALADIGAN (draggable) thumb.
-// Animatsiya/useNativeDriver ishlatilmaydi (rendering glitch bo'lmasligi uchun);
-// thumb holati onScroll orqali yangilanadi, sudralganda scrollTo bilan suriladi.
+// Scroll konteyneri — o'ng chetда doim ko'rinadigan thumb (faqat vizual indikator).
+// Sudrash xususiyati olib tashlandi — kontent bo'ylab oddiy swipe scroll ishlatiladi
+// (Android'da thumb tile'larning tap sohasini bloklab qo'yardi).
 import { useRef, useState } from "react";
-import { View, ScrollView, PanResponder, StyleSheet } from "react-native";
+import { View, ScrollView, StyleSheet } from "react-native";
 import { C } from "../theme";
 
 export function ScrollBox({ children, contentContainerStyle, keyboardShouldPersistTaps, style }) {
@@ -11,31 +11,13 @@ export function ScrollBox({ children, contentContainerStyle, keyboardShouldPersi
   const [ch, setCh] = useState(0);
   const [sy, setSy] = useState(0);
 
-  // Thumb DOIM ko'rinadi — chetda tepadan pastga sudraladigan tugma sifatida.
-  const korinadi = vh > 0;
+  // Thumb DOIM ko'rinadi (vizual indikator); kontent kerakli darajada bo'lganda.
+  const korinadi = vh > 0 && ch > vh;
   const ratio = ch > 0 ? vh / ch : 1;
   const thumbH = korinadi ? Math.min(vh, Math.max(40, vh * ratio)) : 0;
   const maxScroll = Math.max(1, ch - vh);
   const usable = Math.max(1, vh - thumbH);
   const top = Math.max(0, Math.min(usable, (sy / maxScroll) * usable));
-
-  // Sudrash (drag) — eng so'nggi qiymatlarni ref orqali olamiz
-  const m = useRef({});
-  m.current = { maxScroll, usable };
-  const boshSy = useRef(0);
-  const pan = useRef(
-    PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
-      onMoveShouldSetPanResponder: () => true,
-      onPanResponderGrant: () => { boshSy.current = sy; },
-      onPanResponderMove: (e, g) => {
-        const { maxScroll: ms, usable: us } = m.current;
-        let ny = boshSy.current + g.dy * (ms / us);
-        ny = Math.max(0, Math.min(ms, ny));
-        ref.current?.scrollTo({ y: ny, animated: false });
-      },
-    })
-  ).current;
 
   return (
     <View style={[styles.wrap, style]}>
@@ -52,8 +34,9 @@ export function ScrollBox({ children, contentContainerStyle, keyboardShouldPersi
         {children}
       </ScrollView>
       {korinadi && (
-        <View style={styles.track} pointerEvents="box-none">
-          <View style={[styles.thumb, { height: thumbH, transform: [{ translateY: top }] }]} {...pan.panHandlers} />
+        // pointerEvents="none" — tap sohasini bloklamasligi uchun. Faqat vizual.
+        <View style={styles.track} pointerEvents="none">
+          <View style={[styles.thumb, { height: thumbH, transform: [{ translateY: top }] }]} />
         </View>
       )}
     </View>
@@ -62,6 +45,6 @@ export function ScrollBox({ children, contentContainerStyle, keyboardShouldPersi
 
 const styles = StyleSheet.create({
   wrap:  { flex: 1 },
-  track: { position: "absolute", right: 2, top: 0, bottom: 0, width: 14, alignItems: "center" },
-  thumb: { position: "absolute", top: 0, width: 8, borderRadius: 4, backgroundColor: C.accent + "CC" },
+  track: { position: "absolute", right: 2, top: 0, bottom: 0, width: 8, alignItems: "center" },
+  thumb: { position: "absolute", top: 0, width: 6, borderRadius: 3, backgroundColor: C.accent + "CC" },
 });
