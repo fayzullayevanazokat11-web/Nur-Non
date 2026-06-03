@@ -113,6 +113,13 @@ export default function Xodimlar() {
       { text: "Qaytarish", onPress: () => setIshchilar((p) => p.map((x) => x.id === w.id ? { ...x, holat: "Aktiv" } : x)) },
     ]);
 
+  // Ta'tilga chiqarish — holat "Ta'tilda"ga o'tadi (kunlik ish haqi hisoblanmaydi)
+  const tatilgaChiqar = (w) =>
+    Alert.alert("Ta'tilga chiqarish", `${w.ism}ni ta'tilga chiqarasizmi? Ta'tilda bo'lganida kunlik ish haqi hisoblanmaydi.`, [
+      { text: "Bekor", style: "cancel" },
+      { text: "Chiqarish", onPress: () => setIshchilar((p) => p.map((x) => x.id === w.id ? { ...x, holat: "Ta'tilda" } : x)) },
+    ]);
+
   return (
     <SafeAreaView style={styles.safe} edges={["top"]}>
       <ScrollBox contentContainerStyle={styles.scroll}>
@@ -154,6 +161,7 @@ export default function Xodimlar() {
                   ochTahrir={() => ochTahrir(w)}
                   ochir={() => ochir(w.id)}
                   haydash={() => haydash(w)}
+                  tatilgaChiqar={() => tatilgaChiqar(w)}
                 />
               ))}
             </Bolim>
@@ -298,7 +306,7 @@ function Bolim({ icon, tint, nom, soni, children }) {
   );
 }
 
-function Karta({ w, ochTahrir, ochir, haydash, tatildanQaytar, qaytarish }) {
+function Karta({ w, ochTahrir, ochir, haydash, tatildanQaytar, qaytarish, tatilgaChiqar }) {
   const qop = w.haqTuri === "qop";
   const nonlarRo = Object.entries(w.nonNarxlari || {});
   const ketgan = w.holat === "Ishdan ketgan";
@@ -351,6 +359,12 @@ function Karta({ w, ochTahrir, ochir, haydash, tatildanQaytar, qaytarish }) {
           <Pressable accessibilityLabel="Ta'tildan qaytdi" onPress={tatildanQaytar} hitSlop={8} style={styles.actBtn}>
             <Ionicons name="checkmark-circle-outline" size={16} color={C.green} />
             <Text style={[styles.actTxt, { color: C.green }]}> Ta'tildan qaytdi</Text>
+          </Pressable>
+        )}
+        {tatilgaChiqar && (
+          <Pressable accessibilityLabel="Ta'tilga chiqarish" onPress={tatilgaChiqar} hitSlop={8} style={styles.actBtn}>
+            <Ionicons name="airplane-outline" size={16} color={C.accent} />
+            <Text style={[styles.actTxt, { color: C.accent }]}> Ta'tilga chiqarish</Text>
           </Pressable>
         )}
         {qaytarish && (
@@ -413,7 +427,7 @@ const styles = StyleSheet.create({
   haqNom:    { flex: 1, fontSize: T.sm, color: C.text },
   haqVal:    { fontSize: T.sm, color: C.sub, fontWeight: "700", marginLeft: S[2] },
   muted:     { fontSize: T.sm, color: C.muted },
-  bodyActions:{ flexDirection: "row", justifyContent: "flex-end", gap: S[4], marginTop: S[3], borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: C.borderSoft, paddingTop: S[3] },
+  bodyActions:{ flexDirection: "row", flexWrap: "wrap", justifyContent: "flex-end", gap: S[3], rowGap: S[2], marginTop: S[3], borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: C.borderSoft, paddingTop: S[3] },
   actBtn:    { flexDirection: "row", alignItems: "center" },
   actTxt:    { fontSize: T.sm, fontWeight: "700" },
 

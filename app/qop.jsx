@@ -171,7 +171,7 @@ export default function Qop() {
                   <Field label="Yaroqsiz"
                     value={fYaroqsiz[n.id] ?? ""}
                     onChange={(v) => formaTeg(setFYaroqsiz, n.id, v)} />
-                  <Field label="Kun oxiri qoldiq"
+                  <Field label="Qoldiq"
                     value={fSot[n.id] ?? ""}
                     onChange={(v) => formaTeg(setFSot, n.id, v)} />
                 </View>

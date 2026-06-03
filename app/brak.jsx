@@ -22,6 +22,7 @@ const localSana = () => {
 export default function Brak() {
   const { nonlar, ishchilar, braklar, setBraklar } = useApp();
   const [modalOchiq, setModalOchiq] = useState(false);
+  const [tahrirId, setTahrirId] = useState(null);
   const [forma, setForma] = useState({ ishchiId: null, dona: {} });
 
   const qopIshchilar = (ishchilar || []).filter((w) => w.haqTuri === "qop" && w.holat === "Aktiv");
@@ -32,11 +33,28 @@ export default function Brak() {
     [ishchi, forma.dona, nonlar]
   );
 
-  const ochModal = () => { setForma({ ishchiId: null, dona: {} }); setModalOchiq(true); };
+  const ochYangi = () => { setForma({ ishchiId: null, dona: {} }); setTahrirId(null); setModalOchiq(true); };
+  const ochTahrir = (b) => {
+    setForma({ ishchiId: b.ishchiId, dona: { [b.nonNomi]: String(b.soni || "") } });
+    setTahrirId(b.id);
+    setModalOchiq(true);
+  };
   const setDona = (nom, v) => setForma((p) => ({ ...p, dona: { ...p.dona, [nom]: v } }));
 
   const saqla = () => {
     if (!ishchi) { Alert.alert("To'liq emas", "Ishchini tanlang."); return; }
+    if (tahrirId) {
+      // Tahrirlash: bitta yozuvni yangilash (ishchi tanlangan bitta non bo'yicha)
+      const b = (braklar || []).find((x) => x.id === tahrirId);
+      const nom = b?.nonNomi;
+      const soni = parseFloat(forma.dona[nom]) || 0;
+      if (soni <= 0) { Alert.alert("To'liq emas", "Brak sonini kiriting (0 dan katta)."); return; }
+      setBraklar((prev) => prev.map((x) => x.id === tahrirId
+        ? { ...x, ishchiId: ishchi.id, ishchiIsm: ishchi.ism, soni, summa: Math.round(donaNarxi(nom) * soni) }
+        : x));
+      setModalOchiq(false);
+      return;
+    }
     const yozuvlar = (ishchi.nonTurlari || [])
       .map((nom) => ({ nom, soni: parseFloat(forma.dona[nom]) || 0 }))
       .filter((x) => x.soni > 0)
@@ -74,7 +92,7 @@ export default function Brak() {
           </View>
         </View>
 
-        <Btn color={C.accent} onPress={ochModal} icon="add-outline">Brak qo'shish</Btn>
+        <Btn color={C.accent} onPress={ochYangi} icon="add-outline">Brak qo'shish</Btn>
         <View style={styles.gap14} />
 
         {(braklar || []).length === 0 ? (
@@ -94,6 +112,10 @@ export default function Brak() {
               <Text style={styles.itemIzoh}>{b.nonNomi} · {b.soni} dona brak</Text>
               <Text style={styles.itemSana}>{b.sana}</Text>
               <View style={styles.actions}>
+                <Pressable onPress={() => ochTahrir(b)} hitSlop={6} style={styles.actBtn}>
+                  <Ionicons name="create-outline" size={16} color={C.accent} />
+                  <Text style={[styles.actTxt, { color: C.accent }]}> Tahrirlash</Text>
+                </Pressable>
                 <Pressable onPress={() => ochirBrak(b.id)} hitSlop={6} style={styles.actBtn}>
                   <Ionicons name="trash-outline" size={16} color={C.red} />
                   <Text style={[styles.actTxt, { color: C.red }]}> O'chirish</Text>
@@ -106,8 +128,8 @@ export default function Brak() {
 
       <Modal modalVisible={modalOchiq} onClose={() => setModalOchiq(false)}>
         <View style={styles.modalHead}>
-          <Ionicons name="alert-circle-outline" size={20} color={C.sub} />
-          <Text style={styles.modalTitle}>Brak qo'shish</Text>
+          <Ionicons name={tahrirId ? "create-outline" : "alert-circle-outline"} size={20} color={C.sub} />
+          <Text style={styles.modalTitle}>{tahrirId ? "Brakni tahrirlash" : "Brak qo'shish"}</Text>
         </View>
         <ScrollBox style={styles.formScroll} keyboardShouldPersistTaps="handled">
           <Text style={styles.inputLabel}>Ishchi (qopdan haq oladigan)</Text>

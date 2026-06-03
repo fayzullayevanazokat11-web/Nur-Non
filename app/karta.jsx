@@ -22,22 +22,30 @@ const localSana = () => {
 export default function Karta() {
   const { nonlar, kartalar, setKartalar, mahsulotNarxlari } = useApp();
   const [modalOchiq, setModalOchiq] = useState(false);
+  const [tahrirId, setTahrirId] = useState(null);
   const [forma, setForma] = useState({ summa: "", izoh: "" });
 
   const karta = useMemo(() => kartaJami(kartalar), [kartalar]);
   const preview = useMemo(() => kartaHisob(parseFloat(forma.summa) || 0, nonlar, mahsulotNarxlari), [forma.summa, nonlar, mahsulotNarxlari]);
 
-  const ochModal = () => { setForma({ summa: "", izoh: "" }); setModalOchiq(true); };
+  const ochYangi = () => { setForma({ summa: "", izoh: "" }); setTahrirId(null); setModalOchiq(true); };
+  const ochTahrir = (k) => { setForma({ summa: String(k.summa || ""), izoh: k.izoh || "" }); setTahrirId(k.id); setModalOchiq(true); };
   const yangila = (k, v) => setForma((p) => ({ ...p, [k]: v }));
 
   const saqla = () => {
     const summa = parseFloat(forma.summa) || 0;
     if (!summa) { Alert.alert("Maydon to'liq emas", "Iltimos, summani kiriting."); return; }
     const pv = kartaHisob(summa, nonlar, mahsulotNarxlari);
-    setKartalar((prev) => [...prev, {
-      id: Date.now(), summa, izoh: forma.izoh.trim(),
-      sana: localSana(), vaqt: Date.now(), dona: pv.dona, sofFoyda: pv.sofFoyda,
-    }]);
+    if (tahrirId) {
+      setKartalar((prev) => prev.map((k) => k.id === tahrirId
+        ? { ...k, summa, izoh: forma.izoh.trim(), dona: pv.dona, sofFoyda: pv.sofFoyda }
+        : k));
+    } else {
+      setKartalar((prev) => [...prev, {
+        id: Date.now(), summa, izoh: forma.izoh.trim(),
+        sana: localSana(), vaqt: Date.now(), dona: pv.dona, sofFoyda: pv.sofFoyda,
+      }]);
+    }
     setModalOchiq(false);
   };
 
@@ -63,7 +71,7 @@ export default function Karta() {
           </View>
         </View>
 
-        <Btn color={C.accent} onPress={ochModal} icon="card-outline">Karta to'lovi</Btn>
+        <Btn color={C.accent} onPress={ochYangi} icon="card-outline">Karta to'lovi</Btn>
         <View style={styles.gap14} />
 
         {(kartalar || []).length === 0 ? (
@@ -83,6 +91,10 @@ export default function Karta() {
               <Text style={styles.itemIzoh}>≈ {k.dona} dona non · sof foyda {formatSom(k.sofFoyda)} so'm</Text>
               <Text style={styles.itemSana}>{k.sana}</Text>
               <View style={styles.actions}>
+                <Pressable onPress={() => ochTahrir(k)} hitSlop={6} style={styles.actBtn}>
+                  <Ionicons name="create-outline" size={16} color={C.accent} />
+                  <Text style={[styles.actTxt, { color: C.accent }]}> Tahrirlash</Text>
+                </Pressable>
                 <Pressable onPress={() => ochirKarta(k.id)} hitSlop={6} style={styles.actBtn}>
                   <Ionicons name="trash-outline" size={16} color={C.red} />
                   <Text style={[styles.actTxt, { color: C.red }]}> O'chirish</Text>
@@ -95,8 +107,8 @@ export default function Karta() {
 
       <Modal modalVisible={modalOchiq} onClose={() => setModalOchiq(false)}>
         <View style={styles.modalHead}>
-          <Ionicons name="card-outline" size={20} color={C.sub} />
-          <Text style={styles.modalTitle}>Karta to'lovi</Text>
+          <Ionicons name={tahrirId ? "create-outline" : "card-outline"} size={20} color={C.sub} />
+          <Text style={styles.modalTitle}>{tahrirId ? "Karta to'lovini tahrirlash" : "Karta to'lovi"}</Text>
         </View>
         <ScrollBox style={styles.formScroll} keyboardShouldPersistTaps="handled">
           <Text style={styles.inputLabel}>Aniq narx (so'm) *</Text>
