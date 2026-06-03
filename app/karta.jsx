@@ -1,6 +1,6 @@
 // Karta to'lovlari ekrani — summa + izoh kiritiladi, o'rtacha narx asosida ≈ non soni va sof foyda jonli.
 import { useMemo, useState } from "react";
-import { View, Text, ScrollView, Pressable, TextInput, StyleSheet, Alert } from "react-native";
+import { View, Text, ScrollView, Image, Pressable, TextInput, StyleSheet, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
@@ -55,7 +55,7 @@ export default function Karta() {
         </Pressable>
 
         <View style={styles.titleRow}>
-          <View style={styles.iconBox}><Ionicons name="card-outline" size={22} color={C.green} /></View>
+          <View style={styles.iconBox}><Image source={require("../assets/icons/karta.png")} style={styles.iconImg} resizeMode="contain" /></View>
           <View style={styles.flex1}>
             <Text style={styles.eyebrow}>KARTA TO'LOVLARI</Text>
             <Text style={styles.title}>Karta orqali</Text>
@@ -98,7 +98,7 @@ export default function Karta() {
           <Ionicons name="card-outline" size={20} color={C.sub} />
           <Text style={styles.modalTitle}>Karta to'lovi</Text>
         </View>
-        <ScrollView style={styles.formScroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={true}>
+        <ScrollBox style={styles.formScroll} keyboardShouldPersistTaps="handled">
           <Text style={styles.inputLabel}>Aniq narx (so'm) *</Text>
           <TextInput value={forma.summa} onChangeText={(v) => yangila("summa", v)} placeholder="0" placeholderTextColor={C.muted} keyboardType="numeric" style={styles.input} />
           <Text style={styles.inputLabel}>Izoh</Text>
@@ -110,7 +110,7 @@ export default function Karta() {
               <View style={styles.previewRow}><Text style={styles.previewLabel}>Sof foyda</Text><Text style={[styles.previewVal, { color: preview.sofFoyda >= 0 ? C.green : C.red }]}>{formatSom(preview.sofFoyda)} so'm</Text></View>
             </View>
           )}
-        </ScrollView>
+        </ScrollBox>
         <View style={styles.gap12} />
         <View style={styles.modalRow}>
           <View style={styles.flex1}><Btn secondary onPress={() => setModalOchiq(false)}>Bekor</Btn></View>
@@ -128,6 +128,7 @@ const styles = StyleSheet.create({
   backTxt: { fontSize: T.sm, color: C.sub, fontWeight: "600" },
   titleRow: { flexDirection: "row", alignItems: "center", gap: S[3], marginBottom: S[5] },
   iconBox: { width: 44, height: 44, borderRadius: R.md, alignItems: "center", justifyContent: "center", backgroundColor: C.green + "14" },
+  iconImg: { width: 24, height: 24, tintColor: C.green },
   flex1: { flex: 1 },
   eyebrow: { fontSize: 11, color: C.muted, fontWeight: "700", letterSpacing: 1.8 },
   title: { fontSize: T.xl, color: C.text, fontWeight: "800", letterSpacing: -0.6, marginTop: 2 },

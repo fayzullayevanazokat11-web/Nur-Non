@@ -1,6 +1,6 @@
 // Qarzlar ekrani — qarz qo'shish/o'chirish/to'lash, jonli summa va chegirma.
 import { useMemo, useState } from "react";
-import { View, Text, ScrollView, Pressable, TextInput, StyleSheet, Alert } from "react-native";
+import { View, Text, ScrollView, Image, Pressable, TextInput, StyleSheet, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
@@ -75,7 +75,7 @@ export default function Qarzlar() {
         </Pressable>
 
         <View style={styles.titleRow}>
-          <View style={styles.iconBox}><Ionicons name="receipt-outline" size={22} color={C.red} /></View>
+          <View style={styles.iconBox}><Image source={require("../assets/icons/qarz.png")} style={styles.iconImg} resizeMode="contain" /></View>
           <View style={styles.flex1}>
             <Text style={styles.eyebrow}>QARZLAR</Text>
             <Text style={styles.title}>Qarzdorlar</Text>
@@ -131,7 +131,7 @@ export default function Qarzlar() {
           <Ionicons name="receipt-outline" size={20} color={C.sub} />
           <Text style={styles.modalTitle}>Yangi qarz</Text>
         </View>
-        <ScrollView style={styles.formScroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={true}>
+        <ScrollBox style={styles.formScroll} keyboardShouldPersistTaps="handled">
           <Text style={styles.inputLabel}>Sana</Text>
           <DateField value={forma.sana} onChange={(v) => yangila("sana", v)} />
           <View style={styles.gap10} />
@@ -161,7 +161,7 @@ export default function Qarzlar() {
             )}
             <View style={styles.previewRow}><Text style={styles.previewLabel}>Qarz summasi</Text><Text style={[styles.previewVal, { color: C.accent }]}>{formatSom(savatHisob.yakSumma)} so'm</Text></View>
           </View>
-        </ScrollView>
+        </ScrollBox>
         <View style={styles.gap12} />
         <View style={styles.modalRow}>
           <View style={styles.flex1}><Btn secondary onPress={() => setModalOchiq(false)}>Bekor</Btn></View>
@@ -179,6 +179,7 @@ const styles = StyleSheet.create({
   backTxt: { fontSize: T.sm, color: C.sub, fontWeight: "600" },
   titleRow: { flexDirection: "row", alignItems: "center", gap: S[3], marginBottom: S[5] },
   iconBox: { width: 44, height: 44, borderRadius: R.md, alignItems: "center", justifyContent: "center", backgroundColor: C.red + "14" },
+  iconImg: { width: 24, height: 24, tintColor: C.red },
   flex1: { flex: 1 },
   eyebrow: { fontSize: 11, color: C.muted, fontWeight: "700", letterSpacing: 1.8 },
   title: { fontSize: T.xl, color: C.text, fontWeight: "800", letterSpacing: -0.6, marginTop: 2 },

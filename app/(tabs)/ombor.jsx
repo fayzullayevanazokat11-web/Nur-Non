@@ -271,10 +271,9 @@ export default function Ombor() {
           <Text style={styles.modalTitle}>Yangi keltirilgan set</Text>
         </View>
 
-        <ScrollView
+        <ScrollBox
           style={styles.formScroll}
           keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={true}
         >
           {OMBOR_MAYDONLAR.map((m) => {
             const katta = omborKattaBirlik(m.id);
@@ -297,7 +296,7 @@ export default function Ombor() {
               </View>
             );
           })}
-        </ScrollView>
+        </ScrollBox>
 
         <View style={styles.gap12} />
         <View style={styles.modalRow}>

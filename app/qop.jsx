@@ -2,7 +2,7 @@
 // qoldiq, qop, yaroqsiz, kun oxiri qoldiq), FIFO tafsiloti, ishchilar haqi,
 // moliyaviy xulosa va "Saqlash" / "Kunni yakunlash" tugmalari.
 import { useEffect, useMemo, useState } from "react";
-import { View, Text, ScrollView, Pressable, TextInput, StyleSheet, Alert } from "react-native";
+import { View, Text, ScrollView, Image, Pressable, TextInput, StyleSheet, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
@@ -29,6 +29,7 @@ export default function Qop() {
     sotilmaganNon, setSotilmaganNon,
     boshlangichQoldiq, setBoshlangichQoldiq, qoldaYaroqsiz, setQoldaYaroqsiz,
     kunlikXarajatlar,
+    oxirgiYakunlashVaqti, setOxirgiYakunlashVaqti,
     setHisobotlarTarixi, setOmborSorovlar,
   } = useApp();
 
@@ -48,14 +49,19 @@ export default function Qop() {
 
   const formaTeg = (setter, key, val) => { setTegildi(true); setter((p) => ({ ...p, [key]: val })); };
 
+  // Faqat oxirgi yakunlashdan keyingi (bugungi) brak'lar inobatga olinadi.
+  const bugungiBrak = useMemo(
+    () => (braklar || []).filter((b) => (b.vaqt || 0) > (oxirgiYakunlashVaqti || 0)),
+    [braklar, oxirgiYakunlashVaqti]
+  );
   const args = {
     nonlar, ishchilar, optomlar, qarzlar, mahsulotNarxlari, braklar,
     ozIshlabQoplar: fQop, tashqariSonlar: fTash, sotilmaganNon: fSot,
-    boshlangichQoldiq, qoldaYaroqsiz: fYaroqsiz, kunlikXarajatlar,
+    boshlangichQoldiq, qoldaYaroqsiz: fYaroqsiz, kunlikXarajatlar, oxirgiYakunlashVaqti,
   };
-  const stats = useMemo(() => hisoblaKunlik(args), [fQop, fTash, fSot, fYaroqsiz, nonlar, ishchilar, optomlar, qarzlar, mahsulotNarxlari, braklar, boshlangichQoldiq, kunlikXarajatlar]);
-  const qoldiqlar = useMemo(() => qoldiqlarHisobi(nonlar, args), [fQop, fTash, fSot, fYaroqsiz, nonlar, boshlangichQoldiq, optomlar, qarzlar]);
-  const haq = useMemo(() => ishchiHaqlari(nonlar, ishchilar, fQop, braklar), [nonlar, ishchilar, fQop, braklar]);
+  const stats = useMemo(() => hisoblaKunlik(args), [fQop, fTash, fSot, fYaroqsiz, nonlar, ishchilar, optomlar, qarzlar, mahsulotNarxlari, braklar, boshlangichQoldiq, kunlikXarajatlar, oxirgiYakunlashVaqti]);
+  const qoldiqlar = useMemo(() => qoldiqlarHisobi(nonlar, args), [fQop, fTash, fSot, fYaroqsiz, nonlar, boshlangichQoldiq, optomlar, qarzlar, oxirgiYakunlashVaqti]);
+  const haq = useMemo(() => ishchiHaqlari(nonlar, ishchilar, fQop, bugungiBrak), [nonlar, ishchilar, fQop, bugungiBrak]);
 
   const saqla = () => {
     setOzIshlabQoplar(fQop);
@@ -77,6 +83,9 @@ export default function Qop() {
         // Avval formani saqlaymiz (snapshot uchun)
         setOzIshlabQoplar(fQop); setTashqariSonlar(fTash); setSotilmaganNon(fSot); setQoldaYaroqsiz(fYaroqsiz);
         setTegildi(false);
+        // Yakunlash vaqti — bundan keyin yangi qo'shilgan karta/brak/xarajat
+        // "bugungi" hisoblanadi. Oldingilari avtomatik tarixga aylanadi.
+        setOxirgiYakunlashVaqti(Date.now());
         const sana = kunlikSana || localSana();
         const snap = {
           id: Date.now(), sana, vaqt: Date.now(),
@@ -120,7 +129,7 @@ export default function Qop() {
         </Pressable>
 
         <View style={styles.titleRow}>
-          <View style={styles.iconBox}><Ionicons name="calculator-outline" size={22} color={C.accent} /></View>
+          <View style={styles.iconBox}><Image source={require("../assets/icons/qop.png")} style={styles.iconImg} resizeMode="contain" /></View>
           <View style={styles.flex1}>
             <Text style={styles.eyebrow}>KUNLIK HISOB</Text>
             <Text style={styles.title}>Kunlik qop hisobi</Text>
@@ -266,6 +275,7 @@ const styles = StyleSheet.create({
   backTxt: { fontSize: T.sm, color: C.sub, fontWeight: "600" },
   titleRow: { flexDirection: "row", alignItems: "center", gap: S[3], marginBottom: S[5] },
   iconBox: { width: 44, height: 44, borderRadius: R.md, alignItems: "center", justifyContent: "center", backgroundColor: C.accent + "14" },
+  iconImg: { width: 24, height: 24, tintColor: C.accent },
   flex1: { flex: 1 },
   eyebrow: { fontSize: 11, color: C.muted, fontWeight: "700", letterSpacing: 1.8 },
   title: { fontSize: T.xl, color: C.text, fontWeight: "800", letterSpacing: -0.6, marginTop: 2 },

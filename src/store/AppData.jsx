@@ -40,6 +40,10 @@ export function AppDataProvider({ children }) {
   const [qoldaYaroqsiz, setQoldaYaroqsiz]         = usePersistedState("nurnon:qoldaYaroqsiz", {});
   // Kunlik qo'shimcha xarajatlar (7 kun saqlanadi, kunlik sof foydadan ayriladi)
   const [kunlikXarajatlar, setKunlikXarajatlar]   = usePersistedState("nurnon:kunlikXarajatlar", []);
+  // Oxirgi "kunni yakunlash" vaqti (ms). Markaz uchun bugungi karta/brak/xarajat
+  // filtri: faqat vaqti > shu qiymat bo'lganlar "hozirgi kun"da hisoblanadi.
+  // Yakunlangandan keyin oldingilari avtomatik tarixga o'tadi.
+  const [oxirgiYakunlashVaqti, setOxirgiYakunlashVaqti] = usePersistedState("nurnon:oxirgiYakunlashVaqti", 0);
 
   // ── Vaqtinchalik oqim bayroqlari (saqlanmaydi) ──
   const [qopTasdiqlandi, setQopTasdiqlandi]       = useState(false);
@@ -87,6 +91,7 @@ export function AppDataProvider({ children }) {
     boshlangichQoldiq, setBoshlangichQoldiq,
     qoldaYaroqsiz, setQoldaYaroqsiz,
     kunlikXarajatlar, setKunlikXarajatlar,
+    oxirgiYakunlashVaqti, setOxirgiYakunlashVaqti,
     qopTasdiqlandi, setQopTasdiqlandi,
     hisobotYopildi, setHisobotYopildi,
   };

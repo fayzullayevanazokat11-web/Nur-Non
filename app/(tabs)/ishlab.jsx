@@ -182,7 +182,7 @@ export default function IshlabChiqarish() {
           <Text style={styles.modalTitle}>{tahrirId ? "Nonni tahrirlash" : "Yangi non turi"}</Text>
         </View>
 
-        <ScrollView style={styles.formScroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={true}>
+        <ScrollBox style={styles.formScroll} keyboardShouldPersistTaps="handled">
           <Text style={styles.inputLabel}>Non nomi *</Text>
           <TextInput value={forma.nom} onChangeText={(v) => yangila("nom", v)} placeholder="Masalan: Kulcha" placeholderTextColor={C.muted} style={styles.input} />
 
@@ -229,7 +229,7 @@ export default function IshlabChiqarish() {
             )}
             <View style={styles.foydaLine}><Text style={styles.foydaLblBig}>Dona foydasi</Text><Text style={styles.foydaVal}>{formatSom(formaDonaFoyda)} so'm</Text></View>
           </View>
-        </ScrollView>
+        </ScrollBox>
 
         <View style={styles.gap14} />
         <View style={styles.modalRow}>

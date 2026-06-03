@@ -5,7 +5,7 @@ import { useRef, useState } from "react";
 import { View, ScrollView, PanResponder, StyleSheet } from "react-native";
 import { C } from "../theme";
 
-export function ScrollBox({ children, contentContainerStyle, keyboardShouldPersistTaps }) {
+export function ScrollBox({ children, contentContainerStyle, keyboardShouldPersistTaps, style }) {
   const ref = useRef(null);
   const [vh, setVh] = useState(0);
   const [ch, setCh] = useState(0);
@@ -38,7 +38,7 @@ export function ScrollBox({ children, contentContainerStyle, keyboardShouldPersi
   ).current;
 
   return (
-    <View style={styles.wrap}>
+    <View style={[styles.wrap, style]}>
       <ScrollView
         ref={ref}
         contentContainerStyle={contentContainerStyle}

@@ -2,7 +2,7 @@
 // 7 kun davomida saqlanadi (avtomatik tozalanadi), bugungi yozuvlar kunlik
 // sof foydadan ayriladi. Tahrirlash/o'chirish mumkin.
 import { useMemo, useState } from "react";
-import { View, Text, ScrollView, Pressable, TextInput, StyleSheet, Alert } from "react-native";
+import { View, Text, ScrollView, Image, Pressable, TextInput, StyleSheet, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
@@ -73,7 +73,7 @@ export default function Xarajat() {
         </Pressable>
 
         <View style={styles.titleRow}>
-          <View style={styles.iconBox}><Ionicons name="cash-outline" size={22} color={C.accent} /></View>
+          <View style={styles.iconBox}><Image source={require("../assets/icons/xarajat.png")} style={styles.iconImg} resizeMode="contain" /></View>
           <View style={styles.flex1}>
             <Text style={styles.eyebrow}>QO'SHIMCHA XARAJATLAR</Text>
             <Text style={styles.title}>Kunlik xarajatlar</Text>
@@ -123,7 +123,7 @@ export default function Xarajat() {
           <Ionicons name={tahrirId ? "create-outline" : "add-circle-outline"} size={20} color={C.sub} />
           <Text style={styles.modalTitle}>{tahrirId ? "Xarajatni tahrirlash" : "Yangi xarajat"}</Text>
         </View>
-        <ScrollView style={styles.formScroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={true}>
+        <ScrollBox style={styles.formScroll} keyboardShouldPersistTaps="handled">
           <Text style={styles.inputLabel}>Sana</Text>
           <DateField value={forma.sana} onChange={(v) => yangila("sana", v)} />
 
@@ -132,7 +132,7 @@ export default function Xarajat() {
 
           <Text style={styles.inputLabel}>Nimaga ketgan *</Text>
           <TextInput value={forma.izoh} onChangeText={(v) => yangila("izoh", v)} placeholder="Masalan: Elektr, gaz, yo'l haqi, tamir..." placeholderTextColor={C.muted} multiline style={[styles.input, styles.inputMulti]} />
-        </ScrollView>
+        </ScrollBox>
         <View style={styles.gap12} />
         <View style={styles.modalRow}>
           <View style={styles.flex1}><Btn secondary onPress={() => setModalOchiq(false)}>Bekor</Btn></View>
@@ -150,6 +150,7 @@ const styles = StyleSheet.create({
   backTxt: { fontSize: T.sm, color: C.sub, fontWeight: "600" },
   titleRow: { flexDirection: "row", alignItems: "center", gap: S[3], marginBottom: S[5] },
   iconBox: { width: 44, height: 44, borderRadius: R.md, alignItems: "center", justifyContent: "center", backgroundColor: C.accent + "14" },
+  iconImg: { width: 24, height: 24, tintColor: C.accent },
   flex1: { flex: 1 },
   eyebrow: { fontSize: 11, color: C.muted, fontWeight: "700", letterSpacing: 1.8 },
   title: { fontSize: T.xl, color: C.text, fontWeight: "800", letterSpacing: -0.6, marginTop: 2 },

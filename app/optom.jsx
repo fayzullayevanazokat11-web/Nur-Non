@@ -1,6 +1,6 @@
 // Optom savdolar ekrani — xarid qo'shish/o'chirish, donadan/umumiy chegirma + sof foyda.
 import { useMemo, useState } from "react";
-import { View, Text, ScrollView, Pressable, TextInput, StyleSheet, Alert } from "react-native";
+import { View, Text, ScrollView, Image, Pressable, TextInput, StyleSheet, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
@@ -76,7 +76,7 @@ export default function Optom() {
         </Pressable>
 
         <View style={styles.titleRow}>
-          <View style={styles.iconBox}><Ionicons name="storefront-outline" size={22} color={C.accent} /></View>
+          <View style={styles.iconBox}><Image source={require("../assets/icons/optom.png")} style={styles.iconImg} resizeMode="contain" /></View>
           <View style={styles.flex1}>
             <Text style={styles.eyebrow}>OPTOM SAVDOLAR</Text>
             <Text style={styles.title}>Ulgurji savdo</Text>
@@ -127,7 +127,7 @@ export default function Optom() {
           <Ionicons name="storefront-outline" size={20} color={C.sub} />
           <Text style={styles.modalTitle}>Yangi optom savdo</Text>
         </View>
-        <ScrollView style={styles.formScroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={true}>
+        <ScrollBox style={styles.formScroll} keyboardShouldPersistTaps="handled">
           <Text style={styles.inputLabel}>Sana</Text>
           <DateField value={forma.sana} onChange={(v) => yangila("sana", v)} />
           <View style={styles.gap10} />
@@ -160,7 +160,7 @@ export default function Optom() {
             <View style={styles.previewRow}><Text style={styles.previewLabel}>To'lov</Text><Text style={[styles.previewVal, { color: C.accent }]}>{formatSom(savatHisob.yakSumma)} so'm</Text></View>
             <View style={styles.previewRow}><Text style={styles.previewLabel}>Sof foyda</Text><Text style={[styles.previewVal, { color: savatHisob.yakFoyda >= 0 ? C.green : C.red }]}>{formatSom(savatHisob.yakFoyda)} so'm</Text></View>
           </View>
-        </ScrollView>
+        </ScrollBox>
         <View style={styles.gap12} />
         <View style={styles.modalRow}>
           <View style={styles.flex1}><Btn secondary onPress={() => setModalOchiq(false)}>Bekor</Btn></View>
@@ -178,6 +178,7 @@ const styles = StyleSheet.create({
   backTxt: { fontSize: T.sm, color: C.sub, fontWeight: "600" },
   titleRow: { flexDirection: "row", alignItems: "center", gap: S[3], marginBottom: S[5] },
   iconBox: { width: 44, height: 44, borderRadius: R.md, alignItems: "center", justifyContent: "center", backgroundColor: C.accent + "14" },
+  iconImg: { width: 24, height: 24, tintColor: C.accent },
   flex1: { flex: 1 },
   eyebrow: { fontSize: 11, color: C.muted, fontWeight: "700", letterSpacing: 1.8 },
   title: { fontSize: T.xl, color: C.text, fontWeight: "800", letterSpacing: -0.6, marginTop: 2 },

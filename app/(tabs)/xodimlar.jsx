@@ -190,7 +190,7 @@ export default function Xodimlar() {
           <Text style={styles.modalTitle}>{tahrirId ? "Xodimni tahrirlash" : "Yangi ishchi"}</Text>
         </View>
 
-        <ScrollView style={styles.formScroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={true}>
+        <ScrollBox style={styles.formScroll} keyboardShouldPersistTaps="handled">
           <Text style={styles.inputLabel}>Ism *</Text>
           <TextInput value={forma.ism} onChangeText={(v) => yangila("ism", v)} placeholder="Masalan: Akmal aka" placeholderTextColor={C.muted} style={styles.input} />
 
@@ -270,7 +270,7 @@ export default function Xodimlar() {
               <Text style={styles.hintSm}>Ta'tilda bo'lsa kunlik ish haqi hisoblanmaydi.</Text>
             </>
           )}
-        </ScrollView>
+        </ScrollBox>
 
         <View style={styles.gap12} />
         <View style={styles.modalRow}>

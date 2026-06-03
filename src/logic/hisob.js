@@ -29,13 +29,15 @@ export function donaFoyda(non, narxlar) {
   return Math.round((parseFloat(non.narx) || 0) - getQopTannarx(non, narxlar) / son);
 }
 
-// Bugun optom/qarz orqali ketgan nonlar (kunlik hisobdan ayriladi)
-function divertedByNon(optomlar, qarzlar) {
+// Bugun optom/qarz orqali ketgan nonlar (kunlik hisobdan ayriladi).
+// oxirgiYakunlashVaqti'dan keyin yaratilganlargina kiradi — eskilar tarixga ketgan.
+function divertedByNon(optomlar, qarzlar, oxirgiYakunlashVaqti = 0) {
   const bugun = bugunSana();
+  const yangi = (e) => (e.vaqt || 0) > (oxirgiYakunlashVaqti || 0);
   const map = {};
-  (optomlar || []).filter((o) => o.sana === bugun).forEach((o) =>
+  (optomlar || []).filter((o) => o.sana === bugun && yangi(o)).forEach((o) =>
     (o.savat || []).forEach((s) => { map[s.nonNomi] = (map[s.nonNomi] || 0) + (s.soni || 0); }));
-  (qarzlar || []).filter((q) => q.sana === bugun).forEach((q) => {
+  (qarzlar || []).filter((q) => q.sana === bugun && yangi(q)).forEach((q) => {
     const savat = q.savat || [{ nonNomi: q.nonNomi, soni: q.soni }];
     savat.forEach((s) => { map[s.nonNomi] = (map[s.nonNomi] || 0) + (s.soni || 0); });
   });
@@ -49,9 +51,9 @@ function divertedByNon(optomlar, qarzlar) {
 export function hisoblaKunlik({
   nonlar = [], ishchilar = [], ozIshlabQoplar = {}, tashqariSonlar = {},
   sotilmaganNon = {}, optomlar = [], qarzlar = [], mahsulotNarxlari = {}, braklar = [],
-  boshlangichQoldiq = {}, qoldaYaroqsiz = {}, kunlikXarajatlar = [],
+  boshlangichQoldiq = {}, qoldaYaroqsiz = {}, kunlikXarajatlar = [], oxirgiYakunlashVaqti = 0,
 }) {
-  const diverted = divertedByNon(optomlar, qarzlar);
+  const diverted = divertedByNon(optomlar, qarzlar, oxirgiYakunlashVaqti);
   let jamiNon = 0, jamiQop = 0, jamiBoshlang = 0, jamiQoldiq = 0, jamiYaroqsiz = 0;
   let daromad = 0, xomashyo = 0;
 
@@ -88,18 +90,25 @@ export function hisoblaKunlik({
     }
   });
 
-  const haq = ishchiHaqlari(nonlar, ishchilar, ozIshlabQoplar, braklar);
+  // Faqat oxirgi yakunlashdan keyingi (bugungi) brak'lar gross'dan ayrilsin.
+  const bugungiBrak = (braklar || []).filter((b) => (b.vaqt || 0) > (oxirgiYakunlashVaqti || 0));
+  const haq = ishchiHaqlari(nonlar, ishchilar, ozIshlabQoplar, bugungiBrak);
   const ishchiHaq = haq.jami;
   const brakAyirma = haq.list.reduce((s, x) => s + (x.gross - x.net), 0);
 
-  // Bugungi qo'shimcha xarajatlar (faqat bugungi sana — sof foydadan ayriladi)
+  // Bugungi qo'shimcha xarajatlar — bugungi sanali VA oxirgi yakunlashdan keyin
+  // yaratilgani sof foydadan ayriladi. Yakunlash bo'lganidan oldingilari tarix.
   const bugun = bugunSana();
+  const yangi = (e) => (e.vaqt || 0) > (oxirgiYakunlashVaqti || 0);
   const xarajatJami = (kunlikXarajatlar || [])
-    .filter((x) => x.sana === bugun)
+    .filter((x) => x.sana === bugun && yangi(x))
     .reduce((s, x) => s + (parseFloat(x.summa) || 0), 0);
 
-  const malumotBor = jamiQop > 0 || jamiNon > 0 || jamiBoshlang > 0 || xarajatJami > 0;
-  const sofFoyda = malumotBor ? Math.round(daromad - xomashyo - ishchiHaq - xarajatJami) : 0;
+  // Kun "boshlandi" deb hisoblanishi uchun BUGUNGI ishlab chiqarish yoki bugungi
+  // xarajat bo'lishi kerak. Faqat kechagi qoldiq (boshlang) bo'lsa — sofFoyda 0
+  // (aks holda kunlik ishchi haqi darrov ayrilib, kun boshidan minusga kirib ketadi).
+  const kunBoshlandi = jamiQop > 0 || jamiNon > 0 || xarajatJami > 0;
+  const sofFoyda = kunBoshlandi ? Math.round(daromad - xomashyo - ishchiHaq - xarajatJami) : 0;
   // Bugun sotilgan jami (retail + diverted), boshlang va ishlab dan
   const sotilganNon = Math.max(0, jamiBoshlang + jamiNon - jamiQoldiq - jamiYaroqsiz);
 
@@ -115,8 +124,8 @@ export function hisoblaKunlik({
 // Har non uchun partiyaviy zaxira tafsiloti: boshlang + ishlab − sotilgan − yaroqsiz − qoldiq.
 // FIFO ko'rinishi (boshlang avval, keyin bugungi). Sotilgan tafsiloti: avval boshlang,
 // keyin ishlab partiyasidan ketadi.
-export function qoldiqlarHisobi(nonlar, { boshlangichQoldiq = {}, ozIshlabQoplar = {}, tashqariSonlar = {}, qoldaYaroqsiz = {}, sotilmaganNon = {}, optomlar = [], qarzlar = [] } = {}) {
-  const diverted = divertedByNon(optomlar, qarzlar);
+export function qoldiqlarHisobi(nonlar, { boshlangichQoldiq = {}, ozIshlabQoplar = {}, tashqariSonlar = {}, qoldaYaroqsiz = {}, sotilmaganNon = {}, optomlar = [], qarzlar = [], oxirgiYakunlashVaqti = 0 } = {}) {
+  const diverted = divertedByNon(optomlar, qarzlar, oxirgiYakunlashVaqti);
   return (nonlar || []).map((non) => {
     const norma = parseFloat(non.nonSoni) || 0;
     const oz = non.ozIshlab !== false;

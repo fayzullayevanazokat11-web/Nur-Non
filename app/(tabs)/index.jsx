@@ -33,30 +33,39 @@ export default function Markaz() {
     nonlar, ishchilar, qarzlar, optomlar, kartalar,
     ozIshlabQoplar, tashqariSonlar, sotilmaganNon, mahsulotNarxlari,
     hisobotlarTarixi, setHisobotlarTarixi, braklar,
-    boshlangichQoldiq, qoldaYaroqsiz, kunlikXarajatlar,
+    boshlangichQoldiq, qoldaYaroqsiz, kunlikXarajatlar, oxirgiYakunlashVaqti,
   } = useApp();
 
+  // "Bugungi" = oxirgi yakunlashdan keyin kiritilgan yozuvlar.
+  // Yakunlash bo'lganidan oldingi karta/brak/xarajat — Markaz hisobida ko'rinmaydi
+  // (avtomatik tarixga aylanadi, tarix ekranlarida 7 kun ko'rinib turadi).
+  const yangiYozuv = (e) => (e.vaqt || 0) > (oxirgiYakunlashVaqti || 0);
+  const bugungiKarta = useMemo(() => (kartalar || []).filter(yangiYozuv), [kartalar, oxirgiYakunlashVaqti]);
+  const bugungiBrak  = useMemo(() => (braklar  || []).filter(yangiYozuv), [braklar,  oxirgiYakunlashVaqti]);
+  const bugungiOptom = useMemo(() => (optomlar || []).filter(yangiYozuv), [optomlar, oxirgiYakunlashVaqti]);
+  const bugungiQarz  = useMemo(() => (qarzlar  || []).filter(yangiYozuv), [qarzlar,  oxirgiYakunlashVaqti]);
+
   const stats = useMemo(
-    () => hisoblaKunlik({ nonlar, ishchilar, ozIshlabQoplar, tashqariSonlar, sotilmaganNon, optomlar, qarzlar, mahsulotNarxlari, braklar, boshlangichQoldiq, qoldaYaroqsiz, kunlikXarajatlar }),
-    [nonlar, ishchilar, ozIshlabQoplar, tashqariSonlar, sotilmaganNon, optomlar, qarzlar, mahsulotNarxlari, braklar, boshlangichQoldiq, qoldaYaroqsiz, kunlikXarajatlar]
+    () => hisoblaKunlik({ nonlar, ishchilar, ozIshlabQoplar, tashqariSonlar, sotilmaganNon, optomlar, qarzlar, mahsulotNarxlari, braklar, boshlangichQoldiq, qoldaYaroqsiz, kunlikXarajatlar, oxirgiYakunlashVaqti }),
+    [nonlar, ishchilar, ozIshlabQoplar, tashqariSonlar, sotilmaganNon, optomlar, qarzlar, mahsulotNarxlari, braklar, boshlangichQoldiq, qoldaYaroqsiz, kunlikXarajatlar, oxirgiYakunlashVaqti]
   );
   const bugungiHaq = useMemo(
-    () => ishchiHaqlari(nonlar, ishchilar, ozIshlabQoplar, braklar),
-    [nonlar, ishchilar, ozIshlabQoplar, braklar]
+    () => ishchiHaqlari(nonlar, ishchilar, ozIshlabQoplar, bugungiBrak),
+    [nonlar, ishchilar, ozIshlabQoplar, bugungiBrak]
   );
 
   const qarz = useMemo(() => qarzJami(qarzlar), [qarzlar]);
   const optom = useMemo(() => optomJami(optomlar), [optomlar]);
-  const karta = useMemo(() => kartaJami(kartalar), [kartalar]);
-  const brakSumma = useMemo(() => (braklar || []).reduce((s, b) => s + (parseFloat(b.summa) || 0), 0), [braklar]);
+  const karta = useMemo(() => kartaJami(bugungiKarta), [bugungiKarta]);
+  const brakSumma = useMemo(() => bugungiBrak.reduce((s, b) => s + (parseFloat(b.summa) || 0), 0), [bugungiBrak]);
   const xarajatBugun = useMemo(() => {
     const bugun = localSana();
-    return (kunlikXarajatlar || []).filter((x) => x.sana === bugun).reduce((s, x) => s + (parseFloat(x.summa) || 0), 0);
-  }, [kunlikXarajatlar]);
+    return (kunlikXarajatlar || []).filter((x) => x.sana === bugun && yangiYozuv(x)).reduce((s, x) => s + (parseFloat(x.summa) || 0), 0);
+  }, [kunlikXarajatlar, oxirgiYakunlashVaqti]);
   const xarajatSoni = useMemo(() => {
     const bugun = localSana();
-    return (kunlikXarajatlar || []).filter((x) => x.sana === bugun).length;
-  }, [kunlikXarajatlar]);
+    return (kunlikXarajatlar || []).filter((x) => x.sana === bugun && yangiYozuv(x)).length;
+  }, [kunlikXarajatlar, oxirgiYakunlashVaqti]);
 
   const ochirHisobot = (id) => Alert.alert("O'chirish", "Shu sanadagi hisobotni o'chirasizmi?", [
     { text: "Bekor", style: "cancel" },
