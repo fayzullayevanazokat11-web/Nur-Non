@@ -10,6 +10,7 @@ import { useFonts } from "expo-font";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { AppDataProvider } from "../src/store/AppData";
 import { Splash } from "../src/components/Splash";
+import { ErrorBoundary } from "../src/components/ErrorBoundary";
 
 export default function RootLayout() {
   const [splash, setSplash] = useState(true);
@@ -17,19 +18,21 @@ export default function RootLayout() {
 
   return (
     <SafeAreaProvider>
-      <AppDataProvider>
-        <StatusBar style={splash ? "light" : "dark"} />
-        <Stack screenOptions={{ headerShown: false, animation: "slide_from_right" }}>
-          <Stack.Screen name="(tabs)" />
-          <Stack.Screen name="qarzlar" />
-          <Stack.Screen name="optom" />
-          <Stack.Screen name="karta" />
-          <Stack.Screen name="brak" />
-          <Stack.Screen name="xarajat" />
-          <Stack.Screen name="qop" />
-        </Stack>
-        {splash && <Splash onDone={() => setSplash(false)} />}
-      </AppDataProvider>
+      <ErrorBoundary>
+        <AppDataProvider>
+          <StatusBar style={splash ? "light" : "dark"} />
+          <Stack screenOptions={{ headerShown: false, animation: "slide_from_right" }}>
+            <Stack.Screen name="(tabs)" />
+            <Stack.Screen name="qarzlar" />
+            <Stack.Screen name="optom" />
+            <Stack.Screen name="karta" />
+            <Stack.Screen name="brak" />
+            <Stack.Screen name="xarajat" />
+            <Stack.Screen name="qop" />
+          </Stack>
+          {splash && <Splash onDone={() => setSplash(false)} />}
+        </AppDataProvider>
+      </ErrorBoundary>
     </SafeAreaProvider>
   );
 }

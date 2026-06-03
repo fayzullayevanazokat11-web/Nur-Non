@@ -1,6 +1,13 @@
 // Sof biznes mantiq (React/UI yo'q). Eski App111.jsx hisob-kitoblari 1:1 ko'chirilgan.
 import { HISOBOT_UN_IDLAR, OMBOR_MAYDONLAR } from "./konstantalar";
 
+// LOKAL sana — UTC emas. Yarim tunda noto'g'ri "yesterday" ko'rsatmaslik uchun
+// hamma joyda shu helper ishlatilishi kerak.
+export function bugunSana() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
 // ── Ingredient va tannarx ──
 export function getIngNarx(m, narxlar) {
   const p = narxlar?.[m.id];
@@ -24,7 +31,7 @@ export function donaFoyda(non, narxlar) {
 
 // Bugun optom/qarz orqali ketgan nonlar (kunlik hisobdan ayriladi)
 function divertedByNon(optomlar, qarzlar) {
-  const bugun = new Date().toISOString().split("T")[0];
+  const bugun = bugunSana();
   const map = {};
   (optomlar || []).filter((o) => o.sana === bugun).forEach((o) =>
     (o.savat || []).forEach((s) => { map[s.nonNomi] = (map[s.nonNomi] || 0) + (s.soni || 0); }));
@@ -86,7 +93,7 @@ export function hisoblaKunlik({
   const brakAyirma = haq.list.reduce((s, x) => s + (x.gross - x.net), 0);
 
   // Bugungi qo'shimcha xarajatlar (faqat bugungi sana — sof foydadan ayriladi)
-  const bugun = new Date().toISOString().split("T")[0];
+  const bugun = bugunSana();
   const xarajatJami = (kunlikXarajatlar || [])
     .filter((x) => x.sana === bugun)
     .reduce((s, x) => s + (parseFloat(x.summa) || 0), 0);
