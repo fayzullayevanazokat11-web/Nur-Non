@@ -55,6 +55,7 @@ export function AppDataProvider({ children }) {
       setKartalar((p) => p.filter((k) => yosh(k) < 7 * D));
       setOptomlar((p) => p.filter((o) => yosh(o) < 7 * D));
       setQarzlar((p) => p.filter((q) => !q.tolangan || (now - (q.tolanganVaqt || now)) < 7 * D));
+      setBraklar((p) => p.filter((b) => (now - (b.vaqt || now)) < 7 * D));
       setHisobotlarTarixi((p) => p.filter((h) => (now - (h.vaqt || now)) < 30 * D));
       setOmborTasdiqlar((p) => p.filter((t) => (now - (t.vaqt || now)) < 30 * D));
       setKunlikXarajatlar((p) => p.filter((x) => (now - (x.vaqt || now)) < 7 * D));

@@ -30,6 +30,8 @@ export default function Xodimlar() {
   const [forma, setForma] = useState(BOSH_FORMA);
 
   const aktiv = (ishchilar || []).filter((w) => w.holat === "Aktiv");
+  const tatildagilar = (ishchilar || []).filter((w) => w.holat === "Ta'tilda");
+  const ishdanKetgan = (ishchilar || []).filter((w) => w.holat === "Ishdan ketgan");
 
   const yangila = (k, v) => setForma((p) => ({ ...p, [k]: v }));
   const yangilaNon = (nom, v) => setForma((p) => ({ ...p, nonNarx: { ...p.nonNarx, [nom]: v } }));
@@ -97,6 +99,20 @@ export default function Xodimlar() {
       { text: "Ha", onPress: () => setIshchilar((p) => p.map((x) => x.id === w.id ? { ...x, holat: "Aktiv", tatilQaytishSana: "" } : x)) },
     ]);
 
+  // Ishdan haydash — holat "Ishdan ketgan"ga o'tadi (ish haqi hisoblanmaydi)
+  const haydash = (w) =>
+    Alert.alert("Ishdan haydash", `${w.ism}ni ishdan haydaysizmi? Ishchi "Ishdan ketganlar" ro'yxatiga o'tadi.`, [
+      { text: "Bekor", style: "cancel" },
+      { text: "Haydash", style: "destructive", onPress: () => setIshchilar((p) => p.map((x) => x.id === w.id ? { ...x, holat: "Ishdan ketgan", tatilQaytishSana: "" } : x)) },
+    ]);
+
+  // Ishga qaytarish — holat Aktivga o'tadi
+  const qaytarish = (w) =>
+    Alert.alert("Ishga qaytarish", `${w.ism}ni ishga qaytarasizmi? Holati Aktivga o'tkaziladi.`, [
+      { text: "Bekor", style: "cancel" },
+      { text: "Qaytarish", onPress: () => setIshchilar((p) => p.map((x) => x.id === w.id ? { ...x, holat: "Aktiv" } : x)) },
+    ]);
+
   return (
     <SafeAreaView style={styles.safe} edges={["top"]}>
       <ScrollBox contentContainerStyle={styles.scroll}>
@@ -104,9 +120,21 @@ export default function Xodimlar() {
 
         <View style={styles.statsRow}>
           <Card style={styles.statTile}>
-            <Ionicons name="people-circle-outline" size={16} color={C.sub} style={styles.statIcon} />
-            <Text style={styles.statLabel}>AKTIV XODIMLAR</Text>
+            <Ionicons name="people-circle-outline" size={16} color={C.green} style={styles.statIcon} />
+            <Text style={styles.statLabel}>AKTIV</Text>
             <Text style={[styles.statValue, { color: C.text }]}>{aktiv.length}</Text>
+            <Text style={styles.statUnit}>nafar</Text>
+          </Card>
+          <Card style={styles.statTile}>
+            <Ionicons name="airplane-outline" size={16} color={C.accent} style={styles.statIcon} />
+            <Text style={styles.statLabel}>TA'TILDA</Text>
+            <Text style={[styles.statValue, { color: C.text }]}>{tatildagilar.length}</Text>
+            <Text style={styles.statUnit}>nafar</Text>
+          </Card>
+          <Card style={styles.statTile}>
+            <Ionicons name="exit-outline" size={16} color={C.red} style={styles.statIcon} />
+            <Text style={styles.statLabel}>KETGAN</Text>
+            <Text style={[styles.statValue, { color: C.text }]}>{ishdanKetgan.length}</Text>
             <Text style={styles.statUnit}>nafar</Text>
           </Card>
         </View>
@@ -118,68 +146,40 @@ export default function Xodimlar() {
         {(ishchilar || []).length === 0 ? (
           <Card><Text style={styles.muted}>Xodimlar hali kiritilmagan</Text></Card>
         ) : (
-          ishchilar.map((w) => {
-            const qop = w.haqTuri === "qop";
-            const nonlarRo = Object.entries(w.nonNarxlari || {});
-            return (
-              <ExpandableCard
-                key={w.id}
-                style={styles.item}
-                header={
-                  <View style={styles.left}>
-                    <Avatar name={w.ism} />
-                    <View style={styles.flex1}>
-                      <Text style={styles.ism}>{w.ism}</Text>
-                      <Text style={styles.lavozim}>{getLavozimLabel(w)}</Text>
-                    </View>
-                    {w.holat === "Ta'tilda" && (
-                      <View style={styles.tatilBadge}>
-                        <Ionicons name="airplane-outline" size={12} color={C.accent} />
-                        <Text style={styles.tatilBadgeTxt}>Ta'tilda</Text>
-                      </View>
-                    )}
-                  </View>
-                }
-              >
-                <View style={styles.bodyTop}>
-                  <View style={[styles.statePill, { backgroundColor: (w.holat === "Aktiv" ? C.green : C.accent) + "14" }]}>
-                    {w.holat === "Ta'tilda" && <Ionicons name="airplane-outline" size={12} color={C.accent} />}
-                    <Text style={[styles.stateTxt, { color: w.holat === "Aktiv" ? C.green : C.accent }]}>{w.holat}</Text>
-                  </View>
-                  <Text style={styles.haq}>{qop ? "Qoplik" : `${formatSom(w.miqdor)} so'm/kun`}</Text>
-                </View>
-                {w.holat === "Ta'tilda" && w.tatilQaytishSana ? (
-                  <Text style={styles.tatil}>Ta'tildan qaytadi: {w.tatilQaytishSana}</Text>
-                ) : null}
-                {qop && nonlarRo.length > 0 && (
-                  <View style={styles.haqWrap}>
-                    {nonlarRo.map(([nom, narx]) => (
-                      <View key={nom} style={styles.haqRow}>
-                        <Text style={styles.haqNom} numberOfLines={1}>{nom}</Text>
-                        <Text style={styles.haqVal}>{formatSom(narx)} so'm/qop</Text>
-                      </View>
-                    ))}
-                  </View>
-                )}
-                <View style={styles.bodyActions}>
-                  {w.holat === "Ta'tilda" && (
-                    <Pressable accessibilityLabel="Ta'tildan qaytdi" onPress={() => tatildanQaytar(w)} hitSlop={8} style={styles.actBtn}>
-                      <Ionicons name="checkmark-circle-outline" size={16} color={C.green} />
-                      <Text style={[styles.actTxt, { color: C.green }]}> Ta'tildan qaytdi</Text>
-                    </Pressable>
-                  )}
-                  <Pressable accessibilityLabel="Tahrirlash" onPress={() => ochTahrir(w)} hitSlop={8} style={styles.actBtn}>
-                    <Ionicons name="create-outline" size={16} color={C.accent} />
-                    <Text style={[styles.actTxt, { color: C.accent }]}> Tahrirlash</Text>
-                  </Pressable>
-                  <Pressable accessibilityLabel="O'chirish" onPress={() => ochir(w.id)} hitSlop={8} style={styles.actBtn}>
-                    <Ionicons name="trash-outline" size={16} color={C.red} />
-                    <Text style={[styles.actTxt, { color: C.red }]}> O'chirish</Text>
-                  </Pressable>
-                </View>
-              </ExpandableCard>
-            );
-          })
+          <>
+            <Bolim icon="checkmark-circle-outline" tint={C.green} nom="AKTIVLAR" soni={aktiv.length}>
+              {aktiv.map((w) => (
+                <Karta
+                  key={w.id} w={w}
+                  ochTahrir={() => ochTahrir(w)}
+                  ochir={() => ochir(w.id)}
+                  haydash={() => haydash(w)}
+                />
+              ))}
+            </Bolim>
+
+            <Bolim icon="airplane-outline" tint={C.accent} nom="TA'TILDAGILAR" soni={tatildagilar.length}>
+              {tatildagilar.map((w) => (
+                <Karta
+                  key={w.id} w={w}
+                  ochTahrir={() => ochTahrir(w)}
+                  ochir={() => ochir(w.id)}
+                  haydash={() => haydash(w)}
+                  tatildanQaytar={() => tatildanQaytar(w)}
+                />
+              ))}
+            </Bolim>
+
+            <Bolim icon="exit-outline" tint={C.red} nom="ISHDAN KETGANLAR" soni={ishdanKetgan.length}>
+              {ishdanKetgan.map((w) => (
+                <Karta
+                  key={w.id} w={w}
+                  ochir={() => ochir(w.id)}
+                  qaytarish={() => qaytarish(w)}
+                />
+              ))}
+            </Bolim>
+          </>
         )}
       </ScrollBox>
 
@@ -282,6 +282,104 @@ export default function Xodimlar() {
   );
 }
 
+function Bolim({ icon, tint, nom, soni, children }) {
+  if (soni === 0) return null;
+  return (
+    <>
+      <View style={styles.secHead}>
+        <View style={styles.secHeadLeft}>
+          <Ionicons name={icon} size={13} color={tint} />
+          <Text style={[styles.section, { color: tint }]}>{nom}</Text>
+        </View>
+        <Text style={[styles.secSum, { color: tint }]}>{soni} nafar</Text>
+      </View>
+      {children}
+    </>
+  );
+}
+
+function Karta({ w, ochTahrir, ochir, haydash, tatildanQaytar, qaytarish }) {
+  const qop = w.haqTuri === "qop";
+  const nonlarRo = Object.entries(w.nonNarxlari || {});
+  const ketgan = w.holat === "Ishdan ketgan";
+  return (
+    <ExpandableCard
+      style={styles.item}
+      header={
+        <View style={styles.left}>
+          <Avatar name={w.ism} />
+          <View style={styles.flex1}>
+            <Text style={styles.ism}>{w.ism}</Text>
+            <Text style={styles.lavozim}>{getLavozimLabel(w)}</Text>
+          </View>
+          {w.holat === "Ta'tilda" && (
+            <View style={[styles.tatilBadge, { backgroundColor: C.accent + "14" }]}>
+              <Ionicons name="airplane-outline" size={12} color={C.accent} />
+              <Text style={[styles.tatilBadgeTxt, { color: C.accent }]}>Ta'tilda</Text>
+            </View>
+          )}
+          {ketgan && (
+            <View style={[styles.tatilBadge, { backgroundColor: C.red + "14" }]}>
+              <Ionicons name="exit-outline" size={12} color={C.red} />
+              <Text style={[styles.tatilBadgeTxt, { color: C.red }]}>Ketgan</Text>
+            </View>
+          )}
+        </View>
+      }
+    >
+      <View style={styles.bodyTop}>
+        <View style={[styles.statePill, { backgroundColor: (w.holat === "Aktiv" ? C.green : ketgan ? C.red : C.accent) + "14" }]}>
+          <Text style={[styles.stateTxt, { color: w.holat === "Aktiv" ? C.green : ketgan ? C.red : C.accent }]}>{w.holat}</Text>
+        </View>
+        {!ketgan && <Text style={styles.haq}>{qop ? "Qoplik" : `${formatSom(w.miqdor)} so'm/kun`}</Text>}
+      </View>
+      {w.holat === "Ta'tilda" && w.tatilQaytishSana ? (
+        <Text style={styles.tatil}>Ta'tildan qaytadi: {w.tatilQaytishSana}</Text>
+      ) : null}
+      {qop && nonlarRo.length > 0 && !ketgan && (
+        <View style={styles.haqWrap}>
+          {nonlarRo.map(([nom, narx]) => (
+            <View key={nom} style={styles.haqRow}>
+              <Text style={styles.haqNom} numberOfLines={1}>{nom}</Text>
+              <Text style={styles.haqVal}>{formatSom(narx)} so'm/qop</Text>
+            </View>
+          ))}
+        </View>
+      )}
+      <View style={styles.bodyActions}>
+        {tatildanQaytar && (
+          <Pressable accessibilityLabel="Ta'tildan qaytdi" onPress={tatildanQaytar} hitSlop={8} style={styles.actBtn}>
+            <Ionicons name="checkmark-circle-outline" size={16} color={C.green} />
+            <Text style={[styles.actTxt, { color: C.green }]}> Ta'tildan qaytdi</Text>
+          </Pressable>
+        )}
+        {qaytarish && (
+          <Pressable accessibilityLabel="Ishga qaytarish" onPress={qaytarish} hitSlop={8} style={styles.actBtn}>
+            <Ionicons name="arrow-undo-outline" size={16} color={C.green} />
+            <Text style={[styles.actTxt, { color: C.green }]}> Qaytarish</Text>
+          </Pressable>
+        )}
+        {ochTahrir && (
+          <Pressable accessibilityLabel="Tahrirlash" onPress={ochTahrir} hitSlop={8} style={styles.actBtn}>
+            <Ionicons name="create-outline" size={16} color={C.accent} />
+            <Text style={[styles.actTxt, { color: C.accent }]}> Tahrirlash</Text>
+          </Pressable>
+        )}
+        {haydash && (
+          <Pressable accessibilityLabel="Ishdan haydash" onPress={haydash} hitSlop={8} style={styles.actBtn}>
+            <Ionicons name="exit-outline" size={16} color={C.red} />
+            <Text style={[styles.actTxt, { color: C.red }]}> Haydash</Text>
+          </Pressable>
+        )}
+        <Pressable accessibilityLabel="O'chirish" onPress={ochir} hitSlop={8} style={styles.actBtn}>
+          <Ionicons name="trash-outline" size={16} color={C.red} />
+          <Text style={[styles.actTxt, { color: C.red }]}> O'chirish</Text>
+        </Pressable>
+      </View>
+    </ExpandableCard>
+  );
+}
+
 const styles = StyleSheet.create({
   safe:      { flex: 1, backgroundColor: C.bg },
   scroll:    { padding: S[5], paddingBottom: S[8] },
@@ -291,6 +389,10 @@ const styles = StyleSheet.create({
   statLabel: { fontSize: 9, color: C.muted, fontWeight: "700", letterSpacing: 0.8, textTransform: "uppercase", marginBottom: S[2] },
   statValue: { fontSize: 26, fontWeight: "800", letterSpacing: -0.3 },
   statUnit:  { fontSize: 10, color: C.muted, marginTop: 2 },
+  secHead:   { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginTop: S[4], marginBottom: S[3] },
+  secHeadLeft:{ flexDirection: "row", alignItems: "center", gap: 6 },
+  section:   { fontSize: T.xs, fontWeight: "800", letterSpacing: 1.2 },
+  secSum:    { fontSize: T.xs, fontWeight: "700" },
   gap12:     { height: S[3] },
   gap14:     { height: S[4] },
   item:      { marginBottom: S[3] },

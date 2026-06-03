@@ -28,7 +28,7 @@ export default function Qop() {
     ozIshlabQoplar, setOzIshlabQoplar, tashqariSonlar, setTashqariSonlar,
     sotilmaganNon, setSotilmaganNon,
     boshlangichQoldiq, setBoshlangichQoldiq, qoldaYaroqsiz, setQoldaYaroqsiz,
-    kunlikXarajatlar, kartalar, setKartalar, setBraklar,
+    kunlikXarajatlar,
     setHisobotlarTarixi, setOmborSorovlar,
   } = useApp();
 
@@ -101,10 +101,11 @@ export default function Qop() {
 
   const hisobotYop = () => {
     setHisobotOchiq(false);
-    // Kun oxiri qoldiq → ertangi tonggi zaxiraga ko'chadi
+    // Kun oxiri qoldiq → ertangi tonggi zaxiraga ko'chadi.
+    // Karta / Brak / Xarajatlar — TOZALANMAYDI, ular tarixida 7 kun saqlanadi
+    // (AppData useEffect avtomatik tozalaydi).
     setBoshlangichQoldiq(fSot || {});
     setSotilmaganNon({}); setOzIshlabQoplar({}); setTashqariSonlar({}); setQoldaYaroqsiz({});
-    setKartalar([]); setBraklar([]);
     setFQop({}); setFTash({}); setFSot({}); setFYaroqsiz({});
     setKunlikSana(localSana());
     router.back();

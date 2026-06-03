@@ -1,7 +1,7 @@
 // "Markaz" ekrani — kunlik ko'rsatkichlar + navigatsiya tugmalari (qop hisobi,
 // 2x2 grid: Qarz/Optom/Karta/Brak, qo'shimcha xarajatlar) + hisobotlar tarixi.
 import { useMemo } from "react";
-import { View, Text, Pressable, StyleSheet, Alert } from "react-native";
+import { View, Text, Pressable, Image, StyleSheet, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
@@ -13,7 +13,15 @@ import { ExpandableCard } from "../../src/components/ExpandableCard";
 import { ScrollBox } from "../../src/components/ScrollBox";
 import { C, T, S, R } from "../../src/theme";
 import { hisoblaKunlik, formatSom, qarzJami, optomJami, kartaJami, ishchiHaqlari } from "../../src/logic/hisob";
-// Note: KunlikQopModal va HisobotModal endi app/qop.jsx ichida ishlatiladi.
+// Maxsus rasm ikonkalari (Ionicons o'rniga — premium ko'rinish)
+const ICONS = {
+  qop:     require("../../assets/icons/qop.png"),
+  qarz:    require("../../assets/icons/qarz.png"),
+  optom:   require("../../assets/icons/optom.png"),
+  karta:   require("../../assets/icons/karta.png"),
+  brak:    require("../../assets/icons/brak.png"),
+  xarajat: require("../../assets/icons/xarajat.png"),
+};
 
 const localSana = () => {
   const d = new Date();
@@ -74,7 +82,7 @@ export default function Markaz() {
           style={({ pressed }) => [styles.xarajatBtn, styles.qopBtn, pressed && styles.xarajatBtnPressed]}
         >
           <View style={[styles.navIcon, { backgroundColor: C.accent + "14" }]}>
-            <Ionicons name="calculator-outline" size={22} color={C.accent} />
+            <Image source={ICONS.qop} style={styles.navIconImg} resizeMode="contain" />
           </View>
           <View style={styles.flex1}>
             <Text style={styles.xarajatLabel}>Kunlik qop hisobi</Text>
@@ -89,13 +97,13 @@ export default function Markaz() {
         {/* 2×2 navigatsiya grid — har kvadrat o'z sub-ekraniga olib o'tadi */}
         <View style={styles.gridRow}>
           <NavTile
-            icon="receipt-outline" tint={C.red}
+            image={ICONS.qarz} tint={C.red}
             label="Qarzlar"
             sub={`${formatSom(qarz.summa)} so'm • ${qarz.soni} ta`}
             onPress={() => router.push("/qarzlar")}
           />
           <NavTile
-            icon="storefront-outline" tint={C.accent}
+            image={ICONS.optom} tint={C.accent}
             label="Optom"
             sub={`${formatSom(optom.summa)} so'm • ${optom.soni} ta`}
             onPress={() => router.push("/optom")}
@@ -103,13 +111,13 @@ export default function Markaz() {
         </View>
         <View style={styles.gridRow}>
           <NavTile
-            icon="card-outline" tint={C.green}
+            image={ICONS.karta} tint={C.green}
             label="Karta"
             sub={`${formatSom(karta.summa)} so'm • ${karta.soni} ta`}
             onPress={() => router.push("/karta")}
           />
           <NavTile
-            icon="alert-circle-outline" tint={C.red}
+            image={ICONS.brak} tint={C.red}
             label="Brak"
             sub={`${formatSom(brakSumma)} so'm • ${(braklar || []).length} ta`}
             onPress={() => router.push("/brak")}
@@ -124,7 +132,7 @@ export default function Markaz() {
           style={({ pressed }) => [styles.xarajatBtn, pressed && styles.xarajatBtnPressed]}
         >
           <View style={[styles.navIcon, { backgroundColor: C.accent + "14" }]}>
-            <Ionicons name="cash-outline" size={22} color={C.accent} />
+            <Image source={ICONS.xarajat} style={styles.navIconImg} resizeMode="contain" />
           </View>
           <View style={styles.flex1}>
             <Text style={styles.xarajatLabel}>Kunlik qo'shimcha xarajatlar</Text>
@@ -225,7 +233,7 @@ function StatTile({ label, value, unit, color, icon }) {
   );
 }
 
-function NavTile({ icon, tint, label, sub, onPress }) {
+function NavTile({ icon, image, tint, label, sub, onPress }) {
   return (
     <Pressable
       onPress={onPress}
@@ -233,7 +241,9 @@ function NavTile({ icon, tint, label, sub, onPress }) {
       style={({ pressed }) => [styles.navTile, pressed && styles.navTilePressed]}
     >
       <View style={[styles.navIcon, { backgroundColor: tint + "14" }]}>
-        <Ionicons name={icon} size={22} color={tint} />
+        {image
+          ? <Image source={image} style={[styles.navIconImg, { tintColor: tint }]} resizeMode="contain" />
+          : <Ionicons name={icon} size={22} color={tint} />}
       </View>
       <Text style={styles.navLabel}>{label}</Text>
       <Text style={styles.navSub} numberOfLines={1}>{sub}</Text>
@@ -261,7 +271,8 @@ const styles = StyleSheet.create({
   gridRow:   { flexDirection: "row", gap: S[3], marginBottom: S[3] },
   navTile:   { flex: 1, aspectRatio: 1, backgroundColor: C.card, borderRadius: R.lg, padding: S[4], justifyContent: "space-between", borderWidth: StyleSheet.hairlineWidth, borderColor: C.borderSoft },
   navTilePressed: { opacity: 0.7, transform: [{ scale: 0.98 }] },
-  navIcon:   { width: 40, height: 40, borderRadius: R.md, alignItems: "center", justifyContent: "center" },
+  navIcon:   { width: 40, height: 40, borderRadius: R.md, alignItems: "center", justifyContent: "center", overflow: "hidden" },
+  navIconImg:{ width: 24, height: 24, tintColor: C.accent },
   navLabel:  { fontSize: T.md, fontWeight: "800", color: C.text, letterSpacing: -0.2, marginTop: S[2] },
   navSub:    { fontSize: 11, color: C.muted, fontWeight: "600", marginTop: 2 },
 
