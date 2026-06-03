@@ -135,8 +135,8 @@ export default function Xarajat() {
         </ScrollBox>
         <View style={styles.gap12} />
         <View style={styles.modalRow}>
-          <View style={styles.flex1}><Btn secondary onPress={() => setModalOchiq(false)}>Bekor</Btn></View>
-          <View style={styles.flex1}><Btn color={C.accent} onPress={saqla}>Saqlash</Btn></View>
+          <Btn color={C.accent} onPress={saqla}>Saqlash</Btn>
+          <Btn secondary onPress={() => setModalOchiq(false)}>Bekor</Btn>
         </View>
       </Modal>
     </SafeAreaView>
@@ -173,5 +173,5 @@ const styles = StyleSheet.create({
   inputLabel: { fontSize: T.xs, color: C.sub, fontWeight: "600", marginBottom: 6, marginTop: S[3], letterSpacing: 0.3 },
   input: { borderWidth: 1, borderColor: C.border, borderRadius: R.md, paddingVertical: 12, paddingHorizontal: 14, fontSize: T.md, color: C.text, backgroundColor: C.surface },
   inputMulti: { minHeight: 72, textAlignVertical: "top" },
-  modalRow: { flexDirection: "row", gap: S[3] },
+  modalRow:   { gap: S[2] },
 });

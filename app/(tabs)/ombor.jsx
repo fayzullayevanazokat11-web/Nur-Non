@@ -300,8 +300,8 @@ export default function Ombor() {
 
         <View style={styles.gap12} />
         <View style={styles.modalRow}>
-          <View style={styles.flex1}><Btn secondary onPress={yopModal}>Bekor</Btn></View>
-          <View style={styles.flex1}><Btn color={C.blue} onPress={saqla}>Saqlash</Btn></View>
+          <Btn color={C.blue} onPress={saqla}>Saqlash</Btn>
+          <Btn secondary onPress={yopModal}>Bekor</Btn>
         </View>
       </Modal>
     </SafeAreaView>
@@ -357,5 +357,5 @@ const styles = StyleSheet.create({
   },
   hint:       { fontSize: 11, color: C.muted, marginTop: 3 },
   flex1:      { flex: 1 },
-  modalRow:   { flexDirection: "row", gap: S[3] },
+  modalRow:   { gap: S[2] },
 });

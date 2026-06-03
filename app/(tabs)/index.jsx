@@ -4,7 +4,7 @@ import { useMemo } from "react";
 import { View, Text, Pressable, Image, StyleSheet, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import { router, Link } from "expo-router";
+import { router } from "expo-router";
 
 import { useApp } from "../../src/store/AppData";
 import { Card } from "../../src/components/Card";
@@ -84,65 +84,69 @@ export default function Markaz() {
         </View>
 
         {/* Kunlik qop hisobi — alohida sahifaga olib boradi (to'liq tafsilot bilan) */}
-        <Link href="/qop" asChild>
-          <Pressable
-            accessibilityLabel="Kunlik qop hisobi"
-            android_ripple={{ color: C.accent + "1A" }}
-            style={({ pressed }) => [styles.xarajatBtn, styles.qopBtn, pressed && styles.xarajatBtnPressed]}
-          >
-            <View style={[styles.navIcon, { backgroundColor: C.accent + "14" }]}>
-              <Image source={ICONS.qop} style={styles.navIconImg} resizeMode="contain" />
-            </View>
-            <View style={styles.flex1}>
-              <Text style={styles.xarajatLabel}>Kunlik qop hisobi</Text>
-              <Text style={styles.xarajatSub}>
-                {stats.jamiBoshlang > 0 ? `${stats.jamiBoshlang} tonggi · ` : ""}
-                {stats.jamiQop} qop · {stats.jamiNon} dona ishlab
-              </Text>
-            </View>
-            <Ionicons name="chevron-forward" size={18} color={C.muted} />
-          </Pressable>
-        </Link>
+        <Pressable
+          accessibilityLabel="Kunlik qop hisobi"
+          accessibilityRole="button"
+          onPress={() => router.push("/qop")}
+          android_ripple={{ color: C.accent + "1A" }}
+          style={({ pressed }) => [styles.xarajatBtn, styles.qopBtn, pressed && styles.xarajatBtnPressed]}
+        >
+          <View style={[styles.navIcon, { backgroundColor: C.accent + "14" }]}>
+            <Image source={ICONS.qop} style={styles.navIconImg} resizeMode="contain" />
+          </View>
+          <View style={styles.flex1}>
+            <Text style={styles.xarajatLabel}>Kunlik qop hisobi</Text>
+            <Text style={styles.xarajatSub}>
+              {stats.jamiBoshlang > 0 ? `${stats.jamiBoshlang} tonggi · ` : ""}
+              {stats.jamiQop} qop · {stats.jamiNon} dona ishlab
+            </Text>
+          </View>
+          <Ionicons name="chevron-forward" size={18} color={C.muted} />
+        </Pressable>
 
         {/* 2×2 navigatsiya grid — har kvadrat o'z sub-ekraniga olib o'tadi */}
         <View style={styles.gridRow}>
-          <NavTile href="/qarzlar" image={ICONS.qarz} tint={C.red}
+          <NavTile image={ICONS.qarz} tint={C.red}
             label="Qarzlar"
             sub={`${formatSom(qarz.summa)} so'm • ${qarz.soni} ta`}
+            onPress={() => router.push("/qarzlar")}
           />
-          <NavTile href="/optom" image={ICONS.optom} tint={C.accent}
+          <NavTile image={ICONS.optom} tint={C.accent}
             label="Optom"
             sub={`${formatSom(optom.summa)} so'm • ${optom.soni} ta`}
+            onPress={() => router.push("/optom")}
           />
         </View>
         <View style={styles.gridRow}>
-          <NavTile href="/karta" image={ICONS.karta} tint={C.green}
+          <NavTile image={ICONS.karta} tint={C.green}
             label="Karta"
             sub={`${formatSom(karta.summa)} so'm • ${karta.soni} ta`}
+            onPress={() => router.push("/karta")}
           />
-          <NavTile href="/brak" image={ICONS.brak} tint={C.red}
+          <NavTile image={ICONS.brak} tint={C.red}
             label="Brak"
             sub={`${formatSom(brakSumma)} so'm • ${(braklar || []).length} ta`}
+            onPress={() => router.push("/brak")}
           />
         </View>
 
         {/* Kunlik qo'shimcha xarajatlar — vertikal nav tugma */}
-        <Link href="/xarajat" asChild>
-          <Pressable
-            accessibilityLabel="Kunlik qo'shimcha xarajatlar"
-            android_ripple={{ color: C.accent + "1A" }}
-            style={({ pressed }) => [styles.xarajatBtn, pressed && styles.xarajatBtnPressed]}
-          >
-            <View style={[styles.navIcon, { backgroundColor: C.accent + "14" }]}>
-              <Image source={ICONS.xarajat} style={styles.navIconImg} resizeMode="contain" />
-            </View>
-            <View style={styles.flex1}>
-              <Text style={styles.xarajatLabel}>Kunlik qo'shimcha xarajatlar</Text>
-              <Text style={styles.xarajatSub}>Bugun: {formatSom(xarajatBugun)} so'm • {xarajatSoni} ta</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={18} color={C.muted} />
-          </Pressable>
-        </Link>
+        <Pressable
+          accessibilityLabel="Kunlik qo'shimcha xarajatlar"
+          accessibilityRole="button"
+          onPress={() => router.push("/xarajat")}
+          android_ripple={{ color: C.accent + "1A" }}
+          style={({ pressed }) => [styles.xarajatBtn, pressed && styles.xarajatBtnPressed]}
+        >
+          <View style={[styles.navIcon, { backgroundColor: C.accent + "14" }]}>
+            <Image source={ICONS.xarajat} style={styles.navIconImg} resizeMode="contain" />
+          </View>
+          <View style={styles.flex1}>
+            <Text style={styles.xarajatLabel}>Kunlik qo'shimcha xarajatlar</Text>
+            <Text style={styles.xarajatSub}>Bugun: {formatSom(xarajatBugun)} so'm • {xarajatSoni} ta</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={18} color={C.muted} />
+        </Pressable>
 
         {/* BUGUNGI ISHCHILAR HAQI (jonli) */}
         {bugungiHaq.list.length > 0 && (
@@ -236,9 +240,10 @@ function StatTile({ label, value, unit, color, icon }) {
   );
 }
 
-function NavTile({ href, icon, image, tint, label, sub, onPress }) {
-  const inner = (
+function NavTile({ icon, image, tint, label, sub, onPress }) {
+  return (
     <Pressable
+      accessibilityRole="button"
       onPress={onPress}
       android_ripple={{ color: tint + "1A", borderless: false }}
       style={({ pressed }) => [styles.navTile, pressed && styles.navTilePressed]}
@@ -252,8 +257,6 @@ function NavTile({ href, icon, image, tint, label, sub, onPress }) {
       <Text style={styles.navSub} numberOfLines={1}>{sub}</Text>
     </Pressable>
   );
-  // href bo'lsa expo-router Link orqali navigatsiya (eng ishonchli yo'l)
-  return href ? <Link href={href} asChild>{inner}</Link> : inner;
 }
 
 const styles = StyleSheet.create({
@@ -273,8 +276,8 @@ const styles = StyleSheet.create({
   gap10:     { height: S[3] },
 
   // 2x2 grid
-  gridRow:   { flexDirection: "row", gap: S[3], marginBottom: S[3] },
-  navTile:   { flex: 1, aspectRatio: 1, backgroundColor: C.card, borderRadius: R.lg, padding: S[4], justifyContent: "space-between", borderWidth: StyleSheet.hairlineWidth, borderColor: C.borderSoft },
+  gridRow:   { width: "100%", flexDirection: "row", justifyContent: "space-between", marginBottom: S[3] },
+  navTile:   { width: "48%", aspectRatio: 1, backgroundColor: C.card, borderRadius: R.lg, padding: S[4], justifyContent: "space-between", borderWidth: StyleSheet.hairlineWidth, borderColor: C.borderSoft },
   navTilePressed: { opacity: 0.7, transform: [{ scale: 0.98 }] },
   navIcon:   { width: 40, height: 40, borderRadius: R.md, alignItems: "center", justifyContent: "center", overflow: "hidden" },
   navIconImg:{ width: 24, height: 24, tintColor: C.accent },

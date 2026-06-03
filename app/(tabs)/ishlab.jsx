@@ -233,8 +233,8 @@ export default function IshlabChiqarish() {
 
         <View style={styles.gap14} />
         <View style={styles.modalRow}>
-          <View style={styles.flex1}><Btn secondary onPress={yopModal}>Bekor</Btn></View>
-          <View style={styles.flex1}><Btn onPress={saqla}>Saqlash</Btn></View>
+          <Btn onPress={saqla}>Saqlash</Btn>
+          <Btn secondary onPress={yopModal}>Bekor</Btn>
         </View>
       </Modal>
     </SafeAreaView>
@@ -304,5 +304,5 @@ const styles = StyleSheet.create({
   foydaSub:   { fontSize: T.sm, color: C.text, fontWeight: "700" },
   foydaLblBig:{ fontSize: T.md, color: C.text, fontWeight: "700", marginTop: 2 },
   foydaVal:   { fontSize: T.lg, color: C.accent, fontWeight: "800", marginTop: 2 },
-  modalRow:   { flexDirection: "row", gap: S[3] },
+  modalRow:   { gap: S[2] },
 });

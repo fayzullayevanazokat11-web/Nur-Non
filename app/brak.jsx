@@ -164,8 +164,8 @@ export default function Brak() {
         </ScrollBox>
         <View style={styles.gap12} />
         <View style={styles.modalRow}>
-          <View style={styles.flex1}><Btn secondary onPress={() => setModalOchiq(false)}>Bekor</Btn></View>
-          <View style={styles.flex1}><Btn color={C.accent} onPress={saqla}>Saqlash</Btn></View>
+          <Btn color={C.accent} onPress={saqla}>Saqlash</Btn>
+          <Btn secondary onPress={() => setModalOchiq(false)}>Bekor</Btn>
         </View>
       </Modal>
     </SafeAreaView>
@@ -212,5 +212,5 @@ const styles = StyleSheet.create({
   previewRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
   previewLabel: { fontSize: T.sm, color: C.sub },
   previewVal: { fontSize: T.md, fontWeight: "800", color: C.text },
-  modalRow: { flexDirection: "row", gap: S[3] },
+  modalRow:   { gap: S[2] },
 });

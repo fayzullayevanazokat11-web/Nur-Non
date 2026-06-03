@@ -282,8 +282,8 @@ export default function Xodimlar() {
 
         <View style={styles.gap12} />
         <View style={styles.modalRow}>
-          <View style={styles.flex1}><Btn secondary onPress={yopModal}>Bekor</Btn></View>
-          <View style={styles.flex1}><Btn onPress={saqla}>Saqlash</Btn></View>
+          <Btn onPress={saqla}>Saqlash</Btn>
+          <Btn secondary onPress={yopModal}>Bekor</Btn>
         </View>
       </Modal>
     </SafeAreaView>
@@ -455,5 +455,5 @@ const styles = StyleSheet.create({
   holatBtnActive: { borderColor: C.accent, backgroundColor: C.accent + "0D" },
   holatTxt:  { fontSize: T.sm, color: C.sub, fontWeight: "600" },
   holatTxtActive: { color: C.accent, fontWeight: "700" },
-  modalRow:  { flexDirection: "row", gap: S[3] },
+  modalRow:   { gap: S[2] },
 });
