@@ -1,15 +1,14 @@
-// "Ishlab chiqarish" (assortiment) — non qo'shish/tahrirlash + Xomashyo.
+// "Ishlab chiqarish" (assortiment) — inline forma yuqorida (modal yo'q).
 // Non: o'zimizniki (ingredient + 1 qopdan non soni → dona foydasi avtomatik)
-// yoki tashqaridan (donadan qoladigan foyda to'g'ridan kiritiladi). "Tannarx" yo'q.
+// yoki tashqaridan (donadan qoladigan foyda to'g'ridan kiritiladi).
 import { useState } from "react";
-import { View, Text, ScrollView, Pressable, TextInput, StyleSheet, Alert } from "react-native";
+import { View, Text, Pressable, TextInput, StyleSheet, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 
 import { useApp } from "../../src/store/AppData";
 import { Card } from "../../src/components/Card";
 import { Btn } from "../../src/components/Btn";
-import { Modal } from "../../src/components/Modal";
 import { ScreenHeader } from "../../src/components/ScreenHeader";
 import { ExpandableCard } from "../../src/components/ExpandableCard";
 import { MahsulotNarxi } from "../../src/components/MahsulotNarxi";
@@ -19,7 +18,7 @@ import { C, T, S, R } from "../../src/theme";
 import { formatSom, getQopTannarx, getIngNarx } from "../../src/logic/hisob";
 
 const baseUnit = (birlik) => (birlik === "litr" ? "ml" : "g");
-const BOSH_FORMA = { nom: "", narx: "", oz: true, nonSoni: "", donaFoyda: "", ing: {} };
+const BOSH = { nom: "", narx: "", oz: true, nonSoni: "", donaFoyda: "", ing: {} };
 
 // Non uchun dona foydasi
 function donaFoydasi(non, narxlar) {
@@ -34,15 +33,14 @@ export default function IshlabChiqarish() {
   const royxat = xomashyoRoyxati(customMahsulotlar);
 
   const [tab, setTab] = useState("assortiment");
-  const [modalOchiq, setModalOchiq] = useState(false);
   const [tahrirId, setTahrirId] = useState(null);
-  const [forma, setForma] = useState(BOSH_FORMA);
+  const [forma, setForma] = useState(BOSH);
 
   const yangila = (k, v) => setForma((p) => ({ ...p, [k]: v }));
   const yangilaIng = (id, v) => setForma((p) => ({ ...p, ing: { ...p.ing, [id]: v } }));
+  const tozala = () => { setForma(BOSH); setTahrirId(null); };
 
-  const ochYangi = () => { setForma(BOSH_FORMA); setTahrirId(null); setModalOchiq(true); };
-  const ochTahrir = (non) => {
+  const tahrirla = (non) => {
     const oz = non.ozIshlab !== false;
     setForma({
       nom: non.nom, narx: String(non.narx || ""), oz,
@@ -50,9 +48,8 @@ export default function IshlabChiqarish() {
       donaFoyda: oz ? "" : String(non.tashqariFoyda || ""),
       ing: oz ? Object.fromEntries((non.mahsulotlar || []).map((m) => [m.id, String(m.miqdor ?? "")])) : {},
     });
-    setTahrirId(non.id); setModalOchiq(true);
+    setTahrirId(non.id);
   };
-  const yopModal = () => setModalOchiq(false);
 
   // Forma jonli hisoblari
   const formaQopNarx = royxat.reduce((s, m) => {
@@ -84,20 +81,23 @@ export default function IshlabChiqarish() {
     } else {
       setNonlar((prev) => [...prev, { id: Date.now(), ...yangi }]);
     }
-    yopModal();
+    tozala();
   };
 
   const ochirNon = (id) =>
     Alert.alert("O'chirish", "Bu non turini o'chirasizmi?", [
       { text: "Bekor", style: "cancel" },
-      { text: "Ha", style: "destructive", onPress: () => setNonlar((p) => p.filter((n) => n.id !== id)) },
+      { text: "Ha", style: "destructive", onPress: () => {
+        setNonlar((p) => p.filter((n) => n.id !== id));
+        if (tahrirId === id) tozala();
+      } },
     ]);
 
   const aktivIshchi = (ishchilar || []).filter((w) => w.holat === "Aktiv").length;
 
   return (
     <SafeAreaView style={styles.safe} edges={["top"]}>
-      <ScrollBox contentContainerStyle={styles.scroll}>
+      <ScrollBox contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
         <ScreenHeader eyebrow="Assortiment" title="Ishlab chiqarish" subtitle={`${nonlar.length} xil non · ${aktivIshchi} aktiv xodim`} image={require("../../assets/tabicons/ishlab.png")} />
 
         <View style={styles.segment}>
@@ -116,8 +116,72 @@ export default function IshlabChiqarish() {
           <MahsulotNarxi />
         ) : (
           <>
-            <Btn onPress={ochYangi} icon="add-circle-outline">Yangi non turi kiritish</Btn>
-            <View style={styles.gap14} />
+            {/* INLINE FORMA */}
+            <Card style={styles.formCard}>
+              <View style={styles.formHead}>
+                <Ionicons name={tahrirId ? "create-outline" : "add-circle-outline"} size={18} color={C.sub} />
+                <Text style={styles.formTitle}>{tahrirId ? "Nonni tahrirlash" : "Yangi non turi"}</Text>
+              </View>
+
+              <Text style={styles.inputLabel}>Non nomi *</Text>
+              <TextInput value={forma.nom} onChangeText={(v) => yangila("nom", v)} placeholder="Masalan: Kulcha" placeholderTextColor={C.muted} style={styles.input} />
+
+              <Text style={styles.inputLabel}>Sotuv narxi (so'm) *</Text>
+              <TextInput value={forma.narx} onChangeText={(v) => yangila("narx", v)} placeholder="0" placeholderTextColor={C.muted} keyboardType="numeric" style={styles.input} />
+
+              <Text style={styles.inputLabel}>Non turi</Text>
+              <View style={styles.turRow}>
+                <Pressable style={[styles.turBtn, forma.oz && styles.turBtnActive]} onPress={() => yangila("oz", true)}>
+                  <Text style={[styles.turTxt, forma.oz && styles.turTxtActive]}>O'zimizniki</Text>
+                </Pressable>
+                <Pressable style={[styles.turBtn, !forma.oz && styles.turBtnActive]} onPress={() => yangila("oz", false)}>
+                  <Text style={[styles.turTxt, !forma.oz && styles.turTxtActive]}>Tashqaridan</Text>
+                </Pressable>
+              </View>
+
+              {forma.oz ? (
+                <>
+                  <Text style={styles.inputLabel}>1 qopdan o'rtacha nechta non</Text>
+                  <TextInput value={forma.nonSoni} onChangeText={(v) => yangila("nonSoni", v)} placeholder="0" placeholderTextColor={C.muted} keyboardType="numeric" style={styles.input} />
+
+                  <Text style={styles.inputLabel}>1 qopga ketadigan xomashyo</Text>
+                  {royxat.map((m) => {
+                    const unit = baseUnit(m.birlik);
+                    return (
+                      <View key={m.id} style={styles.ingEditRow}>
+                        <Text style={styles.ingEditNom} numberOfLines={1}>{m.emoji} {m.nom}</Text>
+                        <TextInput value={forma.ing[m.id] ?? ""} onChangeText={(v) => yangilaIng(m.id, v)} placeholder="0" placeholderTextColor={C.muted} keyboardType="numeric" style={styles.ingInput} />
+                        <Text style={styles.ingUnit}>{unit}</Text>
+                      </View>
+                    );
+                  })}
+                </>
+              ) : (
+                <>
+                  <Text style={styles.inputLabel}>Donadan qoladigan foyda (so'm) *</Text>
+                  <TextInput value={forma.donaFoyda} onChangeText={(v) => yangila("donaFoyda", v)} placeholder="0" placeholderTextColor={C.muted} keyboardType="numeric" style={styles.input} />
+                </>
+              )}
+
+              <View style={styles.foydaBox}>
+                {forma.oz && (
+                  <View style={styles.foydaLine}><Text style={styles.foydaLbl}>1 qopga xomashyo</Text><Text style={styles.foydaSub}>{formatSom(formaQopNarx)} so'm</Text></View>
+                )}
+                <View style={styles.foydaLine}><Text style={styles.foydaLblBig}>Dona foydasi</Text><Text style={styles.foydaVal}>{formatSom(formaDonaFoyda)} so'm</Text></View>
+              </View>
+
+              <View style={styles.formActions}>
+                <Btn onPress={saqla}>{tahrirId ? "Yangilash" : "Saqlash"}</Btn>
+                {tahrirId && <Btn secondary onPress={tozala}>Bekor</Btn>}
+              </View>
+            </Card>
+
+            {/* RO'YXAT */}
+            <View style={styles.secHead}>
+              <Ionicons name="grid-outline" size={13} color={C.sub} />
+              <Text style={styles.secTitle}>NON TURLARI</Text>
+              <Text style={styles.secCount}>{nonlar.length} ta</Text>
+            </View>
 
             {nonlar.length === 0 ? (
               <Card><Text style={styles.muted}>Hali non turi qo'shilmagan</Text></Card>
@@ -158,7 +222,7 @@ export default function IshlabChiqarish() {
                       </View>
                     )}
                     <View style={styles.bodyActions}>
-                      <Pressable accessibilityLabel="Tahrirlash" onPress={() => ochTahrir(non)} hitSlop={8} style={styles.actBtn}>
+                      <Pressable accessibilityLabel="Tahrirlash" onPress={() => tahrirla(non)} hitSlop={8} style={styles.actBtn}>
                         <Ionicons name="create-outline" size={16} color={C.accent} />
                         <Text style={[styles.actTxt, { color: C.accent }]}> Tahrirlash</Text>
                       </Pressable>
@@ -174,69 +238,6 @@ export default function IshlabChiqarish() {
           </>
         )}
       </ScrollBox>
-
-      {/* Qo'shish / Tahrirlash modali */}
-      <Modal modalVisible={modalOchiq} onClose={yopModal}>
-        <View style={styles.modalHead}>
-          <Ionicons name={tahrirId ? "create-outline" : "add-circle-outline"} size={20} color={C.sub} />
-          <Text style={styles.modalTitle}>{tahrirId ? "Nonni tahrirlash" : "Yangi non turi"}</Text>
-        </View>
-
-        <ScrollBox style={styles.formScroll} keyboardShouldPersistTaps="handled">
-          <Text style={styles.inputLabel}>Non nomi *</Text>
-          <TextInput value={forma.nom} onChangeText={(v) => yangila("nom", v)} placeholder="Masalan: Kulcha" placeholderTextColor={C.muted} style={styles.input} />
-
-          <Text style={styles.inputLabel}>Sotuv narxi (so'm) *</Text>
-          <TextInput value={forma.narx} onChangeText={(v) => yangila("narx", v)} placeholder="0" placeholderTextColor={C.muted} keyboardType="numeric" style={styles.input} />
-
-          <Text style={styles.inputLabel}>Non turi</Text>
-          <View style={styles.turRow}>
-            <Pressable style={[styles.turBtn, forma.oz && styles.turBtnActive]} onPress={() => yangila("oz", true)}>
-              <Text style={[styles.turTxt, forma.oz && styles.turTxtActive]}>O'zimizniki</Text>
-            </Pressable>
-            <Pressable style={[styles.turBtn, !forma.oz && styles.turBtnActive]} onPress={() => yangila("oz", false)}>
-              <Text style={[styles.turTxt, !forma.oz && styles.turTxtActive]}>Tashqaridan</Text>
-            </Pressable>
-          </View>
-
-          {forma.oz ? (
-            <>
-              <Text style={styles.inputLabel}>1 qopdan o'rtacha nechta non</Text>
-              <TextInput value={forma.nonSoni} onChangeText={(v) => yangila("nonSoni", v)} placeholder="0" placeholderTextColor={C.muted} keyboardType="numeric" style={styles.input} />
-
-              <Text style={styles.inputLabel}>1 qopga ketadigan xomashyo</Text>
-              {royxat.map((m) => {
-                const unit = baseUnit(m.birlik);
-                return (
-                  <View key={m.id} style={styles.ingEditRow}>
-                    <Text style={styles.ingEditNom} numberOfLines={1}>{m.emoji} {m.nom}</Text>
-                    <TextInput value={forma.ing[m.id] ?? ""} onChangeText={(v) => yangilaIng(m.id, v)} placeholder="0" placeholderTextColor={C.muted} keyboardType="numeric" style={styles.ingInput} />
-                    <Text style={styles.ingUnit}>{unit}</Text>
-                  </View>
-                );
-              })}
-            </>
-          ) : (
-            <>
-              <Text style={styles.inputLabel}>Donadan qoladigan foyda (so'm) *</Text>
-              <TextInput value={forma.donaFoyda} onChangeText={(v) => yangila("donaFoyda", v)} placeholder="0" placeholderTextColor={C.muted} keyboardType="numeric" style={styles.input} />
-            </>
-          )}
-
-          <View style={styles.foydaBox}>
-            {forma.oz && (
-              <View style={styles.foydaLine}><Text style={styles.foydaLbl}>1 qopga xomashyo</Text><Text style={styles.foydaSub}>{formatSom(formaQopNarx)} so'm</Text></View>
-            )}
-            <View style={styles.foydaLine}><Text style={styles.foydaLblBig}>Dona foydasi</Text><Text style={styles.foydaVal}>{formatSom(formaDonaFoyda)} so'm</Text></View>
-          </View>
-        </ScrollBox>
-
-        <View style={styles.gap14} />
-        <View style={styles.modalRow}>
-          <Btn onPress={saqla}>Saqlash</Btn>
-          <Btn secondary onPress={yopModal}>Bekor</Btn>
-        </View>
-      </Modal>
     </SafeAreaView>
   );
 }
@@ -259,6 +260,36 @@ const styles = StyleSheet.create({
   segActive: { backgroundColor: C.accent },
   segTxt:    { fontSize: T.sm, fontWeight: "700", color: C.sub },
   segTxtActive: { color: "#FFF3E8" },
+
+  // Inline forma
+  formCard:  { marginBottom: S[5] },
+  formHead:  { flexDirection: "row", alignItems: "center", gap: S[2], marginBottom: S[3] },
+  formTitle: { fontSize: T.md, fontWeight: "800", color: C.text },
+  inputLabel:{ fontSize: T.xs, color: C.sub, fontWeight: "600", marginBottom: 6, marginTop: S[2], letterSpacing: 0.3 },
+  input:     { borderWidth: 1, borderColor: C.border, borderRadius: R.md, paddingVertical: 12, paddingHorizontal: 14, fontSize: T.md, color: C.text, backgroundColor: C.surface },
+  turRow:    { flexDirection: "row", gap: S[2] },
+  turBtn:    { flex: 1, alignItems: "center", paddingVertical: 12, borderRadius: R.md, borderWidth: 1, borderColor: C.border, backgroundColor: C.surface },
+  turBtnActive:{ backgroundColor: C.accent, borderColor: C.accent },
+  turTxt:    { fontSize: T.sm, fontWeight: "700", color: C.sub },
+  turTxtActive:{ color: "#FFF3E8" },
+  ingEditRow:{ flexDirection: "row", alignItems: "center", gap: S[2], marginBottom: S[2] },
+  ingEditNom:{ flex: 1, fontSize: T.sm, color: C.text },
+  ingInput:  { width: 90, borderWidth: 1, borderColor: C.border, borderRadius: R.sm, paddingVertical: 8, paddingHorizontal: 10, fontSize: T.sm, color: C.text, backgroundColor: C.surface, textAlign: "right" },
+  ingUnit:   { width: 28, fontSize: T.xs, color: C.muted },
+  foydaBox:  { backgroundColor: C.accent + "0D", borderWidth: 1, borderColor: C.accent + "2E", borderRadius: R.md, paddingVertical: S[3], paddingHorizontal: S[3], marginTop: S[3] },
+  foydaLine: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+  foydaLbl:  { fontSize: T.sm, color: C.sub },
+  foydaSub:  { fontSize: T.sm, color: C.text, fontWeight: "700" },
+  foydaLblBig:{ fontSize: T.md, color: C.text, fontWeight: "700", marginTop: 2 },
+  foydaVal:  { fontSize: T.lg, color: C.accent, fontWeight: "800", marginTop: 2 },
+  formActions:{ marginTop: S[4], gap: S[2] },
+
+  // Section
+  secHead:   { flexDirection: "row", alignItems: "center", gap: 6, marginBottom: S[3] },
+  secTitle:  { fontSize: T.xs, color: C.sub, fontWeight: "700", letterSpacing: 1, flex: 1 },
+  secCount:  { fontSize: T.sm, color: C.sub, fontWeight: "700" },
+
+  // Ro'yxat
   item:      { marginBottom: S[3] },
   flex1:     { flex: 1 },
   nonNom:    { fontSize: T.lg, fontWeight: "800", color: C.text },
@@ -282,27 +313,4 @@ const styles = StyleSheet.create({
   ingTotalRow:{ flexDirection: "row", justifyContent: "space-between", marginTop: 4, paddingTop: 6, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: C.borderSoft },
   ingTotalLbl:{ fontSize: T.xs, color: C.sub, fontWeight: "700" },
   ingTotalV: { fontSize: T.xs, color: C.text, fontWeight: "800" },
-
-  // Modal
-  formScroll: { maxHeight: 420 },
-  modalHead:  { flexDirection: "row", alignItems: "center", gap: S[2], marginBottom: S[4] },
-  modalTitle: { fontSize: T.lg, fontWeight: "800", color: C.text },
-  inputLabel: { fontSize: T.xs, color: C.sub, fontWeight: "600", marginBottom: 6, letterSpacing: 0.3 },
-  input:      { borderWidth: 1, borderColor: C.border, borderRadius: R.md, paddingVertical: 12, paddingHorizontal: 14, fontSize: T.md, color: C.text, backgroundColor: C.surface, marginBottom: S[3] },
-  turRow:     { flexDirection: "row", gap: S[2], marginBottom: S[3] },
-  turBtn:     { flex: 1, alignItems: "center", paddingVertical: 12, borderRadius: R.md, borderWidth: 1, borderColor: C.border, backgroundColor: C.surface },
-  turBtnActive: { backgroundColor: C.accent, borderColor: C.accent },
-  turTxt:     { fontSize: T.sm, fontWeight: "700", color: C.sub },
-  turTxtActive: { color: "#FFF3E8" },
-  ingEditRow: { flexDirection: "row", alignItems: "center", gap: S[2], marginBottom: S[2] },
-  ingEditNom: { flex: 1, fontSize: T.sm, color: C.text },
-  ingInput:   { width: 90, borderWidth: 1, borderColor: C.border, borderRadius: R.sm, paddingVertical: 8, paddingHorizontal: 10, fontSize: T.sm, color: C.text, backgroundColor: C.surface, textAlign: "right" },
-  ingUnit:    { width: 28, fontSize: T.xs, color: C.muted },
-  foydaBox:   { backgroundColor: C.accent + "0D", borderWidth: 1, borderColor: C.accent + "2E", borderRadius: R.md, paddingVertical: S[3], paddingHorizontal: S[3], marginTop: S[1] },
-  foydaLine:  { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-  foydaLbl:   { fontSize: T.sm, color: C.sub },
-  foydaSub:   { fontSize: T.sm, color: C.text, fontWeight: "700" },
-  foydaLblBig:{ fontSize: T.md, color: C.text, fontWeight: "700", marginTop: 2 },
-  foydaVal:   { fontSize: T.lg, color: C.accent, fontWeight: "800", marginTop: 2 },
-  modalRow:   { gap: S[2] },
 });

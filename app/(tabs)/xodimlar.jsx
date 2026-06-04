@@ -1,14 +1,13 @@
-// "Xodimlar" — ishchi qo'shish/tahrirlash. Haq turi: kunlik yoki qoplik
-// (qoplik bo'lsa bir nechta non turi tanlanib, har qaysi non qopidan narx kiritiladi).
+// "Xodimlar" — inline forma yuqorida (modal yo'q). Yangi ishchi qo'shish va
+// tahrirlash to'g'ridan-to'g'ri sahifa ichida.
 import { useState } from "react";
-import { View, Text, ScrollView, Pressable, TextInput, StyleSheet, Alert } from "react-native";
+import { View, Text, Pressable, TextInput, StyleSheet, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 
 import { useApp } from "../../src/store/AppData";
 import { Card } from "../../src/components/Card";
 import { Btn } from "../../src/components/Btn";
-import { Modal } from "../../src/components/Modal";
 import { ScreenHeader } from "../../src/components/ScreenHeader";
 import { ExpandableCard } from "../../src/components/ExpandableCard";
 import { ScrollBox } from "../../src/components/ScrollBox";
@@ -18,16 +17,15 @@ import { C, T, S, R } from "../../src/theme";
 import { formatSom } from "../../src/logic/hisob";
 import { LAVOZIMLAR, getLavozimLabel } from "../../src/logic/konstantalar";
 
-const BOSH_FORMA = { ism: "", lavozimId: LAVOZIMLAR[0].id, lavozimCustom: "", haqTuri: "kunlik", miqdor: "", nonNarx: {}, holat: "Aktiv", tatilSana: "" };
+const BOSH = { ism: "", lavozimId: LAVOZIMLAR[0].id, lavozimCustom: "", haqTuri: "kunlik", miqdor: "", nonNarx: {}, holat: "Aktiv", tatilSana: "" };
 const HOLATLAR = ["Aktiv", "Ta'tilda"];
 
 export default function Xodimlar() {
   const { ishchilar, setIshchilar, nonlar } = useApp();
   const ozNonlar = (nonlar || []).filter((n) => n.ozIshlab !== false);
 
-  const [modalOchiq, setModalOchiq] = useState(false);
   const [tahrirId, setTahrirId] = useState(null);
-  const [forma, setForma] = useState(BOSH_FORMA);
+  const [forma, setForma] = useState(BOSH);
 
   const aktiv = (ishchilar || []).filter((w) => w.holat === "Aktiv");
   const tatildagilar = (ishchilar || []).filter((w) => w.holat === "Ta'tilda");
@@ -35,9 +33,9 @@ export default function Xodimlar() {
 
   const yangila = (k, v) => setForma((p) => ({ ...p, [k]: v }));
   const yangilaNon = (nom, v) => setForma((p) => ({ ...p, nonNarx: { ...p.nonNarx, [nom]: v } }));
+  const tozala = () => { setForma(BOSH); setTahrirId(null); };
 
-  const ochYangi = () => { setForma(BOSH_FORMA); setTahrirId(null); setModalOchiq(true); };
-  const ochTahrir = (w) => {
+  const tahrirla = (w) => {
     const nonNarx = {};
     Object.entries(w.nonNarxlari || {}).forEach(([nom, narx]) => { nonNarx[nom] = String(narx); });
     setForma({
@@ -46,9 +44,8 @@ export default function Xodimlar() {
       miqdor: String(w.miqdor || ""), nonNarx, holat: w.holat || "Aktiv",
       tatilSana: w.tatilQaytishSana || "",
     });
-    setTahrirId(w.id); setModalOchiq(true);
+    setTahrirId(w.id);
   };
-  const yopModal = () => setModalOchiq(false);
 
   const saqla = () => {
     if (!forma.ism.trim()) {
@@ -83,37 +80,36 @@ export default function Xodimlar() {
     } else {
       setIshchilar((prev) => [...prev, { id: Date.now(), tel: "", tatilQaytishSana: "", tahrirSoni: 0, ...asos }]);
     }
-    yopModal();
+    tozala();
   };
 
   const ochir = (id) =>
     Alert.alert("O'chirish", "Bu xodimni o'chirasizmi?", [
       { text: "Bekor", style: "cancel" },
-      { text: "Ha", style: "destructive", onPress: () => setIshchilar((p) => p.filter((w) => w.id !== id)) },
+      { text: "Ha", style: "destructive", onPress: () => {
+        setIshchilar((p) => p.filter((w) => w.id !== id));
+        if (tahrirId === id) tozala();
+      } },
     ]);
 
-  // Ta'tildagi xodimni darhol Aktivga o'tkazish (qaytish sanasi tozalanadi).
   const tatildanQaytar = (w) =>
     Alert.alert("Ta'tildan qaytdi", `${w.ism} ta'tildan qaytdimi? Holati Aktivga o'tkaziladi.`, [
       { text: "Bekor", style: "cancel" },
       { text: "Ha", onPress: () => setIshchilar((p) => p.map((x) => x.id === w.id ? { ...x, holat: "Aktiv", tatilQaytishSana: "" } : x)) },
     ]);
 
-  // Ishdan haydash — holat "Ishdan ketgan"ga o'tadi (ish haqi hisoblanmaydi)
   const haydash = (w) =>
     Alert.alert("Ishdan haydash", `${w.ism}ni ishdan haydaysizmi? Ishchi "Ishdan ketganlar" ro'yxatiga o'tadi.`, [
       { text: "Bekor", style: "cancel" },
       { text: "Haydash", style: "destructive", onPress: () => setIshchilar((p) => p.map((x) => x.id === w.id ? { ...x, holat: "Ishdan ketgan", tatilQaytishSana: "" } : x)) },
     ]);
 
-  // Ishga qaytarish — holat Aktivga o'tadi
   const qaytarish = (w) =>
     Alert.alert("Ishga qaytarish", `${w.ism}ni ishga qaytarasizmi? Holati Aktivga o'tkaziladi.`, [
       { text: "Bekor", style: "cancel" },
       { text: "Qaytarish", onPress: () => setIshchilar((p) => p.map((x) => x.id === w.id ? { ...x, holat: "Aktiv" } : x)) },
     ]);
 
-  // Ta'tilga chiqarish — holat "Ta'tilda"ga o'tadi (kunlik ish haqi hisoblanmaydi)
   const tatilgaChiqar = (w) =>
     Alert.alert("Ta'tilga chiqarish", `${w.ism}ni ta'tilga chiqarasizmi? Ta'tilda bo'lganida kunlik ish haqi hisoblanmaydi.`, [
       { text: "Bekor", style: "cancel" },
@@ -122,7 +118,7 @@ export default function Xodimlar() {
 
   return (
     <SafeAreaView style={styles.safe} edges={["top"]}>
-      <ScrollBox contentContainerStyle={styles.scroll}>
+      <ScrollBox contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
         <ScreenHeader eyebrow="Jamoa" title="Xodimlar" image={require("../../assets/tabicons/xodimlar.png")} />
 
         <View style={styles.statsRow}>
@@ -147,58 +143,14 @@ export default function Xodimlar() {
         </View>
 
         <View style={styles.gap14} />
-        <Btn onPress={ochYangi} icon="person-add-outline">Yangi ishchi kiritish</Btn>
-        <View style={styles.gap14} />
 
-        {(ishchilar || []).length === 0 ? (
-          <Card><Text style={styles.muted}>Xodimlar hali kiritilmagan</Text></Card>
-        ) : (
-          <>
-            <Bolim icon="checkmark-circle-outline" tint={C.green} nom="AKTIVLAR" soni={aktiv.length}>
-              {aktiv.map((w) => (
-                <Karta
-                  key={w.id} w={w}
-                  ochTahrir={() => ochTahrir(w)}
-                  ochir={() => ochir(w.id)}
-                  haydash={() => haydash(w)}
-                  tatilgaChiqar={() => tatilgaChiqar(w)}
-                />
-              ))}
-            </Bolim>
+        {/* INLINE FORMA */}
+        <Card style={styles.formCard}>
+          <View style={styles.formHead}>
+            <Ionicons name={tahrirId ? "create-outline" : "person-add-outline"} size={18} color={C.sub} />
+            <Text style={styles.formTitle}>{tahrirId ? "Xodimni tahrirlash" : "Yangi ishchi"}</Text>
+          </View>
 
-            <Bolim icon="airplane-outline" tint={C.accent} nom="TA'TILDAGILAR" soni={tatildagilar.length}>
-              {tatildagilar.map((w) => (
-                <Karta
-                  key={w.id} w={w}
-                  ochTahrir={() => ochTahrir(w)}
-                  ochir={() => ochir(w.id)}
-                  haydash={() => haydash(w)}
-                  tatildanQaytar={() => tatildanQaytar(w)}
-                />
-              ))}
-            </Bolim>
-
-            <Bolim icon="exit-outline" tint={C.red} nom="ISHDAN KETGANLAR" soni={ishdanKetgan.length}>
-              {ishdanKetgan.map((w) => (
-                <Karta
-                  key={w.id} w={w}
-                  ochir={() => ochir(w.id)}
-                  qaytarish={() => qaytarish(w)}
-                />
-              ))}
-            </Bolim>
-          </>
-        )}
-      </ScrollBox>
-
-      {/* Qo'shish / Tahrirlash modali */}
-      <Modal modalVisible={modalOchiq} onClose={yopModal}>
-        <View style={styles.modalHead}>
-          <Ionicons name={tahrirId ? "create-outline" : "person-add-outline"} size={20} color={C.sub} />
-          <Text style={styles.modalTitle}>{tahrirId ? "Xodimni tahrirlash" : "Yangi ishchi"}</Text>
-        </View>
-
-        <ScrollBox style={styles.formScroll} keyboardShouldPersistTaps="handled">
           <Text style={styles.inputLabel}>Ism *</Text>
           <TextInput value={forma.ism} onChangeText={(v) => yangila("ism", v)} placeholder="Masalan: Akmal aka" placeholderTextColor={C.muted} style={styles.input} />
 
@@ -278,14 +230,53 @@ export default function Xodimlar() {
               <Text style={styles.hintSm}>Ta'tilda bo'lsa kunlik ish haqi hisoblanmaydi.</Text>
             </>
           )}
-        </ScrollBox>
 
-        <View style={styles.gap12} />
-        <View style={styles.modalRow}>
-          <Btn onPress={saqla}>Saqlash</Btn>
-          <Btn secondary onPress={yopModal}>Bekor</Btn>
-        </View>
-      </Modal>
+          <View style={styles.formActions}>
+            <Btn onPress={saqla}>{tahrirId ? "Yangilash" : "Saqlash"}</Btn>
+            {tahrirId && <Btn secondary onPress={tozala}>Bekor</Btn>}
+          </View>
+        </Card>
+
+        {(ishchilar || []).length === 0 ? (
+          <Card><Text style={styles.muted}>Xodimlar hali kiritilmagan</Text></Card>
+        ) : (
+          <>
+            <Bolim icon="checkmark-circle-outline" tint={C.green} nom="AKTIVLAR" soni={aktiv.length}>
+              {aktiv.map((w) => (
+                <KartaWrap
+                  key={w.id} w={w}
+                  ochTahrir={() => tahrirla(w)}
+                  ochir={() => ochir(w.id)}
+                  haydash={() => haydash(w)}
+                  tatilgaChiqar={() => tatilgaChiqar(w)}
+                />
+              ))}
+            </Bolim>
+
+            <Bolim icon="airplane-outline" tint={C.accent} nom="TA'TILDAGILAR" soni={tatildagilar.length}>
+              {tatildagilar.map((w) => (
+                <KartaWrap
+                  key={w.id} w={w}
+                  ochTahrir={() => tahrirla(w)}
+                  ochir={() => ochir(w.id)}
+                  haydash={() => haydash(w)}
+                  tatildanQaytar={() => tatildanQaytar(w)}
+                />
+              ))}
+            </Bolim>
+
+            <Bolim icon="exit-outline" tint={C.red} nom="ISHDAN KETGANLAR" soni={ishdanKetgan.length}>
+              {ishdanKetgan.map((w) => (
+                <KartaWrap
+                  key={w.id} w={w}
+                  ochir={() => ochir(w.id)}
+                  qaytarish={() => qaytarish(w)}
+                />
+              ))}
+            </Bolim>
+          </>
+        )}
+      </ScrollBox>
     </SafeAreaView>
   );
 }
@@ -306,7 +297,7 @@ function Bolim({ icon, tint, nom, soni, children }) {
   );
 }
 
-function Karta({ w, ochTahrir, ochir, haydash, tatildanQaytar, qaytarish, tatilgaChiqar }) {
+function KartaWrap({ w, ochTahrir, ochir, haydash, tatildanQaytar, qaytarish, tatilgaChiqar }) {
   const qop = w.haqTuri === "qop";
   const nonlarRo = Object.entries(w.nonNarxlari || {});
   const ketgan = w.holat === "Ishdan ketgan";
@@ -403,12 +394,42 @@ const styles = StyleSheet.create({
   statLabel: { fontSize: 9, color: C.muted, fontWeight: "700", letterSpacing: 0.8, textTransform: "uppercase", marginBottom: S[2] },
   statValue: { fontSize: 26, fontWeight: "800", letterSpacing: -0.3 },
   statUnit:  { fontSize: 10, color: C.muted, marginTop: 2 },
+  gap14:     { height: S[4] },
+
+  // Inline forma
+  formCard:  { marginBottom: S[5] },
+  formHead:  { flexDirection: "row", alignItems: "center", gap: S[2], marginBottom: S[3] },
+  formTitle: { fontSize: T.md, fontWeight: "800", color: C.text },
+  inputLabel:{ fontSize: T.xs, color: C.sub, fontWeight: "600", marginBottom: 6, marginTop: S[3], letterSpacing: 0.3 },
+  input:     { borderWidth: 1, borderColor: C.border, borderRadius: R.md, paddingVertical: 12, paddingHorizontal: 14, fontSize: T.md, color: C.text, backgroundColor: C.surface },
+  lavGrid:   { flexDirection: "row", flexWrap: "wrap", gap: S[2] },
+  lavBtn:    { width: "47%", flexDirection: "row", alignItems: "center", gap: S[2], borderWidth: 1, borderColor: C.border, borderRadius: R.md, paddingVertical: 11, paddingHorizontal: 11, backgroundColor: "transparent" },
+  lavBtnActive:{ borderColor: C.accent, backgroundColor: C.accent + "0D" },
+  lavLabel:  { fontSize: T.sm, color: C.sub, fontWeight: "600", flexShrink: 1 },
+  lavLabelActive:{ color: C.accent, fontWeight: "700" },
+  turRow:    { flexDirection: "row", gap: S[2] },
+  turBtn:    { flex: 1, alignItems: "center", paddingVertical: 12, borderRadius: R.md, borderWidth: 1, borderColor: C.border, backgroundColor: C.surface },
+  turBtnActive:{ backgroundColor: C.accent, borderColor: C.accent },
+  turTxt:    { fontSize: T.sm, fontWeight: "700", color: C.sub },
+  turTxtActive:{ color: "#FFF3E8" },
+  nonRow:    { flexDirection: "row", alignItems: "center", gap: S[2], marginBottom: S[2] },
+  nonNom:    { flex: 1, fontSize: T.sm, color: C.text },
+  nonInput:  { width: 120, borderWidth: 1, borderColor: C.border, borderRadius: R.sm, paddingVertical: 9, paddingHorizontal: 12, fontSize: T.sm, color: C.text, backgroundColor: C.surface, textAlign: "right" },
+  holatRow:  { flexDirection: "row", gap: S[2] },
+  holatBtn:  { flex: 1, borderWidth: 1, borderColor: C.border, borderRadius: R.md, paddingVertical: 11, alignItems: "center" },
+  holatBtnActive:{ borderColor: C.accent, backgroundColor: C.accent + "0D" },
+  holatTxt:  { fontSize: T.sm, color: C.sub, fontWeight: "600" },
+  holatTxtActive:{ color: C.accent, fontWeight: "700" },
+  hintSm:    { fontSize: 11, color: C.muted, marginTop: 5 },
+  formActions:{ marginTop: S[4], gap: S[2] },
+
+  // Section heading
   secHead:   { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginTop: S[4], marginBottom: S[3] },
   secHeadLeft:{ flexDirection: "row", alignItems: "center", gap: 6 },
   section:   { fontSize: T.xs, fontWeight: "800", letterSpacing: 1.2 },
   secSum:    { fontSize: T.xs, fontWeight: "700" },
-  gap12:     { height: S[3] },
-  gap14:     { height: S[4] },
+
+  // Ro'yxat
   item:      { marginBottom: S[3] },
   left:      { flexDirection: "row", alignItems: "center", gap: S[3], flex: 1 },
   flex1:     { flex: 1 },
@@ -418,10 +439,9 @@ const styles = StyleSheet.create({
   statePill: { flexDirection: "row", alignItems: "center", gap: 4, paddingVertical: 3, paddingHorizontal: 10, borderRadius: R.pill },
   stateTxt:  { fontSize: 11, fontWeight: "700", letterSpacing: 0.2 },
   tatilBadge:{ flexDirection: "row", alignItems: "center", gap: 4, backgroundColor: C.accent + "14", paddingVertical: 3, paddingHorizontal: 8, borderRadius: R.pill },
-  tatilBadgeTxt: { fontSize: 10, fontWeight: "700", color: C.accent, letterSpacing: 0.2 },
+  tatilBadgeTxt:{ fontSize: 10, fontWeight: "700", color: C.accent, letterSpacing: 0.2 },
   haq:       { fontSize: T.sm, fontWeight: "800", color: C.accent },
   tatil:     { fontSize: T.xs, color: C.muted, marginTop: 6 },
-  hintSm:    { fontSize: 11, color: C.muted, marginTop: 5 },
   haqWrap:   { marginTop: S[3], borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: C.borderSoft, paddingTop: S[2] },
   haqRow:    { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 5 },
   haqNom:    { flex: 1, fontSize: T.sm, color: C.text },
@@ -430,30 +450,4 @@ const styles = StyleSheet.create({
   bodyActions:{ flexDirection: "row", flexWrap: "wrap", justifyContent: "flex-end", gap: S[3], rowGap: S[2], marginTop: S[3], borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: C.borderSoft, paddingTop: S[3] },
   actBtn:    { flexDirection: "row", alignItems: "center" },
   actTxt:    { fontSize: T.sm, fontWeight: "700" },
-
-  // Modal
-  modalHead:  { flexDirection: "row", alignItems: "center", gap: S[2], marginBottom: S[3] },
-  modalTitle: { fontSize: T.lg, fontWeight: "800", color: C.text },
-  formScroll: { maxHeight: 440 },
-  inputLabel: { fontSize: T.xs, color: C.sub, fontWeight: "600", marginBottom: 6, marginTop: S[2], letterSpacing: 0.3 },
-  input: { borderWidth: 1, borderColor: C.border, borderRadius: R.md, paddingVertical: 12, paddingHorizontal: 14, fontSize: T.md, color: C.text, backgroundColor: C.surface },
-  lavGrid:   { flexDirection: "row", flexWrap: "wrap", gap: S[2] },
-  lavBtn: { width: "47%", flexDirection: "row", alignItems: "center", gap: S[2], borderWidth: 1, borderColor: C.border, borderRadius: R.md, paddingVertical: 11, paddingHorizontal: 11, backgroundColor: "transparent" },
-  lavBtnActive: { borderColor: C.accent, backgroundColor: C.accent + "0D" },
-  lavLabel:     { fontSize: T.sm, color: C.sub, fontWeight: "600", flexShrink: 1 },
-  lavLabelActive: { color: C.accent, fontWeight: "700" },
-  turRow:    { flexDirection: "row", gap: S[2] },
-  turBtn:    { flex: 1, alignItems: "center", paddingVertical: 12, borderRadius: R.md, borderWidth: 1, borderColor: C.border, backgroundColor: C.surface },
-  turBtnActive: { backgroundColor: C.accent, borderColor: C.accent },
-  turTxt:    { fontSize: T.sm, fontWeight: "700", color: C.sub },
-  turTxtActive: { color: "#FFF3E8" },
-  nonRow:    { flexDirection: "row", alignItems: "center", gap: S[2], marginBottom: S[2] },
-  nonNom:    { flex: 1, fontSize: T.sm, color: C.text },
-  nonInput:  { width: 120, borderWidth: 1, borderColor: C.border, borderRadius: R.sm, paddingVertical: 9, paddingHorizontal: 12, fontSize: T.sm, color: C.text, backgroundColor: C.surface, textAlign: "right" },
-  holatRow:  { flexDirection: "row", gap: S[2] },
-  holatBtn:  { flex: 1, borderWidth: 1, borderColor: C.border, borderRadius: R.md, paddingVertical: 11, alignItems: "center" },
-  holatBtnActive: { borderColor: C.accent, backgroundColor: C.accent + "0D" },
-  holatTxt:  { fontSize: T.sm, color: C.sub, fontWeight: "600" },
-  holatTxtActive: { color: C.accent, fontWeight: "700" },
-  modalRow:   { gap: S[2] },
 });
