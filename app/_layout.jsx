@@ -29,6 +29,7 @@ export default function RootLayout() {
             <Stack.Screen name="brak" />
             <Stack.Screen name="xarajat" />
             <Stack.Screen name="qop" />
+            <Stack.Screen name="tarix" />
           </Stack>
           {splash && <Splash onDone={() => setSplash(false)} />}
         </AppDataProvider>

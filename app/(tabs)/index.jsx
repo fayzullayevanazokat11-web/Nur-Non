@@ -9,7 +9,6 @@ import { router } from "expo-router";
 import { useApp } from "../../src/store/AppData";
 import { Card } from "../../src/components/Card";
 import { BrandHeader } from "../../src/components/BrandHeader";
-import { ExpandableCard } from "../../src/components/ExpandableCard";
 import { ScrollBox } from "../../src/components/ScrollBox";
 import { C, T, S, R } from "../../src/theme";
 import { hisoblaKunlik, formatSom, qarzJami, optomJami, kartaJami, ishchiHaqlari } from "../../src/logic/hisob";
@@ -32,7 +31,7 @@ export default function Markaz() {
   const {
     nonlar, ishchilar, qarzlar, optomlar, kartalar,
     ozIshlabQoplar, tashqariSonlar, sotilmaganNon, mahsulotNarxlari,
-    hisobotlarTarixi, setHisobotlarTarixi, braklar,
+    hisobotlarTarixi, braklar,
     boshlangichQoldiq, qoldaYaroqsiz, kunlikXarajatlar, oxirgiYakunlashVaqti,
     lockedDayStats,
   } = useApp();
@@ -96,11 +95,6 @@ export default function Markaz() {
     if (locked) return locked.xarajatSoni;
     return (kunlikXarajatlar || []).filter((x) => x.sana === bugunSanasi && yangiYozuv(x)).length;
   }, [locked, kunlikXarajatlar, oxirgiYakunlashVaqti, bugunSanasi]);
-
-  const ochirHisobot = (id) => Alert.alert("O'chirish", "Shu sanadagi hisobotni o'chirasizmi?", [
-    { text: "Bekor", style: "cancel" },
-    { text: "Ha", style: "destructive", onPress: () => setHisobotlarTarixi((p) => p.filter((h) => h.id !== id)) },
-  ]);
 
   return (
     <SafeAreaView style={styles.safe} edges={["top"]}>
@@ -195,62 +189,23 @@ export default function Markaz() {
           </Card>
         )}
 
-        {/* KUNLIK HISOBOTLAR TARIXI (30 kun) */}
-        <View style={styles.secHead}>
-          <View style={styles.secHeadLeft}>
-            <Ionicons name="calendar-outline" size={13} color={C.sub} />
-            <Text style={styles.section}>KUNLIK HISOBOTLAR (30 kun)</Text>
+        {/* HISOBOTLAR TARIXI — alohida sahifaga olib boradi (Markaz toza turishi uchun) */}
+        <Pressable
+          accessibilityLabel="Hisobotlar tarixi"
+          accessibilityRole="button"
+          onPress={() => router.push("/tarix")}
+          android_ripple={{ color: C.accent + "1A" }}
+          style={({ pressed }) => [styles.xarajatBtn, pressed && styles.xarajatBtnPressed]}
+        >
+          <View style={[styles.navIcon, { backgroundColor: C.accent + "14" }]}>
+            <Ionicons name="calendar-outline" size={22} color={C.accent} />
           </View>
-          <Text style={[styles.secSum, { color: C.accent }]}>{(hisobotlarTarixi || []).length} ta</Text>
-        </View>
-        {(hisobotlarTarixi || []).length === 0 ? (
-          <Text style={styles.bosh}>Hali hisobot yo'q</Text>
-        ) : (
-          [...hisobotlarTarixi].slice(0, 30).map((h) => (
-            <ExpandableCard
-              key={h.id}
-              style={styles.item}
-              header={
-                <View style={styles.mHead}>
-                  <Text style={[styles.itemIsm, styles.flex1]} numberOfLines={1}>{h.sana}</Text>
-                  <Text style={[styles.itemSumma, { color: (h.sofFoyda || 0) >= 0 ? C.green : C.red }]} numberOfLines={1}>{formatSom(h.sofFoyda)} so'm</Text>
-                </View>
-              }
-            >
-              <View style={styles.histWrap}>
-                {(h.nonlarSnapshot || nonlar).map((n) => {
-                  const oz = n.ozIshlab !== false;
-                  const q = oz ? (parseInt((h.ozIshlabQoplar || {})[n.id]) || 0) : (parseInt((h.tashqariSonlar || {})[n.id]) || 0);
-                  if (q <= 0) return null;
-                  return (
-                    <View key={n.id} style={styles.histRow}>
-                      <Text style={styles.histNom} numberOfLines={1}>{n.nom}</Text>
-                      <Text style={styles.histVal}>{q} {oz ? "qop" : "dona"}</Text>
-                    </View>
-                  );
-                })}
-                <View style={styles.histDiv} />
-                <View style={styles.histRow}><Text style={styles.histNom}>Daromad</Text><Text style={styles.histVal}>{formatSom(h.daromad)} so'm</Text></View>
-                <View style={styles.histRow}><Text style={styles.histNom}>Xomashyo</Text><Text style={styles.histVal}>{formatSom(h.xomashyo)} so'm</Text></View>
-                <View style={styles.histRow}><Text style={styles.histNom}>Ishchi haqi</Text><Text style={styles.histVal}>{formatSom(h.ishchiHaq)} so'm</Text></View>
-                {(h.ishchiHaqlari || []).map((w) => (
-                  <View key={w.id} style={styles.histSubRow}>
-                    <Text style={styles.histSubNom} numberOfLines={1}>· {w.ism}{w.brak > 0 ? ` (brak −${formatSom(w.brak)})` : ""}</Text>
-                    <Text style={styles.histSubVal}>{formatSom(w.net)} so'm</Text>
-                  </View>
-                ))}
-                <View style={styles.histRow}><Text style={styles.histNom}>Ishlab / sotilgan</Text><Text style={styles.histVal}>{h.jamiNon || 0} / {h.sotilganNon || 0} dona</Text></View>
-                <View style={styles.histRow}><Text style={styles.histNomB}>Sof foyda</Text><Text style={styles.histValB}>{formatSom(h.sofFoyda)} so'm</Text></View>
-              </View>
-              <View style={styles.actions}>
-                <Pressable accessibilityLabel="O'chirish" onPress={() => ochirHisobot(h.id)} hitSlop={6} style={styles.actBtn}>
-                  <Ionicons name="trash-outline" size={16} color={C.red} />
-                  <Text style={[styles.actTxt, { color: C.red }]}> O'chirish</Text>
-                </Pressable>
-              </View>
-            </ExpandableCard>
-          ))
-        )}
+          <View style={styles.flex1}>
+            <Text style={styles.xarajatLabel}>Hisobotlar tarixi</Text>
+            <Text style={styles.xarajatSub}>{(hisobotlarTarixi || []).length} ta hisobot · 30 kun</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={18} color={C.muted} />
+        </Pressable>
       </ScrollBox>
 
     </SafeAreaView>

@@ -71,6 +71,18 @@ export function HisobotModal({ visible, onClose }) {
           <Row label="Sotilgan" value={`${data.kunlik.sotilganNon} dona`} />
           <Row label="Yaroqsiz" value={`${data.kunlik.jamiYaroqsiz} dona`} color={data.kunlik.jamiYaroqsiz > 0 ? C.red : C.text} />
           <Row label="Ertangi qoldiq" value={`${data.kunlik.jamiQoldiq} dona`} color={C.accent} bold />
+          <Row label="Daromad" value={`${formatSom(data.kunlik.daromad)} so'm`} />
+          <Row label="Ishchi haqi" value={`− ${formatSom(data.kunlik.ishchiHaq)} so'm`} color={C.red} />
+          {/* KUN OXIRI — kunlik aylanma − ishchi haqi (sof foydadan ham muhim ko'rsatkich) */}
+          <View style={styles.kunOxiriBox}>
+            <View style={styles.kunOxiriRow}>
+              <Text style={styles.kunOxiriLbl}>Kun oxiri</Text>
+              <Text style={[styles.kunOxiriVal, { color: (data.kunlik.daromad - data.kunlik.ishchiHaq) >= 0 ? C.accent : C.red }]}>
+                {formatSom((data.kunlik.daromad || 0) - (data.kunlik.ishchiHaq || 0))} so'm
+              </Text>
+            </View>
+            <Text style={styles.kunOxiriHint}>Kunlik aylanma − ishchilar haqi</Text>
+          </View>
           <Row label="Sof foyda" value={`${formatSom(data.kunlik.sofFoyda)} so'm`} color={data.kunlik.sofFoyda >= 0 ? C.green : C.red} bold />
         </View>
 
@@ -174,6 +186,11 @@ const styles = StyleSheet.create({
   footer:    { padding: S[5], borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: C.borderSoft },
   block:     { borderRadius: R.md, borderWidth: 1, borderColor: C.border, padding: S[3], marginBottom: S[2], backgroundColor: C.surface },
   blockHead: { fontSize: T.sm, fontWeight: "700", color: C.text, marginBottom: S[2] },
+  kunOxiriBox: { marginTop: S[2], marginBottom: S[2], backgroundColor: C.accent + "1A", borderWidth: 1, borderColor: C.accent + "3D", borderRadius: R.md, paddingVertical: S[2], paddingHorizontal: S[3] },
+  kunOxiriRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+  kunOxiriLbl: { fontSize: T.sm, color: C.text, fontWeight: "800", flex: 1 },
+  kunOxiriVal: { fontSize: T.md, fontWeight: "800", marginLeft: S[2] },
+  kunOxiriHint:{ fontSize: 10, color: C.muted, marginTop: 2, fontStyle: "italic" },
   row:       { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 5 },
   rowLabel:  { fontSize: T.sm, color: C.sub },
   rowVal:    { fontSize: T.sm },
