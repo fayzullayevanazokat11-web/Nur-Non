@@ -24,7 +24,8 @@ const localSana = () => {
 export default function Xarajat() {
   const { kunlikXarajatlar, setKunlikXarajatlar } = useApp();
   const bugun = localSana();
-  const BOSH = { summa: "", izoh: "", sana: bugun };
+  // sana: bo'sh bo'lsa => "avtomatik bugun" har save'da yangidan hisoblanadi
+  const BOSH = { summa: "", izoh: "", sana: "", sanaTanlandi: false };
   const [tahrirId, setTahrirId] = useState(null);
   const scrollRef = useRef(null);
   const [forma, setForma] = useState(BOSH);
@@ -43,10 +44,12 @@ export default function Xarajat() {
   );
 
   const yangila = (k, v) => setForma((p) => ({ ...p, [k]: v }));
+  const yangilaSana = (v) => setForma((p) => ({ ...p, sana: v, sanaTanlandi: true }));
   const tozala = () => { setForma(BOSH); setTahrirId(null); };
 
   const tahrirla = (x) => {
-    setForma({ summa: String(x.summa || ""), izoh: x.izoh || "", sana: x.sana || bugun });
+    // Mavjud yozuv sanasi tahrirlash uchun "qo'lda tanlangan" deb hisoblanadi
+    setForma({ summa: String(x.summa || ""), izoh: x.izoh || "", sana: x.sana || bugun, sanaTanlandi: true });
     setTahrirId(x.id); setTimeout(() => scrollRef.current?.scrollToTop?.(true), 50);
   };
 
@@ -54,7 +57,8 @@ export default function Xarajat() {
     const summa = parseFloat(forma.summa) || 0;
     if (!summa) { Alert.alert("Summa kiritilmagan", "Iltimos, xarajat summasini kiriting."); return; }
     if (!forma.izoh.trim()) { Alert.alert("Izoh kiritilmagan", "Xarajat nimaga ketganini yozing."); return; }
-    const sana = forma.sana || bugun;
+    // Qo'lda tanlanmagan bo'lsa har save'da joriy kun (uzoq vaqt ochiq qolsa ham to'g'ri)
+    const sana = forma.sanaTanlandi && forma.sana ? forma.sana : localSana();
     if (tahrirId) {
       setKunlikXarajatlar((prev) => prev.map((x) => x.id === tahrirId ? { ...x, summa, izoh: forma.izoh.trim(), sana } : x));
     } else {
@@ -96,7 +100,8 @@ export default function Xarajat() {
           </View>
 
           <Text style={styles.inputLabel}>Sana</Text>
-          <DateField value={forma.sana} onChange={(v) => yangila("sana", v)} />
+          <DateField value={forma.sana || bugun} onChange={yangilaSana} />
+          {!forma.sanaTanlandi && <Text style={styles.hint}>Bugungi kun avtomatik. Boshqa sana uchun kalendarni oching.</Text>}
 
           <Text style={styles.inputLabel}>Summa (so'm) *</Text>
           <TextInput value={forma.summa} onChangeText={(v) => yangila("summa", v)} placeholder="0" placeholderTextColor={C.muted} keyboardType="numeric" style={styles.input} />
@@ -174,6 +179,7 @@ const styles = StyleSheet.create({
   inputLabel:{ fontSize: T.xs, color: C.sub, fontWeight: "600", marginBottom: 6, marginTop: S[3], letterSpacing: 0.3 },
   input:    { borderWidth: 1, borderColor: C.border, borderRadius: R.md, paddingVertical: 12, paddingHorizontal: 14, fontSize: T.md, color: C.text, backgroundColor: C.surface },
   inputMulti:{ minHeight: 72, textAlignVertical: "top" },
+  hint:     { fontSize: 11, color: C.muted, marginTop: 5, fontStyle: "italic" },
   formActions:{ marginTop: S[4], gap: S[2] },
 
   secHead:  { flexDirection: "row", alignItems: "center", gap: 6, marginBottom: S[3] },

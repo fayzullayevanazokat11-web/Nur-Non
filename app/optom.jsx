@@ -22,7 +22,7 @@ const localSana = () => {
 
 export default function Optom() {
   const { nonlar, optomlar, setOptomlar, mahsulotNarxlari } = useApp();
-  const BOSH = { ism: "", izoh: "", sana: localSana(), savat: {}, donaChegirma: "", chegirma: "" };
+  const BOSH = { ism: "", izoh: "", sana: "", sanaTanlandi: false, savat: {}, donaChegirma: "", chegirma: "" };
   const [forma, setForma] = useState(BOSH);
 
   const optom = useMemo(() => optomJami(optomlar), [optomlar]);
@@ -47,12 +47,13 @@ export default function Optom() {
 
   const yangila = (k, v) => setForma((p) => ({ ...p, [k]: v }));
   const yangilaSavat = (id, v) => setForma((p) => ({ ...p, savat: { ...p.savat, [id]: v } }));
-  const tozala = () => setForma({ ...BOSH, sana: localSana() });
+  const tozala = () => setForma(BOSH);
+  const yangilaSana = (v) => setForma((p) => ({ ...p, sana: v, sanaTanlandi: true }));
 
   const saqla = () => {
     if (!forma.ism.trim()) { Alert.alert("Ism kiritilmagan", "Iltimos, xaridor ismini kiriting."); return; }
     if (savatHisob.items.length === 0) { Alert.alert("Non tanlanmagan", "Kamida bitta non turidan soni kiriting."); return; }
-    const sana = forma.sana || localSana();
+    const sana = forma.sanaTanlandi && forma.sana ? forma.sana : localSana();
     setOptomlar((prev) => [...prev, {
       id: Date.now(), ism: forma.ism.trim(), sana, vaqt: Date.now(),
       savat: savatHisob.items, summa: savatHisob.yakSumma, chegirma: savatHisob.jamiChegirma,
@@ -91,7 +92,8 @@ export default function Optom() {
           </View>
 
           <Text style={styles.inputLabel}>Sana</Text>
-          <DateField value={forma.sana} onChange={(v) => yangila("sana", v)} />
+          <DateField value={forma.sana || localSana()} onChange={yangilaSana} />
+          {!forma.sanaTanlandi && <Text style={styles.hint}>Bugungi kun avtomatik. Boshqa sana uchun kalendarni oching.</Text>}
 
           <Text style={styles.inputLabel}>Xaridor *</Text>
           <TextInput value={forma.ism} onChangeText={(v) => yangila("ism", v)} placeholder="Ism familiya" placeholderTextColor={C.muted} style={styles.input} />
@@ -194,6 +196,7 @@ const styles = StyleSheet.create({
   inputLabel:{ fontSize: T.xs, color: C.sub, fontWeight: "600", marginBottom: 6, marginTop: S[3], letterSpacing: 0.3 },
   input:    { borderWidth: 1, borderColor: C.border, borderRadius: R.md, paddingVertical: 12, paddingHorizontal: 14, fontSize: T.md, color: C.text, backgroundColor: C.surface },
   inputMulti:{ minHeight: 64, textAlignVertical: "top" },
+  hint:     { fontSize: 11, color: C.muted, marginTop: 5, fontStyle: "italic" },
   savatRow: { flexDirection: "row", alignItems: "center", gap: S[2], marginBottom: S[2] },
   savatNom: { flex: 1, fontSize: T.sm, color: C.text },
   savatNarx:{ fontSize: T.xs, color: C.muted, width: 70, textAlign: "right" },

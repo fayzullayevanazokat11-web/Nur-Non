@@ -33,7 +33,9 @@ export default function Qop() {
     setHisobotlarTarixi, setOmborSorovlar,
   } = useApp();
 
-  const [kunlikSana, setKunlikSana] = useState(localSana());
+  // Hisobot sanasi: bo'sh "" => avtomatik bugun har yakunlash'da.
+  const [kunlikSana, setKunlikSana] = useState("");
+  const [sanaTanlandi, setSanaTanlandi] = useState(false);
   const [hisobotOchiq, setHisobotOchiq] = useState(false);
   const [fQop, setFQop] = useState(toStr(ozIshlabQoplar));
   const [fTash, setFTash] = useState(toStr(tashqariSonlar));
@@ -86,7 +88,7 @@ export default function Qop() {
         // Yakunlash vaqti — bundan keyin yangi qo'shilgan karta/brak/xarajat
         // "bugungi" hisoblanadi. Oldingilari avtomatik tarixga aylanadi.
         setOxirgiYakunlashVaqti(Date.now());
-        const sana = kunlikSana || localSana();
+        const sana = sanaTanlandi && kunlikSana ? kunlikSana : localSana();
         const snap = {
           id: Date.now(), sana, vaqt: Date.now(),
           boshlangichQoldiq, ozIshlabQoplar: fQop, tashqariSonlar: fTash, qoldaYaroqsiz: fYaroqsiz, sotilmaganNon: fSot,
@@ -116,7 +118,7 @@ export default function Qop() {
     setBoshlangichQoldiq(fSot || {});
     setSotilmaganNon({}); setOzIshlabQoplar({}); setTashqariSonlar({}); setQoldaYaroqsiz({});
     setFQop({}); setFTash({}); setFSot({}); setFYaroqsiz({});
-    setKunlikSana(localSana());
+    setKunlikSana(""); setSanaTanlandi(false);
     router.back();
   };
 
@@ -140,7 +142,8 @@ export default function Qop() {
         {/* Hisobot sanasi */}
         <Card accent style={styles.card}>
           <Text style={styles.fieldLabel}>Hisobot sanasi</Text>
-          <DateField value={kunlikSana} onChange={setKunlikSana} />
+          <DateField value={kunlikSana || localSana()} onChange={(v) => { setKunlikSana(v); setSanaTanlandi(true); }} />
+          {!sanaTanlandi && <Text style={styles.sanaHint}>Bugungi kun avtomatik. Boshqa sana uchun kalendarni oching.</Text>}
         </Card>
 
         {/* Per-non kiritish */}
@@ -284,6 +287,7 @@ const styles = StyleSheet.create({
   cardTitleRow: { flexDirection: "row", alignItems: "center", gap: 6 },
   cardTitle: { fontSize: T.md, fontWeight: "700", color: C.text },
   fieldLabel: { fontSize: T.xs, color: C.sub, fontWeight: "600", marginBottom: 6, letterSpacing: 0.3 },
+  sanaHint:   { fontSize: 11, color: C.muted, marginTop: 6, fontStyle: "italic" },
   gap10: { height: S[3] },
   gap14: { height: S[4] },
 
