@@ -34,38 +34,68 @@ export default function Markaz() {
     ozIshlabQoplar, tashqariSonlar, sotilmaganNon, mahsulotNarxlari,
     hisobotlarTarixi, setHisobotlarTarixi, braklar,
     boshlangichQoldiq, qoldaYaroqsiz, kunlikXarajatlar, oxirgiYakunlashVaqti,
+    lockedDayStats,
   } = useApp();
 
-  // "Bugungi" = oxirgi yakunlashdan keyin kiritilgan yozuvlar.
-  // Yakunlash bo'lganidan oldingi karta/brak/xarajat — Markaz hisobida ko'rinmaydi
-  // (avtomatik tarixga aylanadi, tarix ekranlarida 7 kun ko'rinib turadi).
-  const yangiYozuv = (e) => (e.vaqt || 0) > (oxirgiYakunlashVaqti || 0);
-  const bugungiKarta = useMemo(() => (kartalar || []).filter(yangiYozuv), [kartalar, oxirgiYakunlashVaqti]);
-  const bugungiBrak  = useMemo(() => (braklar  || []).filter(yangiYozuv), [braklar,  oxirgiYakunlashVaqti]);
-  const bugungiOptom = useMemo(() => (optomlar || []).filter(yangiYozuv), [optomlar, oxirgiYakunlashVaqti]);
-  const bugungiQarz  = useMemo(() => (qarzlar  || []).filter(yangiYozuv), [qarzlar,  oxirgiYakunlashVaqti]);
+  const bugunSanasi = localSana();
 
-  const stats = useMemo(
+  // ── MUHRLANGAN KUN (Lock) ──
+  // "Kunni tugatish" bosilgan bo'lsa va o'sha kun hali tugamagan bo'lsa (23:59 dan oldin)
+  // — Markaz ko'rsatkichlarini yakunlash paytidagi muhrlangan snapshotdan o'qiymiz.
+  // Aks holda jonli (live) hisob-kitob bo'ladi. Sana o'zgarishi bilan (ertaga) lock o'z-o'zidan
+  // tarqaladi va ko'rsatkichlar yangi kun uchun jonli yangilanadi.
+  const locked = useMemo(() => {
+    if (!lockedDayStats) return null;
+    if (lockedDayStats.sana !== bugunSanasi) return null;
+    if (lockedDayStats.lockedUntil && Date.now() > lockedDayStats.lockedUntil) return null;
+    return lockedDayStats.snapshot || null;
+  }, [lockedDayStats, bugunSanasi]);
+
+  // Bugungi yozuvlar — sana + oxirgiYakunlashVaqti filtri bilan (lock paytida
+  // Markaz baribir locked.snapshot'dan o'qiydi, lekin bu filterlar tahlil va
+  // ishchi haqi uchun ham ishlatiladi).
+  const yangiYozuv = (e) => (e.vaqt || 0) > (oxirgiYakunlashVaqti || 0);
+  const bugSanasi = (e) => e.sana === bugunSanasi;
+  const bugungiKarta = useMemo(() => (kartalar || []).filter((e) => bugSanasi(e) && yangiYozuv(e)), [kartalar, oxirgiYakunlashVaqti, bugunSanasi]);
+  const bugungiBrak  = useMemo(() => (braklar  || []).filter((e) => bugSanasi(e) && yangiYozuv(e)), [braklar,  oxirgiYakunlashVaqti, bugunSanasi]);
+  const bugungiOptom = useMemo(() => (optomlar || []).filter((e) => bugSanasi(e) && yangiYozuv(e)), [optomlar, oxirgiYakunlashVaqti, bugunSanasi]);
+
+  const liveStats = useMemo(
     () => hisoblaKunlik({ nonlar, ishchilar, ozIshlabQoplar, tashqariSonlar, sotilmaganNon, optomlar, qarzlar, mahsulotNarxlari, braklar, boshlangichQoldiq, qoldaYaroqsiz, kunlikXarajatlar, oxirgiYakunlashVaqti }),
     [nonlar, ishchilar, ozIshlabQoplar, tashqariSonlar, sotilmaganNon, optomlar, qarzlar, mahsulotNarxlari, braklar, boshlangichQoldiq, qoldaYaroqsiz, kunlikXarajatlar, oxirgiYakunlashVaqti]
   );
+  // Lock bo'lsa — snapshot, aks holda jonli hisob:
+  const stats = locked ? { ...liveStats, ...locked } : liveStats;
+
   const bugungiHaq = useMemo(
     () => ishchiHaqlari(nonlar, ishchilar, ozIshlabQoplar, bugungiBrak),
     [nonlar, ishchilar, ozIshlabQoplar, bugungiBrak]
   );
 
+  // Qarzlar — Lock ta'sir qilmaydi (doimiy qoldiq).
   const qarz = useMemo(() => qarzJami(qarzlar), [qarzlar]);
-  const optom = useMemo(() => optomJami(optomlar), [optomlar]);
-  const karta = useMemo(() => kartaJami(bugungiKarta), [bugungiKarta]);
-  const brakSumma = useMemo(() => bugungiBrak.reduce((s, b) => s + (parseFloat(b.summa) || 0), 0), [bugungiBrak]);
+  // Optom / Karta / Brak / Xarajat — Lock bo'lsa snapshotdan, bo'lmasa jonli:
+  const optom = useMemo(() => {
+    if (locked) return { summa: locked.optomSum, soni: locked.optomSoni };
+    return optomJami(bugungiOptom);
+  }, [locked, bugungiOptom]);
+  const karta = useMemo(() => {
+    if (locked) return { summa: locked.kartaSum, soni: locked.kartaSoni };
+    return kartaJami(bugungiKarta);
+  }, [locked, bugungiKarta]);
+  const brakSumma = useMemo(() => {
+    if (locked) return locked.brakSum;
+    return bugungiBrak.reduce((s, b) => s + (parseFloat(b.summa) || 0), 0);
+  }, [locked, bugungiBrak]);
+  const brakSoni = useMemo(() => locked ? locked.brakSoni : bugungiBrak.length, [locked, bugungiBrak]);
   const xarajatBugun = useMemo(() => {
-    const bugun = localSana();
-    return (kunlikXarajatlar || []).filter((x) => x.sana === bugun && yangiYozuv(x)).reduce((s, x) => s + (parseFloat(x.summa) || 0), 0);
-  }, [kunlikXarajatlar, oxirgiYakunlashVaqti]);
+    if (locked) return locked.xarajatSum;
+    return (kunlikXarajatlar || []).filter((x) => x.sana === bugunSanasi && yangiYozuv(x)).reduce((s, x) => s + (parseFloat(x.summa) || 0), 0);
+  }, [locked, kunlikXarajatlar, oxirgiYakunlashVaqti, bugunSanasi]);
   const xarajatSoni = useMemo(() => {
-    const bugun = localSana();
-    return (kunlikXarajatlar || []).filter((x) => x.sana === bugun && yangiYozuv(x)).length;
-  }, [kunlikXarajatlar, oxirgiYakunlashVaqti]);
+    if (locked) return locked.xarajatSoni;
+    return (kunlikXarajatlar || []).filter((x) => x.sana === bugunSanasi && yangiYozuv(x)).length;
+  }, [locked, kunlikXarajatlar, oxirgiYakunlashVaqti, bugunSanasi]);
 
   const ochirHisobot = (id) => Alert.alert("O'chirish", "Shu sanadagi hisobotni o'chirasizmi?", [
     { text: "Bekor", style: "cancel" },
@@ -125,7 +155,7 @@ export default function Markaz() {
           />
           <NavTile image={ICONS.brak} tint={C.red}
             label="Brak"
-            sub={`${formatSom(brakSumma)} so'm • ${(braklar || []).length} ta`}
+            sub={`${formatSom(brakSumma)} so'm • ${brakSoni} ta`}
             onPress={() => router.push("/brak")}
           />
         </View>

@@ -44,6 +44,10 @@ export function AppDataProvider({ children }) {
   // filtri: faqat vaqti > shu qiymat bo'lganlar "hozirgi kun"da hisoblanadi.
   // Yakunlangandan keyin oldingilari avtomatik tarixga o'tadi.
   const [oxirgiYakunlashVaqti, setOxirgiYakunlashVaqti] = usePersistedState("nurnon:oxirgiYakunlashVaqti", 0);
+  // "Kunni tugatish" → Markaz ko'rsatkichlari shu kunning oxirigacha
+  // (23:59) muhrlangan qiymatda turadi. Tuzilishi: { sana, lockedUntil, snapshot }.
+  // Snapshot ichida sofFoyda, kartaSum, brakSum, optomSum, xarajatSum va h.k.
+  const [lockedDayStats, setLockedDayStats]             = usePersistedState("nurnon:lockedDayStats", null);
 
   // ── Vaqtinchalik oqim bayroqlari (saqlanmaydi) ──
   const [qopTasdiqlandi, setQopTasdiqlandi]       = useState(false);
@@ -112,6 +116,7 @@ export function AppDataProvider({ children }) {
     qoldaYaroqsiz, setQoldaYaroqsiz,
     kunlikXarajatlar, setKunlikXarajatlar,
     oxirgiYakunlashVaqti, setOxirgiYakunlashVaqti,
+    lockedDayStats, setLockedDayStats,
     qopTasdiqlandi, setQopTasdiqlandi,
     hisobotYopildi, setHisobotYopildi,
   };

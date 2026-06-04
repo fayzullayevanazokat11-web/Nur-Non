@@ -24,12 +24,13 @@ const localSana = () => {
 
 export default function Qop() {
   const {
-    nonlar, ishchilar, optomlar, qarzlar, mahsulotNarxlari, braklar,
+    nonlar, ishchilar, optomlar, qarzlar, mahsulotNarxlari, braklar, kartalar,
     ozIshlabQoplar, setOzIshlabQoplar, tashqariSonlar, setTashqariSonlar,
     sotilmaganNon, setSotilmaganNon,
     boshlangichQoldiq, setBoshlangichQoldiq, qoldaYaroqsiz, setQoldaYaroqsiz,
     kunlikXarajatlar,
     oxirgiYakunlashVaqti, setOxirgiYakunlashVaqti,
+    setLockedDayStats,
     setHisobotlarTarixi, setOmborSorovlar,
   } = useApp();
 
@@ -79,16 +80,59 @@ export default function Qop() {
       Alert.alert("Ma'lumot yo'q", "Avval kunlik qop hisobiga ma'lumot kiriting.");
       return;
     }
-    Alert.alert("Kunni yakunlash", "Bugungi ma'lumot tarixga saqlanadi va ko'rsatkichlar nollanadi. Davom etasizmi?", [
+    Alert.alert("Kunni yakunlash", "Bugungi ma'lumot tarixga (history) yoziladi. Ekrandagi ko'rsatkichlar shu kunning oxirigacha (23:59) muhrlangan ko'rinishda qotib turadi. Davom etasizmi?", [
       { text: "Bekor", style: "cancel" },
       { text: "Yakunlash", onPress: () => {
-        // Avval formani saqlaymiz (snapshot uchun)
+        // ── Avval formani saqlash ──
         setOzIshlabQoplar(fQop); setTashqariSonlar(fTash); setSotilmaganNon(fSot); setQoldaYaroqsiz(fYaroqsiz);
         setTegildi(false);
-        // Yakunlash vaqti — bundan keyin yangi qo'shilgan karta/brak/xarajat
-        // "bugungi" hisoblanadi. Oldingilari avtomatik tarixga aylanadi.
-        setOxirgiYakunlashVaqti(Date.now());
         const sana = sanaTanlandi && kunlikSana ? kunlikSana : localSana();
+        const endOfDay = (() => {
+          const d = new Date(); d.setHours(23, 59, 59, 999);
+          return d.getTime();
+        })();
+
+        // ── 1) ARXIV: bugungi karta/optom/brak/xarajat yozuvlarini snap ichiga
+        //    olamiz (jadval o'chmaydi, ular hisobotlarTarixi'ga ham yoziladi)
+        const ms = (e) => e?.vaqt || (e?.sana ? Date.parse(e.sana) : 0);
+        const yangi = (e) => ms(e) > (oxirgiYakunlashVaqti || 0);
+        const bugKarta   = (kartalar || []).filter((e) => e.sana === sana && yangi(e));
+        const bugBrak    = (braklar  || []).filter((e) => e.sana === sana && yangi(e));
+        const bugOptom   = (optomlar || []).filter((e) => e.sana === sana && yangi(e));
+        const bugXarajat = (kunlikXarajatlar || []).filter((e) => e.sana === sana && yangi(e));
+        // Qarz: TEGILMAYDI (doimiy qoldiq sifatida qoladi)
+
+        const sum = (arr, key) => arr.reduce((s, x) => s + (parseFloat(x[key]) || 0), 0);
+        const kartaSum    = sum(bugKarta, "summa");
+        const kartaFoyda  = sum(bugKarta, "sofFoyda");
+        const brakSum     = sum(bugBrak, "summa");
+        const optomSum    = sum(bugOptom, "summa");
+        const optomFoyda  = sum(bugOptom, "sofFoyda");
+        const xarajatSum  = sum(bugXarajat, "summa");
+
+        // ── 2) LOCK: 23:59 gacha Markaz'da ko'rsatkichlar shu qiymatda qotib turadi
+        setLockedDayStats({
+          sana,
+          lockedUntil: endOfDay,
+          snapshot: {
+            sofFoyda:    stats.sofFoyda,
+            sotilganNon: stats.sotilganNon,
+            jamiQop:     stats.jamiQop,
+            jamiNon:     stats.jamiNon,
+            jamiBoshlang:stats.jamiBoshlang,
+            daromad:     stats.daromad,
+            xomashyo:    stats.xomashyo,
+            ishchiHaq:   stats.ishchiHaq,
+            xarajatJami: stats.xarajatJami,
+            kartaSum, kartaSoni: bugKarta.length, kartaFoyda,
+            brakSum,  brakSoni: bugBrak.length,
+            optomSum, optomSoni: bugOptom.length, optomFoyda,
+            xarajatSum, xarajatSoni: bugXarajat.length,
+          },
+        });
+
+        // ── 3) HISTORY: hisobotlarTarixi jadvaliga to'liq snap yoziladi
+        //    (bugungi karta/optom/brak/xarajat yozuvlari ham sana bilan birga)
         const snap = {
           id: Date.now(), sana, vaqt: Date.now(),
           boshlangichQoldiq, ozIshlabQoplar: fQop, tashqariSonlar: fTash, qoldaYaroqsiz: fYaroqsiz, sotilmaganNon: fSot,
@@ -99,12 +143,25 @@ export default function Qop() {
           sofFoyda: stats.sofFoyda, sotilganNon: stats.sotilganNon, jamiQop: stats.jamiQop, jamiNon: stats.jamiNon,
           jamiBoshlang: stats.jamiBoshlang, jamiQoldiq: stats.jamiQoldiq, jamiYaroqsiz: stats.jamiYaroqsiz,
           xarajatJami: stats.xarajatJami, ishchiHaqlari: haq.list,
+          // History qismi — bugungi yozuvlarning to'liq dumpi (Qarz YO'Q):
+          arxiv: {
+            kartalar:        bugKarta,
+            braklar:         bugBrak,
+            optomlar:        bugOptom,
+            kunlikXarajatlar:bugXarajat,
+            kartaSum, kartaFoyda, brakSum, optomSum, optomFoyda, xarajatSum,
+          },
         };
         setHisobotlarTarixi((prev) => [snap, ...(prev || []).filter((h) => h.sana !== sana)]);
+
         const sarf = kunlikXomashyoSarfi(nonlar, fQop);
         if (sarf.length > 0) {
           setOmborSorovlar((prev) => [{ id: Date.now() + 1, sana, vaqt: Date.now(), manba: "Kunlik qop hisobi", maydonlar: sarf }, ...(prev || []).filter((s) => s.sana !== sana)]);
         }
+
+        // ── 4) Yakunlash vaqti yangilanadi (kelajakdagi yangi yozuvlar uchun)
+        setOxirgiYakunlashVaqti(Date.now());
+
         setHisobotOchiq(true);
       }},
     ]);
