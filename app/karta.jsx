@@ -1,6 +1,6 @@
 // Karta to'lovlari ekrani — inline forma yuqorida (Markaz>Karta'ni bosgan ham
 // darrov yozib qo'shadi). Tugma + modal o'rniga doim ko'rinib turadigan kart.
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { View, Text, Image, Pressable, TextInput, StyleSheet, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -23,6 +23,7 @@ const BOSH = { summa: "", izoh: "" };
 export default function Karta() {
   const { nonlar, kartalar, setKartalar, mahsulotNarxlari } = useApp();
   const [tahrirId, setTahrirId] = useState(null);
+  const scrollRef = useRef(null);
   const [forma, setForma] = useState(BOSH);
 
   const karta = useMemo(() => kartaJami(kartalar), [kartalar]);
@@ -36,7 +37,7 @@ export default function Karta() {
 
   const tahrirla = (k) => {
     setForma({ summa: String(k.summa || ""), izoh: k.izoh || "" });
-    setTahrirId(k.id);
+    setTahrirId(k.id); setTimeout(() => scrollRef.current?.scrollToTop?.(true), 50);
   };
 
   const saqla = () => {
@@ -66,7 +67,7 @@ export default function Karta() {
 
   return (
     <SafeAreaView style={styles.safe} edges={["top"]}>
-      <ScrollBox contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+      <ScrollBox ref={scrollRef} contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
         <Pressable accessibilityLabel="Orqaga" onPress={() => router.back()} hitSlop={8} style={styles.backBtn}>
           <Ionicons name="chevron-back" size={20} color={C.text} />
           <Text style={styles.backTxt}>Markaz</Text>

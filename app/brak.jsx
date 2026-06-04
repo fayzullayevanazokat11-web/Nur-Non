@@ -1,6 +1,6 @@
 // Brak ekrani — inline forma yuqorida. Ishchini tanlab, har non turidan brak
 // donasini darrov yozish mumkin (modal yo'q).
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { View, Text, Image, Pressable, TextInput, StyleSheet, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -23,6 +23,7 @@ const BOSH = { ishchiId: null, dona: {} };
 export default function Brak() {
   const { nonlar, ishchilar, braklar, setBraklar } = useApp();
   const [tahrirId, setTahrirId] = useState(null);
+  const scrollRef = useRef(null);
   const [forma, setForma] = useState(BOSH);
 
   const qopIshchilar = (ishchilar || []).filter((w) => w.haqTuri === "qop" && w.holat === "Aktiv");
@@ -38,7 +39,7 @@ export default function Brak() {
 
   const tahrirla = (b) => {
     setForma({ ishchiId: b.ishchiId, dona: { [b.nonNomi]: String(b.soni || "") } });
-    setTahrirId(b.id);
+    setTahrirId(b.id); setTimeout(() => scrollRef.current?.scrollToTop?.(true), 50);
   };
 
   const saqla = () => {
@@ -79,7 +80,7 @@ export default function Brak() {
 
   return (
     <SafeAreaView style={styles.safe} edges={["top"]}>
-      <ScrollBox contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+      <ScrollBox ref={scrollRef} contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
         <Pressable accessibilityLabel="Orqaga" onPress={() => router.back()} hitSlop={8} style={styles.backBtn}>
           <Ionicons name="chevron-back" size={20} color={C.text} />
           <Text style={styles.backTxt}>Markaz</Text>

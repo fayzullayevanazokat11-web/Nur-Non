@@ -1,7 +1,7 @@
 // "Ishlab chiqarish" (assortiment) — inline forma yuqorida (modal yo'q).
 // Non: o'zimizniki (ingredient + 1 qopdan non soni → dona foydasi avtomatik)
 // yoki tashqaridan (donadan qoladigan foyda to'g'ridan kiritiladi).
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { View, Text, Pressable, TextInput, StyleSheet, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -29,12 +29,13 @@ function donaFoydasi(non, narxlar) {
 }
 
 export default function IshlabChiqarish() {
-  const { nonlar, setNonlar, ishchilar, mahsulotNarxlari, customMahsulotlar } = useApp();
+  const { nonlar, setNonlar, ishchilar, setIshchilar, mahsulotNarxlari, customMahsulotlar } = useApp();
   const royxat = xomashyoRoyxati(customMahsulotlar);
 
   const [tab, setTab] = useState("assortiment");
   const [tahrirId, setTahrirId] = useState(null);
   const [forma, setForma] = useState(BOSH);
+  const scrollRef = useRef(null);
 
   const yangila = (k, v) => setForma((p) => ({ ...p, [k]: v }));
   const yangilaIng = (id, v) => setForma((p) => ({ ...p, ing: { ...p.ing, [id]: v } }));
@@ -49,6 +50,8 @@ export default function IshlabChiqarish() {
       ing: oz ? Object.fromEntries((non.mahsulotlar || []).map((m) => [m.id, String(m.miqdor ?? "")])) : {},
     });
     setTahrirId(non.id);
+    // Forma yuqorida — avtomatik scroll qilamiz, foydalanuvchi qidirmasligi uchun
+    setTimeout(() => scrollRef.current?.scrollToTop?.(true), 50);
   };
 
   // Forma jonli hisoblari
@@ -77,7 +80,26 @@ export default function IshlabChiqarish() {
       yangi = { nom: forma.nom.trim(), narx, ozIshlab: false, nonSoni: 0, tashqariFoyda: parseFloat(forma.donaFoyda) || 0, mahsulotlar: [] };
     }
     if (tahrirId) {
+      // Tahrirlash: nomi o'zgargan yoki "tashqaridan"ga o'zgargan bo'lsa ishchilar nonNarxlari/nonTurlari'ni sinxronlaymiz
+      const eski = nonlar.find((n) => n.id === tahrirId);
+      const eskiNom = eski?.nom;
+      const yangiNom = yangi.nom;
+      const yangiOz = yangi.ozIshlab;
       setNonlar((prev) => prev.map((n) => (n.id === tahrirId ? { ...n, ...yangi } : n)));
+      if (eskiNom && (eskiNom !== yangiNom || !yangiOz)) {
+        setIshchilar((prev) => (prev || []).map((w) => {
+          const oldNarxlari = w.nonNarxlari || {};
+          if (!(eskiNom in oldNarxlari)) return w;
+          const newNarxlari = { ...oldNarxlari };
+          const val = newNarxlari[eskiNom];
+          delete newNarxlari[eskiNom];
+          if (yangiOz) newNarxlari[yangiNom] = val; // qayta nomlash
+          const newTurlari = (w.nonTurlari || [])
+            .map((t) => t === eskiNom ? yangiNom : t)
+            .filter((t) => yangiOz || t !== yangiNom); // tashqaridanga aylangan bo'lsa olib tashlash
+          return { ...w, nonNarxlari: newNarxlari, nonTurlari: newTurlari };
+        }));
+      }
     } else {
       setNonlar((prev) => [...prev, { id: Date.now(), ...yangi }]);
     }
@@ -88,7 +110,19 @@ export default function IshlabChiqarish() {
     Alert.alert("O'chirish", "Bu non turini o'chirasizmi?", [
       { text: "Bekor", style: "cancel" },
       { text: "Ha", style: "destructive", onPress: () => {
+        // Cascade: ishchilarning nonNarxlari/nonTurlari'dan ham olib tashlanadi
+        const eski = nonlar.find((n) => n.id === id);
+        const eskiNom = eski?.nom;
         setNonlar((p) => p.filter((n) => n.id !== id));
+        if (eskiNom) {
+          setIshchilar((prev) => (prev || []).map((w) => {
+            if (!w.nonNarxlari || !(eskiNom in w.nonNarxlari)) return w;
+            const newNarxlari = { ...w.nonNarxlari };
+            delete newNarxlari[eskiNom];
+            const newTurlari = (w.nonTurlari || []).filter((t) => t !== eskiNom);
+            return { ...w, nonNarxlari: newNarxlari, nonTurlari: newTurlari };
+          }));
+        }
         if (tahrirId === id) tozala();
       } },
     ]);
@@ -97,7 +131,7 @@ export default function IshlabChiqarish() {
 
   return (
     <SafeAreaView style={styles.safe} edges={["top"]}>
-      <ScrollBox contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+      <ScrollBox ref={scrollRef} contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
         <ScreenHeader eyebrow="Assortiment" title="Ishlab chiqarish" subtitle={`${nonlar.length} xil non · ${aktivIshchi} aktiv xodim`} image={require("../../assets/tabicons/ishlab.png")} />
 
         <View style={styles.segment}>

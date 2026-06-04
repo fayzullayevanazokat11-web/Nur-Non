@@ -1,7 +1,7 @@
 // Kunlik qo'shimcha xarajatlar ekrani — inline forma yuqorida (Markaz>Xarajat'ni
 // bosgan ham darrov yozib qo'shadi). Tugma + modal o'rniga doim ko'rinib turadigan kart.
 // 7 kun saqlanadi, bugungilari kunlik sof foydadan ayriladi.
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { View, Text, Image, Pressable, TextInput, StyleSheet, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -26,6 +26,7 @@ export default function Xarajat() {
   const bugun = localSana();
   const BOSH = { summa: "", izoh: "", sana: bugun };
   const [tahrirId, setTahrirId] = useState(null);
+  const scrollRef = useRef(null);
   const [forma, setForma] = useState(BOSH);
 
   const royxat = useMemo(
@@ -46,7 +47,7 @@ export default function Xarajat() {
 
   const tahrirla = (x) => {
     setForma({ summa: String(x.summa || ""), izoh: x.izoh || "", sana: x.sana || bugun });
-    setTahrirId(x.id);
+    setTahrirId(x.id); setTimeout(() => scrollRef.current?.scrollToTop?.(true), 50);
   };
 
   const saqla = () => {
@@ -72,7 +73,7 @@ export default function Xarajat() {
 
   return (
     <SafeAreaView style={styles.safe} edges={["top"]}>
-      <ScrollBox contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+      <ScrollBox ref={scrollRef} contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
         <Pressable accessibilityLabel="Orqaga" onPress={() => router.back()} hitSlop={8} style={styles.backBtn}>
           <Ionicons name="chevron-back" size={20} color={C.text} />
           <Text style={styles.backTxt}>Markaz</Text>

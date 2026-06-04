@@ -1,12 +1,19 @@
 // Scroll konteyneri — o'ng chetда doim ko'rinadigan thumb (faqat vizual indikator).
 // Sudrash xususiyati olib tashlandi — kontent bo'ylab oddiy swipe scroll ishlatiladi
 // (Android'da thumb tile'larning tap sohasini bloklab qo'yardi).
-import { useRef, useState } from "react";
+import { forwardRef, useImperativeHandle, useRef, useState } from "react";
 import { View, ScrollView, StyleSheet } from "react-native";
 import { C } from "../theme";
 
-export function ScrollBox({ children, contentContainerStyle, keyboardShouldPersistTaps, style }) {
+export const ScrollBox = forwardRef(function ScrollBox(
+  { children, contentContainerStyle, keyboardShouldPersistTaps, style },
+  outerRef
+) {
   const ref = useRef(null);
+  useImperativeHandle(outerRef, () => ({
+    scrollTo: (opts) => ref.current?.scrollTo(opts),
+    scrollToTop: (animated = true) => ref.current?.scrollTo({ y: 0, animated }),
+  }), []);
   const [vh, setVh] = useState(0);
   const [ch, setCh] = useState(0);
   const [sy, setSy] = useState(0);
@@ -41,7 +48,7 @@ export function ScrollBox({ children, contentContainerStyle, keyboardShouldPersi
       )}
     </View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   wrap:  { flex: 1 },

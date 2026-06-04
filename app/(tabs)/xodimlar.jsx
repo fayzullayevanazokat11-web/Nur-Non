@@ -1,6 +1,6 @@
 // "Xodimlar" — inline forma yuqorida (modal yo'q). Yangi ishchi qo'shish va
 // tahrirlash to'g'ridan-to'g'ri sahifa ichida.
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { View, Text, Pressable, TextInput, StyleSheet, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -26,6 +26,7 @@ export default function Xodimlar() {
 
   const [tahrirId, setTahrirId] = useState(null);
   const [forma, setForma] = useState(BOSH);
+  const scrollRef = useRef(null);
 
   const aktiv = (ishchilar || []).filter((w) => w.holat === "Aktiv");
   const tatildagilar = (ishchilar || []).filter((w) => w.holat === "Ta'tilda");
@@ -45,6 +46,7 @@ export default function Xodimlar() {
       tatilSana: w.tatilQaytishSana || "",
     });
     setTahrirId(w.id);
+    setTimeout(() => scrollRef.current?.scrollToTop?.(true), 50);
   };
 
   const saqla = () => {
@@ -118,7 +120,7 @@ export default function Xodimlar() {
 
   return (
     <SafeAreaView style={styles.safe} edges={["top"]}>
-      <ScrollBox contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+      <ScrollBox ref={scrollRef} contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
         <ScreenHeader eyebrow="Jamoa" title="Xodimlar" image={require("../../assets/tabicons/xodimlar.png")} />
 
         <View style={styles.statsRow}>

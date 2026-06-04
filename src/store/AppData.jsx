@@ -67,6 +67,26 @@ export function AppDataProvider({ children }) {
     return () => clearTimeout(t);
   }, []);
 
+  // O'zaro integratsiya: nonlar o'zgarganda, mavjud non id'lariga tegishli bo'lmagan
+  // qoldiq/yaroqsiz/qop yozuvlarini avtomatik tozalash (storage'da yetim qolmasligi uchun).
+  useEffect(() => {
+    const idlar = new Set((nonlar || []).map((n) => String(n.id)));
+    const tozala = (obj) => {
+      const yangi = {};
+      let ozgardi = false;
+      Object.keys(obj || {}).forEach((k) => {
+        if (idlar.has(String(k))) yangi[k] = obj[k];
+        else ozgardi = true;
+      });
+      return ozgardi ? yangi : obj;
+    };
+    setBoshlangichQoldiq((p) => tozala(p));
+    setSotilmaganNon((p) => tozala(p));
+    setQoldaYaroqsiz((p) => tozala(p));
+    setOzIshlabQoplar((p) => tozala(p));
+    setTashqariSonlar((p) => tozala(p));
+  }, [nonlar]);
+
   const value = {
     nonlar, setNonlar,
     ishchilar, setIshchilar,
