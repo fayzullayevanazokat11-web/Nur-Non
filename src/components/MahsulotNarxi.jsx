@@ -7,7 +7,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useApp } from "../store/AppData";
 import { Card } from "./Card";
 import { Btn } from "./Btn";
-import { Modal } from "./Modal";
+import { ExpandableCard } from "./ExpandableCard";
 import { OMBOR_MAYDONLAR, xomashyoRoyxati } from "../logic/konstantalar";
 import { formatSom } from "../logic/hisob";
 import { C, T, S, R } from "../theme";
@@ -19,7 +19,6 @@ export function Xomashyo() {
   const { mahsulotNarxlari, setMahsulotNarxlari, customMahsulotlar, setCustomMahsulotlar } = useApp();
   const royxat = xomashyoRoyxati(customMahsulotlar);
 
-  const [qoshModal, setQoshModal] = useState(false);
   const [forma, setForma] = useState({ nom: "", birlik: "kg", narx: "" });
   const yangilaF = (k, v) => setForma((p) => ({ ...p, [k]: v }));
 
@@ -39,7 +38,6 @@ export function Xomashyo() {
     setCustomMahsulotlar((prev) => [...(prev || []), { id, nom, birlik: forma.birlik, emoji }]);
     setMahsulotNarxlari((p) => ({ ...p, [id]: { miqdor: "1000", narx: String(narx) } }));
     setForma({ nom: "", birlik: "kg", narx: "" });
-    setQoshModal(false);
   };
 
   const ochirIngredient = (id) =>
@@ -65,7 +63,37 @@ export function Xomashyo() {
         </View>
       </Card>
 
-      <Btn onPress={() => setQoshModal(true)} icon="add-outline">Yangi ingredient qo'shish</Btn>
+      <ExpandableCard
+        style={styles.qoshCard}
+        header={
+          <View style={styles.qoshHead}>
+            <Ionicons name="add-circle-outline" size={18} color={C.sub} />
+            <Text style={styles.qoshTitle}>Yangi ingredient qo'shish</Text>
+          </View>
+        }
+      >
+        <Text style={styles.lbl2}>Nomi *</Text>
+        <TextInput value={forma.nom} onChangeText={(v) => yangilaF("nom", v)} placeholder="Masalan: Kunjut" placeholderTextColor={C.muted} style={styles.input} />
+
+        <Text style={styles.lbl2}>O'lchov birligi</Text>
+        <View style={styles.unitRow}>
+          {["kg", "litr"].map((u) => (
+            <Pressable key={u} onPress={() => yangilaF("birlik", u)} style={[styles.unitBtn, forma.birlik === u && styles.unitBtnActive]}>
+              <Text style={[styles.unitTxt, forma.birlik === u && styles.unitTxtActive]}>{u}</Text>
+            </Pressable>
+          ))}
+        </View>
+
+        <Text style={styles.lbl2}>1 {forma.birlik} narxi (so'm) *</Text>
+        <TextInput value={forma.narx} onChangeText={(v) => yangilaF("narx", v)} placeholder="0" placeholderTextColor={C.muted} keyboardType="numeric" style={styles.input} />
+        {(parseFloat(forma.narx) || 0) > 0 && (
+          <Text style={styles.hintLine}>1{baseUnit(forma.birlik === "litr" ? "litr" : "kg")} = {((parseFloat(forma.narx) || 0) / 1000).toFixed(2)} so'm</Text>
+        )}
+
+        <View style={styles.qoshActions}>
+          <Btn onPress={qoshIngredient}>Qo'shish</Btn>
+        </View>
+      </ExpandableCard>
       <View style={styles.gap} />
 
       {royxat.map((m) => {
@@ -121,37 +149,6 @@ export function Xomashyo() {
         );
       })}
 
-      {/* Yangi ingredient modali */}
-      <Modal modalVisible={qoshModal} onClose={() => setQoshModal(false)}>
-        <View style={styles.modalHead}>
-          <Ionicons name="add-circle-outline" size={20} color={C.sub} />
-          <Text style={styles.modalTitle}>Yangi ingredient</Text>
-        </View>
-
-        <Text style={styles.lbl2}>Nomi *</Text>
-        <TextInput value={forma.nom} onChangeText={(v) => yangilaF("nom", v)} placeholder="Masalan: Kunjut" placeholderTextColor={C.muted} style={styles.input} />
-
-        <Text style={styles.lbl2}>O'lchov birligi</Text>
-        <View style={styles.unitRow}>
-          {["kg", "litr"].map((u) => (
-            <Pressable key={u} onPress={() => yangilaF("birlik", u)} style={[styles.unitBtn, forma.birlik === u && styles.unitBtnActive]}>
-              <Text style={[styles.unitTxt, forma.birlik === u && styles.unitTxtActive]}>{u}</Text>
-            </Pressable>
-          ))}
-        </View>
-
-        <Text style={styles.lbl2}>1 {forma.birlik} narxi (so'm) *</Text>
-        <TextInput value={forma.narx} onChangeText={(v) => yangilaF("narx", v)} placeholder="0" placeholderTextColor={C.muted} keyboardType="numeric" style={styles.input} />
-        {(parseFloat(forma.narx) || 0) > 0 && (
-          <Text style={styles.hintLine}>1{baseUnit(forma.birlik === "litr" ? "litr" : "kg")} = {((parseFloat(forma.narx) || 0) / 1000).toFixed(2)} so'm</Text>
-        )}
-
-        <View style={styles.gap} />
-        <View style={styles.modalRow}>
-          <View style={styles.flex1}><Btn secondary onPress={() => setQoshModal(false)}>Bekor</Btn></View>
-          <View style={styles.flex1}><Btn onPress={qoshIngredient}>Qo'shish</Btn></View>
-        </View>
-      </Modal>
     </View>
   );
 }
@@ -192,9 +189,11 @@ const styles = StyleSheet.create({
   exBold:    { fontWeight: "800", color: C.text },
   delBtn:    { padding: 8 },
 
-  // Modal
-  modalHead:  { flexDirection: "row", alignItems: "center", gap: S[2], marginBottom: S[4] },
-  modalTitle: { fontSize: T.lg, fontWeight: "800", color: C.text },
+  // Inline forma
+  qoshCard:   { marginBottom: 0 },
+  qoshHead:   { flexDirection: "row", alignItems: "center", gap: S[2] },
+  qoshTitle:  { fontSize: T.md, fontWeight: "800", color: C.text },
+  qoshActions:{ marginTop: S[3] },
   lbl2:       { fontSize: T.xs, color: C.sub, fontWeight: "600", marginBottom: 6, marginTop: S[2], letterSpacing: 0.3 },
   unitRow:    { flexDirection: "row", gap: S[2] },
   unitBtn:    { flex: 1, alignItems: "center", paddingVertical: 12, borderRadius: R.md, borderWidth: 1, borderColor: C.border, backgroundColor: C.surface },
@@ -202,5 +201,4 @@ const styles = StyleSheet.create({
   unitTxt:    { fontSize: T.md, fontWeight: "700", color: C.sub },
   unitTxtActive: { color: "#FFF3E8" },
   hintLine:   { fontSize: T.xs, color: C.accent, fontWeight: "700", marginTop: 6 },
-  modalRow:   { flexDirection: "row", gap: S[3] },
 });

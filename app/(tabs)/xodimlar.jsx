@@ -144,13 +144,17 @@ export default function Xodimlar() {
 
         <View style={styles.gap14} />
 
-        {/* INLINE FORMA */}
-        <Card style={styles.formCard}>
-          <View style={styles.formHead}>
-            <Ionicons name={tahrirId ? "create-outline" : "person-add-outline"} size={18} color={C.sub} />
-            <Text style={styles.formTitle}>{tahrirId ? "Xodimni tahrirlash" : "Yangi ishchi"}</Text>
-          </View>
-
+        {/* INLINE FORMA — ExpandableCard ichida, default yopiq. Tahrirlash holatida avto-ochiladi. */}
+        <ExpandableCard
+          style={styles.formCard}
+          defaultOpen={!!tahrirId}
+          header={
+            <View style={styles.formHead}>
+              <Ionicons name={tahrirId ? "create-outline" : "person-add-outline"} size={18} color={C.sub} />
+              <Text style={styles.formTitle}>{tahrirId ? "Xodimni tahrirlash" : "Yangi ishchi qo'shish"}</Text>
+            </View>
+          }
+        >
           <Text style={styles.inputLabel}>Ism *</Text>
           <TextInput value={forma.ism} onChangeText={(v) => yangila("ism", v)} placeholder="Masalan: Akmal aka" placeholderTextColor={C.muted} style={styles.input} />
 
@@ -235,7 +239,7 @@ export default function Xodimlar() {
             <Btn onPress={saqla}>{tahrirId ? "Yangilash" : "Saqlash"}</Btn>
             {tahrirId && <Btn secondary onPress={tozala}>Bekor</Btn>}
           </View>
-        </Card>
+        </ExpandableCard>
 
         {(ishchilar || []).length === 0 ? (
           <Card><Text style={styles.muted}>Xodimlar hali kiritilmagan</Text></Card>

@@ -1,10 +1,10 @@
-// Kunlik yakuniy hisobot modali — Tasdiqlashdan keyin chiqadi.
-// Ishlab chiqarish (qop) sof foydasi + bugungi Karta / Optom / Qarz integratsiyasi.
+// Kunlik yakuniy hisobot — Tasdiqlashdan keyin chiqadi.
+// RN Modal o'rniga to'liq ekran View qatlami (absoluteFillObject + zIndex).
 import { useMemo } from "react";
-import { View, Text, ScrollView, StyleSheet } from "react-native";
+import { View, Text, ScrollView, Pressable, StyleSheet } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useApp } from "../store/AppData";
-import { Modal } from "./Modal";
 import { Btn } from "./Btn";
 import { C, T, S, R } from "../theme";
 import { hisoblaKunlik, qoldiqlarHisobi, formatSom, ishchiHaqlari } from "../logic/hisob";
@@ -45,15 +45,24 @@ export function HisobotModal({ visible, onClose }) {
     return { bugun, kunlik, qoldiqlar, xarajatBugun, xarajatSum, optomSum, optomFoyda, optomSoni: optomB.length, qarzSum, qarzSoni: qarzB.length, kartaSum, kartaFoyda, kartaDona, kartaSoni: kartaB.length, umumiy, haqList: haq.list };
   }, [nonlar, ishchilar, ozIshlabQoplar, tashqariSonlar, sotilmaganNon, qarzlar, optomlar, kartalar, mahsulotNarxlari, braklar, boshlangichQoldiq, qoldaYaroqsiz, kunlikXarajatlar]);
 
+  if (!visible) return null;
   return (
-    <Modal modalVisible={visible} onClose={onClose}>
-      <View style={styles.head}>
-        <Ionicons name="document-text-outline" size={20} color={C.sub} />
-        <Text style={styles.title}>Kunlik hisobot</Text>
-      </View>
-      <Text style={styles.sana}>{data.bugun}</Text>
+    <View style={styles.overlay} pointerEvents="auto">
+      <SafeAreaView style={styles.safe} edges={["top", "bottom"]}>
+        <View style={styles.headerRow}>
+          <View style={styles.head}>
+            <Ionicons name="document-text-outline" size={22} color={C.sub} />
+            <View style={styles.flex1}>
+              <Text style={styles.title}>Kunlik hisobot</Text>
+              <Text style={styles.sana}>{data.bugun}</Text>
+            </View>
+          </View>
+          <Pressable accessibilityLabel="Yopish" onPress={onClose} hitSlop={10} style={styles.closeBtn}>
+            <Ionicons name="close" size={22} color={C.text} />
+          </Pressable>
+        </View>
 
-      <ScrollView style={styles.scroll} showsVerticalScrollIndicator={true}>
+        <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
         {/* Ishlab chiqarish (qop) */}
         <View style={[styles.block, { backgroundColor: C.accent + "0D", borderColor: C.accent + "2E" }]}>
           <Text style={styles.blockHead}>Ishlab chiqarish (kunlik qop)</Text>
@@ -132,11 +141,13 @@ export function HisobotModal({ visible, onClose }) {
             Kunlik {formatSom(data.kunlik.sofFoyda)} + Karta {formatSom(data.kartaFoyda)} + Optom {formatSom(data.optomFoyda)}
           </Text>
         </View>
-      </ScrollView>
+        </ScrollView>
 
-      <View style={styles.gap12} />
-      <Btn onPress={onClose} icon="checkmark-outline">Yopish</Btn>
-    </Modal>
+        <View style={styles.footer}>
+          <Btn onPress={onClose} icon="checkmark-outline">Yopish</Btn>
+        </View>
+      </SafeAreaView>
+    </View>
   );
 }
 
@@ -150,10 +161,17 @@ function Row({ label, value, color = C.text, bold }) {
 }
 
 const styles = StyleSheet.create({
-  head:      { flexDirection: "row", alignItems: "center", gap: S[2] },
-  title:     { fontSize: T.lg, fontWeight: "800", color: C.text },
-  sana:      { fontSize: T.sm, color: C.muted, marginBottom: S[3] },
-  scroll:    { maxHeight: 420 },
+  overlay:   { ...StyleSheet.absoluteFillObject, backgroundColor: C.bg, zIndex: 9000 },
+  safe:      { flex: 1 },
+  headerRow: { flexDirection: "row", alignItems: "flex-start", paddingHorizontal: S[5], paddingTop: S[4], paddingBottom: S[3], borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: C.borderSoft },
+  head:      { flexDirection: "row", alignItems: "center", gap: S[3], flex: 1 },
+  flex1:     { flex: 1 },
+  title:     { fontSize: T.xl, fontWeight: "800", color: C.text, letterSpacing: -0.4 },
+  sana:      { fontSize: T.sm, color: C.muted, marginTop: 2 },
+  closeBtn:  { padding: 6 },
+  scroll:    { flex: 1 },
+  scrollContent:{ padding: S[5] },
+  footer:    { padding: S[5], borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: C.borderSoft },
   block:     { borderRadius: R.md, borderWidth: 1, borderColor: C.border, padding: S[3], marginBottom: S[2], backgroundColor: C.surface },
   blockHead: { fontSize: T.sm, fontWeight: "700", color: C.text, marginBottom: S[2] },
   row:       { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 5 },

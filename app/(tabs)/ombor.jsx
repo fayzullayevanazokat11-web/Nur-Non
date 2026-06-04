@@ -7,7 +7,6 @@ import { Ionicons } from "@expo/vector-icons";
 import { useApp } from "../../src/store/AppData";
 import { Card } from "../../src/components/Card";
 import { Btn } from "../../src/components/Btn";
-import { Modal } from "../../src/components/Modal";
 import { ScreenHeader } from "../../src/components/ScreenHeader";
 import { ExpandableCard } from "../../src/components/ExpandableCard";
 import { ScrollBox } from "../../src/components/ScrollBox";
@@ -21,7 +20,6 @@ const boshForma = () => Object.fromEntries(OMBOR_MAYDONLAR.map((m) => [m.id, ""]
 export default function Ombor() {
   const { omborlar, setOmborlar, omborSorovlar, setOmborSorovlar, omborTasdiqlar, setOmborTasdiqlar } = useApp();
 
-  const [modalOchiq, setModalOchiq] = useState(false);
   const [forma, setForma] = useState(boshForma());
 
   const balans = useMemo(() => omborBalans(omborlar), [omborlar]);
@@ -99,8 +97,7 @@ export default function Ombor() {
 
   const setKirimlari = (omborlar || []).filter((h) => h.turi === "yangiset").slice(0, 10);
 
-  const ochModal = () => { setForma(boshForma()); setModalOchiq(true); };
-  const yopModal = () => setModalOchiq(false);
+  const tozala = () => setForma(boshForma());
   const yangila = (id, v) => setForma((p) => ({ ...p, [id]: v }));
 
   // Saqlash — kiritilgan qiymatlar baza birlikka (qop×50, quti×5) o'tkaziladi.
@@ -123,7 +120,7 @@ export default function Ombor() {
       maydonlar,
     };
     setOmborlar((prev) => [entry, ...prev]);
-    yopModal();
+    tozala();
   };
 
   return (
@@ -191,7 +188,42 @@ export default function Ombor() {
         )}
 
         <View style={styles.gap14} />
-        <Btn color={C.blue} onPress={ochModal} icon="add-outline">Yangi set kiritish</Btn>
+
+        {/* INLINE FORMA — Modal o'rniga ExpandableCard (sahifaga kirsa darrov ko'rinmaydi, bosib ochiladi) */}
+        <ExpandableCard
+          style={styles.qoshCard}
+          header={
+            <View style={styles.qoshHead}>
+              <Ionicons name="add-circle-outline" size={18} color={C.sub} />
+              <Text style={styles.qoshTitle}>Yangi keltirilgan set</Text>
+            </View>
+          }
+        >
+          {OMBOR_MAYDONLAR.map((m) => {
+            const katta = omborKattaBirlik(m.id);
+            const birlik = katta ? katta.birlik : m.birlik;
+            const qty = parseFloat(forma[m.id]) || 0;
+            return (
+              <View key={m.id} style={styles.field}>
+                <Text style={styles.inputLabel}>{m.nom} ({birlik})</Text>
+                <TextInput
+                  value={forma[m.id]}
+                  onChangeText={(v) => yangila(m.id, v)}
+                  placeholder={katta ? `Nechta ${birlik}` : "0"}
+                  placeholderTextColor={C.muted}
+                  keyboardType="numeric"
+                  style={styles.input}
+                />
+                {katta && qty > 0 && (
+                  <Text style={styles.hint}>= {qty * katta.faktor} {m.birlik}</Text>
+                )}
+              </View>
+            );
+          })}
+          <View style={styles.qoshActions}>
+            <Btn color={C.blue} onPress={saqla}>Saqlash</Btn>
+          </View>
+        </ExpandableCard>
 
         {(omborTasdiqlar || []).length > 0 && (
           <>
@@ -263,47 +295,6 @@ export default function Ombor() {
           </>
         )}
       </ScrollBox>
-
-      {/* Yangi set kiritish modali */}
-      <Modal modalVisible={modalOchiq} onClose={yopModal}>
-        <View style={styles.modalHead}>
-          <Ionicons name="add-circle-outline" size={20} color={C.sub} />
-          <Text style={styles.modalTitle}>Yangi keltirilgan set</Text>
-        </View>
-
-        <ScrollBox
-          style={styles.formScroll}
-          keyboardShouldPersistTaps="handled"
-        >
-          {OMBOR_MAYDONLAR.map((m) => {
-            const katta = omborKattaBirlik(m.id);
-            const birlik = katta ? katta.birlik : m.birlik;
-            const qty = parseFloat(forma[m.id]) || 0;
-            return (
-              <View key={m.id} style={styles.field}>
-                <Text style={styles.inputLabel}>{m.nom} ({birlik})</Text>
-                <TextInput
-                  value={forma[m.id]}
-                  onChangeText={(v) => yangila(m.id, v)}
-                  placeholder={katta ? `Nechta ${birlik}` : "0"}
-                  placeholderTextColor={C.muted}
-                  keyboardType="numeric"
-                  style={styles.input}
-                />
-                {katta && qty > 0 && (
-                  <Text style={styles.hint}>= {qty * katta.faktor} {m.birlik}</Text>
-                )}
-              </View>
-            );
-          })}
-        </ScrollBox>
-
-        <View style={styles.gap12} />
-        <View style={styles.modalRow}>
-          <Btn color={C.blue} onPress={saqla}>Saqlash</Btn>
-          <Btn secondary onPress={yopModal}>Bekor</Btn>
-        </View>
-      </Modal>
     </SafeAreaView>
   );
 }
@@ -339,10 +330,11 @@ const styles = StyleSheet.create({
   tasdiqDel: { flexDirection: "row", alignItems: "center" },
   tasdiqDelTxt: { fontSize: T.sm, fontWeight: "700" },
 
-  // Modal
-  modalHead:  { flexDirection: "row", alignItems: "center", gap: S[2], marginBottom: S[3] },
-  modalTitle: { fontSize: T.lg, fontWeight: "800", color: C.text },
-  formScroll: { maxHeight: 420 },
+  // Inline forma (ExpandableCard ichida)
+  qoshCard:   { marginBottom: S[3] },
+  qoshHead:   { flexDirection: "row", alignItems: "center", gap: S[2] },
+  qoshTitle:  { fontSize: T.md, fontWeight: "800", color: C.text },
+  qoshActions:{ marginTop: S[3] },
   field:      { marginBottom: S[3] },
   inputLabel: { fontSize: T.xs, color: C.sub, fontWeight: "600", marginBottom: 5, letterSpacing: 0.3 },
   input: {
@@ -357,5 +349,4 @@ const styles = StyleSheet.create({
   },
   hint:       { fontSize: 11, color: C.muted, marginTop: 3 },
   flex1:      { flex: 1 },
-  modalRow:   { gap: S[2] },
 });
