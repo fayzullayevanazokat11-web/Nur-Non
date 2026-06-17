@@ -29,7 +29,11 @@ function donaFoydasi(non, narxlar) {
 }
 
 export default function IshlabChiqarish() {
-  const { nonlar, setNonlar, ishchilar, setIshchilar, mahsulotNarxlari, customMahsulotlar } = useApp();
+  const {
+    nonlar, setNonlar, ishchilar, setIshchilar,
+    optomlar, setOptomlar, qarzlar, setQarzlar, braklar, setBraklar,
+    mahsulotNarxlari, customMahsulotlar,
+  } = useApp();
   const royxat = xomashyoRoyxati(customMahsulotlar);
 
   const [tab, setTab] = useState("assortiment");
@@ -86,17 +90,32 @@ export default function IshlabChiqarish() {
       const yangiNom = yangi.nom;
       const yangiOz = yangi.ozIshlab;
       setNonlar((prev) => prev.map((n) => (n.id === tahrirId ? { ...n, ...yangi } : n)));
-      if (eskiNom && (eskiNom !== yangiNom || !yangiOz)) {
+      if (eskiNom && eskiNom !== yangiNom) {
+        // ── Ishchilar nonNarxlari/nonTurlari sinxron ──
         setIshchilar((prev) => (prev || []).map((w) => {
           const oldNarxlari = w.nonNarxlari || {};
           if (!(eskiNom in oldNarxlari)) return w;
           const newNarxlari = { ...oldNarxlari };
           const val = newNarxlari[eskiNom];
           delete newNarxlari[eskiNom];
-          if (yangiOz) newNarxlari[yangiNom] = val; // qayta nomlash
+          if (yangiOz) newNarxlari[yangiNom] = val;
           const newTurlari = (w.nonTurlari || [])
             .map((t) => t === eskiNom ? yangiNom : t)
-            .filter((t) => yangiOz || t !== yangiNom); // tashqaridanga aylangan bo'lsa olib tashlash
+            .filter((t) => yangiOz || t !== yangiNom);
+          return { ...w, nonNarxlari: newNarxlari, nonTurlari: newTurlari };
+        }));
+        // ── Mavjud yozuvlar (optom/qarz savat va brak nonNomi) ham qayta nomlanadi ──
+        const savatYangila = (savat) => (savat || []).map((s) => s.nonNomi === eskiNom ? { ...s, nonNomi: yangiNom } : s);
+        setOptomlar((prev) => (prev || []).map((o) => ({ ...o, savat: savatYangila(o.savat) })));
+        setQarzlar((prev) => (prev || []).map((q) => ({ ...q, savat: savatYangila(q.savat), nonNomi: q.nonNomi === eskiNom ? yangiNom : q.nonNomi })));
+        setBraklar((prev) => (prev || []).map((b) => b.nonNomi === eskiNom ? { ...b, nonNomi: yangiNom } : b));
+      } else if (eskiNom && !yangiOz) {
+        // Tashqaridan'ga aylangan: ishchilardan olib tashlash (boshqalar tegmaydi)
+        setIshchilar((prev) => (prev || []).map((w) => {
+          if (!(w.nonNarxlari || {})[eskiNom]) return w;
+          const newNarxlari = { ...w.nonNarxlari };
+          delete newNarxlari[eskiNom];
+          const newTurlari = (w.nonTurlari || []).filter((t) => t !== eskiNom);
           return { ...w, nonNarxlari: newNarxlari, nonTurlari: newTurlari };
         }));
       }

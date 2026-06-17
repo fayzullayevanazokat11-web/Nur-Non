@@ -15,24 +15,29 @@ export function HisobotModal({ visible, onClose }) {
     ozIshlabQoplar, tashqariSonlar, sotilmaganNon,
     boshlangichQoldiq, qoldaYaroqsiz, kunlikXarajatlar,
     qarzlar, optomlar, kartalar,
+    oxirgiYakunlashVaqti,
   } = useApp();
 
   const data = useMemo(() => {
     const d = new Date();
     const bugun = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    // Faqat oxirgi yakunlashdan keyingi (bugungi) yozuvlar — bir kun ichida ikki
+    // marta yakunlash bosilsa, ikkinchi hisobot avvalgi yozuvlarni qayta hisoblamaydi
+    const yangi = (e) => (e?.vaqt || 0) > (oxirgiYakunlashVaqti || 0);
+    const bugungiBrak = (braklar || []).filter(yangi);
     const kunlik = hisoblaKunlik({
       nonlar, ishchilar, ozIshlabQoplar, tashqariSonlar, sotilmaganNon, optomlar, qarzlar, mahsulotNarxlari, braklar,
-      boshlangichQoldiq, qoldaYaroqsiz, kunlikXarajatlar,
+      boshlangichQoldiq, qoldaYaroqsiz, kunlikXarajatlar, oxirgiYakunlashVaqti,
     });
-    const xarajatBugun = (kunlikXarajatlar || []).filter((x) => x.sana === bugun);
+    const xarajatBugun = (kunlikXarajatlar || []).filter((x) => x.sana === bugun && yangi(x));
     const xarajatSum = xarajatBugun.reduce((s, x) => s + (parseFloat(x.summa) || 0), 0);
     const qoldiqlar = qoldiqlarHisobi(nonlar, {
-      boshlangichQoldiq, ozIshlabQoplar, tashqariSonlar, qoldaYaroqsiz, sotilmaganNon, optomlar, qarzlar,
+      boshlangichQoldiq, ozIshlabQoplar, tashqariSonlar, qoldaYaroqsiz, sotilmaganNon, optomlar, qarzlar, oxirgiYakunlashVaqti,
     }).filter((q) => q.jamiZaxira > 0 || q.qoldiq > 0 || q.yaroqsiz > 0);
     const sum = (arr, key) => (arr || []).reduce((s, x) => s + (parseFloat(x[key]) || 0), 0);
-    const optomB = (optomlar || []).filter((o) => o.sana === bugun);
-    const qarzB = (qarzlar || []).filter((q) => q.sana === bugun);
-    const kartaB = (kartalar || []).filter((k) => k.sana === bugun);
+    const optomB = (optomlar || []).filter((o) => o.sana === bugun && yangi(o));
+    const qarzB  = (qarzlar  || []).filter((q) => q.sana === bugun && yangi(q));
+    const kartaB = (kartalar || []).filter((k) => k.sana === bugun && yangi(k));
     const optomSum = sum(optomB, "summa");
     const optomFoyda = sum(optomB, "sofFoyda");
     const qarzSum = sum(qarzB, "summa");
@@ -41,9 +46,10 @@ export function HisobotModal({ visible, onClose }) {
     const kartaDona = sum(kartaB, "dona");
     // Umumiy foyda = ishlab chiqarish + karta sof foydasi + optom SOF FOYDASI (chegirma ayrilgan)
     const umumiy = kunlik.sofFoyda + kartaFoyda + optomFoyda;
-    const haq = ishchiHaqlari(nonlar, ishchilar, ozIshlabQoplar, braklar);
+    // Ishchi haqi — faqat bugungi (yakunlashdan keyingi) braklar bilan
+    const haq = ishchiHaqlari(nonlar, ishchilar, ozIshlabQoplar, bugungiBrak);
     return { bugun, kunlik, qoldiqlar, xarajatBugun, xarajatSum, optomSum, optomFoyda, optomSoni: optomB.length, qarzSum, qarzSoni: qarzB.length, kartaSum, kartaFoyda, kartaDona, kartaSoni: kartaB.length, umumiy, haqList: haq.list };
-  }, [nonlar, ishchilar, ozIshlabQoplar, tashqariSonlar, sotilmaganNon, qarzlar, optomlar, kartalar, mahsulotNarxlari, braklar, boshlangichQoldiq, qoldaYaroqsiz, kunlikXarajatlar]);
+  }, [nonlar, ishchilar, ozIshlabQoplar, tashqariSonlar, sotilmaganNon, qarzlar, optomlar, kartalar, mahsulotNarxlari, braklar, boshlangichQoldiq, qoldaYaroqsiz, kunlikXarajatlar, oxirgiYakunlashVaqti]);
 
   if (!visible) return null;
   return (

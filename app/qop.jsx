@@ -2,7 +2,7 @@
 // qoldiq, qop, yaroqsiz, kun oxiri qoldiq), FIFO tafsiloti, ishchilar haqi,
 // moliyaviy xulosa va "Saqlash" / "Kunni yakunlash" tugmalari.
 import { useEffect, useMemo, useState } from "react";
-import { View, Text, ScrollView, Image, Pressable, TextInput, StyleSheet, Alert } from "react-native";
+import { View, Text, Image, Pressable, TextInput, StyleSheet, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
@@ -76,7 +76,9 @@ export default function Qop() {
   };
 
   const kunniYakunla = () => {
-    if (!(stats.jamiNon > 0 || stats.jamiQop > 0)) {
+    // Boshlangich qoldiq, bugungi ishlab chiqarish yoki bugungi xarajat — yakunlash uchun yetarli
+    const hechNarsa = stats.jamiNon <= 0 && stats.jamiQop <= 0 && stats.jamiBoshlang <= 0 && (stats.xarajatJami || 0) <= 0;
+    if (hechNarsa) {
       Alert.alert("Ma'lumot yo'q", "Avval kunlik qop hisobiga ma'lumot kiriting.");
       return;
     }

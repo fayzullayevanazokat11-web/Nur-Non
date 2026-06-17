@@ -1,6 +1,6 @@
 // "Ombor" ekrani — mavjud zaxira + "Yangi set kiritish" modali.
 import { useMemo, useState } from "react";
-import { View, Text, ScrollView, TextInput, Pressable, StyleSheet, Alert } from "react-native";
+import { View, Text, TextInput, Pressable, StyleSheet, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 

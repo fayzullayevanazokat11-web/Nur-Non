@@ -53,10 +53,11 @@ export function AppDataProvider({ children }) {
   const [qopTasdiqlandi, setQopTasdiqlandi]       = useState(false);
   const [hisobotYopildi, setHisobotYopildi]       = useState(false);
 
-  // Avtomatik tozalash (hidratsiyadan keyin): karta/optom va to'langan qarz 7 kun,
-  // kunlik hisobotlar 30 kun saqlanadi, so'ng o'chiriladi.
+  // Avtomatik tozalash: karta/optom va to'langan qarz 7 kun, kunlik hisobotlar
+  // 30 kun saqlanadi. AsyncStorage hidratsiyasi async bo'lgani uchun shu funksiya
+  // 5 soniya kutib ham, ma'lumotlar yuklangach (uzunlik o'zgarganda) ham ishlaydi.
   useEffect(() => {
-    const t = setTimeout(() => {
+    const yuritish = () => {
       const now = Date.now();
       const D = 86400000;
       const yosh = (e) => now - (e.vaqt || (e.sana ? Date.parse(e.sana) : now) || now);
@@ -67,8 +68,11 @@ export function AppDataProvider({ children }) {
       setHisobotlarTarixi((p) => p.filter((h) => (now - (h.vaqt || now)) < 30 * D));
       setOmborTasdiqlar((p) => p.filter((t) => (now - (t.vaqt || now)) < 30 * D));
       setKunlikXarajatlar((p) => p.filter((x) => (now - (x.vaqt || now)) < 7 * D));
-    }, 1500);
-    return () => clearTimeout(t);
+    };
+    // 5s kutamiz (hidratsiya ulgursin), keyin har 6 soatda ham yuritamiz
+    const t1 = setTimeout(yuritish, 5000);
+    const t2 = setInterval(yuritish, 6 * 60 * 60 * 1000);
+    return () => { clearTimeout(t1); clearInterval(t2); };
   }, []);
 
   // O'zaro integratsiya: nonlar o'zgarganda, mavjud non id'lariga tegishli bo'lmagan

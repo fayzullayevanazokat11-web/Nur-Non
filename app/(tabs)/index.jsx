@@ -1,7 +1,7 @@
 // "Markaz" ekrani — kunlik ko'rsatkichlar + navigatsiya tugmalari (qop hisobi,
 // 2x2 grid: Qarz/Optom/Karta/Brak, qo'shimcha xarajatlar) + hisobotlar tarixi.
-import { useMemo } from "react";
-import { View, Text, Pressable, Image, StyleSheet, Alert } from "react-native";
+import { useEffect, useMemo, useState } from "react";
+import { View, Text, Pressable, Image, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
@@ -36,7 +36,14 @@ export default function Markaz() {
     lockedDayStats,
   } = useApp();
 
-  const bugunSanasi = localSana();
+  // Har 30 soniyada tick — yarim tundan o'tganda lock va sana ko'rsatkichlari
+  // o'z-o'zidan yangilanishi uchun. Foydalanuvchi tegmasa ham Markaz tetik turadi.
+  const [tick, setTick] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setTick((t) => (t + 1) % 1000000), 30000);
+    return () => clearInterval(id);
+  }, []);
+  const bugunSanasi = useMemo(() => localSana(), [tick]);
 
   // ── MUHRLANGAN KUN (Lock) ──
   // "Kunni tugatish" bosilgan bo'lsa va o'sha kun hali tugamagan bo'lsa (23:59 dan oldin)
@@ -48,7 +55,7 @@ export default function Markaz() {
     if (lockedDayStats.sana !== bugunSanasi) return null;
     if (lockedDayStats.lockedUntil && Date.now() > lockedDayStats.lockedUntil) return null;
     return lockedDayStats.snapshot || null;
-  }, [lockedDayStats, bugunSanasi]);
+  }, [lockedDayStats, bugunSanasi, tick]);
 
   // Bugungi yozuvlar — sana + oxirgiYakunlashVaqti filtri bilan (lock paytida
   // Markaz baribir locked.snapshot'dan o'qiydi, lekin bu filterlar tahlil va
