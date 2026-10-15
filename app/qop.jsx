@@ -10,6 +10,7 @@ import { router } from "expo-router";
 import { useApp } from "../src/store/AppData";
 import { Card } from "../src/components/Card";
 import { Btn } from "../src/components/Btn";
+import { xomashyoRoyxati } from "../src/logic/konstantalar";
 import { DateField } from "../src/components/DateField";
 import { HisobotModal } from "../src/components/HisobotModal";
 import { ScrollBox } from "../src/components/ScrollBox";
@@ -30,7 +31,7 @@ export default function Qop() {
     boshlangichQoldiq, setBoshlangichQoldiq, qoldaYaroqsiz, setQoldaYaroqsiz,
     kunlikXarajatlar,
     oxirgiYakunlashVaqti, setOxirgiYakunlashVaqti,
-    setLockedDayStats,
+    setLockedDayStats, customMahsulotlar,
     setHisobotlarTarixi, setOmborSorovlar,
   } = useApp();
 
@@ -156,7 +157,7 @@ export default function Qop() {
         };
         setHisobotlarTarixi((prev) => [snap, ...(prev || []).filter((h) => h.sana !== sana)]);
 
-        const sarf = kunlikXomashyoSarfi(nonlar, fQop);
+        const sarf = kunlikXomashyoSarfi(nonlar, fQop, xomashyoRoyxati(customMahsulotlar));
         if (sarf.length > 0) {
           setOmborSorovlar((prev) => [{ id: Date.now() + 1, sana, vaqt: Date.now(), manba: "Kunlik qop hisobi", maydonlar: sarf }, ...(prev || []).filter((s) => s.sana !== sana)]);
         }
@@ -270,7 +271,9 @@ export default function Qop() {
           </View>
           <View style={styles.gap10} />
           <Row label="Daromad" value={`${formatSom(stats.daromad)} so'm`} />
-          <Row label="Xomashyo" value={`${formatSom(stats.xomashyo)} so'm`} />
+          {stats.tashqariTannarx > 0 && (
+            <Row label="Tashqaridan olingan non" value={`− ${formatSom(stats.tashqariTannarx)} so'm`} color={C.red} />
+          )}
           <Row label="Ishchi haqi" value={`${formatSom(stats.ishchiHaq)} so'm`} />
           {stats.xarajatJami > 0 && (
             <Row label="Qo'shimcha xarajat (bugun)" value={`− ${formatSom(stats.xarajatJami)} so'm`} color={C.red} />

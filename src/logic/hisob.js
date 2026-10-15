@@ -55,7 +55,9 @@ export function hisoblaKunlik({
 }) {
   const diverted = divertedByNon(optomlar, qarzlar, oxirgiYakunlashVaqti);
   let jamiNon = 0, jamiQop = 0, jamiBoshlang = 0, jamiQoldiq = 0, jamiYaroqsiz = 0;
-  let daromad = 0, xomashyo = 0;
+  // xomashyo — o'z ishlab chiqarishimiz xomashyosi (faqat ma'lumot uchun, sof foydadan ayrilmaydi).
+  // tashqariTannarx — tashqaridan olingan nonning sotib olish narxi (sof foydadan ayriladi).
+  let daromad = 0, xomashyo = 0, tashqariTannarx = 0;
 
   nonlar.forEach((non) => {
     const norma = parseFloat(non.nonSoni) || 0;
@@ -86,7 +88,7 @@ export function hisoblaKunlik({
       const retailSold = Math.max(0, boshlang + olingan - yaroqsiz - qoldiq - divertedShu);
       daromad += retailSold * narx;
       const tannarx = Math.max(0, narx - (parseFloat(non.tashqariFoyda) || 2000));
-      xomashyo += (olingan - Math.min(divertedShu, olingan)) * tannarx;
+      tashqariTannarx += (olingan - Math.min(divertedShu, olingan)) * tannarx;
     }
   });
 
@@ -108,14 +110,16 @@ export function hisoblaKunlik({
   // xarajat bo'lishi kerak. Faqat kechagi qoldiq (boshlang) bo'lsa — sofFoyda 0
   // (aks holda kunlik ishchi haqi darrov ayrilib, kun boshidan minusga kirib ketadi).
   const kunBoshlandi = jamiQop > 0 || jamiNon > 0 || xarajatJami > 0;
-  const sofFoyda = kunBoshlandi ? Math.round(daromad - xomashyo - ishchiHaq - xarajatJami) : 0;
+  // O'z xomashyomiz sof foydadan AYRILMAYDI — u ombor (keltirilgan set) orqali alohida
+  // hisoblanadi. Tashqaridan olingan non narxi esa omborda yo'q, shuning uchun ayriladi.
+  const sofFoyda = kunBoshlandi ? Math.round(daromad - tashqariTannarx - ishchiHaq - xarajatJami) : 0;
   // Bugun sotilgan jami (retail + diverted), boshlang va ishlab dan
   const sotilganNon = Math.max(0, jamiBoshlang + jamiNon - jamiQoldiq - jamiYaroqsiz);
 
   return {
     sofFoyda, jamiNon, jamiQop, sotilganNon,
     jamiBoshlang, jamiQoldiq, jamiYaroqsiz,
-    daromad: Math.round(daromad), xomashyo: Math.round(xomashyo),
+    daromad: Math.round(daromad), xomashyo: Math.round(xomashyo), tashqariTannarx: Math.round(tashqariTannarx),
     ishchiHaq: Math.round(ishchiHaq), brakAyirma: Math.round(brakAyirma),
     xarajatJami: Math.round(xarajatJami),
   };

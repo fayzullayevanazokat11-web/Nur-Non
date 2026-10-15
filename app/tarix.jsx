@@ -71,7 +71,6 @@ export default function Tarix() {
                   })}
                   <View style={styles.histDiv} />
                   <View style={styles.histRow}><Text style={styles.histNom}>Daromad</Text><Text style={styles.histVal}>{formatSom(daromad)} so'm</Text></View>
-                  <View style={styles.histRow}><Text style={styles.histNom}>Xomashyo</Text><Text style={styles.histVal}>{formatSom(h.xomashyo)} so'm</Text></View>
                   <View style={styles.histRow}><Text style={styles.histNom}>Ishchi haqi</Text><Text style={styles.histVal}>{formatSom(ishchiHaq)} so'm</Text></View>
                   {(h.ishchiHaqlari || []).map((w) => (
                     <View key={w.id} style={styles.histSubRow}>
@@ -87,7 +86,7 @@ export default function Tarix() {
                       <Text style={styles.kunOxiriLbl}>Kun oxiri</Text>
                       <Text style={[styles.kunOxiriVal, { color: kunOxiri >= 0 ? C.accent : C.red }]}>{formatSom(kunOxiri)} so'm</Text>
                     </View>
-                    <Text style={styles.kunOxiriHint}>Kunlik aylanma − ishchilar haqi (xomashyo va xarajatdan oldin)</Text>
+                    <Text style={styles.kunOxiriHint}>Kunlik aylanma − ishchilar haqi (qo'shimcha xarajatdan oldin)</Text>
                   </View>
 
                   <View style={styles.histRow}><Text style={styles.histNomB}>Sof foyda</Text><Text style={styles.histValB}>{formatSom(h.sofFoyda)} so'm</Text></View>

@@ -12,17 +12,19 @@ import { ExpandableCard } from "../../src/components/ExpandableCard";
 import { ScrollBox } from "../../src/components/ScrollBox";
 import { C, T, S, R } from "../../src/theme";
 import { omborBalans, zaxiraMatni, omborKattaBirlik } from "../../src/logic/hisob";
-import { OMBOR_MAYDONLAR } from "../../src/logic/konstantalar";
+import { xomashyoRoyxati } from "../../src/logic/konstantalar";
 
-// Har bir mahsulot id'si uchun bo'sh maydon (konstantalarga mos)
-const boshForma = () => Object.fromEntries(OMBOR_MAYDONLAR.map((m) => [m.id, ""]));
+// Har bir mahsulot id'si uchun bo'sh maydon (asosiy + Xomashyoda qo'shilganlar)
+const boshForma = (royxat) => Object.fromEntries(royxat.map((m) => [m.id, ""]));
 
 export default function Ombor() {
-  const { omborlar, setOmborlar, omborSorovlar, setOmborSorovlar, omborTasdiqlar, setOmborTasdiqlar } = useApp();
+  const { omborlar, setOmborlar, omborSorovlar, setOmborSorovlar, omborTasdiqlar, setOmborTasdiqlar, customMahsulotlar } = useApp();
+  // Ishlab chiqarish > Xomashyo'da qo'shilgan mahsulotlar ham omborda avtomatik ko'rinadi
+  const royxat = useMemo(() => xomashyoRoyxati(customMahsulotlar), [customMahsulotlar]);
 
-  const [forma, setForma] = useState(boshForma());
+  const [forma, setForma] = useState(() => boshForma(royxat));
 
-  const balans = useMemo(() => omborBalans(omborlar), [omborlar]);
+  const balans = useMemo(() => omborBalans(omborlar, royxat), [omborlar, royxat]);
   const setSoni = (omborlar || []).filter((h) => h.turi === "yangiset").length;
   const zaxiraBor = balans.some((b) => Math.abs(b.qiymat) > 0.0001);
 
@@ -97,13 +99,13 @@ export default function Ombor() {
 
   const setKirimlari = (omborlar || []).filter((h) => h.turi === "yangiset").slice(0, 10);
 
-  const tozala = () => setForma(boshForma());
+  const tozala = () => setForma(boshForma(royxat));
   const yangila = (id, v) => setForma((p) => ({ ...p, [id]: v }));
 
   // Saqlash — kiritilgan qiymatlar baza birlikka (qop×50, quti×5) o'tkaziladi.
   // Yangi set avvalgi qoldiqqa QO'SHILADI (balans barcha yozuvlarni yig'adi).
   const saqla = () => {
-    const maydonlar = OMBOR_MAYDONLAR.map((m) => {
+    const maydonlar = royxat.map((m) => {
       const faktor = omborKattaBirlik(m.id)?.faktor || 1;
       const kiritilgan = parseFloat(forma[m.id]) || 0;
       return { id: m.id, nom: m.nom, birlik: m.birlik, emoji: m.emoji, qiymat: kiritilgan * faktor };
@@ -199,7 +201,7 @@ export default function Ombor() {
             </View>
           }
         >
-          {OMBOR_MAYDONLAR.map((m) => {
+          {royxat.map((m) => {
             const katta = omborKattaBirlik(m.id);
             const birlik = katta ? katta.birlik : m.birlik;
             const qty = parseFloat(forma[m.id]) || 0;
@@ -207,7 +209,7 @@ export default function Ombor() {
               <View key={m.id} style={styles.field}>
                 <Text style={styles.inputLabel}>{m.nom} ({birlik})</Text>
                 <TextInput
-                  value={forma[m.id]}
+                  value={forma[m.id] ?? ""}
                   onChangeText={(v) => yangila(m.id, v)}
                   placeholder={katta ? `Nechta ${birlik}` : "0"}
                   placeholderTextColor={C.muted}
