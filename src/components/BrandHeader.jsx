@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { View, Text, Image, Pressable, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useApp } from "../store/AppData";
-import { C, T, S, R, shadow } from "../theme";
+import { C, T, S, R, shadow, temaStil } from "../theme";
 
 const LOGO = require("../../assets/logo-tight.png");
 const OYLAR = ["Yan", "Fev", "Mar", "Apr", "May", "Iyun", "Iyul", "Avg", "Sen", "Okt", "Noy", "Dek"];
@@ -40,7 +40,7 @@ export function BrandHeader({ onLogo, menuOchiq = false }) {
         <Image source={LOGO} style={styles.logo} resizeMode="contain" />
         {onLogo ? (
           <View style={styles.tileBadge}>
-            <Ionicons name={menuOchiq ? "chevron-up" : "chevron-down"} size={11} color="#FFF6EA" />
+            <Ionicons name={menuOchiq ? "chevron-up" : "chevron-down"} size={11} color={C.onAccent} />
           </View>
         ) : null}
       </Pressable>
@@ -48,7 +48,7 @@ export function BrandHeader({ onLogo, menuOchiq = false }) {
         <Text style={styles.title}>Nur-Non</Text>
         {akkauntNomi ? (
           <View style={styles.akkRow}>
-            <Ionicons name="person-circle-outline" size={13} color="#EBD8BF" />
+            <Ionicons name="person-circle-outline" size={13} color={C.onAccentSub} />
             <Text style={[styles.sub, styles.akk]} numberOfLines={1}>{akkauntNomi}</Text>
           </View>
         ) : (
@@ -57,7 +57,7 @@ export function BrandHeader({ onLogo, menuOchiq = false }) {
       </View>
       <View style={styles.clock}>
         <View style={styles.clockRow}>
-          <Ionicons name="time-outline" size={12} color="#FFF6EA" />
+          <Ionicons name="time-outline" size={12} color={C.onAccent} />
           <Text style={styles.clockTime}>{t.vaqt}</Text>
         </View>
         <Text style={styles.clockDate}>{t.sana}</Text>
@@ -66,7 +66,7 @@ export function BrandHeader({ onLogo, menuOchiq = false }) {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = temaStil(() => StyleSheet.create({
   banner: {
     flexDirection: "row",
     alignItems: "center",
@@ -93,8 +93,8 @@ const styles = StyleSheet.create({
   },
   logo:  { width: 50, height: 50 },
   flex1: { flex: 1 },
-  title: { fontSize: 23, fontWeight: "800", color: "#FFF6EA", letterSpacing: -0.3 },
-  sub:   { fontSize: T.sm, color: "#EBD8BF", marginTop: 2, fontWeight: "500" },
+  title: { fontSize: 23, fontWeight: "800", color: C.onAccent, letterSpacing: -0.3 },
+  sub:   { fontSize: T.sm, color: C.onAccentSub, marginTop: 2, fontWeight: "500" },
   akkRow:{ flexDirection: "row", alignItems: "center", gap: 4, marginTop: 2 },
   akk:   { marginTop: 0, fontWeight: "700", flexShrink: 1 },
   clock: {
@@ -102,9 +102,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: S[3],
     paddingVertical: 6,
     borderRadius: R.md,
-    backgroundColor: "rgba(255,246,234,0.12)",
+    backgroundColor: C.onAccent + "1F",
   },
   clockRow:  { flexDirection: "row", alignItems: "center", gap: 3 },
-  clockTime: { fontSize: T.md, color: "#FFF6EA", fontWeight: "800", letterSpacing: 0.3 },
-  clockDate: { fontSize: 10, color: "#EBD8BF", fontWeight: "700", marginTop: 1, letterSpacing: 0.4 },
-});
+  clockTime: { fontSize: T.md, color: C.onAccent, fontWeight: "800", letterSpacing: 0.3 },
+  clockDate: { fontSize: 10, color: C.onAccentSub, fontWeight: "700", marginTop: 1, letterSpacing: 0.4 },
+}));

@@ -13,7 +13,7 @@ import { Animated, View, Pressable, Easing, StyleSheet, LayoutAnimation, Platfor
 import { NavigationContext } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { Card } from "./Card";
-import { C, R, S, ANIM } from "../theme";
+import { C, R, S, ANIM, temaStil } from "../theme";
 
 if (Platform.OS === "android" && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
@@ -104,11 +104,11 @@ export function ExpandableCard({ header, children, defaultOpen = false, ochKalit
   );
 }
 
-const styles = StyleSheet.create({
+const styles = temaStil(() => StyleSheet.create({
   card:       { padding: 0 },
   head:       { flexDirection: "row", alignItems: "center", gap: S[2], paddingVertical: S[4], paddingHorizontal: S[5] },
   headClosed: { borderRadius: R.lg },
   headOpen:   { borderTopLeftRadius: R.lg, borderTopRightRadius: R.lg, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: C.borderSoft },
   headLeft:   { flex: 1 },
   body:       { paddingVertical: S[4], paddingHorizontal: S[5] },
-});
+}));

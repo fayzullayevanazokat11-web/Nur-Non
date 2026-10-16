@@ -9,9 +9,9 @@ import { router, useFocusEffect } from "expo-router";
 import { useApp } from "../../src/store/AppData";
 import { Card } from "../../src/components/Card";
 import { BrandHeader } from "../../src/components/BrandHeader";
-import { MarkazMenyu } from "../../src/components/MarkazMenyu";
+import { MarkazMenyu, menyuQaytaOchilsinmi, menyuEslandi } from "../../src/components/MarkazMenyu";
 import { ScrollBox } from "../../src/components/ScrollBox";
-import { C, T, S, R } from "../../src/theme";
+import { C, T, S, R, temaStil } from "../../src/theme";
 import { hisoblaKunlik, formatSom, qarzJami, optomJami, kartaJami, ishchiHaqlari } from "../../src/logic/hisob";
 // Maxsus rasm ikonkalari (Ionicons o'rniga — premium ko'rinish)
 const ICONS = {
@@ -41,7 +41,8 @@ export default function Markaz() {
   // o'z-o'zidan yangilanishi uchun. Foydalanuvchi tegmasa ham Markaz tetik turadi.
   // Logotip menyusi (Tarixdagilar, yozuv tanlovi) — boshqa bo'limga o'tganda yoki
   // dasturdan chiqilganda o'zi yopiladi
-  const [menu, setMenu] = useState(false);
+  const [menu, setMenu] = useState(menyuQaytaOchilsinmi); // dizayn almashgandan keyin ochiq qoladi
+  useEffect(() => { menyuEslandi(); }, []);
   const menuAlmash = () => {
     LayoutAnimation.configureNext(LayoutAnimation.create(220, LayoutAnimation.Types.easeInEaseOut, LayoutAnimation.Properties.opacity));
     setMenu((m) => !m);
@@ -266,7 +267,7 @@ function NavTile({ icon, image, tint, label, sub, onPress }) {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = temaStil(() => StyleSheet.create({
   safe:      { flex: 1, backgroundColor: C.bg },
   scroll:    { padding: S[5], paddingBottom: S[8] },
   statsRow:  { flexDirection: "row", gap: S[2], marginBottom: S[5] },
@@ -329,4 +330,4 @@ const styles = StyleSheet.create({
   actions:   { flexDirection: "row", justifyContent: "flex-end", gap: S[4], marginTop: S[3], borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: C.borderSoft, paddingTop: S[3] },
   actBtn:    { flexDirection: "row", alignItems: "center" },
   actTxt:    { fontSize: T.sm, fontWeight: "700" },
-});
+}));

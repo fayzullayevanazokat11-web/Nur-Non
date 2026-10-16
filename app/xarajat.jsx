@@ -13,7 +13,7 @@ import { Btn } from "../src/components/Btn";
 import { ExpandableCard, yopKartalar } from "../src/components/ExpandableCard";
 import { DateField } from "../src/components/DateField";
 import { ScrollBox } from "../src/components/ScrollBox";
-import { C, T, S, R } from "../src/theme";
+import { C, T, S, R, temaStil } from "../src/theme";
 import { formatSom } from "../src/logic/hisob";
 
 const localSana = () => {
@@ -162,7 +162,7 @@ export default function Xarajat() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = temaStil(() => StyleSheet.create({
   safe:     { flex: 1, backgroundColor: C.bg },
   scroll:   { padding: S[5], paddingBottom: S[8] },
   backBtn:  { flexDirection: "row", alignItems: "center", gap: 4, marginBottom: S[3] },
@@ -198,4 +198,4 @@ const styles = StyleSheet.create({
   actBtn:   { flexDirection: "row", alignItems: "center" },
   actTxt:   { fontSize: T.sm, fontWeight: "700" },
   note:     { fontSize: 11, color: C.muted, marginTop: S[4], fontStyle: "italic", textAlign: "center" },
-});
+}));

@@ -2,18 +2,16 @@
 //   • Bosh raqam: tanlangan ko'rsatkichning davr bo'yicha jami
 //   • Plitkalar: o'rtacha kunlik, eng yaxshi kun, hisobot kunlari
 //   • Ustunli grafik: har kun bitta ustun (bitta seriya — afsona shart emas).
-//     Foyda — jigarrang (iliq qutb), zarar — moviy-feruza (sovuq qutb), nol chizig'idan o'sadi.
+//     Foyda va zarar — mavzuning ikki qarama-qarshi rangi, nol chizig'idan o'sadi.
 //     Ustun bosilsa — sana va qiymat yuqorida ko'rsatiladi.
 //   • Non turlari bo'yicha ishlab chiqarilgan qoplar
-// Ranglar validator bilan tekshirilgan (dataviz: lightness, chroma, CVD, kontrast — PASS).
+// Har bir mavzu ranglari validator bilan tekshirilgan (dataviz: lightness, chroma, CVD, kontrast — PASS).
 import { useEffect, useMemo, useRef, useState } from "react";
 import { View, Text, Pressable, Animated, Easing, StyleSheet, LayoutAnimation } from "react-native";
-import { C, T, S, R } from "../theme";
+import { C, T, S, R, temaStil } from "../theme";
 import { formatSom } from "../logic/hisob";
 
-const MUSBAT = C.accent;   // #A0612A
-const MANFIY = "#1C7FA8";  // sovuq qutb — faqat zarar kunlari uchun
-const GRID = C.borderSoft;
+// Grafik ranglari joriy mavzudan: C.musbat (foyda) va C.manfiy (zarar — qarama-qarshi qutb)
 const H = 168;             // grafik balandligi
 
 const OYLAR = ["Yan", "Fev", "Mar", "Apr", "May", "Iyun", "Iyul", "Avg", "Sen", "Okt", "Noy", "Dek"];
@@ -119,7 +117,7 @@ export function Statistika({ hisobotlar, nonlar }) {
       <View style={styles.karta}>
         {/* Bosh raqam */}
         <Text style={styles.heroLbl}>{kor.nom} · {davr} kun jami</Text>
-        <Text style={[styles.hero, jami < 0 && { color: MANFIY }]} numberOfLines={1} adjustsFontSizeToFit>
+        <Text style={styles.hero} numberOfLines={1} adjustsFontSizeToFit>
           {formatSom(jami)}<Text style={styles.heroBirlik}> {kor.birlik}</Text>
         </Text>
 
@@ -135,7 +133,7 @@ export function Statistika({ hisobotlar, nonlar }) {
           <>
             {/* Tanlangan kun ko'rsatkichi (bosish bilan o'zgaradi) */}
             <View style={styles.oqish}>
-              <View style={[styles.oqishNuqta, { backgroundColor: qiymatlar[tI] < 0 ? MANFIY : MUSBAT }]} />
+              <View style={[styles.oqishNuqta, { backgroundColor: qiymatlar[tI] < 0 ? C.manfiy : C.musbat }]} />
               <Text style={styles.oqishSana}>{sanaQisqa(kunlar[tI]?.sana)}</Text>
               <Text style={styles.oqishQiymat}>{qiymatMatni(qiymatlar[tI], kor.birlik)}</Text>
             </View>
@@ -171,7 +169,7 @@ export function Statistika({ hisobotlar, nonlar }) {
                               {
                                 width: ustunEni,
                                 height: osish.interpolate({ inputRange: [0, 1], outputRange: [0, Math.max(h, v !== 0 ? 2 : 0)] }),
-                                backgroundColor: musbat ? MUSBAT : MANFIY,
+                                backgroundColor: musbat ? C.musbat : C.manfiy,
                                 opacity: faol ? 1 : 0.55,
                               },
                               musbat
@@ -222,19 +220,19 @@ function Plitka({ nom, qiymat }) {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = temaStil(() => StyleSheet.create({
   flex1:      { flex: 1 },
   filtrQator: { flexDirection: "row", marginBottom: S[2] },
   seg:        { flexDirection: "row", backgroundColor: C.panel, borderRadius: R.pill, padding: 3 },
   segBtn:     { paddingVertical: 7, paddingHorizontal: 16, borderRadius: R.pill },
   segBtnActive: { backgroundColor: C.accent },
   segTxt:     { fontSize: T.xs, fontWeight: "700", color: C.sub },
-  segTxtActive: { color: "#FFF3E8" },
+  segTxtActive: { color: C.onAccent },
   chips:      { flexDirection: "row", flexWrap: "wrap", gap: S[2], marginBottom: S[3] },
   chip:       { paddingVertical: 7, paddingHorizontal: 13, borderRadius: R.pill, borderWidth: 1, borderColor: C.border, backgroundColor: C.surface },
   chipActive: { backgroundColor: C.text, borderColor: C.text },
   chipTxt:    { fontSize: T.xs, fontWeight: "700", color: C.sub },
-  chipTxtActive: { color: "#FFF6EA" },
+  chipTxtActive: { color: C.onAccent },
 
   karta:      { backgroundColor: C.card, borderRadius: R.lg, borderWidth: StyleSheet.hairlineWidth, borderColor: C.borderSoft, padding: S[4], marginBottom: S[4] },
   heroLbl:    { fontSize: T.xs, color: C.sub, fontWeight: "700" },
@@ -254,7 +252,7 @@ const styles = StyleSheet.create({
   grafikQator:{ flexDirection: "row", gap: S[2] },
   yOq:        { width: 56 },
   yTxt:       { position: "absolute", right: 0, fontSize: 10, color: C.muted, fontWeight: "600" },
-  grid:       { position: "absolute", left: 0, right: 0, height: 1, backgroundColor: GRID },
+  grid:       { position: "absolute", left: 0, right: 0, height: 1, backgroundColor: C.borderSoft },
   nolChiziq:  { position: "absolute", left: 0, right: 0, height: 1, backgroundColor: C.border },
   ustunlar:   { ...StyleSheet.absoluteFillObject, flexDirection: "row" },
   slot:       { height: "100%", alignItems: "center" },
@@ -266,6 +264,6 @@ const styles = StyleSheet.create({
   nonQator:   { flexDirection: "row", alignItems: "center", gap: S[2], marginBottom: S[2] },
   nonNom:     { width: 104, fontSize: T.xs, color: C.sub, fontWeight: "600" },
   nonTrek:    { flex: 1, height: 10, borderRadius: 5, backgroundColor: C.panel, overflow: "hidden" },
-  nonBar:     { height: "100%", borderRadius: 5, backgroundColor: MUSBAT },
+  nonBar:     { height: "100%", borderRadius: 5, backgroundColor: C.musbat },
   nonQiymat:  { width: 52, textAlign: "right", fontSize: T.xs, color: C.text, fontWeight: "700" },
-});
+}));

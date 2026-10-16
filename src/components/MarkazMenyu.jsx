@@ -2,17 +2,24 @@
 //   • Akkaunt va ma'lumotlar — akkaunt nomi, ma'lumotlarni yuborish/qabul qilish
 //   • Tarixdagilar — o'chirilgan narsalar (7 kun), qaytarish mumkin
 //   • Yozuv — Lotin / Кирилл (butun ilova matni darhol o'zgaradi)
+//   • Dizayn — mavzu tanlovi (Non, Tun, Zaytun, Moviy)
 import { useEffect, useRef } from "react";
 import { View, Text, Pressable, Animated, Easing, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useApp } from "../store/AppData";
 import { useTil, setTil } from "../i18n/til";
-import { C, T, S, R, ANIM } from "../theme";
+import { C, T, S, R, ANIM, temaStil, TEMALAR, useTema, temaAlmashtir } from "../theme";
+
+// Mavzu almashganda ekranlar qayta chiziladi — menyu ochiq qolishi uchun eslab qolamiz
+let qaytaOchish = false;
+export const menyuQaytaOchilsinmi = () => qaytaOchish;
+export const menyuEslandi = () => { qaytaOchish = false; };
 
 export function MarkazMenyu({ onYop }) {
   const { ochirilganlar, akkauntNomi } = useApp();
   const til = useTil();
+  const tema = useTema();
   const soni = (ochirilganlar || []).length;
 
   // Ochilish animatsiyasi: shaffoflik + yuqoridan sirpanish
@@ -77,11 +84,50 @@ export function MarkazMenyu({ onYop }) {
           ))}
         </View>
       </View>
+
+      <View style={styles.divider} />
+
+      <View style={styles.row}>
+        <View style={styles.icon}><Ionicons name="color-palette-outline" size={20} color={C.accent} /></View>
+        <View style={styles.flex1}>
+          <Text style={styles.label}>Dizayn</Text>
+          <Text style={styles.sub}>Ilova ranglari</Text>
+        </View>
+      </View>
+      <View style={styles.temalar}>
+        {Object.entries(TEMALAR).map(([id, t]) => {
+          const tanlangan = tema === id;
+          return (
+            <Pressable
+              key={id}
+              accessibilityRole="button"
+              accessibilityLabel={`Dizayn: ${t.nom}`}
+              accessibilityState={{ selected: tanlangan }}
+              onPress={() => { if (!tanlangan) { qaytaOchish = true; temaAlmashtir(id); } }}
+              style={({ pressed }) => [styles.tema, pressed && styles.temaPressed]}
+            >
+              <View style={[styles.namuna, { backgroundColor: t.ranglar.card, borderColor: tanlangan ? C.accent : C.border }, tanlangan && styles.namunaTanlangan]}>
+                <View style={[styles.namunaBar, { backgroundColor: t.ranglar.accent }]} />
+                <View style={styles.namunaQator}>
+                  <View style={[styles.namunaNuqta, { backgroundColor: t.ranglar.text }]} />
+                  <View style={[styles.namunaChiziq, { backgroundColor: t.ranglar.muted }]} />
+                </View>
+                {tanlangan && (
+                  <View style={[styles.belgi, { backgroundColor: C.accent }]}>
+                    <Ionicons name="checkmark" size={11} color={C.onAccent} />
+                  </View>
+                )}
+              </View>
+              <Text style={[styles.temaNom, tanlangan && styles.temaNomTanlangan]}>{t.nom}</Text>
+            </Pressable>
+          );
+        })}
+      </View>
     </Animated.View>
   );
 }
 
-const styles = StyleSheet.create({
+const styles = temaStil(() => StyleSheet.create({
   wrap:      { backgroundColor: C.card, borderRadius: R.lg, borderWidth: StyleSheet.hairlineWidth, borderColor: C.borderSoft, marginTop: -S[3], marginBottom: S[5], overflow: "hidden" },
   row:       { flexDirection: "row", alignItems: "center", gap: S[3], paddingVertical: S[3], paddingHorizontal: S[4] },
   rowPressed:{ opacity: 0.75 },
@@ -90,11 +136,24 @@ const styles = StyleSheet.create({
   label:     { fontSize: T.md, fontWeight: "800", color: C.text },
   sub:       { fontSize: T.xs, color: C.sub, marginTop: 2 },
   badge:     { minWidth: 24, height: 24, paddingHorizontal: 7, borderRadius: 12, backgroundColor: C.accent, alignItems: "center", justifyContent: "center" },
-  badgeTxt:  { fontSize: 12, fontWeight: "800", color: "#FFF3E8" },
+  badgeTxt:  { fontSize: 12, fontWeight: "800", color: C.onAccent },
   divider:   { height: StyleSheet.hairlineWidth, backgroundColor: C.borderSoft, marginHorizontal: S[4] },
   seg:       { flexDirection: "row", backgroundColor: C.panel, borderRadius: R.pill, padding: 3 },
   segBtn:    { paddingVertical: 7, paddingHorizontal: 12, borderRadius: R.pill },
   segBtnActive: { backgroundColor: C.accent },
   segTxt:    { fontSize: T.xs, fontWeight: "700", color: C.sub },
-  segTxtActive: { color: "#FFF3E8" },
-});
+  segTxtActive: { color: C.onAccent },
+
+  temalar:   { flexDirection: "row", gap: S[2], paddingHorizontal: S[4], paddingBottom: S[4] },
+  tema:      { flex: 1, alignItems: "center" },
+  temaPressed: { opacity: 0.8, transform: [{ scale: 0.97 }] },
+  namuna:    { width: "100%", height: 54, borderRadius: R.sm, borderWidth: 1.5, padding: 8, gap: 6, overflow: "hidden" },
+  namunaTanlangan: { borderWidth: 2 },
+  namunaBar: { height: 12, borderRadius: 6, width: "70%" },
+  namunaQator: { flexDirection: "row", alignItems: "center", gap: 4 },
+  namunaNuqta: { width: 8, height: 8, borderRadius: 4 },
+  namunaChiziq: { flex: 1, height: 4, borderRadius: 2 },
+  belgi:     { position: "absolute", right: 5, bottom: 5, width: 18, height: 18, borderRadius: 9, alignItems: "center", justifyContent: "center" },
+  temaNom:   { fontSize: T.xs, fontWeight: "700", color: C.sub, marginTop: 6 },
+  temaNomTanlangan: { color: C.accent },
+}));

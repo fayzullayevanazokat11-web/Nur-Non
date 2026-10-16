@@ -14,7 +14,7 @@ import { xomashyoRoyxati } from "../src/logic/konstantalar";
 import { DateField } from "../src/components/DateField";
 import { HisobotModal } from "../src/components/HisobotModal";
 import { ScrollBox } from "../src/components/ScrollBox";
-import { C, T, S, R } from "../src/theme";
+import { C, T, S, R, temaStil } from "../src/theme";
 import { hisoblaKunlik, qoldiqlarHisobi, ishchiHaqlari, kunlikXomashyoSarfi, formatSom } from "../src/logic/hisob";
 
 const toStr = (obj) => Object.fromEntries(Object.entries(obj || {}).map(([k, v]) => [k, String(v)]));
@@ -333,7 +333,7 @@ function Row({ label, value, color = C.text, bold, big }) {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = temaStil(() => StyleSheet.create({
   safe: { flex: 1, backgroundColor: C.bg },
   scroll: { padding: S[5], paddingBottom: S[8] },
   backBtn: { flexDirection: "row", alignItems: "center", gap: 4, marginBottom: S[3] },
@@ -372,4 +372,4 @@ const styles = StyleSheet.create({
   haqRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: S[2] },
   haqNom: { flex: 1, fontSize: T.sm, color: C.text },
   haqVal: { fontSize: T.sm, color: C.accent, fontWeight: "800", marginLeft: S[2] },
-});
+}));

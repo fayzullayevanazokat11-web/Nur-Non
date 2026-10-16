@@ -1,7 +1,7 @@
 // Splash ekran — "Non" logo rasmi, bir xil (oq) fonda. Ochilganda ~2.2s.
 import { useEffect, useRef } from "react";
 import { View, Text, Image, Animated, StyleSheet } from "react-native";
-import { C } from "../theme";
+import { C, temaStil } from "../theme";
 
 const LOGO = require("../../assets/splash-logo.jpg");
 
@@ -30,7 +30,7 @@ export function Splash({ onDone }) {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = temaStil(() => StyleSheet.create({
   wrap: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: "#FFFFFF",   // bir xil (oq) fon — logo bilan mos
@@ -40,4 +40,4 @@ const styles = StyleSheet.create({
   },
   logo: { width: 300, height: 220 },
   sub: { fontSize: 14, color: C.accent, marginTop: -6, letterSpacing: 1.5, fontWeight: "700" },
-});
+}));

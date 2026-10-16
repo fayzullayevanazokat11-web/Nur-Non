@@ -6,7 +6,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useApp } from "../store/AppData";
 import { Btn } from "./Btn";
-import { C, T, S, R } from "../theme";
+import { C, T, S, R, temaStil } from "../theme";
 import { hisoblaKunlik, qoldiqlarHisobi, formatSom, ishchiHaqlari } from "../logic/hisob";
 
 export function HisobotModal({ visible, onClose }) {
@@ -143,7 +143,7 @@ export function HisobotModal({ visible, onClose }) {
 
         {/* Ishchilar haqi */}
         {data.haqList.length > 0 && (
-          <View style={[styles.block, { backgroundColor: "#F5EBDA", borderColor: "#E7D3B4" }]}>
+          <View style={[styles.block, { backgroundColor: C.accentBg, borderColor: C.accentBorder }]}>
             <Text style={styles.blockHead}>Ishchilar haqi</Text>
             {data.haqList.map((w) => (
               <Row key={w.id} label={w.brak > 0 ? `${w.ism} (brak −${formatSom(w.brak)})` : w.ism} value={`${formatSom(w.net)} so'm`} bold />
@@ -178,7 +178,7 @@ function Row({ label, value, color = C.text, bold }) {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = temaStil(() => StyleSheet.create({
   overlay:   { ...StyleSheet.absoluteFillObject, backgroundColor: C.bg, zIndex: 9000 },
   safe:      { flex: 1 },
   headerRow: { flexDirection: "row", alignItems: "flex-start", paddingHorizontal: S[5], paddingTop: S[4], paddingBottom: S[3], borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: C.borderSoft },
@@ -210,4 +210,4 @@ const styles = StyleSheet.create({
   umumiyVal: { fontSize: T.xxl, fontWeight: "800", marginTop: S[1], letterSpacing: -0.5 },
   umumiyForm: { fontSize: 10, color: C.muted, marginTop: 6, textAlign: "center" },
   gap12:     { height: S[3] },
-});
+}));

@@ -7,7 +7,7 @@ import { withLayoutContext } from "expo-router";
 import { createMaterialTopTabNavigator } from "@react-navigation/material-top-tabs";
 import { View, Text, Image, Pressable, Animated, StyleSheet } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { C } from "../../src/theme";
+import { C, temaStil } from "../../src/theme";
 import { useTil } from "../../src/i18n/til";
 import { ogir } from "../../src/i18n/translit";
 
@@ -99,12 +99,12 @@ export default function TabsLayout() {
   );
 }
 
-const styles = StyleSheet.create({
-  bar:     { flexDirection: "row", backgroundColor: "#FFFFFF", borderTopColor: C.borderSoft, borderTopWidth: StyleSheet.hairlineWidth, paddingTop: 6 },
+const styles = temaStil(() => StyleSheet.create({
+  bar:     { flexDirection: "row", backgroundColor: C.bar, borderTopColor: C.borderSoft, borderTopWidth: StyleSheet.hairlineWidth, paddingTop: 6 },
   pill:    { position: "absolute", top: 6, left: 0, width: PILL_W, height: 30, borderRadius: 15, backgroundColor: C.accent + "16" },
   item:    { flex: 1, alignItems: "center", paddingBottom: 4 },
   iconBox: { width: 24, height: 24, marginTop: 3 },
   icon:    { width: 24, height: 24 },
   iconUst: { position: "absolute", top: 0, left: 0 },
   label:   { fontSize: 11, fontWeight: "600", letterSpacing: 0.3, marginTop: 5 },
-});
+}));

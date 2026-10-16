@@ -14,7 +14,7 @@ import { ExpandableCard, yopKartalar } from "../../src/components/ExpandableCard
 import { MahsulotNarxi } from "../../src/components/MahsulotNarxi";
 import { ScrollBox } from "../../src/components/ScrollBox";
 import { xomashyoRoyxati } from "../../src/logic/konstantalar";
-import { C, T, S, R } from "../../src/theme";
+import { C, T, S, R, temaStil } from "../../src/theme";
 import { formatSom, getQopTannarx, getIngNarx } from "../../src/logic/hisob";
 
 const baseUnit = (birlik) => (birlik === "litr" ? "ml" : "g");
@@ -161,11 +161,11 @@ export default function IshlabChiqarish() {
 
         <View style={styles.segment}>
           <Pressable style={[styles.seg, tab === "assortiment" && styles.segActive]} onPress={() => setTab("assortiment")}>
-            <Ionicons name="grid-outline" size={15} color={tab === "assortiment" ? "#FFF3E8" : C.sub} />
+            <Ionicons name="grid-outline" size={15} color={tab === "assortiment" ? C.onAccent : C.sub} />
             <Text style={[styles.segTxt, tab === "assortiment" && styles.segTxtActive]}>Assortiment</Text>
           </Pressable>
           <Pressable style={[styles.seg, tab === "narx" && styles.segActive]} onPress={() => setTab("narx")}>
-            <Ionicons name="leaf-outline" size={15} color={tab === "narx" ? "#FFF3E8" : C.sub} />
+            <Ionicons name="leaf-outline" size={15} color={tab === "narx" ? C.onAccent : C.sub} />
             <Text style={[styles.segTxt, tab === "narx" && styles.segTxtActive]}>Xomashyo</Text>
           </Pressable>
         </View>
@@ -315,7 +315,7 @@ function Row({ label, value, valueColor = C.text, bold = false, last = false }) 
   );
 }
 
-const styles = StyleSheet.create({
+const styles = temaStil(() => StyleSheet.create({
   safe:      { flex: 1, backgroundColor: C.bg },
   scroll:    { padding: S[5], paddingBottom: S[8] },
   gap14:     { height: S[4] },
@@ -323,7 +323,7 @@ const styles = StyleSheet.create({
   seg:       { flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, paddingVertical: 12, borderRadius: R.md },
   segActive: { backgroundColor: C.accent },
   segTxt:    { fontSize: T.sm, fontWeight: "700", color: C.sub },
-  segTxtActive: { color: "#FFF3E8" },
+  segTxtActive: { color: C.onAccent },
 
   // Inline forma
   formCard:  { marginBottom: S[5] },
@@ -335,7 +335,7 @@ const styles = StyleSheet.create({
   turBtn:    { flex: 1, alignItems: "center", paddingVertical: 12, borderRadius: R.md, borderWidth: 1, borderColor: C.border, backgroundColor: C.surface },
   turBtnActive:{ backgroundColor: C.accent, borderColor: C.accent },
   turTxt:    { fontSize: T.sm, fontWeight: "700", color: C.sub },
-  turTxtActive:{ color: "#FFF3E8" },
+  turTxtActive:{ color: C.onAccent },
   ingEditRow:{ flexDirection: "row", alignItems: "center", gap: S[2], marginBottom: S[2] },
   ingEditNom:{ flex: 1, fontSize: T.sm, color: C.text },
   ingInput:  { width: 90, borderWidth: 1, borderColor: C.border, borderRadius: R.sm, paddingVertical: 8, paddingHorizontal: 10, fontSize: T.sm, color: C.text, backgroundColor: C.surface, textAlign: "right" },
@@ -377,4 +377,4 @@ const styles = StyleSheet.create({
   ingTotalRow:{ flexDirection: "row", justifyContent: "space-between", marginTop: 4, paddingTop: 6, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: C.borderSoft },
   ingTotalLbl:{ fontSize: T.xs, color: C.sub, fontWeight: "700" },
   ingTotalV: { fontSize: T.xs, color: C.text, fontWeight: "800" },
-});
+}));

@@ -2,13 +2,13 @@
 import { useRef } from "react";
 import { Animated, Pressable, Text, Easing, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { C, T, R, ANIM } from "../theme";
+import { C, T, R, ANIM, temaStil } from "../theme";
 
 export function Btn({
   children,
   onPress,
   color = C.accent,
-  textColor = "#FFF3E8",
+  textColor = C.onAccent,
   icon,
   disabled = false,
   secondary = false,
@@ -59,7 +59,7 @@ export function Btn({
   );
 }
 
-const styles = StyleSheet.create({
+const styles = temaStil(() => StyleSheet.create({
   full: { width: "100%" },
   base: {
     flexDirection: "row",
@@ -71,4 +71,4 @@ const styles = StyleSheet.create({
   },
   icon:  { marginRight: 8 },
   label: { fontSize: T.md, fontWeight: "700", letterSpacing: 0.2 },
-});
+}));

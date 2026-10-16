@@ -12,7 +12,7 @@ import { Card } from "../src/components/Card";
 import { ExpandableCard, yopKartalar } from "../src/components/ExpandableCard";
 import { ScrollBox } from "../src/components/ScrollBox";
 import { Statistika } from "../src/components/Statistika";
-import { C, T, S, R } from "../src/theme";
+import { C, T, S, R, temaStil } from "../src/theme";
 import { formatSom } from "../src/logic/hisob";
 
 export default function Tarix() {
@@ -117,7 +117,7 @@ export default function Tarix() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = temaStil(() => StyleSheet.create({
   safe:     { flex: 1, backgroundColor: C.bg },
   scroll:   { padding: S[5], paddingBottom: S[8] },
   backBtn:  { flexDirection: "row", alignItems: "center", gap: 4, marginBottom: S[3] },
@@ -157,4 +157,4 @@ const styles = StyleSheet.create({
   actions:  { flexDirection: "row", justifyContent: "flex-end", marginTop: S[3], borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: C.borderSoft, paddingTop: S[3] },
   actBtn:   { flexDirection: "row", alignItems: "center" },
   actTxt:   { fontSize: T.sm, fontWeight: "700" },
-});
+}));

@@ -10,7 +10,7 @@ import { Btn } from "../../src/components/Btn";
 import { ScreenHeader } from "../../src/components/ScreenHeader";
 import { ExpandableCard, yopKartalar } from "../../src/components/ExpandableCard";
 import { ScrollBox } from "../../src/components/ScrollBox";
-import { C, T, S, R } from "../../src/theme";
+import { C, T, S, R, temaStil } from "../../src/theme";
 import { omborBalans, zaxiraMatni, omborKattaBirlik } from "../../src/logic/hisob";
 import { xomashyoRoyxati } from "../../src/logic/konstantalar";
 
@@ -305,7 +305,7 @@ export default function Ombor() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = temaStil(() => StyleSheet.create({
   safe:      { flex: 1, backgroundColor: C.bg },
   scroll:    { padding: S[5], paddingBottom: S[8] },
   gap10:     { height: S[3] },
@@ -357,4 +357,4 @@ const styles = StyleSheet.create({
   },
   hint:       { fontSize: 11, color: C.muted, marginTop: 3 },
   flex1:      { flex: 1 },
-});
+}));

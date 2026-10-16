@@ -13,7 +13,7 @@ import { ExpandableCard, yopKartalar } from "../../src/components/ExpandableCard
 import { ScrollBox } from "../../src/components/ScrollBox";
 import { DateField } from "../../src/components/DateField";
 import { Avatar } from "../../src/components/Avatar";
-import { C, T, S, R } from "../../src/theme";
+import { C, T, S, R, temaStil } from "../../src/theme";
 import { formatSom } from "../../src/logic/hisob";
 import { LAVOZIMLAR, getLavozimLabel } from "../../src/logic/konstantalar";
 
@@ -395,7 +395,7 @@ function KartaWrap({ w, ochTahrir, ochir, haydash, tatildanQaytar, qaytarish, ta
   );
 }
 
-const styles = StyleSheet.create({
+const styles = temaStil(() => StyleSheet.create({
   safe:      { flex: 1, backgroundColor: C.bg },
   scroll:    { padding: S[5], paddingBottom: S[8] },
   statsRow:  { flexDirection: "row", gap: S[2] },
@@ -421,7 +421,7 @@ const styles = StyleSheet.create({
   turBtn:    { flex: 1, alignItems: "center", paddingVertical: 12, borderRadius: R.md, borderWidth: 1, borderColor: C.border, backgroundColor: C.surface },
   turBtnActive:{ backgroundColor: C.accent, borderColor: C.accent },
   turTxt:    { fontSize: T.sm, fontWeight: "700", color: C.sub },
-  turTxtActive:{ color: "#FFF3E8" },
+  turTxtActive:{ color: C.onAccent },
   nonRow:    { flexDirection: "row", alignItems: "center", gap: S[2], marginBottom: S[2] },
   nonNom:    { flex: 1, fontSize: T.sm, color: C.text },
   nonInput:  { width: 120, borderWidth: 1, borderColor: C.border, borderRadius: R.sm, paddingVertical: 9, paddingHorizontal: 12, fontSize: T.sm, color: C.text, backgroundColor: C.surface, textAlign: "right" },
@@ -460,4 +460,4 @@ const styles = StyleSheet.create({
   bodyActions:{ flexDirection: "row", flexWrap: "wrap", justifyContent: "flex-end", gap: S[3], rowGap: S[2], marginTop: S[3], borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: C.borderSoft, paddingTop: S[3] },
   actBtn:    { flexDirection: "row", alignItems: "center" },
   actTxt:    { fontSize: T.sm, fontWeight: "700" },
-});
+}));

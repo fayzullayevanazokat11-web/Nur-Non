@@ -2,7 +2,7 @@
 // `image` — bo'lim ikonkasi (maxsus rasm; har doim ko'rinadi). `icon` — Ionicons (zaxira).
 import { View, Text, Image, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { C, T, S, R } from "../theme";
+import { C, T, S, R, temaStil } from "../theme";
 
 export function ScreenHeader({ eyebrow, title, subtitle, icon, image, style }) {
   return (
@@ -25,7 +25,7 @@ export function ScreenHeader({ eyebrow, title, subtitle, icon, image, style }) {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = temaStil(() => StyleSheet.create({
   wrap:     { marginBottom: S[6] },
   eyebrow:  { fontSize: 11, color: C.muted, fontWeight: "700", letterSpacing: 1.8 },
   titleRow: { flexDirection: "row", alignItems: "center", gap: S[3], marginTop: S[2] },
@@ -33,4 +33,4 @@ const styles = StyleSheet.create({
   img:      { width: 24, height: 24, tintColor: C.sub },
   title:    { fontSize: T.xl, color: C.text, fontWeight: "800", letterSpacing: -0.6, lineHeight: T.xl + 4, flexShrink: 1 },
   subtitle: { fontSize: T.sm, color: C.sub, fontWeight: "500", marginTop: S[2], lineHeight: 19 },
-});
+}));

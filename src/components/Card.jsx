@@ -3,15 +3,15 @@
 // (ko'p kartali ro'yxatlarда scroll ravon bo'lishi uchun).
 import { useEffect, useRef } from "react";
 import { View, Animated, Easing, StyleSheet } from "react-native";
-import { C, R, S, shadow, ANIM } from "../theme";
+import { C, R, S, shadow, ANIM, temaStil } from "../theme";
 
 export function Card({ children, danger = false, accent = false, animate = true, style }) {
   // Fon SHAFFOFMAS (opaque) — yarim-shaffof fon + elevation Android'да
   // burchaklarda soya "sizib o'tishi" (qalin halo) artefaktini beradi.
   const variant = danger
-    ? { backgroundColor: "#F8EDE7", borderColor: "#E8C9B6" }
+    ? { backgroundColor: C.dangerBg, borderColor: C.dangerBorder }
     : accent
-    ? { backgroundColor: "#F5EBDA", borderColor: "#E7D3B4" }
+    ? { backgroundColor: C.accentBg, borderColor: C.accentBorder }
     : { backgroundColor: C.card, borderColor: C.border };
 
   if (!animate) {
@@ -32,11 +32,11 @@ function AnimatedCard({ variant, style, children }) {
   return <Animated.View style={[styles.base, variant, entrance, style]}>{children}</Animated.View>;
 }
 
-const styles = StyleSheet.create({
+const styles = temaStil(() => StyleSheet.create({
   base: {
     borderRadius: R.lg,
     borderWidth: 1.5,
     padding: S[5],
     ...shadow,
   },
-});
+}));

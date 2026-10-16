@@ -16,7 +16,7 @@ import { useApp } from "../src/store/AppData";
 import { Card } from "../src/components/Card";
 import { Btn } from "../src/components/Btn";
 import { ScrollBox } from "../src/components/ScrollBox";
-import { C, T, S, R } from "../src/theme";
+import { C, T, S, R, temaStil } from "../src/theme";
 import { matngaAylantir, matndanOqi, xulosa, hajm, sanaVaqt, faylNomi } from "../src/logic/uzatish";
 
 // Juda uzun matn TextInput'da sekinlashtiradi — undan uzunini ixcham ko'rsatamiz
@@ -173,7 +173,7 @@ export default function Akkaunt() {
         <Card style={styles.card}>
           <View style={styles.akkRow}>
             <View style={styles.avatar}>
-              {harf ? <Text style={styles.avatarTxt}>{harf}</Text> : <Ionicons name="storefront-outline" size={24} color="#FFF3E8" />}
+              {harf ? <Text style={styles.avatarTxt}>{harf}</Text> : <Ionicons name="storefront-outline" size={24} color={C.onAccent} />}
             </View>
             <View style={styles.flex1}>
               <Text style={styles.akkEyebrow}>ASOSIY AKKAUNT</Text>
@@ -287,7 +287,7 @@ export default function Akkaunt() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = temaStil(() => StyleSheet.create({
   safe:     { flex: 1, backgroundColor: C.bg },
   scroll:   { padding: S[5], paddingBottom: S[8] },
   backBtn:  { flexDirection: "row", alignItems: "center", gap: 4, marginBottom: S[3] },
@@ -306,7 +306,7 @@ const styles = StyleSheet.create({
   card:     { marginBottom: S[5] },
   akkRow:   { flexDirection: "row", alignItems: "center", gap: S[3] },
   avatar:   { width: 52, height: 52, borderRadius: 26, backgroundColor: C.accent, alignItems: "center", justifyContent: "center" },
-  avatarTxt:{ fontSize: 19, fontWeight: "800", color: "#FFF3E8", letterSpacing: 0.5 },
+  avatarTxt:{ fontSize: 19, fontWeight: "800", color: C.onAccent, letterSpacing: 0.5 },
   akkEyebrow:{ fontSize: 10, color: C.muted, fontWeight: "800", letterSpacing: 1.4 },
   akkNom:   { fontSize: T.lg, color: C.text, fontWeight: "800", marginTop: 2 },
 
@@ -337,4 +337,4 @@ const styles = StyleSheet.create({
 
   zaxiraRow:{ flexDirection: "row", alignItems: "center", gap: S[3], marginBottom: S[3] },
   zaxiraBosh:{ fontSize: T.md, fontWeight: "800", color: C.text },
-});
+}));

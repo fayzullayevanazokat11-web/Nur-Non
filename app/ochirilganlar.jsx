@@ -9,7 +9,7 @@ import { router } from "expo-router";
 import { useApp } from "../src/store/AppData";
 import { Card } from "../src/components/Card";
 import { ScrollBox } from "../src/components/ScrollBox";
-import { C, T, S, R } from "../src/theme";
+import { C, T, S, R, temaStil } from "../src/theme";
 import { formatSom } from "../src/logic/hisob";
 
 const D = 86400000;
@@ -138,7 +138,7 @@ export default function Ochirilganlar() {
                     onPress={() => qaytarish(y)}
                     style={({ pressed }) => [styles.qaytarBtn, pressed && styles.pressed]}
                   >
-                    <Ionicons name="arrow-undo-outline" size={16} color="#FFF3E8" />
+                    <Ionicons name="arrow-undo-outline" size={16} color={C.onAccent} />
                     <Text style={styles.qaytarTxt}>Qaytarish</Text>
                   </Pressable>
                 </View>
@@ -151,7 +151,7 @@ export default function Ochirilganlar() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = temaStil(() => StyleSheet.create({
   safe:     { flex: 1, backgroundColor: C.bg },
   scroll:   { padding: S[5], paddingBottom: S[8] },
   backBtn:  { flexDirection: "row", alignItems: "center", gap: 4, marginBottom: S[3] },
@@ -171,7 +171,7 @@ const styles = StyleSheet.create({
   chip:     { paddingVertical: 7, paddingHorizontal: 14, borderRadius: R.pill, borderWidth: 1, borderColor: C.border, backgroundColor: C.surface },
   chipActive: { backgroundColor: C.accent, borderColor: C.accent },
   chipTxt:  { fontSize: T.xs, fontWeight: "700", color: C.sub },
-  chipTxtActive: { color: "#FFF3E8" },
+  chipTxtActive: { color: C.onAccent },
 
   item:     { marginBottom: S[3] },
   itemRow:  { flexDirection: "row", alignItems: "flex-start", gap: S[3] },
@@ -183,6 +183,6 @@ const styles = StyleSheet.create({
   delBtn:   { width: 38, height: 38, borderRadius: R.md, alignItems: "center", justifyContent: "center", backgroundColor: C.red + "12" },
   delImg:   { width: 18, height: 18, tintColor: C.red },
   qaytarBtn:{ flexDirection: "row", alignItems: "center", gap: 6, backgroundColor: C.accent, borderRadius: R.pill, paddingVertical: 9, paddingHorizontal: 16 },
-  qaytarTxt:{ fontSize: T.sm, fontWeight: "800", color: "#FFF3E8" },
+  qaytarTxt:{ fontSize: T.sm, fontWeight: "800", color: C.onAccent },
   pressed:  { opacity: 0.7, transform: [{ scale: 0.97 }] },
-});
+}));

@@ -1,6 +1,6 @@
 // Xodim avatari — bosh harflar (initials) tinti doirada.
 import { View, Text, StyleSheet } from "react-native";
-import { C, R } from "../theme";
+import { C, R, temaStil } from "../theme";
 
 function initials(name = "") {
   const parts = String(name).trim().split(/\s+/).filter(Boolean);
@@ -17,7 +17,7 @@ export function Avatar({ name, size = 44 }) {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = temaStil(() => StyleSheet.create({
   wrap: { backgroundColor: C.accent + "16", alignItems: "center", justifyContent: "center" },
   txt:  { color: C.accent, fontWeight: "800", fontSize: 16, letterSpacing: 0.3 },
-});
+}));

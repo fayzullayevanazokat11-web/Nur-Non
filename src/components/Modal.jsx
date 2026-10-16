@@ -1,7 +1,7 @@
 // Qayta ishlatiladigan Modal — pastdan chiqadigan "bottom sheet".
 // Orqa fonga (backdrop) bosilganda yopiladi; ichki bosishlar yopmaydi.
 import { Modal as RNModal, View, Pressable, StyleSheet } from "react-native";
-import { C, R, S } from "../theme";
+import { C, R, S, temaStil } from "../theme";
 
 export function Modal({ modalVisible, onClose, children }) {
   return (
@@ -24,10 +24,10 @@ export function Modal({ modalVisible, onClose, children }) {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = temaStil(() => StyleSheet.create({
   backdrop: {
     flex: 1,
-    backgroundColor: "rgba(58,30,8,0.35)",
+    backgroundColor: C.overlay,
     justifyContent: "flex-end",
   },
   sheet: {
@@ -48,4 +48,4 @@ const styles = StyleSheet.create({
     alignSelf: "center",
     marginBottom: S[4],
   },
-});
+}));

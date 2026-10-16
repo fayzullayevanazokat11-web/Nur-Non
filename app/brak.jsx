@@ -11,7 +11,7 @@ import { Card } from "../src/components/Card";
 import { Btn } from "../src/components/Btn";
 import { ExpandableCard, yopKartalar } from "../src/components/ExpandableCard";
 import { ScrollBox } from "../src/components/ScrollBox";
-import { C, T, S, R } from "../src/theme";
+import { C, T, S, R, temaStil } from "../src/theme";
 import { formatSom } from "../src/logic/hisob";
 
 const localSana = () => {
@@ -182,7 +182,7 @@ export default function Brak() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = temaStil(() => StyleSheet.create({
   safe:     { flex: 1, backgroundColor: C.bg },
   scroll:   { padding: S[5], paddingBottom: S[8] },
   backBtn:  { flexDirection: "row", alignItems: "center", gap: 4, marginBottom: S[3] },
@@ -227,4 +227,4 @@ const styles = StyleSheet.create({
   actions:  { flexDirection: "row", justifyContent: "flex-end", gap: S[4], marginTop: S[3], borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: C.borderSoft, paddingTop: S[3] },
   actBtn:   { flexDirection: "row", alignItems: "center" },
   actTxt:   { fontSize: T.sm, fontWeight: "700" },
-});
+}));

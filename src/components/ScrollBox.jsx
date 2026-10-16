@@ -3,7 +3,7 @@
 // (Android'da thumb tile'larning tap sohasini bloklab qo'yardi).
 import { forwardRef, useImperativeHandle, useRef, useState } from "react";
 import { View, ScrollView, StyleSheet } from "react-native";
-import { C } from "../theme";
+import { C, temaStil } from "../theme";
 
 export const ScrollBox = forwardRef(function ScrollBox(
   { children, contentContainerStyle, keyboardShouldPersistTaps, style },
@@ -50,8 +50,8 @@ export const ScrollBox = forwardRef(function ScrollBox(
   );
 });
 
-const styles = StyleSheet.create({
+const styles = temaStil(() => StyleSheet.create({
   wrap:  { flex: 1 },
   track: { position: "absolute", right: 2, top: 0, bottom: 0, width: 8, alignItems: "center" },
   thumb: { position: "absolute", top: 0, width: 6, borderRadius: 3, backgroundColor: C.accent + "CC" },
-});
+}));

@@ -10,7 +10,7 @@ import { Btn } from "./Btn";
 import { ExpandableCard, yopKartalar } from "./ExpandableCard";
 import { OMBOR_MAYDONLAR, xomashyoRoyxati } from "../logic/konstantalar";
 import { formatSom } from "../logic/hisob";
-import { C, T, S, R } from "../theme";
+import { C, T, S, R, temaStil } from "../theme";
 
 const baseUnit = (birlik) => (birlik === "litr" ? "ml" : "g");
 const ASOSIY_IDLAR = new Set(OMBOR_MAYDONLAR.map((m) => m.id));
@@ -158,7 +158,7 @@ export function Xomashyo() {
 // Eski nom bilan ham ishlashi uchun (ishlab.jsx import)
 export const MahsulotNarxi = Xomashyo;
 
-const styles = StyleSheet.create({
+const styles = temaStil(() => StyleSheet.create({
   hint:      { marginBottom: S[4] },
   hintRow:   { flexDirection: "row", gap: S[2] },
   hintIcon:  { marginTop: 1 },
@@ -201,6 +201,6 @@ const styles = StyleSheet.create({
   unitBtn:    { flex: 1, alignItems: "center", paddingVertical: 12, borderRadius: R.md, borderWidth: 1, borderColor: C.border, backgroundColor: C.surface },
   unitBtnActive: { backgroundColor: C.accent, borderColor: C.accent },
   unitTxt:    { fontSize: T.md, fontWeight: "700", color: C.sub },
-  unitTxtActive: { color: "#FFF3E8" },
+  unitTxtActive: { color: C.onAccent },
   hintLine:   { fontSize: T.xs, color: C.accent, fontWeight: "700", marginTop: 6 },
-});
+}));
