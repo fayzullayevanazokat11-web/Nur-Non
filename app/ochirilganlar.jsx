@@ -1,0 +1,188 @@
+// "Tarixdagilar" — dasturda o'chirilgan barcha narsalar 7 kun saqlanadi.
+// Har birini "Qaytarish" bilan asl joyiga (asl tartibida) tiklash mumkin.
+import { useEffect, useMemo, useRef, useState } from "react";
+import { View, Text, Image, Pressable, ScrollView, StyleSheet, Alert, LayoutAnimation } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
+
+import { useApp } from "../src/store/AppData";
+import { Card } from "../src/components/Card";
+import { ScrollBox } from "../src/components/ScrollBox";
+import { C, T, S, R } from "../src/theme";
+import { formatSom } from "../src/logic/hisob";
+
+const D = 86400000;
+const ikki = (n) => String(n).padStart(2, "0");
+const vaqtMatni = (ms) => { const d = new Date(ms); return `${ikki(d.getDate())}.${ikki(d.getMonth() + 1)} ${ikki(d.getHours())}:${ikki(d.getMinutes())}`; };
+const som = (x) => `${formatSom(x)} so'm`;
+
+// Har bir tur: nomi, ikonka va qisqa tavsif
+const TURLAR = {
+  qarz:        { nom: "Qarz",              icon: "receipt-outline",       tavsif: (e) => `${e.ism} · ${som(e.summa)}` },
+  optom:       { nom: "Optom",             icon: "storefront-outline",    tavsif: (e) => `${e.ism} · ${som(e.summa)}` },
+  karta:       { nom: "Karta",             icon: "card-outline",          tavsif: (e) => `${e.izoh || "Karta to'lovi"} · ${som(e.summa)}` },
+  brak:        { nom: "Brak",              icon: "alert-circle-outline",  tavsif: (e) => `${e.ishchiIsm} · ${e.nonNomi} ${e.soni} dona` },
+  xarajat:     { nom: "Xarajat",           icon: "cash-outline",          tavsif: (e) => `${e.izoh} · ${som(e.summa)}` },
+  ishchi:      { nom: "Xodim",             icon: "person-outline",        tavsif: (e) => e.ism },
+  non:         { nom: "Non turi",          icon: "grid-outline",          tavsif: (e) => `${e.nom} · ${som(e.narx)}` },
+  hisobot:     { nom: "Hisobot",           icon: "calendar-outline",      tavsif: (e) => `${e.sana} · sof foyda ${som(e.sofFoyda)}` },
+  omborSorov:  { nom: "So'rovnoma",        icon: "documents-outline",     tavsif: (e) => `${e.manba} · ${e.sana}` },
+  omborSet:    { nom: "Ombor kirimi",      icon: "cube-outline",          tavsif: (e) => `Yangi set · ${e.sana}` },
+  omborTasdiq: { nom: "Ombor chiqimi",     icon: "checkmark-done-outline", tavsif: (e) => `${e.manba} · ${e.sana}` },
+  ingredient:  { nom: "Xomashyo",          icon: "leaf-outline",          tavsif: (e) => e.nom },
+};
+
+const silliq = () => LayoutAnimation.configureNext(LayoutAnimation.create(220, LayoutAnimation.Types.easeInEaseOut, LayoutAnimation.Properties.opacity));
+
+export default function Ochirilganlar() {
+  const { ochirilganlar, qaytar, butunlayOchir } = useApp();
+  const [filtr, setFiltr] = useState("hammasi");
+  const [xabar, setXabar] = useState("");
+  const xabarT = useRef(null);
+  useEffect(() => () => clearTimeout(xabarT.current), []);
+
+  const royxat = useMemo(
+    () => [...(ochirilganlar || [])].filter((y) => TURLAR[y.tur]).sort((a, b) => (b.vaqt || 0) - (a.vaqt || 0)),
+    [ochirilganlar]
+  );
+  const mavjudTurlar = useMemo(() => Object.keys(TURLAR).filter((k) => royxat.some((y) => y.tur === k)), [royxat]);
+  const korinadi = filtr === "hammasi" ? royxat : royxat.filter((y) => y.tur === filtr);
+
+  // Tanlangan tur ro'yxatda qolmasa — "Hammasi"ga qaytamiz
+  useEffect(() => { if (filtr !== "hammasi" && !mavjudTurlar.includes(filtr)) setFiltr("hammasi"); }, [filtr, mavjudTurlar]);
+
+  const qaytarish = (y) => {
+    silliq();
+    if (qaytar(y.id)) {
+      setXabar(`Qaytarildi: ${TURLAR[y.tur].nom}`);
+      clearTimeout(xabarT.current);
+      xabarT.current = setTimeout(() => setXabar(""), 2200);
+    }
+  };
+
+  const butunlay = (y) =>
+    Alert.alert("Butunlay o'chirish", "Bu yozuv butunlay o'chiriladi va qaytarib bo'lmaydi. Davom etasizmi?", [
+      { text: "Bekor", style: "cancel" },
+      { text: "O'chirish", style: "destructive", onPress: () => { silliq(); butunlayOchir(y.id); } },
+    ]);
+
+  return (
+    <SafeAreaView style={styles.safe} edges={["top"]}>
+      <ScrollBox contentContainerStyle={styles.scroll}>
+        <Pressable accessibilityLabel="Orqaga" onPress={() => router.back()} hitSlop={8} style={styles.backBtn}>
+          <Ionicons name="chevron-back" size={20} color={C.text} />
+          <Text style={styles.backTxt}>Markaz</Text>
+        </Pressable>
+
+        <View style={styles.titleRow}>
+          <View style={styles.iconBox}><Ionicons name="archive-outline" size={22} color={C.accent} /></View>
+          <View style={styles.flex1}>
+            <Text style={styles.eyebrow}>TARIXDAGILAR</Text>
+            <Text style={styles.title}>O'chirilganlar</Text>
+            <Text style={styles.subtitle}>7 kun saqlanadi · {royxat.length} ta</Text>
+          </View>
+        </View>
+
+        {xabar ? (
+          <View style={styles.xabar}>
+            <Ionicons name="checkmark-circle-outline" size={16} color={C.accent} />
+            <Text style={styles.xabarTxt}>{xabar}</Text>
+          </View>
+        ) : null}
+
+        {mavjudTurlar.length > 1 && (
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
+            {["hammasi", ...mavjudTurlar].map((k) => {
+              const tanlangan = filtr === k;
+              return (
+                <Pressable key={k} onPress={() => { silliq(); setFiltr(k); }} style={[styles.chip, tanlangan && styles.chipActive]}>
+                  <Text style={[styles.chipTxt, tanlangan && styles.chipTxtActive]}>{k === "hammasi" ? "Hammasi" : TURLAR[k].nom}</Text>
+                </Pressable>
+              );
+            })}
+          </ScrollView>
+        )}
+
+        {korinadi.length === 0 ? (
+          <Card>
+            <Text style={styles.bosh}>Hozircha o'chirilgan narsa yo'q. Biror narsani o'chirsangiz, u shu yerda 7 kun turadi va uni qaytarish mumkin.</Text>
+          </Card>
+        ) : (
+          korinadi.map((y) => {
+            const tur = TURLAR[y.tur];
+            const qoldi = Math.max(0, Math.ceil((7 * D - (Date.now() - (y.vaqt || 0))) / D));
+            let tavsif = "";
+            try { tavsif = tur.tavsif(y.element || {}); } catch { tavsif = ""; }
+            return (
+              <Card key={y.id} style={styles.item}>
+                <View style={styles.itemRow}>
+                  <View style={styles.itemIcon}><Ionicons name={tur.icon} size={18} color={C.accent} /></View>
+                  <View style={styles.flex1}>
+                    <Text style={styles.itemTur}>{tur.nom}</Text>
+                    <Text style={styles.itemNom} numberOfLines={2}>{tavsif}</Text>
+                    <Text style={styles.itemMeta}>O'chirildi: {vaqtMatni(y.vaqt)} · {qoldi} kun qoldi</Text>
+                  </View>
+                </View>
+                <View style={styles.actions}>
+                  <Pressable
+                    accessibilityLabel="Butunlay o'chirish"
+                    onPress={() => butunlay(y)}
+                    hitSlop={6}
+                    style={({ pressed }) => [styles.delBtn, pressed && styles.pressed]}
+                  >
+                    <Image source={require("../assets/icons/ochirish.png")} style={styles.delImg} resizeMode="contain" />
+                  </Pressable>
+                  <Pressable
+                    accessibilityRole="button"
+                    onPress={() => qaytarish(y)}
+                    style={({ pressed }) => [styles.qaytarBtn, pressed && styles.pressed]}
+                  >
+                    <Ionicons name="arrow-undo-outline" size={16} color="#FFF3E8" />
+                    <Text style={styles.qaytarTxt}>Qaytarish</Text>
+                  </Pressable>
+                </View>
+              </Card>
+            );
+          })
+        )}
+      </ScrollBox>
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  safe:     { flex: 1, backgroundColor: C.bg },
+  scroll:   { padding: S[5], paddingBottom: S[8] },
+  backBtn:  { flexDirection: "row", alignItems: "center", gap: 4, marginBottom: S[3] },
+  backTxt:  { fontSize: T.sm, color: C.sub, fontWeight: "600" },
+  titleRow: { flexDirection: "row", alignItems: "center", gap: S[3], marginBottom: S[5] },
+  iconBox:  { width: 44, height: 44, borderRadius: R.md, alignItems: "center", justifyContent: "center", backgroundColor: C.accent + "14" },
+  flex1:    { flex: 1 },
+  eyebrow:  { fontSize: 11, color: C.muted, fontWeight: "700", letterSpacing: 1.8 },
+  title:    { fontSize: T.xl, color: C.text, fontWeight: "800", letterSpacing: -0.6, marginTop: 2 },
+  subtitle: { fontSize: T.sm, color: C.sub, fontWeight: "500", marginTop: 3 },
+  bosh:     { fontSize: T.sm, color: C.muted, lineHeight: 20 },
+
+  xabar:    { flexDirection: "row", alignItems: "center", gap: S[2], backgroundColor: C.accent + "14", borderRadius: R.md, paddingVertical: S[2], paddingHorizontal: S[3], marginBottom: S[3] },
+  xabarTxt: { fontSize: T.sm, fontWeight: "700", color: C.accent },
+
+  chips:    { gap: S[2], paddingBottom: S[3] },
+  chip:     { paddingVertical: 7, paddingHorizontal: 14, borderRadius: R.pill, borderWidth: 1, borderColor: C.border, backgroundColor: C.surface },
+  chipActive: { backgroundColor: C.accent, borderColor: C.accent },
+  chipTxt:  { fontSize: T.xs, fontWeight: "700", color: C.sub },
+  chipTxtActive: { color: "#FFF3E8" },
+
+  item:     { marginBottom: S[3] },
+  itemRow:  { flexDirection: "row", alignItems: "flex-start", gap: S[3] },
+  itemIcon: { width: 38, height: 38, borderRadius: R.md, alignItems: "center", justifyContent: "center", backgroundColor: C.accent + "14" },
+  itemTur:  { fontSize: 11, color: C.muted, fontWeight: "800", letterSpacing: 0.8, textTransform: "uppercase" },
+  itemNom:  { fontSize: T.md, color: C.text, fontWeight: "700", marginTop: 2 },
+  itemMeta: { fontSize: T.xs, color: C.sub, marginTop: 4 },
+  actions:  { flexDirection: "row", justifyContent: "flex-end", alignItems: "center", gap: S[3], marginTop: S[3], paddingTop: S[3], borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: C.borderSoft },
+  delBtn:   { width: 38, height: 38, borderRadius: R.md, alignItems: "center", justifyContent: "center", backgroundColor: C.red + "12" },
+  delImg:   { width: 18, height: 18, tintColor: C.red },
+  qaytarBtn:{ flexDirection: "row", alignItems: "center", gap: 6, backgroundColor: C.accent, borderRadius: R.pill, paddingVertical: 9, paddingHorizontal: 16 },
+  qaytarTxt:{ fontSize: T.sm, fontWeight: "800", color: "#FFF3E8" },
+  pressed:  { opacity: 0.7, transform: [{ scale: 0.97 }] },
+});

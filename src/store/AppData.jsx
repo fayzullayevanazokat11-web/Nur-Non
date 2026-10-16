@@ -48,6 +48,9 @@ export function AppDataProvider({ children }) {
   // (23:59) muhrlangan qiymatda turadi. Tuzilishi: { sana, lockedUntil, snapshot }.
   // Snapshot ichida sofFoyda, kartaSum, brakSum, optomSum, xarajatSum va h.k.
   const [lockedDayStats, setLockedDayStats]             = usePersistedState("nurnon:lockedDayStats", null);
+  // "Tarixdagilar" — foydalanuvchi o'chirgan barcha narsalar 7 kun saqlanadi va qaytarilishi mumkin.
+  // Yozuv: { id, tur, vaqt, element, qoshimcha: { indeks, ... } }
+  const [ochirilganlar, setOchirilganlar]               = usePersistedState("nurnon:ochirilganlar", []);
 
   // ── Vaqtinchalik oqim bayroqlari (saqlanmaydi) ──
   const [qopTasdiqlandi, setQopTasdiqlandi]       = useState(false);
@@ -68,6 +71,7 @@ export function AppDataProvider({ children }) {
       setHisobotlarTarixi((p) => p.filter((h) => (now - (h.vaqt || now)) < 30 * D));
       setOmborTasdiqlar((p) => p.filter((t) => (now - (t.vaqt || now)) < 30 * D));
       setKunlikXarajatlar((p) => p.filter((x) => (now - (x.vaqt || now)) < 7 * D));
+      setOchirilganlar((p) => (p || []).filter((x) => (now - (x.vaqt || now)) < 7 * D));
     };
     // 5s kutamiz (hidratsiya ulgursin), keyin har 6 soatda ham yuritamiz
     const t1 = setTimeout(yuritish, 5000);
@@ -95,6 +99,75 @@ export function AppDataProvider({ children }) {
     setTashqariSonlar((p) => tozala(p));
   }, [nonlar]);
 
+  // ── Tarixdagilar: o'chirish (arxivga) va qaytarish ──
+  // tur → [joriy ro'yxat, setter]
+  const KOLLEKSIYA = {
+    qarz: [qarzlar, setQarzlar],
+    optom: [optomlar, setOptomlar],
+    karta: [kartalar, setKartalar],
+    brak: [braklar, setBraklar],
+    xarajat: [kunlikXarajatlar, setKunlikXarajatlar],
+    ishchi: [ishchilar, setIshchilar],
+    non: [nonlar, setNonlar],
+    hisobot: [hisobotlarTarixi, setHisobotlarTarixi],
+    omborSorov: [omborSorovlar, setOmborSorovlar],
+    omborSet: [omborlar, setOmborlar],
+    omborTasdiq: [omborTasdiqlar, setOmborTasdiqlar],
+    ingredient: [customMahsulotlar, setCustomMahsulotlar],
+  };
+
+  // Elementni ro'yxatdan olib tashlaydi va "Tarixdagilar"ga yozadi (asl o'rni bilan).
+  // qoshimcha — qaytarishda kerak bo'ladigan bog'liq ma'lumotlar (masalan, ishchi narxlari).
+  const ochirArxivga = (tur, id, qoshimcha = {}) => {
+    const k = KOLLEKSIYA[tur];
+    if (!k) return;
+    const [royxat, set] = k;
+    const indeks = (royxat || []).findIndex((x) => x.id === id);
+    if (indeks < 0) return;
+    const element = royxat[indeks];
+    set((p) => (p || []).filter((x) => x.id !== id));
+    setOchirilganlar((p) => [
+      { id: `${Date.now()}-${Math.floor(Math.random() * 1e6)}`, tur, vaqt: Date.now(), element, qoshimcha: { ...qoshimcha, indeks } },
+      ...(p || []),
+    ]);
+  };
+
+  // Elementni asl ro'yxatiga, asl o'rniga qaytaradi
+  const qaytar = (yozuvId) => {
+    const y = (ochirilganlar || []).find((x) => x.id === yozuvId);
+    if (!y || !KOLLEKSIYA[y.tur]) return false;
+    const q = y.qoshimcha || {};
+    const kirit = (set, el, indeks) => set((p) => {
+      const a = [...(p || [])];
+      if (a.some((x) => x.id === el.id)) return a; // allaqachon bor — takrorlamaymiz
+      a.splice(Math.min(indeks ?? a.length, a.length), 0, el);
+      return a;
+    });
+    kirit(KOLLEKSIYA[y.tur][1], y.element, q.indeks);
+    if (y.tur === "ingredient" && q.narx) {
+      setMahsulotNarxlari((p) => ({ ...p, [y.element.id]: q.narx }));
+    }
+    if (y.tur === "omborTasdiq" && q.omborEntry) {
+      kirit(setOmborlar, q.omborEntry, 0);
+    }
+    if (y.tur === "non" && q.ishchiNarxlari) {
+      const nom = y.element.nom;
+      setIshchilar((p) => (p || []).map((w) => {
+        if (!(w.id in q.ishchiNarxlari)) return w;
+        const turlari = w.nonTurlari || [];
+        return {
+          ...w,
+          nonNarxlari: { ...(w.nonNarxlari || {}), [nom]: q.ishchiNarxlari[w.id] },
+          nonTurlari: turlari.includes(nom) ? turlari : [...turlari, nom],
+        };
+      }));
+    }
+    setOchirilganlar((p) => (p || []).filter((x) => x.id !== yozuvId));
+    return true;
+  };
+
+  const butunlayOchir = (yozuvId) => setOchirilganlar((p) => (p || []).filter((x) => x.id !== yozuvId));
+
   const value = {
     nonlar, setNonlar,
     ishchilar, setIshchilar,
@@ -121,6 +194,7 @@ export function AppDataProvider({ children }) {
     kunlikXarajatlar, setKunlikXarajatlar,
     oxirgiYakunlashVaqti, setOxirgiYakunlashVaqti,
     lockedDayStats, setLockedDayStats,
+    ochirilganlar, ochirArxivga, qaytar, butunlayOchir,
     qopTasdiqlandi, setQopTasdiqlandi,
     hisobotYopildi, setHisobotYopildi,
   };

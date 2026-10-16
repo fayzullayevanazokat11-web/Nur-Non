@@ -1,7 +1,8 @@
 // Markaz brendi sarlavhasi — jigarrang banner + oq kvadrat ichida "Non" logotipi
 // + "Nur-Non" / "Boshqaruv tizimi". O'ng chetda joriy sana va vaqt (har 30s yangilanadi).
+// Logotip bosilganda `onLogo` chaqiriladi (Markaz menyusi: Tarixdagilar, yozuv tanlovi).
 import { useEffect, useState } from "react";
-import { View, Text, Image, StyleSheet } from "react-native";
+import { View, Text, Image, Pressable, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { C, T, S, R, shadow } from "../theme";
 
@@ -17,7 +18,7 @@ function hozir() {
   };
 }
 
-export function BrandHeader() {
+export function BrandHeader({ onLogo, menuOchiq = false }) {
   const [t, setT] = useState(hozir());
   useEffect(() => {
     const id = setInterval(() => setT(hozir()), 30000); // 30s
@@ -26,9 +27,21 @@ export function BrandHeader() {
 
   return (
     <View style={styles.banner}>
-      <View style={styles.tile}>
+      <Pressable
+        accessibilityLabel="Menyu"
+        accessibilityRole="button"
+        onPress={onLogo}
+        disabled={!onLogo}
+        hitSlop={6}
+        style={({ pressed }) => [styles.tile, pressed && styles.tilePressed]}
+      >
         <Image source={LOGO} style={styles.logo} resizeMode="contain" />
-      </View>
+        {onLogo ? (
+          <View style={styles.tileBadge}>
+            <Ionicons name={menuOchiq ? "chevron-up" : "chevron-down"} size={11} color="#FFF6EA" />
+          </View>
+        ) : null}
+      </Pressable>
       <View style={styles.flex1}>
         <Text style={styles.title}>Nur-Non</Text>
         <Text style={styles.sub}>Boshqaruv tizimi</Text>
@@ -63,6 +76,11 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
     alignItems: "center",
     justifyContent: "center",
+  },
+  tilePressed: { opacity: 0.85, transform: [{ scale: 0.95 }] },
+  tileBadge: {
+    position: "absolute", right: -4, bottom: -4, width: 20, height: 20, borderRadius: 10,
+    backgroundColor: C.accent, borderWidth: 2, borderColor: "#FFFFFF", alignItems: "center", justifyContent: "center",
   },
   logo:  { width: 50, height: 50 },
   flex1: { flex: 1 },

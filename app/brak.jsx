@@ -21,7 +21,7 @@ const localSana = () => {
 const BOSH = { ishchiId: null, dona: {} };
 
 export default function Brak() {
-  const { nonlar, ishchilar, braklar, setBraklar } = useApp();
+  const { nonlar, ishchilar, braklar, setBraklar, ochirArxivga } = useApp();
   const [tahrirId, setTahrirId] = useState(null);
   const scrollRef = useRef(null);
   const [forma, setForma] = useState(BOSH);
@@ -74,7 +74,7 @@ export default function Brak() {
     { text: "Bekor", style: "cancel" },
     { text: "Ha", style: "destructive", onPress: () => {
       yopKartalar();
-      setBraklar((p) => p.filter((b) => b.id !== id));
+      ochirArxivga("brak", id); // Tarixdagilar'ga — 7 kun ichida qaytarish mumkin
       if (tahrirId === id) tozala();
     } },
   ]);

@@ -1,14 +1,15 @@
 // "Markaz" ekrani — kunlik ko'rsatkichlar + navigatsiya tugmalari (qop hisobi,
 // 2x2 grid: Qarz/Optom/Karta/Brak, qo'shimcha xarajatlar) + hisobotlar tarixi.
-import { useEffect, useMemo, useState } from "react";
-import { View, Text, Pressable, Image, StyleSheet } from "react-native";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { View, Text, Pressable, Image, StyleSheet, LayoutAnimation, AppState } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import { router } from "expo-router";
+import { router, useFocusEffect } from "expo-router";
 
 import { useApp } from "../../src/store/AppData";
 import { Card } from "../../src/components/Card";
 import { BrandHeader } from "../../src/components/BrandHeader";
+import { MarkazMenyu } from "../../src/components/MarkazMenyu";
 import { ScrollBox } from "../../src/components/ScrollBox";
 import { C, T, S, R } from "../../src/theme";
 import { hisoblaKunlik, formatSom, qarzJami, optomJami, kartaJami, ishchiHaqlari } from "../../src/logic/hisob";
@@ -38,6 +39,19 @@ export default function Markaz() {
 
   // Har 30 soniyada tick — yarim tundan o'tganda lock va sana ko'rsatkichlari
   // o'z-o'zidan yangilanishi uchun. Foydalanuvchi tegmasa ham Markaz tetik turadi.
+  // Logotip menyusi (Tarixdagilar, yozuv tanlovi) — boshqa bo'limga o'tganda yoki
+  // dasturdan chiqilganda o'zi yopiladi
+  const [menu, setMenu] = useState(false);
+  const menuAlmash = () => {
+    LayoutAnimation.configureNext(LayoutAnimation.create(220, LayoutAnimation.Types.easeInEaseOut, LayoutAnimation.Properties.opacity));
+    setMenu((m) => !m);
+  };
+  useFocusEffect(useCallback(() => () => setMenu(false), []));
+  useEffect(() => {
+    const sub = AppState.addEventListener("change", (h) => { if (h !== "active") setMenu(false); });
+    return () => sub.remove();
+  }, []);
+
   const [tick, setTick] = useState(0);
   useEffect(() => {
     const id = setInterval(() => setTick((t) => (t + 1) % 1000000), 30000);
@@ -106,7 +120,8 @@ export default function Markaz() {
   return (
     <SafeAreaView style={styles.safe} edges={["top"]}>
       <ScrollBox contentContainerStyle={styles.scroll}>
-        <BrandHeader />
+        <BrandHeader onLogo={menuAlmash} menuOchiq={menu} />
+        {menu && <MarkazMenyu onYop={() => setMenu(false)} />}
 
         <View style={styles.statsRow}>
           <StatTile label="Bugungi sof foyda" unit="so'm" value={formatSom(stats.sofFoyda)} color={stats.sofFoyda >= 0 ? C.green : C.red} icon="trending-up-outline" />

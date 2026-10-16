@@ -21,7 +21,7 @@ const localSana = () => {
 };
 
 export default function Optom() {
-  const { nonlar, optomlar, setOptomlar, mahsulotNarxlari } = useApp();
+  const { nonlar, optomlar, setOptomlar, mahsulotNarxlari, ochirArxivga } = useApp();
   const BOSH = { ism: "", izoh: "", sana: "", sanaTanlandi: false, savat: {}, donaChegirma: "", chegirma: "" };
   const [forma, setForma] = useState(BOSH);
 
@@ -64,7 +64,7 @@ export default function Optom() {
 
   const ochirOptom = (id) => Alert.alert("O'chirish", "Bu savdoni o'chirasizmi?", [
     { text: "Bekor", style: "cancel" },
-    { text: "Ha", style: "destructive", onPress: () => { yopKartalar(); setOptomlar((p) => p.filter((o) => o.id !== id)); } },
+    { text: "Ha", style: "destructive", onPress: () => { yopKartalar(); ochirArxivga("optom", id); } },
   ]);
 
   return (

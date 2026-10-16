@@ -14,12 +14,12 @@ import { C, T, S, R } from "../src/theme";
 import { formatSom } from "../src/logic/hisob";
 
 export default function Tarix() {
-  const { nonlar, hisobotlarTarixi, setHisobotlarTarixi } = useApp();
+  const { nonlar, hisobotlarTarixi, ochirArxivga } = useApp();
 
   const ochirHisobot = (id) =>
     Alert.alert("O'chirish", "Shu sanadagi hisobotni o'chirasizmi?", [
       { text: "Bekor", style: "cancel" },
-      { text: "Ha", style: "destructive", onPress: () => { yopKartalar(); setHisobotlarTarixi((p) => p.filter((h) => h.id !== id)); } },
+      { text: "Ha", style: "destructive", onPress: () => { yopKartalar(); ochirArxivga("hisobot", id); } },
     ]);
 
   return (

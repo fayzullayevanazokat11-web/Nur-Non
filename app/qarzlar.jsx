@@ -21,7 +21,7 @@ const localSana = () => {
 };
 
 export default function Qarzlar() {
-  const { nonlar, qarzlar, setQarzlar, mahsulotNarxlari } = useApp();
+  const { nonlar, qarzlar, setQarzlar, mahsulotNarxlari, ochirArxivga } = useApp();
   // sana: bo'sh bo'lsa => "avtomatik bugun". Qo'lda tanlansa => shu qiymat.
   const BOSH = { ism: "", izoh: "", sana: "", sanaTanlandi: false, savat: {}, chegirma: "" };
   const [forma, setForma] = useState(BOSH);
@@ -68,7 +68,7 @@ export default function Qarzlar() {
   };
   const ochirQarz = (id) => Alert.alert("O'chirish", "Bu qarzni o'chirasizmi?", [
     { text: "Bekor", style: "cancel" },
-    { text: "Ha", style: "destructive", onPress: () => { yopKartalar(); setQarzlar((p) => p.filter((q) => q.id !== id)); } },
+    { text: "Ha", style: "destructive", onPress: () => { yopKartalar(); ochirArxivga("qarz", id); } },
   ]);
 
   return (

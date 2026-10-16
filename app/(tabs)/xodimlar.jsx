@@ -21,7 +21,7 @@ const BOSH = { ism: "", lavozimId: LAVOZIMLAR[0].id, lavozimCustom: "", haqTuri:
 const HOLATLAR = ["Aktiv", "Ta'tilda"];
 
 export default function Xodimlar() {
-  const { ishchilar, setIshchilar, nonlar } = useApp();
+  const { ishchilar, setIshchilar, nonlar, ochirArxivga } = useApp();
   const ozNonlar = (nonlar || []).filter((n) => n.ozIshlab !== false);
 
   const [tahrirId, setTahrirId] = useState(null);
@@ -92,7 +92,7 @@ export default function Xodimlar() {
       { text: "Bekor", style: "cancel" },
       { text: "Ha", style: "destructive", onPress: () => {
         yopKartalar({ qoldir: "forma" });
-        setIshchilar((p) => p.filter((w) => w.id !== id));
+        ochirArxivga("ishchi", id); // Tarixdagilar'ga — 7 kun ichida qaytarish mumkin
         if (tahrirId === id) tozala();
       } },
     ]);

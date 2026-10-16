@@ -21,7 +21,7 @@ const localSana = () => {
 const BOSH = { summa: "", izoh: "" };
 
 export default function Karta() {
-  const { nonlar, kartalar, setKartalar, mahsulotNarxlari } = useApp();
+  const { nonlar, kartalar, setKartalar, mahsulotNarxlari, ochirArxivga } = useApp();
   const [tahrirId, setTahrirId] = useState(null);
   const scrollRef = useRef(null);
   const [forma, setForma] = useState(BOSH);
@@ -63,7 +63,7 @@ export default function Karta() {
     { text: "Bekor", style: "cancel" },
     { text: "Ha", style: "destructive", onPress: () => {
       yopKartalar();
-      setKartalar((p) => p.filter((k) => k.id !== id));
+      ochirArxivga("karta", id); // Tarixdagilar'ga — 7 kun ichida qaytarish mumkin
       if (tahrirId === id) tozala();
     } },
   ]);

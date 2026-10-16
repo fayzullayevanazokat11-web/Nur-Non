@@ -22,7 +22,7 @@ const localSana = () => {
 };
 
 export default function Xarajat() {
-  const { kunlikXarajatlar, setKunlikXarajatlar } = useApp();
+  const { kunlikXarajatlar, setKunlikXarajatlar, ochirArxivga } = useApp();
   const bugun = localSana();
   // sana: bo'sh bo'lsa => "avtomatik bugun" har save'da yangidan hisoblanadi
   const BOSH = { summa: "", izoh: "", sana: "", sanaTanlandi: false };
@@ -73,7 +73,7 @@ export default function Xarajat() {
     { text: "Bekor", style: "cancel" },
     { text: "Ha", style: "destructive", onPress: () => {
       yopKartalar();
-      setKunlikXarajatlar((p) => p.filter((x) => x.id !== id));
+      ochirArxivga("xarajat", id); // Tarixdagilar'ga — 7 kun ichida qaytarish mumkin
       if (tahrirId === id) tozala();
     } },
   ]);

@@ -16,7 +16,7 @@ const baseUnit = (birlik) => (birlik === "litr" ? "ml" : "g");
 const ASOSIY_IDLAR = new Set(OMBOR_MAYDONLAR.map((m) => m.id));
 
 export function Xomashyo() {
-  const { mahsulotNarxlari, setMahsulotNarxlari, customMahsulotlar, setCustomMahsulotlar } = useApp();
+  const { mahsulotNarxlari, setMahsulotNarxlari, customMahsulotlar, setCustomMahsulotlar, ochirArxivga } = useApp();
   const royxat = xomashyoRoyxati(customMahsulotlar);
 
   const [forma, setForma] = useState({ nom: "", birlik: "kg", narx: "" });
@@ -46,7 +46,8 @@ export function Xomashyo() {
       { text: "Bekor", style: "cancel" },
       {
         text: "Ha", style: "destructive", onPress: () => {
-          setCustomMahsulotlar((prev) => (prev || []).filter((m) => m.id !== id));
+          // Tarixdagilar'ga: qaytarilsa narxi ham tiklanadi
+          ochirArxivga("ingredient", id, { narx: mahsulotNarxlari[id] });
           setMahsulotNarxlari((p) => { const c = { ...p }; delete c[id]; return c; });
         },
       },

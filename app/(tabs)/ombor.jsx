@@ -18,7 +18,7 @@ import { xomashyoRoyxati } from "../../src/logic/konstantalar";
 const boshForma = (royxat) => Object.fromEntries(royxat.map((m) => [m.id, ""]));
 
 export default function Ombor() {
-  const { omborlar, setOmborlar, omborSorovlar, setOmborSorovlar, omborTasdiqlar, setOmborTasdiqlar, customMahsulotlar } = useApp();
+  const { omborlar, setOmborlar, omborSorovlar, setOmborSorovlar, omborTasdiqlar, setOmborTasdiqlar, customMahsulotlar, ochirArxivga } = useApp();
   // Ishlab chiqarish > Xomashyo'da qo'shilgan mahsulotlar ham omborda avtomatik ko'rinadi
   const royxat = useMemo(() => xomashyoRoyxati(customMahsulotlar), [customMahsulotlar]);
 
@@ -73,7 +73,7 @@ export default function Ombor() {
   const radEtSorov = (sorov) =>
     Alert.alert("Rad etish", "Bu so'rovnomani rad etasizmi? Xomashyo ayrilmaydi.", [
       { text: "Bekor", style: "cancel" },
-      { text: "Rad etish", style: "destructive", onPress: () => setOmborSorovlar((prev) => (prev || []).filter((s) => s.id !== sorov.id)) },
+      { text: "Rad etish", style: "destructive", onPress: () => ochirArxivga("omborSorov", sorov.id) },
     ]);
 
   // Tasdiqlangan xarajatni BEKOR qilish — tarixdan o'chiriladi va
@@ -83,12 +83,13 @@ export default function Ombor() {
       { text: "Bekor", style: "cancel" },
       { text: "Ha, bekor qil", style: "destructive", onPress: () => {
         yopKartalar();
-        setOmborlar((prev) => prev.filter((h) => {
-          if (t.omborId) return h.id !== t.omborId;
-          // Eski yozuvlar uchun: manba va yaqin vaqt bo'yicha mos topish.
-          return !(h.turi === "xarajat" && h.manba === t.manba && Math.abs((h.vaqt || 0) - (t.vaqt || 0)) < 2000);
-        }));
-        setOmborTasdiqlar((prev) => (prev || []).filter((x) => x.id !== t.id));
+        // Mos chiqim yozuvi: id bo'yicha, eski yozuvlar uchun manba va yaqin vaqt bo'yicha.
+        const mos = (h) => (t.omborId ? h.id === t.omborId
+          : h.turi === "xarajat" && h.manba === t.manba && Math.abs((h.vaqt || 0) - (t.vaqt || 0)) < 2000);
+        const omborEntry = (omborlar || []).find(mos);
+        setOmborlar((prev) => prev.filter((h) => !mos(h)));
+        // Tarixdagilar'ga: qaytarilsa chiqim yozuvi ham tiklanadi (xomashyo yana ayriladi)
+        ochirArxivga("omborTasdiq", t.id, { omborEntry });
       }},
     ]);
 
@@ -96,7 +97,7 @@ export default function Ombor() {
   const ochirSetKirim = (id) =>
     Alert.alert("O'chirish", "Bu set kirimini o'chirasizmi? Zaxiradan ayriladi.", [
       { text: "Bekor", style: "cancel" },
-      { text: "Ha", style: "destructive", onPress: () => { yopKartalar(); setOmborlar((prev) => prev.filter((h) => h.id !== id)); } },
+      { text: "Ha", style: "destructive", onPress: () => { yopKartalar(); ochirArxivga("omborSet", id); } },
     ]);
 
   const setKirimlari = (omborlar || []).filter((h) => h.turi === "yangiset").slice(0, 10);

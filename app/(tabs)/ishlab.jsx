@@ -32,7 +32,7 @@ export default function IshlabChiqarish() {
   const {
     nonlar, setNonlar, ishchilar, setIshchilar,
     optomlar, setOptomlar, qarzlar, setQarzlar, braklar, setBraklar,
-    mahsulotNarxlari, customMahsulotlar,
+    mahsulotNarxlari, customMahsulotlar, ochirArxivga,
   } = useApp();
   const royxat = xomashyoRoyxati(customMahsulotlar);
 
@@ -135,7 +135,10 @@ export default function IshlabChiqarish() {
         // Cascade: ishchilarning nonNarxlari/nonTurlari'dan ham olib tashlanadi
         const eski = nonlar.find((n) => n.id === id);
         const eskiNom = eski?.nom;
-        setNonlar((p) => p.filter((n) => n.id !== id));
+        // Tarixdagilar'ga: qaytarilganda ishchilarning shu nondagi qop narxlari ham tiklanadi
+        const ishchiNarxlari = {};
+        (ishchilar || []).forEach((w) => { if (eskiNom && w.nonNarxlari && eskiNom in w.nonNarxlari) ishchiNarxlari[w.id] = w.nonNarxlari[eskiNom]; });
+        ochirArxivga("non", id, { ishchiNarxlari });
         if (eskiNom) {
           setIshchilar((prev) => (prev || []).map((w) => {
             if (!w.nonNarxlari || !(eskiNom in w.nonNarxlari)) return w;
