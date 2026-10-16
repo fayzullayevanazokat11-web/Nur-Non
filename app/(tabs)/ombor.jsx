@@ -1,6 +1,6 @@
 // "Ombor" ekrani — mavjud zaxira + "Yangi set kiritish" modali.
 import { useMemo, useState } from "react";
-import { View, Text, TextInput, Pressable, StyleSheet, Alert } from "react-native";
+import { View, Text, TextInput, Pressable, Image, StyleSheet, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 
@@ -8,7 +8,7 @@ import { useApp } from "../../src/store/AppData";
 import { Card } from "../../src/components/Card";
 import { Btn } from "../../src/components/Btn";
 import { ScreenHeader } from "../../src/components/ScreenHeader";
-import { ExpandableCard } from "../../src/components/ExpandableCard";
+import { ExpandableCard, yopKartalar } from "../../src/components/ExpandableCard";
 import { ScrollBox } from "../../src/components/ScrollBox";
 import { C, T, S, R } from "../../src/theme";
 import { omborBalans, zaxiraMatni, omborKattaBirlik } from "../../src/logic/hisob";
@@ -67,6 +67,7 @@ export default function Ombor() {
     setOmborlar((prev) => [entry, ...prev]);
     setOmborTasdiqlar((prev) => [{ id: tasdiqId, omborId, sana, vaqt, manba: sorov.manba, maydonlar: sorov.maydonlar }, ...(prev || [])]);
     setOmborSorovlar((prev) => (prev || []).filter((s) => s.id !== sorov.id));
+    yopKartalar();
   };
 
   const radEtSorov = (sorov) =>
@@ -81,6 +82,7 @@ export default function Ombor() {
     Alert.alert("Bekor qilish", "Tasdiqlangan xarajatni bekor qilasizmi? Xomashyo zaxiraga qaytariladi.", [
       { text: "Bekor", style: "cancel" },
       { text: "Ha, bekor qil", style: "destructive", onPress: () => {
+        yopKartalar();
         setOmborlar((prev) => prev.filter((h) => {
           if (t.omborId) return h.id !== t.omborId;
           // Eski yozuvlar uchun: manba va yaqin vaqt bo'yicha mos topish.
@@ -94,12 +96,13 @@ export default function Ombor() {
   const ochirSetKirim = (id) =>
     Alert.alert("O'chirish", "Bu set kirimini o'chirasizmi? Zaxiradan ayriladi.", [
       { text: "Bekor", style: "cancel" },
-      { text: "Ha", style: "destructive", onPress: () => setOmborlar((prev) => prev.filter((h) => h.id !== id)) },
+      { text: "Ha", style: "destructive", onPress: () => { yopKartalar(); setOmborlar((prev) => prev.filter((h) => h.id !== id)); } },
     ]);
 
   const setKirimlari = (omborlar || []).filter((h) => h.turi === "yangiset").slice(0, 10);
 
-  const tozala = () => setForma(boshForma(royxat));
+  // Saqlangandan keyin forma tozalanadi va ochiq kartalar (forma ham) yopiladi
+  const tozala = () => { setForma(boshForma(royxat)); yopKartalar(); };
   const yangila = (id, v) => setForma((p) => ({ ...p, [id]: v }));
 
   // Saqlash — kiritilgan qiymatlar baza birlikka (qop×50, quti×5) o'tkaziladi.
@@ -170,8 +173,8 @@ export default function Ombor() {
                     <Text style={styles.sorovManba}>{sorov.manba}</Text>
                     <Text style={styles.muted}>{sorov.sana} · ketadigan xomashyo</Text>
                   </View>
-                  <Pressable accessibilityLabel="Rad etish" onPress={() => radEtSorov(sorov)} hitSlop={8} style={styles.radBtn}>
-                    <Ionicons name="close-outline" size={18} color={C.muted} />
+                  <Pressable accessibilityLabel="So'rovnomani o'chirish" onPress={() => radEtSorov(sorov)} hitSlop={8} style={({ pressed }) => [styles.radBtn, pressed && styles.radBtnPressed]}>
+                    <Image source={require("../../assets/icons/ochirish.png")} style={styles.radImg} resizeMode="contain" />
                   </Pressable>
                 </View>
                 <View style={styles.sorovList}>
@@ -323,7 +326,9 @@ const styles = StyleSheet.create({
   sorov:     { marginBottom: S[3] },
   sorovHead: { flexDirection: "row", alignItems: "flex-start", marginBottom: S[3] },
   sorovManba:{ fontSize: T.md, fontWeight: "800", color: C.text },
-  radBtn:    { padding: 4 },
+  radBtn:    { width: 36, height: 36, borderRadius: R.md, alignItems: "center", justifyContent: "center", backgroundColor: C.red + "12" },
+  radBtnPressed: { opacity: 0.6, transform: [{ scale: 0.94 }] },
+  radImg:    { width: 18, height: 18, tintColor: C.red },
   sorovList: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: C.borderSoft, paddingTop: S[3], marginBottom: S[3] },
   sorovRow:  { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: S[2] },
   sorovNom:  { fontSize: T.sm, color: C.text, flex: 1 },

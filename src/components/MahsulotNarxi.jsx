@@ -7,7 +7,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useApp } from "../store/AppData";
 import { Card } from "./Card";
 import { Btn } from "./Btn";
-import { ExpandableCard } from "./ExpandableCard";
+import { ExpandableCard, yopKartalar } from "./ExpandableCard";
 import { OMBOR_MAYDONLAR, xomashyoRoyxati } from "../logic/konstantalar";
 import { formatSom } from "../logic/hisob";
 import { C, T, S, R } from "../theme";
@@ -38,6 +38,7 @@ export function Xomashyo() {
     setCustomMahsulotlar((prev) => [...(prev || []), { id, nom, birlik: forma.birlik, emoji }]);
     setMahsulotNarxlari((p) => ({ ...p, [id]: { miqdor: "1000", narx: String(narx) } }));
     setForma({ nom: "", birlik: "kg", narx: "" });
+    yopKartalar(); // qo'shilgandan keyin forma yopiladi
   };
 
   const ochirIngredient = (id) =>

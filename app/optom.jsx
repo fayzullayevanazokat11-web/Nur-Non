@@ -9,7 +9,7 @@ import { router } from "expo-router";
 import { useApp } from "../src/store/AppData";
 import { Card } from "../src/components/Card";
 import { Btn } from "../src/components/Btn";
-import { ExpandableCard } from "../src/components/ExpandableCard";
+import { ExpandableCard, yopKartalar } from "../src/components/ExpandableCard";
 import { DateField } from "../src/components/DateField";
 import { ScrollBox } from "../src/components/ScrollBox";
 import { C, T, S, R } from "../src/theme";
@@ -47,7 +47,7 @@ export default function Optom() {
 
   const yangila = (k, v) => setForma((p) => ({ ...p, [k]: v }));
   const yangilaSavat = (id, v) => setForma((p) => ({ ...p, savat: { ...p.savat, [id]: v } }));
-  const tozala = () => setForma(BOSH);
+  const tozala = () => { setForma(BOSH); yopKartalar(); };
   const yangilaSana = (v) => setForma((p) => ({ ...p, sana: v, sanaTanlandi: true }));
 
   const saqla = () => {
@@ -64,7 +64,7 @@ export default function Optom() {
 
   const ochirOptom = (id) => Alert.alert("O'chirish", "Bu savdoni o'chirasizmi?", [
     { text: "Bekor", style: "cancel" },
-    { text: "Ha", style: "destructive", onPress: () => setOptomlar((p) => p.filter((o) => o.id !== id)) },
+    { text: "Ha", style: "destructive", onPress: () => { yopKartalar(); setOptomlar((p) => p.filter((o) => o.id !== id)); } },
   ]);
 
   return (

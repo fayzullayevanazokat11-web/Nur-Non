@@ -9,7 +9,7 @@ import { router } from "expo-router";
 import { useApp } from "../src/store/AppData";
 import { Card } from "../src/components/Card";
 import { Btn } from "../src/components/Btn";
-import { ExpandableCard } from "../src/components/ExpandableCard";
+import { ExpandableCard, yopKartalar } from "../src/components/ExpandableCard";
 import { ScrollBox } from "../src/components/ScrollBox";
 import { C, T, S, R } from "../src/theme";
 import { formatSom } from "../src/logic/hisob";
@@ -34,11 +34,13 @@ export default function Brak() {
     [ishchi, forma.dona, nonlar]
   );
 
-  const tozala = () => { setForma(BOSH); setTahrirId(null); };
+  // Saqlash/Bekor: forma tozalanadi va ochiq batafsil kartalar yopiladi
+  const tozala = () => { setForma(BOSH); setTahrirId(null); yopKartalar(); };
   const setDona = (nom, v) => setForma((p) => ({ ...p, dona: { ...p.dona, [nom]: v } }));
 
   const tahrirla = (b) => {
     setForma({ ishchiId: b.ishchiId, dona: { [b.nonNomi]: String(b.soni || "") } });
+    yopKartalar();
     setTahrirId(b.id); setTimeout(() => scrollRef.current?.scrollToTop?.(true), 50);
   };
 
@@ -71,6 +73,7 @@ export default function Brak() {
   const ochirBrak = (id) => Alert.alert("O'chirish", "Bu brakni o'chirasizmi?", [
     { text: "Bekor", style: "cancel" },
     { text: "Ha", style: "destructive", onPress: () => {
+      yopKartalar();
       setBraklar((p) => p.filter((b) => b.id !== id));
       if (tahrirId === id) tozala();
     } },

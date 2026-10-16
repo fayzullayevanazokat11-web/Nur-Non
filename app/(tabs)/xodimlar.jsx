@@ -9,7 +9,7 @@ import { useApp } from "../../src/store/AppData";
 import { Card } from "../../src/components/Card";
 import { Btn } from "../../src/components/Btn";
 import { ScreenHeader } from "../../src/components/ScreenHeader";
-import { ExpandableCard } from "../../src/components/ExpandableCard";
+import { ExpandableCard, yopKartalar } from "../../src/components/ExpandableCard";
 import { ScrollBox } from "../../src/components/ScrollBox";
 import { DateField } from "../../src/components/DateField";
 import { Avatar } from "../../src/components/Avatar";
@@ -34,7 +34,8 @@ export default function Xodimlar() {
 
   const yangila = (k, v) => setForma((p) => ({ ...p, [k]: v }));
   const yangilaNon = (nom, v) => setForma((p) => ({ ...p, nonNarx: { ...p.nonNarx, [nom]: v } }));
-  const tozala = () => { setForma(BOSH); setTahrirId(null); };
+  // Saqlash/Bekor: forma tozalanadi va barcha ochiq kartalar (forma ham) yopiladi
+  const tozala = () => { setForma(BOSH); setTahrirId(null); yopKartalar(); };
 
   const tahrirla = (w) => {
     const nonNarx = {};
@@ -45,6 +46,7 @@ export default function Xodimlar() {
       miqdor: String(w.miqdor || ""), nonNarx, holat: w.holat || "Aktiv",
       tatilSana: w.tatilQaytishSana || "",
     });
+    yopKartalar({ qoldir: "forma" }); // ishchi kartasi yopiladi, forma ochiq qoladi
     setTahrirId(w.id);
     setTimeout(() => scrollRef.current?.scrollToTop?.(true), 50);
   };
@@ -89,6 +91,7 @@ export default function Xodimlar() {
     Alert.alert("O'chirish", "Bu xodimni o'chirasizmi?", [
       { text: "Bekor", style: "cancel" },
       { text: "Ha", style: "destructive", onPress: () => {
+        yopKartalar({ qoldir: "forma" });
         setIshchilar((p) => p.filter((w) => w.id !== id));
         if (tahrirId === id) tozala();
       } },
@@ -97,25 +100,25 @@ export default function Xodimlar() {
   const tatildanQaytar = (w) =>
     Alert.alert("Ta'tildan qaytdi", `${w.ism} ta'tildan qaytdimi? Holati Aktivga o'tkaziladi.`, [
       { text: "Bekor", style: "cancel" },
-      { text: "Ha", onPress: () => setIshchilar((p) => p.map((x) => x.id === w.id ? { ...x, holat: "Aktiv", tatilQaytishSana: "" } : x)) },
+      { text: "Ha", onPress: () => { yopKartalar({ qoldir: "forma" }); setIshchilar((p) => p.map((x) => x.id === w.id ? { ...x, holat: "Aktiv", tatilQaytishSana: "" } : x)); } },
     ]);
 
   const haydash = (w) =>
     Alert.alert("Ishdan haydash", `${w.ism}ni ishdan haydaysizmi? Ishchi "Ishdan ketganlar" ro'yxatiga o'tadi.`, [
       { text: "Bekor", style: "cancel" },
-      { text: "Haydash", style: "destructive", onPress: () => setIshchilar((p) => p.map((x) => x.id === w.id ? { ...x, holat: "Ishdan ketgan", tatilQaytishSana: "" } : x)) },
+      { text: "Haydash", style: "destructive", onPress: () => { yopKartalar({ qoldir: "forma" }); setIshchilar((p) => p.map((x) => x.id === w.id ? { ...x, holat: "Ishdan ketgan", tatilQaytishSana: "" } : x)); } },
     ]);
 
   const qaytarish = (w) =>
     Alert.alert("Ishga qaytarish", `${w.ism}ni ishga qaytarasizmi? Holati Aktivga o'tkaziladi.`, [
       { text: "Bekor", style: "cancel" },
-      { text: "Qaytarish", onPress: () => setIshchilar((p) => p.map((x) => x.id === w.id ? { ...x, holat: "Aktiv" } : x)) },
+      { text: "Qaytarish", onPress: () => { yopKartalar({ qoldir: "forma" }); setIshchilar((p) => p.map((x) => x.id === w.id ? { ...x, holat: "Aktiv" } : x)); } },
     ]);
 
   const tatilgaChiqar = (w) =>
     Alert.alert("Ta'tilga chiqarish", `${w.ism}ni ta'tilga chiqarasizmi? Ta'tilda bo'lganida kunlik ish haqi hisoblanmaydi.`, [
       { text: "Bekor", style: "cancel" },
-      { text: "Chiqarish", onPress: () => setIshchilar((p) => p.map((x) => x.id === w.id ? { ...x, holat: "Ta'tilda" } : x)) },
+      { text: "Chiqarish", onPress: () => { yopKartalar({ qoldir: "forma" }); setIshchilar((p) => p.map((x) => x.id === w.id ? { ...x, holat: "Ta'tilda" } : x)); } },
     ]);
 
   return (
@@ -148,8 +151,9 @@ export default function Xodimlar() {
 
         {/* INLINE FORMA — ExpandableCard ichida, default yopiq. Tahrirlash holatida avto-ochiladi. */}
         <ExpandableCard
+          id="forma"
           style={styles.formCard}
-          defaultOpen={!!tahrirId}
+          ochKaliti={tahrirId}
           header={
             <View style={styles.formHead}>
               <Ionicons name={tahrirId ? "create-outline" : "person-add-outline"} size={18} color={C.sub} />

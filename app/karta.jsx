@@ -9,7 +9,7 @@ import { router } from "expo-router";
 import { useApp } from "../src/store/AppData";
 import { Card } from "../src/components/Card";
 import { Btn } from "../src/components/Btn";
-import { ExpandableCard } from "../src/components/ExpandableCard";
+import { ExpandableCard, yopKartalar } from "../src/components/ExpandableCard";
 import { ScrollBox } from "../src/components/ScrollBox";
 import { C, T, S, R } from "../src/theme";
 import { formatSom, kartaJami, kartaHisob } from "../src/logic/hisob";
@@ -33,10 +33,12 @@ export default function Karta() {
   );
 
   const yangila = (k, v) => setForma((p) => ({ ...p, [k]: v }));
-  const tozala = () => { setForma(BOSH); setTahrirId(null); };
+  // Saqlash/Bekor: forma tozalanadi va ochiq batafsil kartalar yopiladi
+  const tozala = () => { setForma(BOSH); setTahrirId(null); yopKartalar(); };
 
   const tahrirla = (k) => {
     setForma({ summa: String(k.summa || ""), izoh: k.izoh || "" });
+    yopKartalar();
     setTahrirId(k.id); setTimeout(() => scrollRef.current?.scrollToTop?.(true), 50);
   };
 
@@ -60,6 +62,7 @@ export default function Karta() {
   const ochirKarta = (id) => Alert.alert("O'chirish", "Bu to'lovni o'chirasizmi?", [
     { text: "Bekor", style: "cancel" },
     { text: "Ha", style: "destructive", onPress: () => {
+      yopKartalar();
       setKartalar((p) => p.filter((k) => k.id !== id));
       if (tahrirId === id) tozala();
     } },

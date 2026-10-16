@@ -10,7 +10,7 @@ import { useApp } from "../../src/store/AppData";
 import { Card } from "../../src/components/Card";
 import { Btn } from "../../src/components/Btn";
 import { ScreenHeader } from "../../src/components/ScreenHeader";
-import { ExpandableCard } from "../../src/components/ExpandableCard";
+import { ExpandableCard, yopKartalar } from "../../src/components/ExpandableCard";
 import { MahsulotNarxi } from "../../src/components/MahsulotNarxi";
 import { ScrollBox } from "../../src/components/ScrollBox";
 import { xomashyoRoyxati } from "../../src/logic/konstantalar";
@@ -43,7 +43,8 @@ export default function IshlabChiqarish() {
 
   const yangila = (k, v) => setForma((p) => ({ ...p, [k]: v }));
   const yangilaIng = (id, v) => setForma((p) => ({ ...p, ing: { ...p.ing, [id]: v } }));
-  const tozala = () => { setForma(BOSH); setTahrirId(null); };
+  // Saqlash/Bekor: forma tozalanadi va barcha ochiq kartalar (forma ham) yopiladi
+  const tozala = () => { setForma(BOSH); setTahrirId(null); yopKartalar(); };
 
   const tahrirla = (non) => {
     const oz = non.ozIshlab !== false;
@@ -53,6 +54,7 @@ export default function IshlabChiqarish() {
       donaFoyda: oz ? "" : String(non.tashqariFoyda || ""),
       ing: oz ? Object.fromEntries((non.mahsulotlar || []).map((m) => [m.id, String(m.miqdor ?? "")])) : {},
     });
+    yopKartalar({ qoldir: "forma" }); // non kartasi yopiladi, forma ochiq qoladi
     setTahrirId(non.id);
     // Forma yuqorida — avtomatik scroll qilamiz, foydalanuvchi qidirmasligi uchun
     setTimeout(() => scrollRef.current?.scrollToTop?.(true), 50);
@@ -129,6 +131,7 @@ export default function IshlabChiqarish() {
     Alert.alert("O'chirish", "Bu non turini o'chirasizmi?", [
       { text: "Bekor", style: "cancel" },
       { text: "Ha", style: "destructive", onPress: () => {
+        yopKartalar({ qoldir: "forma" });
         // Cascade: ishchilarning nonNarxlari/nonTurlari'dan ham olib tashlanadi
         const eski = nonlar.find((n) => n.id === id);
         const eskiNom = eski?.nom;
@@ -171,8 +174,9 @@ export default function IshlabChiqarish() {
           <>
             {/* INLINE FORMA — ExpandableCard ichida, default yopiq. Tahrirlash holatida avto-ochiladi. */}
             <ExpandableCard
+              id="forma"
               style={styles.formCard}
-              defaultOpen={!!tahrirId}
+              ochKaliti={tahrirId}
               header={
                 <View style={styles.formHead}>
                   <Ionicons name={tahrirId ? "create-outline" : "add-circle-outline"} size={18} color={C.sub} />

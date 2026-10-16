@@ -9,7 +9,7 @@ import { router } from "expo-router";
 import { useApp } from "../src/store/AppData";
 import { Card } from "../src/components/Card";
 import { Btn } from "../src/components/Btn";
-import { ExpandableCard } from "../src/components/ExpandableCard";
+import { ExpandableCard, yopKartalar } from "../src/components/ExpandableCard";
 import { DateField } from "../src/components/DateField";
 import { ScrollBox } from "../src/components/ScrollBox";
 import { C, T, S, R } from "../src/theme";
@@ -47,7 +47,7 @@ export default function Qarzlar() {
   const yangila = (k, v) => setForma((p) => ({ ...p, [k]: v }));
   const yangilaSana = (v) => setForma((p) => ({ ...p, sana: v, sanaTanlandi: true }));
   const yangilaSavat = (id, v) => setForma((p) => ({ ...p, savat: { ...p.savat, [id]: v } }));
-  const tozala = () => setForma(BOSH);
+  const tozala = () => { setForma(BOSH); yopKartalar(); };
 
   const saqla = () => {
     if (!forma.ism.trim()) { Alert.alert("Ism kiritilmagan", "Iltimos, qarz oluvchi ismini kiriting."); return; }
@@ -62,10 +62,13 @@ export default function Qarzlar() {
     tozala();
   };
 
-  const tolaQarz = (id) => setQarzlar((prev) => prev.map((q) => q.id === id ? { ...q, tolangan: true, tolanganVaqt: Date.now() } : q));
+  const tolaQarz = (id) => {
+    setQarzlar((prev) => prev.map((q) => q.id === id ? { ...q, tolangan: true, tolanganVaqt: Date.now() } : q));
+    yopKartalar();
+  };
   const ochirQarz = (id) => Alert.alert("O'chirish", "Bu qarzni o'chirasizmi?", [
     { text: "Bekor", style: "cancel" },
-    { text: "Ha", style: "destructive", onPress: () => setQarzlar((p) => p.filter((q) => q.id !== id)) },
+    { text: "Ha", style: "destructive", onPress: () => { yopKartalar(); setQarzlar((p) => p.filter((q) => q.id !== id)); } },
   ]);
 
   return (

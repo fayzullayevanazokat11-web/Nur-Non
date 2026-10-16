@@ -10,7 +10,7 @@ import { router } from "expo-router";
 import { useApp } from "../src/store/AppData";
 import { Card } from "../src/components/Card";
 import { Btn } from "../src/components/Btn";
-import { ExpandableCard } from "../src/components/ExpandableCard";
+import { ExpandableCard, yopKartalar } from "../src/components/ExpandableCard";
 import { DateField } from "../src/components/DateField";
 import { ScrollBox } from "../src/components/ScrollBox";
 import { C, T, S, R } from "../src/theme";
@@ -45,11 +45,13 @@ export default function Xarajat() {
 
   const yangila = (k, v) => setForma((p) => ({ ...p, [k]: v }));
   const yangilaSana = (v) => setForma((p) => ({ ...p, sana: v, sanaTanlandi: true }));
-  const tozala = () => { setForma(BOSH); setTahrirId(null); };
+  // Saqlash/Bekor: forma tozalanadi va ochiq batafsil kartalar yopiladi
+  const tozala = () => { setForma(BOSH); setTahrirId(null); yopKartalar(); };
 
   const tahrirla = (x) => {
     // Mavjud yozuv sanasi tahrirlash uchun "qo'lda tanlangan" deb hisoblanadi
     setForma({ summa: String(x.summa || ""), izoh: x.izoh || "", sana: x.sana || bugun, sanaTanlandi: true });
+    yopKartalar();
     setTahrirId(x.id); setTimeout(() => scrollRef.current?.scrollToTop?.(true), 50);
   };
 
@@ -70,6 +72,7 @@ export default function Xarajat() {
   const ochir = (id) => Alert.alert("O'chirish", "Bu xarajatni o'chirasizmi?", [
     { text: "Bekor", style: "cancel" },
     { text: "Ha", style: "destructive", onPress: () => {
+      yopKartalar();
       setKunlikXarajatlar((p) => p.filter((x) => x.id !== id));
       if (tahrirId === id) tozala();
     } },

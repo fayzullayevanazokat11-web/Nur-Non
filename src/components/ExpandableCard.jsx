@@ -1,7 +1,16 @@
 // Yig'iladigan karta (akkordeon) — sarlavha bandi bosilganda tana silliq ochiladi/yopiladi.
 // Fon oq; ochiqda pastki hairline ajratadi. Chevron ease-in-out bilan aylanadi.
-import { useEffect, useRef, useState } from "react";
-import { Animated, View, Pressable, Easing, StyleSheet, LayoutAnimation, Platform, UIManager } from "react-native";
+//
+// Avtomatik yopilish (ochiq batafsil ma'lumot "osilib" qolmasligi uchun):
+//   1) Dasturdan chiqilganda (fon rejimiga o'tganda)
+//   2) Boshqa bo'lim yoki sahifa ochilganda (ekran fokusni yo'qotganda)
+//   3) Tasdiqlovchi amaldan keyin — ekranlar `yopKartalar()` ni chaqiradi
+// `id` + `yopKartalar({ qoldir: id })` — ma'lum kartani yopilishdan saqlaydi
+// (masalan, Tahrirlash bosilganda tahrir formasi ochiq qolishi kerak).
+// `ochKaliti` — qiymati o'zgarib rost bo'lsa karta o'zi ochiladi (tahrir rejimi uchun).
+import { useContext, useEffect, useRef, useState } from "react";
+import { Animated, View, Pressable, Easing, StyleSheet, LayoutAnimation, Platform, UIManager, AppState } from "react-native";
+import { NavigationContext } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { Card } from "./Card";
 import { C, R, S, ANIM } from "../theme";
@@ -10,10 +19,29 @@ if (Platform.OS === "android" && UIManager.setLayoutAnimationEnabledExperimental
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 
-export function ExpandableCard({ header, children, defaultOpen = false, style }) {
-  const [open, setOpen] = useState(defaultOpen);
-  const rot = useRef(new Animated.Value(defaultOpen ? 1 : 0)).current;
+// ── Butun ilova bo'ylab ochiq kartalar ro'yxati ──
+const kartalar = new Set();
+
+const silliq = () =>
+  LayoutAnimation.configureNext(LayoutAnimation.create(ANIM.duration, LayoutAnimation.Types.easeInEaseOut, LayoutAnimation.Properties.opacity));
+
+// Ochiq kartalarni yopadi. `qoldir` — yopilmasligi kerak bo'lgan karta id(lar)i.
+export function yopKartalar({ qoldir } = {}) {
+  const saqla = new Set([].concat(qoldir || []));
+  let biror = false;
+  kartalar.forEach((k) => {
+    if (k.ochiq() && !(k.id && saqla.has(k.id))) { k.yop(); biror = true; }
+  });
+  if (biror) silliq();
+}
+
+export function ExpandableCard({ header, children, defaultOpen = false, ochKaliti, id, style }) {
+  const [open, setOpen] = useState(defaultOpen || !!ochKaliti);
+  const openRef = useRef(open);
+  openRef.current = open;
+  const rot = useRef(new Animated.Value(open ? 1 : 0)).current;
   const press = useRef(new Animated.Value(0)).current;
+  const navigation = useContext(NavigationContext); // navigatordan tashqarida — undefined
 
   useEffect(() => {
     Animated.timing(rot, {
@@ -24,8 +52,34 @@ export function ExpandableCard({ header, children, defaultOpen = false, style })
     }).start();
   }, [open, rot]);
 
+  // Tashqi signal bilan yopish uchun ro'yxatga yozilamiz
+  useEffect(() => {
+    const k = { id, ochiq: () => openRef.current, yop: () => setOpen(false) };
+    kartalar.add(k);
+    return () => { kartalar.delete(k); };
+  }, [id]);
+
+  // 1) Dastur fonga o'tsa — yopiladi
+  useEffect(() => {
+    const sub = AppState.addEventListener("change", (holat) => {
+      if (holat !== "active" && openRef.current) setOpen(false);
+    });
+    return () => sub.remove();
+  }, []);
+
+  // 2) Ekran fokusni yo'qotsa (boshqa tab/sahifa ochilsa) — yopiladi
+  useEffect(() => {
+    if (!navigation?.addListener) return undefined;
+    return navigation.addListener("blur", () => { if (openRef.current) setOpen(false); });
+  }, [navigation]);
+
+  // Tahrir rejimi: kalit yangi rost qiymatga o'zgarsa — ochiladi
+  useEffect(() => {
+    if (ochKaliti) { silliq(); setOpen(true); }
+  }, [ochKaliti]);
+
   const toggle = () => {
-    LayoutAnimation.configureNext(LayoutAnimation.create(ANIM.duration, LayoutAnimation.Types.easeInEaseOut, LayoutAnimation.Properties.opacity));
+    silliq();
     setOpen((o) => !o);
   };
 

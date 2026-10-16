@@ -8,7 +8,7 @@ import { router } from "expo-router";
 
 import { useApp } from "../src/store/AppData";
 import { Card } from "../src/components/Card";
-import { ExpandableCard } from "../src/components/ExpandableCard";
+import { ExpandableCard, yopKartalar } from "../src/components/ExpandableCard";
 import { ScrollBox } from "../src/components/ScrollBox";
 import { C, T, S, R } from "../src/theme";
 import { formatSom } from "../src/logic/hisob";
@@ -19,7 +19,7 @@ export default function Tarix() {
   const ochirHisobot = (id) =>
     Alert.alert("O'chirish", "Shu sanadagi hisobotni o'chirasizmi?", [
       { text: "Bekor", style: "cancel" },
-      { text: "Ha", style: "destructive", onPress: () => setHisobotlarTarixi((p) => p.filter((h) => h.id !== id)) },
+      { text: "Ha", style: "destructive", onPress: () => { yopKartalar(); setHisobotlarTarixi((p) => p.filter((h) => h.id !== id)); } },
     ]);
 
   return (
