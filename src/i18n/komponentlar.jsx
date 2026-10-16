@@ -3,7 +3,7 @@
 // importini shu yerga yo'naltiradi, shuning uchun kelajakdagi har qanday yangi matn ham
 // avtomatik o'giriladi.
 import { forwardRef } from "react";
-import { Text as RNText, TextInput as RNTextInput, Alert as RNAlert } from "react-native";
+import { Text as RNText, TextInput as RNTextInput, Alert as RNAlert, Platform } from "react-native";
 import { useTil, getTil } from "./til";
 import { ogir } from "./translit";
 
@@ -21,9 +21,22 @@ export const TextInput = forwardRef(function TextInput(props, ref) {
   return <RNTextInput ref={ref} {...props} placeholder={ogir(props.placeholder, til)} />;
 });
 
+// Web'da RN Alert hech narsa qilmaydi — brauzerning confirm/alert oynasi bilan almashtiramiz
+function webAlert(title, message, buttons) {
+  const matn = [title, message].filter(Boolean).join("\n\n");
+  const tugmalar = buttons || [];
+  if (tugmalar.length < 2) { window.alert(matn); tugmalar[0]?.onPress?.(); return; }
+  const bekor = tugmalar.find((b) => b.style === "cancel");
+  const asosiy = [...tugmalar].reverse().find((b) => b.style !== "cancel");
+  if (window.confirm(matn)) asosiy?.onPress?.(); else bekor?.onPress?.();
+}
+
 export const Alert = {
   alert(title, message, buttons, options) {
     const til = getTil();
+    if (Platform.OS === "web" && typeof window !== "undefined" && window.confirm) {
+      return webAlert(ogir(title, til), ogir(message, til), buttons);
+    }
     return RNAlert.alert(
       ogir(title, til),
       ogir(message, til),

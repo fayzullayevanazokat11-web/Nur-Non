@@ -11,6 +11,16 @@ export function useApp() {
   return ctx;
 }
 
+// Import qilinayotgan qiymat kutilgan turga mosmi
+export function BAZA_TUR_MOS(qiymat, tur) {
+  if (tur === "array") return Array.isArray(qiymat);
+  if (tur === "object") return !!qiymat && typeof qiymat === "object" && !Array.isArray(qiymat);
+  if (tur === "objectOrNull") return qiymat === null || (typeof qiymat === "object" && !Array.isArray(qiymat));
+  if (tur === "string") return typeof qiymat === "string";
+  if (tur === "number") return typeof qiymat === "number" && isFinite(qiymat);
+  return false;
+}
+
 export function AppDataProvider({ children }) {
   // ── Saqlanadigan ma'lumotlar ──
   const [nonlar, setNonlar]                       = usePersistedState("nurnon:nonlar", SEED_NONLAR);
@@ -51,6 +61,10 @@ export function AppDataProvider({ children }) {
   // "Tarixdagilar" — foydalanuvchi o'chirgan barcha narsalar 7 kun saqlanadi va qaytarilishi mumkin.
   // Yozuv: { id, tur, vaqt, element, qoshimcha: { indeks, ... } }
   const [ochirilganlar, setOchirilganlar]               = usePersistedState("nurnon:ochirilganlar", []);
+  // Asosiy akkaunt nomi (Markaz sarlavhasida ko'rinadi, ma'lumot uzatishda birga ketadi)
+  const [akkauntNomi, setAkkauntNomi]                   = usePersistedState("nurnon:akkauntNomi", "");
+  // Ma'lumot yuklashdan oldingi holat — "Oldingi holatga qaytarish" uchun: { vaqt, akkaunt, data }
+  const [importZaxira, setImportZaxira]                 = usePersistedState("nurnon:importZaxira", null);
 
   // ── Vaqtinchalik oqim bayroqlari (saqlanmaydi) ──
   const [qopTasdiqlandi, setQopTasdiqlandi]       = useState(false);
@@ -168,6 +182,69 @@ export function AppDataProvider({ children }) {
 
   const butunlayOchir = (yozuvId) => setOchirilganlar((p) => (p || []).filter((x) => x.id !== yozuvId));
 
+  // ── Ma'lumotlarni uzatish: butun baza bitta matnga va qaytib ──
+  // kalit → [joriy qiymat, setter, kutilgan tur]
+  const BAZA = {
+    nonlar: [nonlar, setNonlar, "array"],
+    ishchilar: [ishchilar, setIshchilar, "array"],
+    mahsulotNarxlari: [mahsulotNarxlari, setMahsulotNarxlari, "object"],
+    customMahsulotlar: [customMahsulotlar, setCustomMahsulotlar, "array"],
+    qarzlar: [qarzlar, setQarzlar, "array"],
+    optomlar: [optomlar, setOptomlar, "array"],
+    kartalar: [kartalar, setKartalar, "array"],
+    omborlar: [omborlar, setOmborlar, "array"],
+    omborSorovlar: [omborSorovlar, setOmborSorovlar, "array"],
+    omborTasdiqlar: [omborTasdiqlar, setOmborTasdiqlar, "array"],
+    hisobotlarTarixi: [hisobotlarTarixi, setHisobotlarTarixi, "array"],
+    tasdiqlanganKunlar: [tasdiqlanganKunlar, setTasdiqlanganKunlar, "array"],
+    kunlikQoplar: [kunlikQoplar, setKunlikQoplar, "array"],
+    braklar: [braklar, setBraklar, "array"],
+    gazNarx: [gazNarx, setGazNarx, "string"],
+    elektroNarx: [elektroNarx, setElektroNarx, "string"],
+    ozIshlabQoplar: [ozIshlabQoplar, setOzIshlabQoplar, "object"],
+    tashqariSonlar: [tashqariSonlar, setTashqariSonlar, "object"],
+    sotilmaganNon: [sotilmaganNon, setSotilmaganNon, "object"],
+    kunlikQopSoni: [kunlikQopSoni, setKunlikQopSoni, "string"],
+    boshlangichQoldiq: [boshlangichQoldiq, setBoshlangichQoldiq, "object"],
+    qoldaYaroqsiz: [qoldaYaroqsiz, setQoldaYaroqsiz, "object"],
+    kunlikXarajatlar: [kunlikXarajatlar, setKunlikXarajatlar, "array"],
+    oxirgiYakunlashVaqti: [oxirgiYakunlashVaqti, setOxirgiYakunlashVaqti, "number"],
+    lockedDayStats: [lockedDayStats, setLockedDayStats, "objectOrNull"],
+    ochirilganlar: [ochirilganlar, setOchirilganlar, "array"],
+  };
+
+  // Joriy bazaning to'liq nusxasi
+  const eksportMalumot = () => {
+    const data = {};
+    Object.keys(BAZA).forEach((k) => { data[k] = BAZA[k][0]; });
+    return { v: 1, ilova: "nur-non", akkaunt: akkauntNomi || "", vaqt: Date.now(), data };
+  };
+
+  // Matndan kelgan bazani o'rnatadi (faqat to'g'ri turdagi kalitlar). Avval joriy
+  // holat zaxiraga olinadi — kerak bo'lsa "Oldingi holatga qaytarish" mumkin.
+  const importMalumot = (paket, { zaxiraOl = true } = {}) => {
+    const data = paket?.data || {};
+    if (zaxiraOl) setImportZaxira(eksportMalumot());
+    let soni = 0;
+    Object.keys(BAZA).forEach((k) => {
+      if (!(k in data) || !BAZA_TUR_MOS(data[k], BAZA[k][2])) return;
+      BAZA[k][1](data[k]);
+      soni++;
+    });
+    if (typeof paket?.akkaunt === "string" && paket.akkaunt.trim()) setAkkauntNomi(paket.akkaunt.trim());
+    setQopTasdiqlandi(false);
+    setHisobotYopildi(false);
+    return soni;
+  };
+
+  const zaxiradanQaytar = () => {
+    if (!importZaxira) return false;
+    importMalumot(importZaxira, { zaxiraOl: false });
+    setAkkauntNomi(importZaxira.akkaunt || "");
+    setImportZaxira(null);
+    return true;
+  };
+
   const value = {
     nonlar, setNonlar,
     ishchilar, setIshchilar,
@@ -195,6 +272,8 @@ export function AppDataProvider({ children }) {
     oxirgiYakunlashVaqti, setOxirgiYakunlashVaqti,
     lockedDayStats, setLockedDayStats,
     ochirilganlar, ochirArxivga, qaytar, butunlayOchir,
+    akkauntNomi, setAkkauntNomi,
+    eksportMalumot, importMalumot, importZaxira, zaxiradanQaytar,
     qopTasdiqlandi, setQopTasdiqlandi,
     hisobotYopildi, setHisobotYopildi,
   };

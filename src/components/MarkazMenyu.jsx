@@ -1,4 +1,5 @@
 // Markaz menyusi — Nur-Non logotipi bosilganda sarlavha ostida silliq ochiladi (Modal yo'q).
+//   • Akkaunt va ma'lumotlar — akkaunt nomi, ma'lumotlarni yuborish/qabul qilish
 //   • Tarixdagilar — o'chirilgan narsalar (7 kun), qaytarish mumkin
 //   • Yozuv — Lotin / Кирилл (butun ilova matni darhol o'zgaradi)
 import { useEffect, useRef } from "react";
@@ -10,7 +11,7 @@ import { useTil, setTil } from "../i18n/til";
 import { C, T, S, R, ANIM } from "../theme";
 
 export function MarkazMenyu({ onYop }) {
-  const { ochirilganlar } = useApp();
+  const { ochirilganlar, akkauntNomi } = useApp();
   const til = useTil();
   const soni = (ochirilganlar || []).length;
 
@@ -23,6 +24,22 @@ export function MarkazMenyu({ onYop }) {
 
   return (
     <Animated.View style={[styles.wrap, { opacity: a, transform: [{ translateY }] }]}>
+      <Pressable
+        accessibilityRole="button"
+        onPress={() => { onYop?.(); router.push("/akkaunt"); }}
+        android_ripple={{ color: C.accent + "1A" }}
+        style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
+      >
+        <View style={styles.icon}><Ionicons name="person-circle-outline" size={22} color={C.accent} /></View>
+        <View style={styles.flex1}>
+          <Text style={styles.label}>Akkaunt va ma'lumotlar</Text>
+          <Text style={styles.sub} numberOfLines={1}>{akkauntNomi ? `${akkauntNomi} · ` : ""}Ma'lumotlarni yuborish va qabul qilish</Text>
+        </View>
+        <Ionicons name="chevron-forward" size={18} color={C.muted} />
+      </Pressable>
+
+      <View style={styles.divider} />
+
       <Pressable
         accessibilityRole="button"
         onPress={() => { onYop?.(); router.push("/ochirilganlar"); }}

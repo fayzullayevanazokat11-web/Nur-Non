@@ -1,9 +1,10 @@
 // Markaz brendi sarlavhasi — jigarrang banner + oq kvadrat ichida "Non" logotipi
-// + "Nur-Non" / "Boshqaruv tizimi". O'ng chetda joriy sana va vaqt (har 30s yangilanadi).
+// + "Nur-Non" / asosiy akkaunt nomi (yo'q bo'lsa "Boshqaruv tizimi"). O'ng chetda joriy sana va vaqt (har 30s yangilanadi).
 // Logotip bosilganda `onLogo` chaqiriladi (Markaz menyusi: Tarixdagilar, yozuv tanlovi).
 import { useEffect, useState } from "react";
 import { View, Text, Image, Pressable, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { useApp } from "../store/AppData";
 import { C, T, S, R, shadow } from "../theme";
 
 const LOGO = require("../../assets/logo-tight.png");
@@ -19,6 +20,7 @@ function hozir() {
 }
 
 export function BrandHeader({ onLogo, menuOchiq = false }) {
+  const { akkauntNomi } = useApp();
   const [t, setT] = useState(hozir());
   useEffect(() => {
     const id = setInterval(() => setT(hozir()), 30000); // 30s
@@ -44,7 +46,14 @@ export function BrandHeader({ onLogo, menuOchiq = false }) {
       </Pressable>
       <View style={styles.flex1}>
         <Text style={styles.title}>Nur-Non</Text>
-        <Text style={styles.sub}>Boshqaruv tizimi</Text>
+        {akkauntNomi ? (
+          <View style={styles.akkRow}>
+            <Ionicons name="person-circle-outline" size={13} color="#EBD8BF" />
+            <Text style={[styles.sub, styles.akk]} numberOfLines={1}>{akkauntNomi}</Text>
+          </View>
+        ) : (
+          <Text style={styles.sub}>Boshqaruv tizimi</Text>
+        )}
       </View>
       <View style={styles.clock}>
         <View style={styles.clockRow}>
@@ -86,6 +95,8 @@ const styles = StyleSheet.create({
   flex1: { flex: 1 },
   title: { fontSize: 23, fontWeight: "800", color: "#FFF6EA", letterSpacing: -0.3 },
   sub:   { fontSize: T.sm, color: "#EBD8BF", marginTop: 2, fontWeight: "500" },
+  akkRow:{ flexDirection: "row", alignItems: "center", gap: 4, marginTop: 2 },
+  akk:   { marginTop: 0, fontWeight: "700", flexShrink: 1 },
   clock: {
     alignItems: "flex-end",
     paddingHorizontal: S[3],
