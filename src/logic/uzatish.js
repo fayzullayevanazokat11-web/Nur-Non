@@ -39,7 +39,7 @@ export function matndanOqi(matn) {
   }
   let paket;
   try { paket = JSON.parse(json); } catch { return { ok: false, xato: "Kod to'liq emas yoki buzilgan. Matnni oxirigacha nusxalang." }; }
-  if (!paket || typeof paket !== "object" || !paket.data || typeof paket.data !== "object") {
+  if (!paket || typeof paket !== "object" || paket.ilova !== "nur-non" || !paket.data || typeof paket.data !== "object" || Array.isArray(paket.data)) {
     return { ok: false, xato: "Bu Nur-Non ma'lumotlari emas" };
   }
   if (paket.v && paket.v > 1) return { ok: false, xato: "Bu matn yangiroq versiyadan. Ilovani yangilang." };
@@ -64,7 +64,7 @@ const XULOSA = [
 
 export function xulosa(data) {
   return XULOSA
-    .map(([k, nom]) => ({ k, nom, soni: Array.isArray(data?.[k]) ? data[k].length : 0 }))
+    .map(([k, nom]) => ({ k, nom, soni: Array.isArray(data?.[k]) ? data[k].filter((x) => x && typeof x === "object" && x.id != null).length : 0 }))
     .filter((x) => x.soni > 0);
 }
 

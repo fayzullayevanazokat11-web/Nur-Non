@@ -2,7 +2,9 @@
 //   • Akkaunt va ma'lumotlar — akkaunt nomi, ma'lumotlarni yuborish/qabul qilish
 //   • Tarixdagilar — o'chirilgan narsalar (7 kun), qaytarish mumkin
 //   • Yozuv — Lotin / Кирилл (butun ilova matni darhol o'zgaradi)
-//   • Dizayn — mavzu tanlovi (Non, Tun, Zaytun, Moviy)
+//   • Dizayn — mavzu tanlovi (Non — yorug', Tun — qorong'i)
+// Menyu FAQAT logotip bosilganda ochiladi; boshqa bo'limga o'tilganda, dasturdan
+// chiqilganda yoki dizayn almashganda yopiladi.
 import { useEffect, useRef } from "react";
 import { View, Text, Pressable, Animated, Easing, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
@@ -10,11 +12,6 @@ import { router } from "expo-router";
 import { useApp } from "../store/AppData";
 import { useTil, setTil } from "../i18n/til";
 import { C, T, S, R, ANIM, temaStil, TEMALAR, useTema, temaAlmashtir } from "../theme";
-
-// Mavzu almashganda ekranlar qayta chiziladi — menyu ochiq qolishi uchun eslab qolamiz
-let qaytaOchish = false;
-export const menyuQaytaOchilsinmi = () => qaytaOchish;
-export const menyuEslandi = () => { qaytaOchish = false; };
 
 export function MarkazMenyu({ onYop }) {
   const { ochirilganlar, akkauntNomi } = useApp();
@@ -103,7 +100,7 @@ export function MarkazMenyu({ onYop }) {
               accessibilityRole="button"
               accessibilityLabel={`Dizayn: ${t.nom}`}
               accessibilityState={{ selected: tanlangan }}
-              onPress={() => { if (!tanlangan) { qaytaOchish = true; temaAlmashtir(id); } }}
+              onPress={() => { if (!tanlangan) temaAlmashtir(id); }}
               style={({ pressed }) => [styles.tema, pressed && styles.temaPressed]}
             >
               <View style={[styles.namuna, { backgroundColor: t.ranglar.card, borderColor: tanlangan ? C.accent : C.border }, tanlangan && styles.namunaTanlangan]}>

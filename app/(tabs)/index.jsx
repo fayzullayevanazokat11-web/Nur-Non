@@ -9,7 +9,7 @@ import { router, useFocusEffect } from "expo-router";
 import { useApp } from "../../src/store/AppData";
 import { Card } from "../../src/components/Card";
 import { BrandHeader } from "../../src/components/BrandHeader";
-import { MarkazMenyu, menyuQaytaOchilsinmi, menyuEslandi } from "../../src/components/MarkazMenyu";
+import { MarkazMenyu } from "../../src/components/MarkazMenyu";
 import { ScrollBox } from "../../src/components/ScrollBox";
 import { useAnimSon } from "../../src/components/useAnimSon";
 import { C, T, S, R, temaStil } from "../../src/theme";
@@ -42,8 +42,7 @@ export default function Markaz() {
   // o'z-o'zidan yangilanishi uchun. Foydalanuvchi tegmasa ham Markaz tetik turadi.
   // Logotip menyusi (Tarixdagilar, yozuv tanlovi) — boshqa bo'limga o'tganda yoki
   // dasturdan chiqilganda o'zi yopiladi
-  const [menu, setMenu] = useState(menyuQaytaOchilsinmi); // dizayn almashgandan keyin ochiq qoladi
-  useEffect(() => { menyuEslandi(); }, []);
+  const [menu, setMenu] = useState(false); // faqat logotip bosilganda ochiladi
   const menuAlmash = () => {
     LayoutAnimation.configureNext(LayoutAnimation.create(220, LayoutAnimation.Types.easeInEaseOut, LayoutAnimation.Properties.opacity));
     setMenu((m) => !m);

@@ -16,6 +16,7 @@ import { useApp } from "../src/store/AppData";
 import { Card } from "../src/components/Card";
 import { Btn } from "../src/components/Btn";
 import { ScrollBox } from "../src/components/ScrollBox";
+import { yopKartalar } from "../src/components/ExpandableCard";
 import { SahifaSarlavha } from "../src/components/SahifaSarlavha";
 import { C, T, S, R, temaStil } from "../src/theme";
 import { matngaAylantir, matndanOqi, xulosa, hajm, sanaVaqt, faylNomi } from "../src/logic/uzatish";
@@ -128,6 +129,7 @@ export default function Akkaunt() {
         {
           text: "Yuklash",
           onPress: () => {
+            yopKartalar(); // ochiq batafsil kartalar eski ma'lumotga ishora qilmasin
             const soni = importMalumot(tahlil.paket);
             tegildi.current = false;
             silliq(); setKirish("");
@@ -141,7 +143,7 @@ export default function Akkaunt() {
   const zaxiraQaytar = () =>
     Alert.alert("Oldingi holatga qaytarish", "Oxirgi yuklashdan oldingi ma'lumotlar tiklanadi. Davom etasizmi?", [
       { text: "Bekor", style: "cancel" },
-      { text: "Qaytarish", onPress: () => { tegildi.current = false; silliq(); if (zaxiradanQaytar()) ayt("Oldingi holat tiklandi"); } },
+      { text: "Qaytarish", onPress: () => { yopKartalar(); tegildi.current = false; silliq(); if (zaxiradanQaytar()) ayt("Oldingi holat tiklandi"); } },
     ]);
 
   const harf = bosh(akkauntNomi);

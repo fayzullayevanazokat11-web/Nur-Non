@@ -2,8 +2,8 @@
 // spacing (S), radius (R) va yumshoq soya (shadow).
 // RN'da fontSize/spacing SON bo'ladi (px emas).
 //
-// MAVZULAR: foydalanuvchi Markaz menyusidan dizaynni almashtiradi (Non, Tun, Zaytun,
-// Moviy). `C` — joriy mavzu ranglari (jonli obyekt, almashganda yangilanadi).
+// MAVZULAR: foydalanuvchi Markaz menyusidan dizaynni almashtiradi (Non — yorug',
+// Tun — qorong'i). `C` — joriy mavzu ranglari (jonli obyekt, almashganda yangilanadi).
 // Uslublar `temaStil(() => StyleSheet.create({...}))` bilan e'lon qilinadi —
 // mavzu almashganda o'zi qayta hisoblanadi. Ekranlar app/_layout.jsx'da qayta chiziladi.
 import { useSyncExternalStore } from "react";
@@ -47,36 +47,6 @@ export const TEMALAR = {
       accentBg: "#2A2016", accentBorder: "#47361F",
       overlay: "rgba(0,0,0,0.55)",
       musbat: "#C47A35", manfiy: "#3A93C6",
-    },
-  },
-  zaytun: {
-    nom: "Zaytun", qorongi: false,
-    ranglar: {
-      bg: "#FFFFFF", surface: "#FFFFFF", card: "#F5F7EE", panel: "#EBF0DF",
-      border: "#D2DABD", borderSoft: "#E2E8D2",
-      accent: "#5B7330", red: "#4A2A12",
-      text: "#20280F", sub: "#66714F", muted: "#A2AA8B",
-      onAccent: "#F5F8EC", onAccentSub: "#D5E0BD",
-      bar: "#FFFFFF",
-      dangerBg: "#F7EEE6", dangerBorder: "#E6D2C1",
-      accentBg: "#EDF2E1", accentBorder: "#D3DDBC",
-      overlay: "rgba(32,40,15,0.35)",
-      musbat: "#5E8024", manfiy: "#2F78B5",
-    },
-  },
-  moviy: {
-    nom: "Moviy", qorongi: false,
-    ranglar: {
-      bg: "#FFFFFF", surface: "#FFFFFF", card: "#F3F6FA", panel: "#E8EEF5",
-      border: "#CCD7E4", borderSoft: "#DFE6EF",
-      accent: "#2E5E8C", red: "#5A1F1F",
-      text: "#13202F", sub: "#5C6E83", muted: "#98A6B7",
-      onAccent: "#F1F6FC", onAccentSub: "#C6D7EA",
-      bar: "#FFFFFF",
-      dangerBg: "#F8ECEC", dangerBorder: "#E9CDCD",
-      accentBg: "#EAF0F7", accentBorder: "#CAD8E8",
-      overlay: "rgba(19,32,47,0.35)",
-      musbat: "#2563A6", manfiy: "#C0662B",
     },
   },
 };

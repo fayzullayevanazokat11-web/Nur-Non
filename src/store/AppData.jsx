@@ -32,6 +32,15 @@ const silliqSetter = (set) => (v) =>
     return n;
   });
 
+// Import: id'li yozuvlar ro'yxatida faqat id'si bor obyektlar qoladi —
+// buzilgan matn ilovani ishdan chiqarmasligi uchun
+const ID_ROYXATLAR = new Set(["nonlar", "ishchilar", "customMahsulotlar", "qarzlar", "optomlar", "kartalar", "omborlar",
+  "omborSorovlar", "omborTasdiqlar", "hisobotlarTarixi", "braklar", "kunlikXarajatlar", "ochirilganlar"]);
+export function tozalaRoyxat(kalit, qiymat) {
+  if (!ID_ROYXATLAR.has(kalit) || !Array.isArray(qiymat)) return qiymat;
+  return qiymat.filter((x) => x && typeof x === "object" && !Array.isArray(x) && x.id != null);
+}
+
 export function AppDataProvider({ children }) {
   // ── Saqlanadigan ma'lumotlar ──
   const [nonlar, setNonlarXom]                    = usePersistedState("nurnon:nonlar", SEED_NONLAR);
@@ -254,7 +263,7 @@ export function AppDataProvider({ children }) {
     let soni = 0;
     Object.keys(BAZA).forEach((k) => {
       if (!(k in data) || !BAZA_TUR_MOS(data[k], BAZA[k][2])) return;
-      BAZA[k][1](data[k]);
+      BAZA[k][1](tozalaRoyxat(k, data[k]));
       soni++;
     });
     if (typeof paket?.akkaunt === "string" && paket.akkaunt.trim()) setAkkauntNomi(paket.akkaunt.trim());

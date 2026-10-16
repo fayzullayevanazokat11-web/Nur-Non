@@ -2,10 +2,10 @@
 // (swipe) orqali ham o'tiladi: ekranlar sahifalovchi (pager) ichida turadi,
 // pastki panel esa o'zimizniki — barmoq harakatiga ergashuvchi silliq indikator bilan.
 // Ikonkalar — maxsus rasmlar (tintColor bilan bo'yaladi).
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { withLayoutContext } from "expo-router";
 import { createMaterialTopTabNavigator } from "@react-navigation/material-top-tabs";
-import { View, Text, Image, Pressable, Animated, StyleSheet } from "react-native";
+import { View, Text, Image, Pressable, Animated, StyleSheet, Keyboard } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { C, temaStil } from "../../src/theme";
 import { useTil } from "../../src/i18n/til";
@@ -26,6 +26,13 @@ const PILL_W = 56;
 function PastkiPanel({ state, descriptors, navigation, position }) {
   const insets = useSafeAreaInsets();
   const [kenglik, setKenglik] = useState(0);
+  // Klaviatura ochiq bo'lsa panel yashirinadi — formalarga ko'proq joy qoladi
+  const [klaviatura, setKlaviatura] = useState(false);
+  useEffect(() => {
+    const a = Keyboard.addListener("keyboardDidShow", () => setKlaviatura(true));
+    const b = Keyboard.addListener("keyboardDidHide", () => setKlaviatura(false));
+    return () => { a.remove(); b.remove(); };
+  }, []);
   const soni = state.routes.length;
   const tabW = kenglik / soni;
   const kirishlar = state.routes.map((_, i) => i);
@@ -34,6 +41,8 @@ function PastkiPanel({ state, descriptors, navigation, position }) {
   const pillX = kenglik
     ? position.interpolate({ inputRange: kirishlar, outputRange: kirishlar.map((i) => i * tabW + (tabW - PILL_W) / 2) })
     : 0;
+
+  if (klaviatura) return null;
 
   return (
     <View
