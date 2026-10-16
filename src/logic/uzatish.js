@@ -69,7 +69,7 @@ export function xulosa(data) {
 }
 
 export const hajm = (matn) => {
-  const b = String(matn || "").length;
+  const b = typeof matn === "number" ? matn : String(matn || "").length;
   return b < 1024 ? `${b} B` : `${(b / 1024).toFixed(b < 10240 ? 1 : 0)} KB`;
 };
 

@@ -32,6 +32,7 @@ const TURLAR = {
   omborSet:    { nom: "Ombor kirimi",      icon: "cube-outline",          tavsif: (e) => `Yangi set · ${e.sana}` },
   omborTasdiq: { nom: "Ombor chiqimi",     icon: "checkmark-done-outline", tavsif: (e) => `${e.manba} · ${e.sana}` },
   ingredient:  { nom: "Xomashyo",          icon: "leaf-outline",          tavsif: (e) => e.nom },
+  ishHaqi:     { nom: "Ish haqi yozuvi",   icon: "wallet-outline",        tavsif: (e) => `${{ avans: "Avans", jarima: "Jarima", bonus: "Bonus", tolov: "To'lov" }[e.tur] || ""} · ${som(e.summa)} · ${e.sana}` },
 };
 
 const silliq = () => LayoutAnimation.configureNext(LayoutAnimation.create(220, LayoutAnimation.Types.easeInEaseOut, LayoutAnimation.Properties.opacity));

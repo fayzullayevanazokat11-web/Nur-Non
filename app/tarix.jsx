@@ -15,9 +15,13 @@ import { SahifaSarlavha } from "../src/components/SahifaSarlavha";
 import { Statistika } from "../src/components/Statistika";
 import { C, T, S, R, temaStil } from "../src/theme";
 import { formatSom } from "../src/logic/hisob";
+import { sanaChiroyli } from "../src/logic/davr";
+import { kunlikHtml, kunlikMatn, pdfUlash, matnUlash } from "../src/logic/ulashish";
 
 export default function Tarix() {
-  const { nonlar, hisobotlarTarixi, ochirArxivga } = useApp();
+  const { nonlar, hisobotlarTarixi, ochirArxivga, akkauntNomi, oylikArxiv } = useApp();
+  const pdf = (h) => pdfUlash(kunlikHtml(h, { akkaunt: akkauntNomi, nonlar }), `nur-non-${h.sana}`).catch(() => Alert.alert("Xatolik", "PDF tayyorlab bo'lmadi."));
+  const matn = (h) => matnUlash(kunlikMatn(h, { akkaunt: akkauntNomi })).catch(() => {});
 
   const ochirHisobot = (id) =>
     Alert.alert("O'chirish", "Shu sanadagi hisobotni o'chirasizmi?", [
@@ -30,7 +34,7 @@ export default function Tarix() {
       <ScrollBox contentContainerStyle={styles.scroll}>
         <SahifaSarlavha eyebrow="HISOBOTLAR TARIXI" title="Statistika" subtitle={`30 kun davomida saqlanadi · ${(hisobotlarTarixi || []).length} ta`} icon="stats-chart-outline" />
 
-        {(hisobotlarTarixi || []).length > 0 && <Statistika hisobotlar={hisobotlarTarixi} nonlar={nonlar} />}
+        {((hisobotlarTarixi || []).length > 0 || Object.keys(oylikArxiv || {}).length > 0) && <Statistika hisobotlar={hisobotlarTarixi || []} nonlar={nonlar} arxiv={oylikArxiv} akkaunt={akkauntNomi} />}
 
         {(hisobotlarTarixi || []).length > 0 && (
           <View style={styles.secHead}>
@@ -52,7 +56,7 @@ export default function Tarix() {
                 style={styles.item}
                 header={
                   <View style={styles.mHead}>
-                    <Text style={[styles.itemIsm, styles.flex1]} numberOfLines={1}>{h.sana}</Text>
+                    <Text style={[styles.itemIsm, styles.flex1]} numberOfLines={1}>{sanaChiroyli(h.sana)}</Text>
                     <Text style={[styles.itemSumma, { color: (h.sofFoyda || 0) >= 0 ? C.green : C.red }]} numberOfLines={1}>{formatSom(h.sofFoyda)} so'm</Text>
                   </View>
                 }
@@ -92,6 +96,15 @@ export default function Tarix() {
                   <View style={styles.histRow}><Text style={styles.histNomB}>Sof foyda</Text><Text style={styles.histValB}>{formatSom(h.sofFoyda)} so'm</Text></View>
                 </View>
                 <View style={styles.actions}>
+                  <Pressable accessibilityLabel={`${h.sana}: PDF ulashish`} onPress={() => pdf(h)} hitSlop={6} style={styles.actBtn}>
+                    <Ionicons name="document-outline" size={16} color={C.accent} />
+                    <Text style={[styles.actTxt, { color: C.accent }]}> PDF</Text>
+                  </Pressable>
+                  <Pressable accessibilityLabel={`${h.sana}: matn ulashish`} onPress={() => matn(h)} hitSlop={6} style={styles.actBtn}>
+                    <Ionicons name="share-social-outline" size={16} color={C.accent} />
+                    <Text style={[styles.actTxt, { color: C.accent }]}> Matn</Text>
+                  </Pressable>
+                  <View style={styles.flex1} />
                   <Pressable accessibilityLabel="O'chirish" onPress={() => ochirHisobot(h.id)} hitSlop={6} style={styles.actBtn}>
                     <Ionicons name="trash-outline" size={16} color={C.red} />
                     <Text style={[styles.actTxt, { color: C.red }]}> O'chirish</Text>
@@ -136,7 +149,7 @@ const styles = temaStil(() => StyleSheet.create({
   kunOxiriVal: { fontSize: T.md, fontWeight: "800", marginLeft: S[2] },
   kunOxiriHint:{ fontSize: 10, color: C.muted, marginTop: 2, fontStyle: "italic" },
 
-  actions:  { flexDirection: "row", justifyContent: "flex-end", marginTop: S[3], borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: C.borderSoft, paddingTop: S[3] },
+  actions:  { flexDirection: "row", alignItems: "center", gap: S[4], marginTop: S[3], borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: C.borderSoft, paddingTop: S[3] },
   actBtn:   { flexDirection: "row", alignItems: "center" },
   actTxt:   { fontSize: T.sm, fontWeight: "700" },
 }));

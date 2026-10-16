@@ -6,15 +6,23 @@
 // Menyu FAQAT logotip bosilganda ochiladi; boshqa bo'limga o'tilganda, dasturdan
 // chiqilganda yoki dizayn almashganda yopiladi.
 import { useEffect, useRef } from "react";
-import { View, Text, Pressable, Animated, Easing, StyleSheet } from "react-native";
+import { View, Text, Pressable, Animated, Easing, StyleSheet, Switch, Alert, Platform } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useApp } from "../store/AppData";
+import { ruxsatSora, ESLATMA_SOAT } from "../logic/bildirishnoma";
 import { useTil, setTil } from "../i18n/til";
 import { C, T, S, R, ANIM, temaStil, TEMALAR, useTema, temaAlmashtir } from "../theme";
 
 export function MarkazMenyu({ onYop }) {
-  const { ochirilganlar, akkauntNomi } = useApp();
+  const { ochirilganlar, akkauntNomi, eslatmaYoqilgan, setEslatmaYoqilgan } = useApp();
+  const eslatmaAlmash = async (v) => {
+    if (!v) { setEslatmaYoqilgan(false); return; }
+    setEslatmaYoqilgan(true);
+    if (Platform.OS === "web") return;
+    const bor = await ruxsatSora();
+    if (!bor) Alert.alert("Ruxsat kerak", "Eslatma kelishi uchun telefon sozlamalarida Nur-Non ilovasiga bildirishnomalarni yoqing.");
+  };
   const til = useTil();
   const tema = useTema();
   const soni = (ochirilganlar || []).length;
@@ -80,6 +88,25 @@ export function MarkazMenyu({ onYop }) {
             </Pressable>
           ))}
         </View>
+      </View>
+
+      <View style={styles.divider} />
+
+      <View style={styles.row}>
+        <View style={styles.icon}><Ionicons name="alarm-outline" size={20} color={C.accent} /></View>
+        <View style={styles.flex1}>
+          <Text style={styles.label}>Kechki eslatma</Text>
+          <Text style={styles.sub}>Har kuni {ESLATMA_SOAT}:00 da, kun yakunlanmagan bo'lsa</Text>
+        </View>
+        <Switch
+          accessibilityLabel="Kechki eslatma"
+          value={!!eslatmaYoqilgan}
+          onValueChange={eslatmaAlmash}
+          trackColor={{ false: C.border, true: C.accent }}
+          thumbColor={C.surface}
+          activeThumbColor={C.surface}
+          ios_backgroundColor={C.border}
+        />
       </View>
 
       <View style={styles.divider} />

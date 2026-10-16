@@ -12,6 +12,7 @@ import { Btn } from "../../src/components/Btn";
 import { ScreenHeader } from "../../src/components/ScreenHeader";
 import { ExpandableCard, yopKartalar } from "../../src/components/ExpandableCard";
 import { MahsulotNarxi } from "../../src/components/MahsulotNarxi";
+import { TannarxKalk } from "../../src/components/TannarxKalk";
 import { ScrollBox } from "../../src/components/ScrollBox";
 import { xomashyoRoyxati } from "../../src/logic/konstantalar";
 import { C, T, S, R, temaStil } from "../../src/theme";
@@ -168,10 +169,16 @@ export default function IshlabChiqarish() {
             <Ionicons name="leaf-outline" size={15} color={tab === "narx" ? C.onAccent : C.sub} />
             <Text style={[styles.segTxt, tab === "narx" && styles.segTxtActive]}>Xomashyo</Text>
           </Pressable>
+          <Pressable style={[styles.seg, tab === "tannarx" && styles.segActive]} onPress={() => setTab("tannarx")}>
+            <Ionicons name="calculator-outline" size={15} color={tab === "tannarx" ? C.onAccent : C.sub} />
+            <Text style={[styles.segTxt, tab === "tannarx" && styles.segTxtActive]}>Tannarx</Text>
+          </Pressable>
         </View>
         <View style={styles.gap14} />
 
-        {tab === "narx" ? (
+        {tab === "tannarx" ? (
+          <TannarxKalk />
+        ) : tab === "narx" ? (
           <MahsulotNarxi />
         ) : (
           <>

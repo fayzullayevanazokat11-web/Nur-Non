@@ -12,6 +12,7 @@ import { BrandHeader } from "../../src/components/BrandHeader";
 import { MarkazMenyu } from "../../src/components/MarkazMenyu";
 import { ScrollBox } from "../../src/components/ScrollBox";
 import { useAnimSon } from "../../src/components/useAnimSon";
+import { EslatmalarPanel } from "../../src/components/EslatmalarPanel";
 import { C, T, S, R, temaStil } from "../../src/theme";
 import { hisoblaKunlik, formatSom, qarzJami, optomJami, kartaJami, ishchiHaqlari } from "../../src/logic/hisob";
 // Maxsus rasm ikonkalari (Ionicons o'rniga — premium ko'rinish)
@@ -124,8 +125,10 @@ export default function Markaz() {
         <BrandHeader onLogo={menuAlmash} menuOchiq={menu} />
         {menu && <MarkazMenyu onYop={() => setMenu(false)} />}
 
+        <EslatmalarPanel />
+
         <View style={styles.statsRow}>
-          <StatTile label="Bugungi sof foyda" unit="so'm" son={stats.sofFoyda} format={formatSom} color={stats.sofFoyda >= 0 ? C.green : C.red} icon="trending-up-outline" />
+          <StatTile label="Sof foyda" unit="so'm" son={stats.sofFoyda} format={formatSom} color={stats.sofFoyda >= 0 ? C.green : C.red} icon="trending-up-outline" />
           <StatTile label="Sotilgan non" unit="dona" son={stats.sotilganNon} color={C.text} icon="cube-outline" />
           <StatTile label="Kunlik qop" unit="qop" son={stats.jamiQop} color={C.accent} icon="layers-outline" />
         </View>
@@ -155,7 +158,7 @@ export default function Markaz() {
         <View style={styles.gridRow}>
           <NavTile image={ICONS.qarz} tint={C.red}
             label="Qarzlar"
-            sub={`${formatSom(qarz.summa)} so'm • ${qarz.soni} ta`}
+            sub={`${formatSom(qarz.summa)} so'm • ${qarz.kishi} kishi`}
             onPress={() => router.push("/qarzlar")}
           />
           <NavTile image={ICONS.optom} tint={C.accent}

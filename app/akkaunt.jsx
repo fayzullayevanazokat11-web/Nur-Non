@@ -20,6 +20,7 @@ import { yopKartalar } from "../src/components/ExpandableCard";
 import { SahifaSarlavha } from "../src/components/SahifaSarlavha";
 import { C, T, S, R, temaStil } from "../src/theme";
 import { matngaAylantir, matndanOqi, xulosa, hajm, sanaVaqt, faylNomi } from "../src/logic/uzatish";
+import { nusxalar, nusxaOqi, nusxaUlash } from "../src/logic/avtoZaxira";
 
 // Juda uzun matn TextInput'da sekinlashtiradi — undan uzunini ixcham ko'rsatamiz
 const KATTA = 3000;
@@ -32,7 +33,24 @@ function bosh(nom) {
 }
 
 export default function Akkaunt() {
-  const { akkauntNomi, setAkkauntNomi, eksportMalumot, importMalumot, importZaxira, zaxiradanQaytar } = useApp();
+  const { akkauntNomi, setAkkauntNomi, eksportMalumot, importMalumot, importZaxira, zaxiradanQaytar, oxirgiNusxa, nusxaOl: avtoNusxaOl } = useApp();
+
+  // ── Avtomatik nusxalar ro'yxati ──
+  const [avto, setAvto] = useState([]);
+  useEffect(() => { let tirik = true; nusxalar().then((r) => { if (tirik) setAvto(r); }); return () => { tirik = false; }; }, [oxirgiNusxa]);
+  const avtoTikla = (x) =>
+    Alert.alert("Nusxadan tiklash", `${x.sana} kungi nusxa tiklansinmi? Joriy ma'lumotlar zaxirada qoladi — kerak bo'lsa qaytarish mumkin.`, [
+      { text: "Bekor", style: "cancel" },
+      { text: "Tiklash", onPress: async () => {
+        try {
+          const r = await nusxaOqi(x);
+          if (!r.ok) { ayt(r.xato, true); return; }
+          yopKartalar(); tegildi.current = false;
+          importMalumot(r.paket);
+          ayt(`${x.sana} kungi nusxa tiklandi`);
+        } catch { ayt("Nusxani o'qib bo'lmadi", true); }
+      } },
+    ]);
 
   // ── Akkaunt nomi ──
   const [nom, setNom] = useState(akkauntNomi || "");
@@ -261,6 +279,38 @@ export default function Akkaunt() {
           ) : null}
         </Card>
 
+        {/* AVTOMATIK NUSXALAR */}
+        <View style={styles.secHead}>
+          <Ionicons name="shield-checkmark-outline" size={13} color={C.sub} />
+          <Text style={styles.secTitle}>AVTOMATIK NUSXALAR</Text>
+        </View>
+        <Card style={styles.card}>
+          <Text style={styles.matn}>Har kuni butun ma'lumot telefonga avtomatik saqlanadi (oxirgi 7 kun). Telefon almashsa — nusxani ulashib, yangi telefonda «Fayldan» orqali tiklang.</Text>
+          {avto.length === 0 ? (
+            <Text style={[styles.hint, styles.avtoBosh]}>Hali nusxa yo'q.</Text>
+          ) : (
+            avto.map((x) => (
+              <View key={x.sana} style={styles.avtoQator}>
+                <Ionicons name="document-text-outline" size={18} color={C.accent} />
+                <View style={styles.flex1}>
+                  <Text style={styles.avtoSana}>{x.sana}</Text>
+                  <Text style={styles.tahlilMeta}>{hajm(x.hajm)}</Text>
+                </View>
+                <Pressable accessibilityLabel={`${x.sana}: nusxani ulashish`} onPress={() => nusxaUlash(x).catch(() => ayt("Ulashib bo'lmadi", true))} hitSlop={8} style={styles.avtoBtn}>
+                  <Ionicons name="share-outline" size={17} color={C.sub} />
+                </Pressable>
+                <Pressable accessibilityLabel={`${x.sana}: nusxadan tiklash`} onPress={() => avtoTikla(x)} hitSlop={8} style={styles.avtoTiklaBtn}>
+                  <Text style={styles.avtoTiklaTxt}>Tiklash</Text>
+                </Pressable>
+              </View>
+            ))
+          )}
+          <Pressable onPress={() => { avtoNusxaOl(true); ayt("Nusxa saqlandi"); }} hitSlop={6} style={styles.hozirBtn}>
+            <Ionicons name="save-outline" size={15} color={C.accent} />
+            <Text style={styles.hozirTxt}> Hozir saqlash</Text>
+          </Pressable>
+        </Card>
+
         {importZaxira ? (
           <Card style={styles.card}>
             <View style={styles.zaxiraRow}>
@@ -319,6 +369,14 @@ const styles = temaStil(() => StyleSheet.create({
   tahlilBosh:{ fontSize: T.md, fontWeight: "800", color: C.text },
   tahlilMeta:{ fontSize: T.xs, color: C.sub, marginTop: 2 },
 
+  avtoBosh: { marginTop: S[3] },
+  avtoQator:{ flexDirection: "row", alignItems: "center", gap: S[3], paddingVertical: S[3], borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: C.borderSoft, marginTop: S[2] },
+  avtoSana: { fontSize: T.md, fontWeight: "800", color: C.text },
+  avtoBtn:  { width: 34, height: 34, borderRadius: 17, alignItems: "center", justifyContent: "center", backgroundColor: C.panel },
+  avtoTiklaBtn:{ paddingVertical: 8, paddingHorizontal: 14, borderRadius: R.pill, borderWidth: 1, borderColor: C.border, backgroundColor: C.surface },
+  avtoTiklaTxt:{ fontSize: T.xs, fontWeight: "800", color: C.accent },
+  hozirBtn: { flexDirection: "row", alignItems: "center", alignSelf: "flex-start", marginTop: S[3] },
+  hozirTxt: { fontSize: T.sm, fontWeight: "700", color: C.accent },
   zaxiraRow:{ flexDirection: "row", alignItems: "center", gap: S[3], marginBottom: S[3] },
   zaxiraBosh:{ fontSize: T.md, fontWeight: "800", color: C.text },
 }));

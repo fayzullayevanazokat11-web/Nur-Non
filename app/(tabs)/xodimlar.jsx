@@ -1,6 +1,7 @@
 // "Xodimlar" — inline forma yuqorida (modal yo'q). Yangi ishchi qo'shish va
 // tahrirlash to'g'ridan-to'g'ri sahifa ichida.
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
+import { router } from "expo-router";
 import { View, Text, Pressable, TextInput, StyleSheet, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -9,6 +10,8 @@ import { useApp } from "../../src/store/AppData";
 import { Card } from "../../src/components/Card";
 import { Btn } from "../../src/components/Btn";
 import { ScreenHeader } from "../../src/components/ScreenHeader";
+import { NavQator } from "../../src/components/NavQator";
+import { oylikIshHaqi, joriyOy, oyNomi } from "../../src/logic/davr";
 import { ExpandableCard, yopKartalar } from "../../src/components/ExpandableCard";
 import { ScrollBox } from "../../src/components/ScrollBox";
 import { DateField } from "../../src/components/DateField";
@@ -21,7 +24,11 @@ const BOSH = { ism: "", lavozimId: LAVOZIMLAR[0].id, lavozimCustom: "", haqTuri:
 const HOLATLAR = ["Aktiv", "Ta'tilda"];
 
 export default function Xodimlar() {
-  const { ishchilar, setIshchilar, nonlar, ochirArxivga } = useApp();
+  const { ishchilar, setIshchilar, nonlar, ochirArxivga, hisobotlarTarixi, oylikArxiv, ishHaqiYozuvlari } = useApp();
+  const oylik = useMemo(
+    () => oylikIshHaqi({ oy: joriyOy(), hisobotlar: hisobotlarTarixi, arxiv: oylikArxiv, ishchilar, yozuvlar: ishHaqiYozuvlari }),
+    [hisobotlarTarixi, oylikArxiv, ishchilar, ishHaqiYozuvlari]
+  );
   const ozNonlar = (nonlar || []).filter((n) => n.ozIshlab !== false);
 
   const [tahrirId, setTahrirId] = useState(null);
@@ -147,7 +154,13 @@ export default function Xodimlar() {
           </Card>
         </View>
 
-        <View style={styles.gap14} />
+        <NavQator
+          icon="wallet-outline"
+          nom="Oylik ish haqi"
+          izoh={`${oyNomi(joriyOy())} · qolgan ${formatSom(oylik.qoldiq)} so'm`}
+          onPress={() => router.push("/ishhaqi")}
+          style={styles.navQator}
+        />
 
         {/* INLINE FORMA — ExpandableCard ichida, default yopiq. Tahrirlash holatida avto-ochiladi. */}
         <ExpandableCard
@@ -398,13 +411,14 @@ function KartaWrap({ w, ochTahrir, ochir, haydash, tatildanQaytar, qaytarish, ta
 const styles = temaStil(() => StyleSheet.create({
   safe:      { flex: 1, backgroundColor: C.bg },
   scroll:    { padding: S[5], paddingBottom: S[8] },
-  statsRow:  { flexDirection: "row", gap: S[2] },
+  statsRow:  { flexDirection: "row", gap: S[2], marginBottom: S[4] },
   statTile:  { flex: 1, paddingVertical: S[3], paddingHorizontal: S[3] },
   statIcon:  { marginBottom: S[1] },
   statLabel: { fontSize: 9, color: C.muted, fontWeight: "700", letterSpacing: 0.8, textTransform: "uppercase", marginBottom: S[2] },
   statValue: { fontSize: 26, fontWeight: "800", letterSpacing: -0.3 },
   statUnit:  { fontSize: 10, color: C.muted, marginTop: 2 },
   gap14:     { height: S[4] },
+  navQator:  { marginBottom: S[4] },
 
   // Inline forma
   formCard:  { marginBottom: S[5] },

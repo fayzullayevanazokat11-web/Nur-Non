@@ -7,9 +7,12 @@
 //   • Non turlari bo'yicha ishlab chiqarilgan qoplar
 // Har bir mavzu ranglari validator bilan tekshirilgan (dataviz: lightness, chroma, CVD, kontrast — PASS).
 import { useEffect, useMemo, useRef, useState } from "react";
-import { View, Text, Pressable, Animated, Easing, StyleSheet, LayoutAnimation } from "react-native";
+import { View, Text, Pressable, Animated, Easing, StyleSheet, LayoutAnimation, Alert } from "react-native";
 import { C, T, S, R, temaStil } from "../theme";
+import { Ionicons } from "@expo/vector-icons";
 import { formatSom } from "../logic/hisob";
+import { oylar, oyQisqa, oyNomi, joriyOy, oyQosh, haftaKunlari, davrTaqqos } from "../logic/davr";
+import { davrHtml, pdfUlash } from "../logic/ulashish";
 
 // Grafik ranglari joriy mavzudan: C.musbat (foyda) va C.manfiy (zarar — qarama-qarshi qutb)
 const H = 168;             // grafik balandligi
@@ -30,17 +33,18 @@ export function ixcham(n) {
 }
 
 const KORSATKICHLAR = [
-  { k: "sofFoyda", nom: "Sof foyda", birlik: "so'm", ol: (h) => parseFloat(h.sofFoyda) || 0 },
-  { k: "kunOxiri", nom: "Kun oxiri", birlik: "so'm", ol: (h) => (parseFloat(h.daromad) || 0) - (parseFloat(h.ishchiHaq) || 0) },
-  { k: "daromad",  nom: "Daromad",   birlik: "so'm", ol: (h) => parseFloat(h.daromad) || 0 },
-  { k: "sotilgan", nom: "Sotilgan non", birlik: "dona", ol: (h) => parseFloat(h.sotilganNon) || 0 },
+  // oy: oylik yig'madan (arxiv + kunlik) shu ko'rsatkichni olish
+  { k: "sofFoyda", nom: "Sof foyda", birlik: "so'm", ol: (h) => parseFloat(h.sofFoyda) || 0, oy: (a) => a.sofFoyda },
+  { k: "kunOxiri", nom: "Kun oxiri", birlik: "so'm", ol: (h) => (parseFloat(h.daromad) || 0) - (parseFloat(h.ishchiHaq) || 0), oy: (a) => a.daromad - a.ishchiHaq },
+  { k: "daromad",  nom: "Daromad",   birlik: "so'm", ol: (h) => parseFloat(h.daromad) || 0, oy: (a) => a.daromad },
+  { k: "sotilgan", nom: "Sotilgan non", birlik: "dona", ol: (h) => parseFloat(h.sotilganNon) || 0, oy: (a) => a.sotilganNon },
 ];
 const DAVRLAR = [{ k: 7, nom: "7 kun" }, { k: 30, nom: "30 kun" }];
 
 const silliq = () => LayoutAnimation.configureNext(LayoutAnimation.create(220, LayoutAnimation.Types.easeInEaseOut, LayoutAnimation.Properties.opacity));
 const qiymatMatni = (v, birlik) => (birlik === "so'm" ? `${formatSom(v)} so'm` : `${formatSom(v)} ${birlik}`);
 
-export function Statistika({ hisobotlar, nonlar }) {
+export function Statistika({ hisobotlar, nonlar, arxiv, akkaunt }) {
   const [davr, setDavr] = useState(30);
   const [korK, setKorK] = useState("sofFoyda");
   const [tanlangan, setTanlangan] = useState(null);
@@ -94,6 +98,34 @@ export function Statistika({ hisobotlar, nonlar }) {
   }, [kunlar, nonlar]);
   const maxQop = nonQoplar.length ? nonQoplar[0][1] : 1;
 
+  // O'tgan shuncha kunga nisbatan (kunlik o'rtacha) — ma'lumot yetarli bo'lsa
+  const taqqos = useMemo(() => davrTaqqos(hisobotlar, kor.ol, davr), [hisobotlar, kor, davr]);
+
+  // Oylar: oxirgi 6 oy (joriy oy — hali tugamagan)
+  const oyMalumot = useMemo(() => {
+    const m = oylar(hisobotlar, arxiv);
+    const j = joriyOy();
+    return [-5, -4, -3, -2, -1, 0].map((i) => {
+      const k = oyQosh(j, i);
+      const a = m[k];
+      return { k, qiymat: a ? kor.oy(a) : 0, kunlar: a ? a.kunlar : 0 };
+    }).filter((x, i, arr) => x.kunlar > 0 || i === arr.length - 1);
+  }, [hisobotlar, arxiv, kor]);
+  const oyMax = Math.max(1, ...oyMalumot.map((x) => Math.abs(x.qiymat)));
+  const buOy = oyMalumot[oyMalumot.length - 1];
+  const otganOy = oyMalumot.length > 1 ? oyMalumot[oyMalumot.length - 2] : null;
+  const oyFoiz = buOy?.kunlar && otganOy?.kunlar && otganOy.k === oyQosh(buOy.k, -1)
+    ? (() => { const a = buOy.qiymat / buOy.kunlar, b = otganOy.qiymat / otganOy.kunlar; return Math.abs(b) >= 1 ? Math.round(((a - b) / Math.abs(b)) * 100) : null; })()
+    : null;
+
+  // Hafta kunlari bo'yicha o'rtacha (barcha saqlangan kunlik hisobotlar)
+  const hafta = useMemo(() => haftaKunlari(hisobotlar, kor.ol), [hisobotlar, kor]);
+  const haftaMax = Math.max(1, ...hafta.map((x) => Math.abs(x.ortacha)));
+  const engHafta = hafta.reduce((b, x, i) => (x.soni && (b < 0 || x.ortacha > hafta[b].ortacha) ? i : b), -1);
+
+  const ulash = () => pdfUlash(davrHtml({ hisobotlar: kunlar, kunlar: davr, akkaunt }), `nur-non-${davr}-kun`)
+    .catch(() => Alert.alert("Xatolik", "PDF tayyorlab bo'lmadi."));
+
   return (
     <View>
       {/* Filtrlar — bitta qatorda */}
@@ -105,6 +137,13 @@ export function Statistika({ hisobotlar, nonlar }) {
             </Pressable>
           ))}
         </View>
+        <View style={styles.flex1} />
+        {n > 0 && (
+          <Pressable accessibilityLabel="Davr hisobotini PDF qilib ulashish" onPress={ulash} hitSlop={6} style={({ pressed }) => [styles.ulashBtn, pressed && { opacity: 0.7 }]}>
+            <Ionicons name="document-outline" size={15} color={C.accent} />
+            <Text style={styles.ulashTxt}>PDF</Text>
+          </Pressable>
+        )}
       </View>
       <View style={styles.chips}>
         {KORSATKICHLAR.map((x) => (
@@ -120,6 +159,14 @@ export function Statistika({ hisobotlar, nonlar }) {
         <Text style={styles.hero} numberOfLines={1} adjustsFontSizeToFit>
           {formatSom(jami)}<Text style={styles.heroBirlik}> {kor.birlik}</Text>
         </Text>
+        {taqqos && (
+          <View style={styles.trend}>
+            <Ionicons name={taqqos.foiz >= 0 ? "trending-up" : "trending-down"} size={14} color={taqqos.foiz >= 0 ? C.accent : C.sub} />
+            <Text style={styles.trendTxt}>
+              <Text style={styles.trendFoiz}>{taqqos.foiz > 0 ? "+" : ""}{taqqos.foiz}%</Text> oldingi {davr} kunga nisbatan (kunlik o'rtacha)
+            </Text>
+          </View>
+        )}
 
         <View style={styles.plitkalar}>
           <Plitka nom="O'rtacha kunlik" qiymat={ixcham(ortacha)} />
@@ -192,6 +239,50 @@ export function Statistika({ hisobotlar, nonlar }) {
           </>
         )}
       </View>
+
+      {/* OYLAR */}
+      {oyMalumot.some((x) => x.kunlar > 0) && (
+        <View style={styles.karta}>
+          <View style={styles.bolimBosh}>
+            <Text style={[styles.bolimNom, styles.flex1]}>Oylar bo'yicha · {kor.nom.toLowerCase()}</Text>
+          </View>
+          {oyFoiz != null && (
+            <Text style={styles.oyIzoh}>
+              {oyNomi(buOy.k)}: kunlik o'rtacha <Text style={styles.trendFoiz}>{oyFoiz > 0 ? "+" : ""}{oyFoiz}%</Text> o'tgan oyga nisbatan
+            </Text>
+          )}
+          {oyMalumot.map((x, i) => {
+            const joriy = i === oyMalumot.length - 1;
+            return (
+              <View key={x.k} style={styles.nonQator}>
+                <Text style={[styles.oyNom, joriy && styles.qalin]} numberOfLines={1}>{oyQisqa(x.k)}</Text>
+                <View style={styles.nonTrek}>
+                  <View style={[styles.nonBar, { width: `${x.qiymat ? Math.max(3, (Math.abs(x.qiymat) / oyMax) * 100) : 0}%`, backgroundColor: x.qiymat < 0 ? C.manfiy : C.musbat, opacity: joriy ? 1 : 0.6 }]} />
+                </View>
+                <Text style={[styles.oyQiymat, joriy && styles.qalin]} numberOfLines={1}>{ixcham(x.qiymat)}</Text>
+              </View>
+            );
+          })}
+          <Text style={styles.oyIzohKichik}>Oxirgi qator — joriy oy (hali tugamagan).</Text>
+        </View>
+      )}
+
+      {/* HAFTA KUNLARI */}
+      {engHafta >= 0 && (
+        <View style={styles.karta}>
+          <Text style={styles.bolimNom}>Hafta kunlari · kunlik o'rtacha</Text>
+          {hafta.map((x, i) => (
+            <View key={x.kun} style={styles.nonQator}>
+              <Text style={[styles.oyNom, i === engHafta && styles.qalin]}>{x.kun}</Text>
+              <View style={styles.nonTrek}>
+                <View style={[styles.nonBar, { width: `${x.soni ? Math.max(3, (Math.abs(x.ortacha) / haftaMax) * 100) : 0}%`, backgroundColor: x.ortacha < 0 ? C.manfiy : C.musbat, opacity: i === engHafta ? 1 : 0.6 }]} />
+              </View>
+              <Text style={[styles.oyQiymat, i === engHafta && styles.qalin]}>{x.soni ? ixcham(x.ortacha) : "—"}</Text>
+            </View>
+          ))}
+          <Text style={styles.oyIzohKichik}>Eng yaxshi kun: {["Dushanba", "Seshanba", "Chorshanba", "Payshanba", "Juma", "Shanba", "Yakshanba"][engHafta]}</Text>
+        </View>
+      )}
 
       {nonQoplar.length > 0 && (
         <View style={styles.karta}>
@@ -266,4 +357,15 @@ const styles = temaStil(() => StyleSheet.create({
   nonTrek:    { flex: 1, height: 10, borderRadius: 5, backgroundColor: C.panel, overflow: "hidden" },
   nonBar:     { height: "100%", borderRadius: 5, backgroundColor: C.musbat },
   nonQiymat:  { width: 52, textAlign: "right", fontSize: T.xs, color: C.text, fontWeight: "700" },
+  ulashBtn:   { flexDirection: "row", alignItems: "center", gap: 4, paddingVertical: 7, paddingHorizontal: 12, borderRadius: R.pill, borderWidth: 1, borderColor: C.border, backgroundColor: C.surface },
+  ulashTxt:   { fontSize: T.xs, fontWeight: "800", color: C.accent },
+  trend:      { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 4 },
+  trendTxt:   { fontSize: T.xs, color: C.sub, flexShrink: 1 },
+  trendFoiz:  { fontWeight: "800", color: C.text },
+  bolimBosh:  { flexDirection: "row", alignItems: "center" },
+  oyIzoh:     { fontSize: T.xs, color: C.sub, marginTop: -S[1], marginBottom: S[3] },
+  oyIzohKichik: { fontSize: 11, color: C.muted, marginTop: S[1], lineHeight: 15 },
+  oyNom:      { width: 44, fontSize: T.xs, color: C.sub, fontWeight: "600" },
+  oyQiymat:   { width: 64, textAlign: "right", fontSize: T.xs, color: C.text, fontWeight: "600" },
+  qalin:      { fontWeight: "800", color: C.text },
 }));

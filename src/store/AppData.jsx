@@ -1,7 +1,13 @@
 // Butun ilova holati — har bir kolleksiya "nurnon:" prefiksi bilan AsyncStorage'da.
-import { createContext, useContext, useState, useEffect, useMemo } from "react";
-import { LayoutAnimation } from "react-native";
-import usePersistedState from "./usePersistedState";
+import { createContext, useContext, useState, useEffect, useMemo, useRef } from "react";
+import { LayoutAnimation, AppState } from "react-native";
+import usePersistedState, { useHidratsiya } from "./usePersistedState";
+import { arxivla } from "../logic/davr";
+import { kunYakunEslatmalari } from "../logic/bildirishnoma";
+import { nusxaSaqla, nusxaBormi } from "../logic/avtoZaxira";
+import { bugunSana } from "../logic/hisob";
+import { getTil } from "../i18n/til";
+import { ogir } from "../i18n/translit";
 import { SEED_NONLAR, SEED_ISHCHILAR, SEED_MAHSULOT_NARXLARI } from "../logic/data";
 
 const AppDataContext = createContext(null);
@@ -35,7 +41,7 @@ const silliqSetter = (set) => (v) =>
 // Import: id'li yozuvlar ro'yxatida faqat id'si bor obyektlar qoladi —
 // buzilgan matn ilovani ishdan chiqarmasligi uchun
 const ID_ROYXATLAR = new Set(["nonlar", "ishchilar", "customMahsulotlar", "qarzlar", "optomlar", "kartalar", "omborlar",
-  "omborSorovlar", "omborTasdiqlar", "hisobotlarTarixi", "braklar", "kunlikXarajatlar", "ochirilganlar"]);
+  "omborSorovlar", "omborTasdiqlar", "hisobotlarTarixi", "braklar", "kunlikXarajatlar", "ochirilganlar", "ishHaqiYozuvlari"]);
 export function tozalaRoyxat(kalit, qiymat) {
   if (!ID_ROYXATLAR.has(kalit) || !Array.isArray(qiymat)) return qiymat;
   return qiymat.filter((x) => x && typeof x === "object" && !Array.isArray(x) && x.id != null);
@@ -85,6 +91,22 @@ export function AppDataProvider({ children }) {
   const [akkauntNomi, setAkkauntNomi]                   = usePersistedState("nurnon:akkauntNomi", "");
   // Ma'lumot yuklashdan oldingi holat — "Oldingi holatga qaytarish" uchun: { vaqt, akkaunt, data }
   const [importZaxira, setImportZaxira]                 = usePersistedState("nurnon:importZaxira", null);
+  // Oylik ish haqi yozuvlari: avans / jarima / bonus / to'lov (400 kun saqlanadi)
+  const [ishHaqiYozuvlari, setIshHaqiYozuvlariXom]      = usePersistedState("nurnon:ishHaqiYozuvlari", []);
+  // 30 kundan eskirgan kunlik hisobotlarning oylik yig'masi (oylar taqqoslash, oylik ish haqi)
+  const [oylikArxiv, setOylikArxiv]                     = usePersistedState("nurnon:oylikArxiv", {});
+  // Kechqurungi "Kunni yakunlash" eslatmasi (bildirishnoma) yoqilganmi
+  const [eslatmaYoqilgan, setEslatmaYoqilgan]           = usePersistedState("nurnon:eslatmaYoqilgan", true);
+  // Barcha saqlangan ma'lumot yuklandi. Tashqi signal sinxron render qiladi, yuklangan
+  // qiymatlar esa oddiy navbatda — shuning uchun "tayyor"ni alohida holat orqali
+  // keyingi navbatga qo'yamiz: u true bo'lgan renderda barcha qiymatlar allaqachon bor.
+  const yuklandi = useHidratsiya();
+  const [tayyor, setTayyor] = useState(false);
+  useEffect(() => {
+    if (!yuklandi || tayyor) return undefined;
+    const t = setTimeout(() => setTayyor(true), 0);
+    return () => clearTimeout(t);
+  }, [yuklandi, tayyor]);
 
   // Ro'yxat setterlari — uzunlik o'zgarsa silliq animatsiya bilan (identifikatori barqaror)
   const setNonlar = useMemo(() => silliqSetter(setNonlarXom), [setNonlarXom]);
@@ -100,33 +122,42 @@ export function AppDataProvider({ children }) {
   const setBraklar = useMemo(() => silliqSetter(setBraklarXom), [setBraklarXom]);
   const setKunlikXarajatlar = useMemo(() => silliqSetter(setKunlikXarajatlarXom), [setKunlikXarajatlarXom]);
   const setOchirilganlar = useMemo(() => silliqSetter(setOchirilganlarXom), [setOchirilganlarXom]);
+  const setIshHaqiYozuvlari = useMemo(() => silliqSetter(setIshHaqiYozuvlariXom), [setIshHaqiYozuvlariXom]);
 
   // ── Vaqtinchalik oqim bayroqlari (saqlanmaydi) ──
   const [qopTasdiqlandi, setQopTasdiqlandi]       = useState(false);
   const [hisobotYopildi, setHisobotYopildi]       = useState(false);
 
   // Avtomatik tozalash: karta/optom va to'langan qarz 7 kun, kunlik hisobotlar
-  // 30 kun saqlanadi. AsyncStorage hidratsiyasi async bo'lgani uchun shu funksiya
-  // 5 soniya kutib ham, ma'lumotlar yuklangach (uzunlik o'zgarganda) ham ishlaydi.
+  // 30 kun saqlanadi (eskirganlari oylik arxivga yig'ma bo'lib o'tadi), ish haqi
+  // yozuvlari 400 kun. Saqlangan ma'lumot to'liq yuklangandan keyin va har 6 soatda ishlaydi.
+  const hisobotRef = useRef(hisobotlarTarixi);
+  hisobotRef.current = hisobotlarTarixi;
   useEffect(() => {
+    if (!tayyor) return undefined;
     const yuritish = () => {
       const now = Date.now();
       const D = 86400000;
       const yosh = (e) => now - (e.vaqt || (e.sana ? Date.parse(e.sana) : now) || now);
+      const eski = (hisobotRef.current || []).filter((h) => (now - (h.vaqt || now)) >= 30 * D);
+      if (eski.length) {
+        const idlar = new Set(eski.map((h) => h.id));
+        setOylikArxiv((a) => arxivla(a, eski));
+        setHisobotlarTarixiXom((p) => (p || []).filter((h) => !idlar.has(h.id)));
+      }
       setKartalarXom((p) => p.filter((k) => yosh(k) < 7 * D));
       setOptomlarXom((p) => p.filter((o) => yosh(o) < 7 * D));
       setQarzlarXom((p) => p.filter((q) => !q.tolangan || (now - (q.tolanganVaqt || now)) < 7 * D));
       setBraklarXom((p) => p.filter((b) => (now - (b.vaqt || now)) < 7 * D));
-      setHisobotlarTarixiXom((p) => p.filter((h) => (now - (h.vaqt || now)) < 30 * D));
       setOmborTasdiqlarXom((p) => p.filter((t) => (now - (t.vaqt || now)) < 30 * D));
       setKunlikXarajatlarXom((p) => p.filter((x) => (now - (x.vaqt || now)) < 7 * D));
       setOchirilganlarXom((p) => (p || []).filter((x) => (now - (x.vaqt || now)) < 7 * D));
+      setIshHaqiYozuvlariXom((p) => (p || []).filter((x) => (now - (x.vaqt || now)) < 400 * D));
     };
-    // 5s kutamiz (hidratsiya ulgursin), keyin har 6 soatda ham yuritamiz
-    const t1 = setTimeout(yuritish, 5000);
-    const t2 = setInterval(yuritish, 6 * 60 * 60 * 1000);
-    return () => { clearTimeout(t1); clearInterval(t2); };
-  }, []);
+    yuritish();
+    const t = setInterval(yuritish, 6 * 60 * 60 * 1000);
+    return () => clearInterval(t);
+  }, [tayyor]);
 
   // O'zaro integratsiya: nonlar o'zgarganda, mavjud non id'lariga tegishli bo'lmagan
   // qoldiq/yaroqsiz/qop yozuvlarini avtomatik tozalash (storage'da yetim qolmasligi uchun).
@@ -148,6 +179,19 @@ export function AppDataProvider({ children }) {
     setTashqariSonlar((p) => tozala(p));
   }, [nonlar]);
 
+  // Kechqurungi bildirishnoma rejasi — sozlama, yakunlangan kun yoki yozuv o'zgarsa yangilanadi
+  const yakunSana = lockedDayStats?.sana || "";
+  useEffect(() => {
+    if (!tayyor) return;
+    const til = getTil();
+    kunYakunEslatmalari({
+      yoqilgan: !!eslatmaYoqilgan,
+      yakunlanganSana: yakunSana,
+      sarlavha: ogir("Kunni yakunlashni unutmang", til),
+      matn: ogir("Bugungi qop hisobini kiriting va «Kunni yakunlash»ni bosing.", til),
+    });
+  }, [tayyor, eslatmaYoqilgan, yakunSana]);
+
   // ── Tarixdagilar: o'chirish (arxivga) va qaytarish ──
   // tur → [joriy ro'yxat, setter]
   const KOLLEKSIYA = {
@@ -163,6 +207,7 @@ export function AppDataProvider({ children }) {
     omborSet: [omborlar, setOmborlar],
     omborTasdiq: [omborTasdiqlar, setOmborTasdiqlar],
     ingredient: [customMahsulotlar, setCustomMahsulotlar],
+    ishHaqi: [ishHaqiYozuvlari, setIshHaqiYozuvlari],
   };
 
   // Elementni ro'yxatdan olib tashlaydi va "Tarixdagilar"ga yozadi (asl o'rni bilan).
@@ -246,6 +291,8 @@ export function AppDataProvider({ children }) {
     oxirgiYakunlashVaqti: [oxirgiYakunlashVaqti, setOxirgiYakunlashVaqti, "number"],
     lockedDayStats: [lockedDayStats, setLockedDayStats, "objectOrNull"],
     ochirilganlar: [ochirilganlar, setOchirilganlar, "array"],
+    ishHaqiYozuvlari: [ishHaqiYozuvlari, setIshHaqiYozuvlari, "array"],
+    oylikArxiv: [oylikArxiv, setOylikArxiv, "object"],
   };
 
   // Joriy bazaning to'liq nusxasi
@@ -271,6 +318,29 @@ export function AppDataProvider({ children }) {
     setHisobotYopildi(false);
     return soni;
   };
+
+  // ── Avtomatik zaxira nusxa: ilova ochilganda (faqat bugungi yo'q bo'lsa — ochilishdagi
+  //    holat bugungi yaxshi nusxani bosib ketmasin), kun yakunlanganda
+  //    va ilova fonga o'tganda (eng ko'pi 10 daqiqada bir) bugungi nusxa yoziladi ──
+  const eksportRef = useRef(eksportMalumot);
+  eksportRef.current = eksportMalumot;
+  const [oxirgiNusxa, setOxirgiNusxa] = useState(0);
+  const oxirgiNusxaRef = useRef(0);
+  const nusxaOl = (majburiy = false) => {
+    const hozir = Date.now();
+    if (!majburiy && hozir - oxirgiNusxaRef.current < 10 * 60 * 1000) return;
+    oxirgiNusxaRef.current = hozir;
+    nusxaSaqla(eksportRef.current(), bugunSana()).then(() => setOxirgiNusxa(Date.now())).catch(() => {});
+  };
+  useEffect(() => {
+    if (!tayyor) return undefined;
+    const t = setTimeout(() => {
+      nusxaBormi(bugunSana()).then((bor) => { if (!bor) nusxaOl(true); else setOxirgiNusxa(Date.now()); }).catch(() => {});
+    }, 3000);
+    const sub = AppState.addEventListener("change", (h) => { if (h === "background") nusxaOl(); });
+    return () => { clearTimeout(t); sub.remove(); };
+  }, [tayyor]);
+  useEffect(() => { if (tayyor && yakunSana) nusxaOl(true); }, [tayyor, yakunSana]);
 
   const zaxiradanQaytar = () => {
     if (!importZaxira) return false;
@@ -308,6 +378,11 @@ export function AppDataProvider({ children }) {
     lockedDayStats, setLockedDayStats,
     ochirilganlar, ochirArxivga, qaytar, butunlayOchir,
     akkauntNomi, setAkkauntNomi,
+    ishHaqiYozuvlari, setIshHaqiYozuvlari,
+    oylikArxiv, setOylikArxiv,
+    eslatmaYoqilgan, setEslatmaYoqilgan,
+    oxirgiNusxa, nusxaOl,
+    tayyor,
     eksportMalumot, importMalumot, importZaxira, zaxiradanQaytar,
     qopTasdiqlandi, setQopTasdiqlandi,
     hisobotYopildi, setHisobotYopildi,

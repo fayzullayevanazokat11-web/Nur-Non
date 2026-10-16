@@ -242,9 +242,13 @@ export function kunlikXomashyoSarfi(nonlar, ozIshlabQoplar, maydonlar = OMBOR_MA
 }
 
 // Faol (to'lanmagan) qarzlar jami
+// Faol qarzlar: qoldiq (qisman to'lovlar ayirilgan) va qarzdorlar soni
 export function qarzJami(qarzlar) {
   const faol = (qarzlar || []).filter((q) => !q.tolangan);
-  return { soni: faol.length, summa: faol.reduce((s, q) => s + (parseFloat(q.summa) || 0), 0) };
+  const qoldiq = (q) => Math.max(0, (parseFloat(q.summa) || 0) - (q.tolovlar || []).reduce((s, t) => s + (parseFloat(t.summa) || 0), 0));
+  const ochiq = faol.filter((q) => qoldiq(q) > 0);
+  const kishilar = new Set(ochiq.map((q) => String(q.ism || "").trim().replace(/\s+/g, " ").toLowerCase()));
+  return { soni: ochiq.length, kishi: kishilar.size, summa: ochiq.reduce((s, q) => s + qoldiq(q), 0) };
 }
 
 // Optom savdolar jami

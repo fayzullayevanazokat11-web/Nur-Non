@@ -1,13 +1,14 @@
 // Kunlik yakuniy hisobot — Tasdiqlashdan keyin chiqadi.
 // RN Modal o'rniga to'liq ekran View qatlami (absoluteFillObject + zIndex).
 import { useMemo } from "react";
-import { View, Text, ScrollView, Pressable, StyleSheet } from "react-native";
+import { View, Text, ScrollView, Pressable, StyleSheet, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useApp } from "../store/AppData";
 import { Btn } from "./Btn";
 import { C, T, S, R, temaStil } from "../theme";
 import { hisoblaKunlik, qoldiqlarHisobi, formatSom, ishchiHaqlari } from "../logic/hisob";
+import { kunlikHtml, kunlikMatn, pdfUlash, matnUlash } from "../logic/ulashish";
 
 export function HisobotModal({ visible, onClose }) {
   const {
@@ -15,7 +16,7 @@ export function HisobotModal({ visible, onClose }) {
     ozIshlabQoplar, tashqariSonlar, sotilmaganNon,
     boshlangichQoldiq, qoldaYaroqsiz, kunlikXarajatlar,
     qarzlar, optomlar, kartalar,
-    oxirgiYakunlashVaqti,
+    oxirgiYakunlashVaqti, hisobotlarTarixi, akkauntNomi,
   } = useApp();
 
   const data = useMemo(() => {
@@ -162,6 +163,21 @@ export function HisobotModal({ visible, onClose }) {
         </ScrollView>
 
         <View style={styles.footer}>
+          {(() => {
+            // Yakunlangan kun hisoboti (tarixga yozilgani) — PDF yoki matn qilib yuborish
+            const h = (hisobotlarTarixi || []).find((x) => x.sana === data.bugun) || (hisobotlarTarixi || [])[0];
+            if (!h) return null;
+            return (
+              <View style={styles.ulashQator}>
+                <View style={styles.flex1}>
+                  <Btn secondary icon="document-outline" onPress={() => pdfUlash(kunlikHtml(h, { akkaunt: akkauntNomi, nonlar }), `nur-non-${h.sana}`).catch(() => Alert.alert("Xatolik", "PDF tayyorlab bo'lmadi."))}>PDF</Btn>
+                </View>
+                <View style={styles.flex1}>
+                  <Btn secondary icon="share-social-outline" onPress={() => matnUlash(kunlikMatn(h, { akkaunt: akkauntNomi })).catch(() => {})}>Matn</Btn>
+                </View>
+              </View>
+            );
+          })()}
           <Btn onPress={onClose} icon="checkmark-outline">Yopish</Btn>
         </View>
       </SafeAreaView>
@@ -179,6 +195,7 @@ function Row({ label, value, color = C.text, bold }) {
 }
 
 const styles = temaStil(() => StyleSheet.create({
+  ulashQator: { flexDirection: "row", gap: S[2], marginBottom: S[2] },
   overlay:   { ...StyleSheet.absoluteFillObject, backgroundColor: C.bg, zIndex: 9000 },
   safe:      { flex: 1 },
   headerRow: { flexDirection: "row", alignItems: "flex-start", paddingHorizontal: S[5], paddingTop: S[4], paddingBottom: S[3], borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: C.borderSoft },
