@@ -1,40 +1,110 @@
-// Pastki tab navigatsiya — 4 ta ekran. Ikonkalar — maxsus rasmlar (tintColor bilan bo'yaladi).
-import { Tabs } from "expo-router";
-import { Image, StyleSheet } from "react-native";
+// Pastki tab navigatsiya — 4 ta ekran. Bo'limlar orasida chapga/o'ngga SURISH
+// (swipe) orqali ham o'tiladi: ekranlar sahifalovchi (pager) ichida turadi,
+// pastki panel esa o'zimizniki — barmoq harakatiga ergashuvchi silliq indikator bilan.
+// Ikonkalar — maxsus rasmlar (tintColor bilan bo'yaladi).
+import { useState } from "react";
+import { withLayoutContext } from "expo-router";
+import { createMaterialTopTabNavigator } from "@react-navigation/material-top-tabs";
+import { View, Text, Image, Pressable, Animated, StyleSheet } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { C } from "../../src/theme";
 import { useTil } from "../../src/i18n/til";
 import { ogir } from "../../src/i18n/translit";
 
+const { Navigator } = createMaterialTopTabNavigator();
+const SwipeTabs = withLayoutContext(Navigator);
+
 const ICONS = {
-  markaz: require("../../assets/tabicons/markaz.png"),
+  index: require("../../assets/tabicons/markaz.png"),
   ishlab: require("../../assets/tabicons/ishlab.png"),
   xodimlar: require("../../assets/tabicons/xodimlar.png"),
   ombor: require("../../assets/tabicons/ombor.png"),
 };
 
-const tabIcon = (key) => ({ color, size }) => (
-  <Image source={ICONS[key]} style={{ width: size, height: size, tintColor: color }} resizeMode="contain" />
-);
+const PILL_W = 56;
+
+function PastkiPanel({ state, descriptors, navigation, position }) {
+  const insets = useSafeAreaInsets();
+  const [kenglik, setKenglik] = useState(0);
+  const soni = state.routes.length;
+  const tabW = kenglik / soni;
+  const kirishlar = state.routes.map((_, i) => i);
+
+  // Indikator barmoq bilan birga suriladi (position — 0..n-1 oralig'idagi kasr son)
+  const pillX = kenglik
+    ? position.interpolate({ inputRange: kirishlar, outputRange: kirishlar.map((i) => i * tabW + (tabW - PILL_W) / 2) })
+    : 0;
+
+  return (
+    <View
+      style={[styles.bar, { paddingBottom: 6 + insets.bottom }]}
+      onLayout={(e) => setKenglik(e.nativeEvent.layout.width)}
+    >
+      {kenglik > 0 && (
+        <Animated.View pointerEvents="none" style={[styles.pill, { transform: [{ translateX: pillX }] }]} />
+      )}
+      {state.routes.map((route, i) => {
+        const { options } = descriptors[route.key];
+        const tanlangan = state.index === i;
+        // Rang ham surish bilan silliq almashadi
+        const faollik = soni > 1
+          ? position.interpolate({ inputRange: kirishlar, outputRange: kirishlar.map((j) => (j === i ? 1 : 0)), extrapolate: "clamp" })
+          : 1;
+        const onPress = () => {
+          const ev = navigation.emit({ type: "tabPress", target: route.key, canPreventDefault: true });
+          if (!tanlangan && !ev.defaultPrevented) navigation.navigate(route.name, route.params);
+        };
+        const nom = options.tabBarLabel ?? options.title ?? route.name;
+        return (
+          <Pressable
+            key={route.key}
+            accessibilityRole="tab"
+            accessibilityState={{ selected: tanlangan }}
+            accessibilityLabel={options.tabBarAccessibilityLabel}
+            onPress={onPress}
+            onLongPress={() => navigation.emit({ type: "tabLongPress", target: route.key })}
+            style={styles.item}
+          >
+            <View style={styles.iconBox}>
+              <Image source={ICONS[route.name]} style={[styles.icon, { tintColor: C.muted }]} resizeMode="contain" />
+              <Animated.Image
+                source={ICONS[route.name]}
+                style={[styles.icon, styles.iconUst, { tintColor: C.accent, opacity: faollik }]}
+                resizeMode="contain"
+              />
+            </View>
+            <Text numberOfLines={1} style={[styles.label, { color: tanlangan ? C.accent : C.muted }]}>{nom}</Text>
+          </Pressable>
+        );
+      })}
+    </View>
+  );
+}
 
 export default function TabsLayout() {
-  // Tab nomlari kutubxona ichida chiziladi — shuning uchun yozuvga shu yerda o'giramiz
+  // Sarlavhalar kutubxona ichida ham ishlatiladi — shuning uchun yozuvga shu yerda o'giramiz
   const til = useTil();
   const t = (s) => ogir(s, til);
   return (
-    <Tabs
-      screenOptions={{
-        headerShown: false,
-        tabBarActiveTintColor: C.accent,
-        tabBarInactiveTintColor: C.muted,
-        tabBarStyle: { backgroundColor: "#FFFFFF", borderTopColor: C.borderSoft, borderTopWidth: StyleSheet.hairlineWidth, height: 64, paddingTop: 8, paddingBottom: 8 },
-        tabBarLabelStyle: { fontSize: 11, fontWeight: "600", letterSpacing: 0.3 },
-        tabBarItemStyle: { paddingVertical: 4 },
-      }}
+    <SwipeTabs
+      tabBarPosition="bottom"
+      tabBar={(props) => <PastkiPanel {...props} />}
+      screenOptions={{ swipeEnabled: true, animationEnabled: true, lazy: true, lazyPreloadDistance: 1, sceneStyle: { backgroundColor: C.bg } }}
     >
-      <Tabs.Screen name="index" options={{ title: t("Markaz"), tabBarIcon: tabIcon("markaz") }} />
-      <Tabs.Screen name="ishlab" options={{ title: t("Ishlab chiqarish"), tabBarLabel: t("Ishlab"), tabBarIcon: tabIcon("ishlab") }} />
-      <Tabs.Screen name="xodimlar" options={{ title: t("Xodimlar"), tabBarIcon: tabIcon("xodimlar") }} />
-      <Tabs.Screen name="ombor" options={{ title: t("Ombor"), tabBarIcon: tabIcon("ombor") }} />
-    </Tabs>
+      <SwipeTabs.Screen name="index" options={{ title: t("Markaz") }} />
+      <SwipeTabs.Screen name="ishlab" options={{ title: t("Ishlab chiqarish"), tabBarLabel: t("Ishlab") }} />
+      <SwipeTabs.Screen name="xodimlar" options={{ title: t("Xodimlar") }} />
+      <SwipeTabs.Screen name="ombor" options={{ title: t("Ombor") }} />
+    </SwipeTabs>
   );
 }
+
+const styles = StyleSheet.create({
+  bar:     { flexDirection: "row", backgroundColor: "#FFFFFF", borderTopColor: C.borderSoft, borderTopWidth: StyleSheet.hairlineWidth, paddingTop: 6 },
+  pill:    { position: "absolute", top: 6, left: 0, width: PILL_W, height: 30, borderRadius: 15, backgroundColor: C.accent + "16" },
+  item:    { flex: 1, alignItems: "center", paddingBottom: 4 },
+  iconBox: { width: 24, height: 24, marginTop: 3 },
+  icon:    { width: 24, height: 24 },
+  iconUst: { position: "absolute", top: 0, left: 0 },
+  label:   { fontSize: 11, fontWeight: "600", letterSpacing: 0.3, marginTop: 5 },
+});

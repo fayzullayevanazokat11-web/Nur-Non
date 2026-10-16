@@ -220,10 +220,10 @@ export default function Markaz() {
           style={({ pressed }) => [styles.xarajatBtn, pressed && styles.xarajatBtnPressed]}
         >
           <View style={[styles.navIcon, { backgroundColor: C.accent + "14" }]}>
-            <Ionicons name="calendar-outline" size={22} color={C.accent} />
+            <Ionicons name="stats-chart-outline" size={22} color={C.accent} />
           </View>
           <View style={styles.flex1}>
-            <Text style={styles.xarajatLabel}>Hisobotlar tarixi</Text>
+            <Text style={styles.xarajatLabel}>Statistika va tarix</Text>
             <Text style={styles.xarajatSub}>{(hisobotlarTarixi || []).length} ta hisobot · 30 kun</Text>
           </View>
           <Ionicons name="chevron-forward" size={18} color={C.muted} />

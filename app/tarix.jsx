@@ -1,4 +1,5 @@
-// Kunlik hisobotlar tarixi — Markaz'dagi siqilgan ro'yxat o'rniga to'liq sahifa.
+// Statistika va kunlik hisobotlar tarixi — yuqorida grafik va ko'rsatkichlar,
+// pastda har kunlik hisobot (jadval ko'rinishi).
 // 30 kun davomida saqlanadi (AppData useEffect avtomatik tozalaydi).
 // Har bir hisobot ichida 'Kun oxiri' qatori = Daromad − Ishchi haqi (alohida muhim ko'rsatkich).
 import { View, Text, Image, Pressable, StyleSheet, Alert } from "react-native";
@@ -10,6 +11,7 @@ import { useApp } from "../src/store/AppData";
 import { Card } from "../src/components/Card";
 import { ExpandableCard, yopKartalar } from "../src/components/ExpandableCard";
 import { ScrollBox } from "../src/components/ScrollBox";
+import { Statistika } from "../src/components/Statistika";
 import { C, T, S, R } from "../src/theme";
 import { formatSom } from "../src/logic/hisob";
 
@@ -31,13 +33,22 @@ export default function Tarix() {
         </Pressable>
 
         <View style={styles.titleRow}>
-          <View style={styles.iconBox}><Ionicons name="calendar-outline" size={22} color={C.accent} /></View>
+          <View style={styles.iconBox}><Ionicons name="stats-chart-outline" size={22} color={C.accent} /></View>
           <View style={styles.flex1}>
             <Text style={styles.eyebrow}>HISOBOTLAR TARIXI</Text>
-            <Text style={styles.title}>Kunlik hisobotlar</Text>
+            <Text style={styles.title}>Statistika</Text>
             <Text style={styles.subtitle}>30 kun davomida saqlanadi · {(hisobotlarTarixi || []).length} ta</Text>
           </View>
         </View>
+
+        {(hisobotlarTarixi || []).length > 0 && <Statistika hisobotlar={hisobotlarTarixi} nonlar={nonlar} />}
+
+        {(hisobotlarTarixi || []).length > 0 && (
+          <View style={styles.secHead}>
+            <Ionicons name="calendar-outline" size={13} color={C.sub} />
+            <Text style={styles.secTitle}>KUNLIK HISOBOTLAR</Text>
+          </View>
+        )}
 
         {(hisobotlarTarixi || []).length === 0 ? (
           <Card><Text style={styles.bosh}>Hali hisobot yo'q. Kunlik qop hisobi sahifasidagi "Kunni yakunlash"ni bossangiz, hisobot shu yerda paydo bo'ladi.</Text></Card>
@@ -118,6 +129,8 @@ const styles = StyleSheet.create({
   title:    { fontSize: T.xl, color: C.text, fontWeight: "800", letterSpacing: -0.6, marginTop: 2 },
   subtitle: { fontSize: T.sm, color: C.sub, fontWeight: "500", marginTop: 3 },
   bosh:     { fontSize: T.sm, color: C.muted },
+  secHead:  { flexDirection: "row", alignItems: "center", gap: 6, marginTop: S[2], marginBottom: S[3] },
+  secTitle: { fontSize: T.xs, color: C.sub, fontWeight: "700", letterSpacing: 1 },
 
   item:     { marginBottom: S[3] },
   mHead:    { flexDirection: "row", justifyContent: "space-between", alignItems: "center", gap: S[2] },
