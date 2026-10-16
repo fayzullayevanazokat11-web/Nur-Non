@@ -1,36 +1,7 @@
-// Ekran sarlavhasi — eyebrow (TRACKED CAPS) + title + subtitle.
-// `image` — bo'lim ikonkasi (maxsus rasm; har doim ko'rinadi). `icon` — Ionicons (zaxira).
-import { View, Text, Image, StyleSheet } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
-import { C, T, S, R, temaStil } from "../theme";
+// Bo'lim (tab) sarlavhasi — ichki sahifalar bilan bir xil ko'rinish uchun
+// yagona SahifaSarlavha'dan foydalanadi (orqaga tugmasisiz).
+import { SahifaSarlavha } from "./SahifaSarlavha";
 
 export function ScreenHeader({ eyebrow, title, subtitle, icon, image, style }) {
-  return (
-    <View style={[styles.wrap, style]}>
-      {eyebrow ? <Text style={styles.eyebrow}>{String(eyebrow).toUpperCase()}</Text> : null}
-      <View style={styles.titleRow}>
-        {image ? (
-          <View style={styles.iconBox}>
-            <Image source={image} style={styles.img} resizeMode="contain" />
-          </View>
-        ) : icon ? (
-          <View style={styles.iconBox}>
-            <Ionicons name={icon} size={20} color={C.sub} />
-          </View>
-        ) : null}
-        <Text style={styles.title}>{title}</Text>
-      </View>
-      {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
-    </View>
-  );
+  return <SahifaSarlavha eyebrow={eyebrow} title={title} subtitle={subtitle} icon={icon} image={image} orqaga={null} style={style} />;
 }
-
-const styles = temaStil(() => StyleSheet.create({
-  wrap:     { marginBottom: S[6] },
-  eyebrow:  { fontSize: 11, color: C.muted, fontWeight: "700", letterSpacing: 1.8 },
-  titleRow: { flexDirection: "row", alignItems: "center", gap: S[3], marginTop: S[2] },
-  iconBox:  { width: 42, height: 42, borderRadius: R.md, alignItems: "center", justifyContent: "center", backgroundColor: C.panel },
-  img:      { width: 24, height: 24, tintColor: C.sub },
-  title:    { fontSize: T.xl, color: C.text, fontWeight: "800", letterSpacing: -0.6, lineHeight: T.xl + 4, flexShrink: 1 },
-  subtitle: { fontSize: T.sm, color: C.sub, fontWeight: "500", marginTop: S[2], lineHeight: 19 },
-}));

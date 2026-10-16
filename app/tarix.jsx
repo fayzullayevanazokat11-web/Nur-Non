@@ -11,6 +11,7 @@ import { useApp } from "../src/store/AppData";
 import { Card } from "../src/components/Card";
 import { ExpandableCard, yopKartalar } from "../src/components/ExpandableCard";
 import { ScrollBox } from "../src/components/ScrollBox";
+import { SahifaSarlavha } from "../src/components/SahifaSarlavha";
 import { Statistika } from "../src/components/Statistika";
 import { C, T, S, R, temaStil } from "../src/theme";
 import { formatSom } from "../src/logic/hisob";
@@ -27,19 +28,7 @@ export default function Tarix() {
   return (
     <SafeAreaView style={styles.safe} edges={["top"]}>
       <ScrollBox contentContainerStyle={styles.scroll}>
-        <Pressable accessibilityLabel="Orqaga" onPress={() => router.back()} hitSlop={8} style={styles.backBtn}>
-          <Ionicons name="chevron-back" size={20} color={C.text} />
-          <Text style={styles.backTxt}>Markaz</Text>
-        </Pressable>
-
-        <View style={styles.titleRow}>
-          <View style={styles.iconBox}><Ionicons name="stats-chart-outline" size={22} color={C.accent} /></View>
-          <View style={styles.flex1}>
-            <Text style={styles.eyebrow}>HISOBOTLAR TARIXI</Text>
-            <Text style={styles.title}>Statistika</Text>
-            <Text style={styles.subtitle}>30 kun davomida saqlanadi · {(hisobotlarTarixi || []).length} ta</Text>
-          </View>
-        </View>
+        <SahifaSarlavha eyebrow="HISOBOTLAR TARIXI" title="Statistika" subtitle={`30 kun davomida saqlanadi · ${(hisobotlarTarixi || []).length} ta`} icon="stats-chart-outline" />
 
         {(hisobotlarTarixi || []).length > 0 && <Statistika hisobotlar={hisobotlarTarixi} nonlar={nonlar} />}
 
@@ -120,14 +109,7 @@ export default function Tarix() {
 const styles = temaStil(() => StyleSheet.create({
   safe:     { flex: 1, backgroundColor: C.bg },
   scroll:   { padding: S[5], paddingBottom: S[8] },
-  backBtn:  { flexDirection: "row", alignItems: "center", gap: 4, marginBottom: S[3] },
-  backTxt:  { fontSize: T.sm, color: C.sub, fontWeight: "600" },
-  titleRow: { flexDirection: "row", alignItems: "center", gap: S[3], marginBottom: S[5] },
-  iconBox:  { width: 44, height: 44, borderRadius: R.md, alignItems: "center", justifyContent: "center", backgroundColor: C.accent + "14" },
   flex1:    { flex: 1 },
-  eyebrow:  { fontSize: 11, color: C.muted, fontWeight: "700", letterSpacing: 1.8 },
-  title:    { fontSize: T.xl, color: C.text, fontWeight: "800", letterSpacing: -0.6, marginTop: 2 },
-  subtitle: { fontSize: T.sm, color: C.sub, fontWeight: "500", marginTop: 3 },
   bosh:     { fontSize: T.sm, color: C.muted },
   secHead:  { flexDirection: "row", alignItems: "center", gap: 6, marginTop: S[2], marginBottom: S[3] },
   secTitle: { fontSize: T.xs, color: C.sub, fontWeight: "700", letterSpacing: 1 },

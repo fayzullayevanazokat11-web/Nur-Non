@@ -11,6 +11,7 @@ import { Card } from "../../src/components/Card";
 import { BrandHeader } from "../../src/components/BrandHeader";
 import { MarkazMenyu, menyuQaytaOchilsinmi, menyuEslandi } from "../../src/components/MarkazMenyu";
 import { ScrollBox } from "../../src/components/ScrollBox";
+import { useAnimSon } from "../../src/components/useAnimSon";
 import { C, T, S, R, temaStil } from "../../src/theme";
 import { hisoblaKunlik, formatSom, qarzJami, optomJami, kartaJami, ishchiHaqlari } from "../../src/logic/hisob";
 // Maxsus rasm ikonkalari (Ionicons o'rniga — premium ko'rinish)
@@ -125,9 +126,9 @@ export default function Markaz() {
         {menu && <MarkazMenyu onYop={() => setMenu(false)} />}
 
         <View style={styles.statsRow}>
-          <StatTile label="Bugungi sof foyda" unit="so'm" value={formatSom(stats.sofFoyda)} color={stats.sofFoyda >= 0 ? C.green : C.red} icon="trending-up-outline" />
-          <StatTile label="Sotilgan non" unit="dona" value={String(stats.sotilganNon)} color={C.text} icon="cube-outline" />
-          <StatTile label="Kunlik qop" unit="qop" value={String(stats.jamiQop)} color={C.accent} icon="layers-outline" />
+          <StatTile label="Bugungi sof foyda" unit="so'm" son={stats.sofFoyda} format={formatSom} color={stats.sofFoyda >= 0 ? C.green : C.red} icon="trending-up-outline" />
+          <StatTile label="Sotilgan non" unit="dona" son={stats.sotilganNon} color={C.text} icon="cube-outline" />
+          <StatTile label="Kunlik qop" unit="qop" son={stats.jamiQop} color={C.accent} icon="layers-outline" />
         </View>
 
         {/* Kunlik qop hisobi — alohida sahifaga olib boradi (to'liq tafsilot bilan) */}
@@ -235,8 +236,11 @@ export default function Markaz() {
   );
 }
 
-function StatTile({ label, value, unit, color, icon }) {
-  const len = String(value || "").length;
+// Ko'rsatkich plitkasi — qiymat o'zgarganda son silliq "sanab" boradi
+function StatTile({ label, son, format = (x) => String(x), unit, color, icon }) {
+  const korinish = useAnimSon(son);
+  const value = format(Math.round(korinish));
+  const len = String(format(Math.round(Number(son) || 0))).length; // o'lcham yakuniy qiymatdan — sakramasin
   const valSize = len > 9 ? 14 : len > 7 ? 16 : len > 5 ? 18 : 20;
   return (
     <Card style={styles.statTile}>

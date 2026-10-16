@@ -11,6 +11,7 @@ import { Card } from "../src/components/Card";
 import { Btn } from "../src/components/Btn";
 import { ExpandableCard, yopKartalar } from "../src/components/ExpandableCard";
 import { ScrollBox } from "../src/components/ScrollBox";
+import { SahifaSarlavha } from "../src/components/SahifaSarlavha";
 import { C, T, S, R, temaStil } from "../src/theme";
 import { formatSom } from "../src/logic/hisob";
 
@@ -84,19 +85,7 @@ export default function Brak() {
   return (
     <SafeAreaView style={styles.safe} edges={["top"]}>
       <ScrollBox ref={scrollRef} contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
-        <Pressable accessibilityLabel="Orqaga" onPress={() => router.back()} hitSlop={8} style={styles.backBtn}>
-          <Ionicons name="chevron-back" size={20} color={C.text} />
-          <Text style={styles.backTxt}>Markaz</Text>
-        </Pressable>
-
-        <View style={styles.titleRow}>
-          <View style={styles.iconBox}><Image source={require("../assets/icons/brak.png")} style={styles.iconImg} resizeMode="contain" /></View>
-          <View style={styles.flex1}>
-            <Text style={styles.eyebrow}>BRAK</Text>
-            <Text style={styles.title}>Yaroqsizlar</Text>
-            <Text style={styles.subtitle}>{formatSom(jamiSumma)} so'm · {(braklar || []).length} ta yozuv</Text>
-          </View>
-        </View>
+        <SahifaSarlavha eyebrow="BRAK" title="Yaroqsizlar" subtitle={`${formatSom(jamiSumma)} so'm · ${(braklar || []).length} ta yozuv`} image={require("../assets/icons/brak.png")} ton="red" />
 
         {/* INLINE FORMA */}
         <Card style={styles.formCard}>
@@ -185,15 +174,7 @@ export default function Brak() {
 const styles = temaStil(() => StyleSheet.create({
   safe:     { flex: 1, backgroundColor: C.bg },
   scroll:   { padding: S[5], paddingBottom: S[8] },
-  backBtn:  { flexDirection: "row", alignItems: "center", gap: 4, marginBottom: S[3] },
-  backTxt:  { fontSize: T.sm, color: C.sub, fontWeight: "600" },
-  titleRow: { flexDirection: "row", alignItems: "center", gap: S[3], marginBottom: S[5] },
-  iconBox:  { width: 44, height: 44, borderRadius: R.md, alignItems: "center", justifyContent: "center", backgroundColor: C.red + "14" },
-  iconImg:  { width: 24, height: 24, tintColor: C.red },
   flex1:    { flex: 1 },
-  eyebrow:  { fontSize: 11, color: C.muted, fontWeight: "700", letterSpacing: 1.8 },
-  title:    { fontSize: T.xl, color: C.text, fontWeight: "800", letterSpacing: -0.6, marginTop: 2 },
-  subtitle: { fontSize: T.sm, color: C.sub, fontWeight: "500", marginTop: 3 },
   bosh:     { fontSize: T.sm, color: C.muted },
 
   formCard: { marginBottom: S[5] },

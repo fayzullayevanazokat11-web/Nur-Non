@@ -14,6 +14,7 @@ import { xomashyoRoyxati } from "../src/logic/konstantalar";
 import { DateField } from "../src/components/DateField";
 import { HisobotModal } from "../src/components/HisobotModal";
 import { ScrollBox } from "../src/components/ScrollBox";
+import { SahifaSarlavha } from "../src/components/SahifaSarlavha";
 import { C, T, S, R, temaStil } from "../src/theme";
 import { hisoblaKunlik, qoldiqlarHisobi, ishchiHaqlari, kunlikXomashyoSarfi, formatSom } from "../src/logic/hisob";
 
@@ -185,19 +186,7 @@ export default function Qop() {
   return (
     <SafeAreaView style={styles.safe} edges={["top"]}>
       <ScrollBox contentContainerStyle={styles.scroll}>
-        <Pressable accessibilityLabel="Orqaga" onPress={() => router.back()} hitSlop={8} style={styles.backBtn}>
-          <Ionicons name="chevron-back" size={20} color={C.text} />
-          <Text style={styles.backTxt}>Markaz</Text>
-        </Pressable>
-
-        <View style={styles.titleRow}>
-          <View style={styles.iconBox}><Image source={require("../assets/icons/qop.png")} style={styles.iconImg} resizeMode="contain" /></View>
-          <View style={styles.flex1}>
-            <Text style={styles.eyebrow}>KUNLIK HISOB</Text>
-            <Text style={styles.title}>Kunlik qop hisobi</Text>
-            <Text style={styles.subtitle}>{stats.jamiQop} qop · {stats.jamiNon} dona ishlab</Text>
-          </View>
-        </View>
+        <SahifaSarlavha eyebrow="KUNLIK HISOB" title="Kunlik qop hisobi" subtitle={`${stats.jamiQop} qop · ${stats.jamiNon} dona ishlab`} image={require("../assets/icons/qop.png")} />
 
         {/* Hisobot sanasi */}
         <Card accent style={styles.card}>
@@ -336,15 +325,7 @@ function Row({ label, value, color = C.text, bold, big }) {
 const styles = temaStil(() => StyleSheet.create({
   safe: { flex: 1, backgroundColor: C.bg },
   scroll: { padding: S[5], paddingBottom: S[8] },
-  backBtn: { flexDirection: "row", alignItems: "center", gap: 4, marginBottom: S[3] },
-  backTxt: { fontSize: T.sm, color: C.sub, fontWeight: "600" },
-  titleRow: { flexDirection: "row", alignItems: "center", gap: S[3], marginBottom: S[5] },
-  iconBox: { width: 44, height: 44, borderRadius: R.md, alignItems: "center", justifyContent: "center", backgroundColor: C.accent + "14" },
-  iconImg: { width: 24, height: 24, tintColor: C.accent },
   flex1: { flex: 1 },
-  eyebrow: { fontSize: 11, color: C.muted, fontWeight: "700", letterSpacing: 1.8 },
-  title: { fontSize: T.xl, color: C.text, fontWeight: "800", letterSpacing: -0.6, marginTop: 2 },
-  subtitle: { fontSize: T.sm, color: C.sub, fontWeight: "500", marginTop: 3 },
   card: { marginBottom: S[4] },
   cardTitleRow: { flexDirection: "row", alignItems: "center", gap: 6 },
   cardTitle: { fontSize: T.md, fontWeight: "700", color: C.text },

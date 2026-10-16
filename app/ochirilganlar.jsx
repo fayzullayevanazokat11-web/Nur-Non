@@ -9,6 +9,7 @@ import { router } from "expo-router";
 import { useApp } from "../src/store/AppData";
 import { Card } from "../src/components/Card";
 import { ScrollBox } from "../src/components/ScrollBox";
+import { SahifaSarlavha } from "../src/components/SahifaSarlavha";
 import { C, T, S, R, temaStil } from "../src/theme";
 import { formatSom } from "../src/logic/hisob";
 
@@ -70,19 +71,7 @@ export default function Ochirilganlar() {
   return (
     <SafeAreaView style={styles.safe} edges={["top"]}>
       <ScrollBox contentContainerStyle={styles.scroll}>
-        <Pressable accessibilityLabel="Orqaga" onPress={() => router.back()} hitSlop={8} style={styles.backBtn}>
-          <Ionicons name="chevron-back" size={20} color={C.text} />
-          <Text style={styles.backTxt}>Markaz</Text>
-        </Pressable>
-
-        <View style={styles.titleRow}>
-          <View style={styles.iconBox}><Ionicons name="archive-outline" size={22} color={C.accent} /></View>
-          <View style={styles.flex1}>
-            <Text style={styles.eyebrow}>TARIXDAGILAR</Text>
-            <Text style={styles.title}>O'chirilganlar</Text>
-            <Text style={styles.subtitle}>7 kun saqlanadi · {royxat.length} ta</Text>
-          </View>
-        </View>
+        <SahifaSarlavha eyebrow="TARIXDAGILAR" title="O'chirilganlar" subtitle={`7 kun saqlanadi · ${royxat.length} ta`} icon="archive-outline" />
 
         {xabar ? (
           <View style={styles.xabar}>
@@ -154,14 +143,7 @@ export default function Ochirilganlar() {
 const styles = temaStil(() => StyleSheet.create({
   safe:     { flex: 1, backgroundColor: C.bg },
   scroll:   { padding: S[5], paddingBottom: S[8] },
-  backBtn:  { flexDirection: "row", alignItems: "center", gap: 4, marginBottom: S[3] },
-  backTxt:  { fontSize: T.sm, color: C.sub, fontWeight: "600" },
-  titleRow: { flexDirection: "row", alignItems: "center", gap: S[3], marginBottom: S[5] },
-  iconBox:  { width: 44, height: 44, borderRadius: R.md, alignItems: "center", justifyContent: "center", backgroundColor: C.accent + "14" },
   flex1:    { flex: 1 },
-  eyebrow:  { fontSize: 11, color: C.muted, fontWeight: "700", letterSpacing: 1.8 },
-  title:    { fontSize: T.xl, color: C.text, fontWeight: "800", letterSpacing: -0.6, marginTop: 2 },
-  subtitle: { fontSize: T.sm, color: C.sub, fontWeight: "500", marginTop: 3 },
   bosh:     { fontSize: T.sm, color: C.muted, lineHeight: 20 },
 
   xabar:    { flexDirection: "row", alignItems: "center", gap: S[2], backgroundColor: C.accent + "14", borderRadius: R.md, paddingVertical: S[2], paddingHorizontal: S[3], marginBottom: S[3] },

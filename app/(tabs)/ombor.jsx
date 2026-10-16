@@ -163,7 +163,7 @@ export default function Ombor() {
         {(omborSorovlar || []).length > 0 && (
           <>
             <View style={styles.secHead}>
-              <Ionicons name="documents-outline" size={15} color={C.sub} />
+              <Ionicons name="documents-outline" size={13} color={C.sub} />
               <Text style={styles.secTitle}>OMBOR SO'ROVNOMALARI</Text>
               <Text style={styles.secCount}>{omborSorovlar.length} ta</Text>
             </View>
@@ -234,7 +234,7 @@ export default function Ombor() {
         {(omborTasdiqlar || []).length > 0 && (
           <>
             <View style={styles.secHead}>
-              <Ionicons name="checkmark-done-outline" size={15} color={C.sub} />
+              <Ionicons name="checkmark-done-outline" size={13} color={C.sub} />
               <Text style={styles.secTitle}>TASDIQLANGAN (30 kun)</Text>
               <Text style={styles.secCount}>{omborTasdiqlar.length} ta</Text>
             </View>
@@ -269,7 +269,7 @@ export default function Ombor() {
         {setKirimlari.length > 0 && (
           <>
             <View style={styles.secHead}>
-              <Ionicons name="cube-outline" size={15} color={C.sub} />
+              <Ionicons name="cube-outline" size={13} color={C.sub} />
               <Text style={styles.secTitle}>OXIRGI SET KIRIMLARI</Text>
               <Text style={styles.secCount}>{setKirimlari.length} ta</Text>
             </View>

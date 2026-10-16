@@ -1,5 +1,6 @@
 // Butun ilova holati — har bir kolleksiya "nurnon:" prefiksi bilan AsyncStorage'da.
-import { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useContext, useState, useEffect, useMemo } from "react";
+import { LayoutAnimation } from "react-native";
 import usePersistedState from "./usePersistedState";
 import { SEED_NONLAR, SEED_ISHCHILAR, SEED_MAHSULOT_NARXLARI } from "../logic/data";
 
@@ -21,22 +22,32 @@ export function BAZA_TUR_MOS(qiymat, tur) {
   return false;
 }
 
+// Ro'yxatga element qo'shilsa yoki o'chirilsa — qolganlari silliq siljiydi (barcha sahifalarda)
+const silliqAnim = () =>
+  LayoutAnimation.configureNext(LayoutAnimation.create(220, LayoutAnimation.Types.easeInEaseOut, LayoutAnimation.Properties.opacity));
+const silliqSetter = (set) => (v) =>
+  set((p) => {
+    const n = typeof v === "function" ? v(p) : v;
+    if (Array.isArray(n) && Array.isArray(p) && n.length !== p.length) silliqAnim();
+    return n;
+  });
+
 export function AppDataProvider({ children }) {
   // ── Saqlanadigan ma'lumotlar ──
-  const [nonlar, setNonlar]                       = usePersistedState("nurnon:nonlar", SEED_NONLAR);
-  const [ishchilar, setIshchilar]                 = usePersistedState("nurnon:ishchilar", SEED_ISHCHILAR);
+  const [nonlar, setNonlarXom]                    = usePersistedState("nurnon:nonlar", SEED_NONLAR);
+  const [ishchilar, setIshchilarXom]              = usePersistedState("nurnon:ishchilar", SEED_ISHCHILAR);
   const [mahsulotNarxlari, setMahsulotNarxlari]   = usePersistedState("nurnon:mahsulotNarxlari", SEED_MAHSULOT_NARXLARI);
-  const [customMahsulotlar, setCustomMahsulotlar] = usePersistedState("nurnon:customMahsulotlar", []);
-  const [qarzlar, setQarzlar]                     = usePersistedState("nurnon:qarzlar", []);
-  const [optomlar, setOptomlar]                   = usePersistedState("nurnon:optomlar", []);
-  const [kartalar, setKartalar]                   = usePersistedState("nurnon:kartalar", []);
-  const [omborlar, setOmborlar]                   = usePersistedState("nurnon:omborlar", []);
-  const [omborSorovlar, setOmborSorovlar]         = usePersistedState("nurnon:omborSorovlar", []);
-  const [omborTasdiqlar, setOmborTasdiqlar]       = usePersistedState("nurnon:omborTasdiqlar", []);
-  const [hisobotlarTarixi, setHisobotlarTarixi]   = usePersistedState("nurnon:hisobotlarTarixi", []);
+  const [customMahsulotlar, setCustomMahsulotlarXom] = usePersistedState("nurnon:customMahsulotlar", []);
+  const [qarzlar, setQarzlarXom]                  = usePersistedState("nurnon:qarzlar", []);
+  const [optomlar, setOptomlarXom]                = usePersistedState("nurnon:optomlar", []);
+  const [kartalar, setKartalarXom]                = usePersistedState("nurnon:kartalar", []);
+  const [omborlar, setOmborlarXom]                = usePersistedState("nurnon:omborlar", []);
+  const [omborSorovlar, setOmborSorovlarXom]      = usePersistedState("nurnon:omborSorovlar", []);
+  const [omborTasdiqlar, setOmborTasdiqlarXom]    = usePersistedState("nurnon:omborTasdiqlar", []);
+  const [hisobotlarTarixi, setHisobotlarTarixiXom] = usePersistedState("nurnon:hisobotlarTarixi", []);
   const [tasdiqlanganKunlar, setTasdiqlanganKunlar] = usePersistedState("nurnon:tasdiqlanganKunlar", []);
   const [kunlikQoplar, setKunlikQoplar]           = usePersistedState("nurnon:kunlikQoplar", []);
-  const [braklar, setBraklar]                     = usePersistedState("nurnon:braklar", []);
+  const [braklar, setBraklarXom]                  = usePersistedState("nurnon:braklar", []);
   const [gazNarx, setGazNarx]                     = usePersistedState("nurnon:gazNarx", "350000");
   const [elektroNarx, setElektroNarx]             = usePersistedState("nurnon:elektroNarx", "0");
 
@@ -49,7 +60,7 @@ export function AppDataProvider({ children }) {
   const [boshlangichQoldiq, setBoshlangichQoldiq] = usePersistedState("nurnon:boshlangichQoldiq", {});
   const [qoldaYaroqsiz, setQoldaYaroqsiz]         = usePersistedState("nurnon:qoldaYaroqsiz", {});
   // Kunlik qo'shimcha xarajatlar (7 kun saqlanadi, kunlik sof foydadan ayriladi)
-  const [kunlikXarajatlar, setKunlikXarajatlar]   = usePersistedState("nurnon:kunlikXarajatlar", []);
+  const [kunlikXarajatlar, setKunlikXarajatlarXom] = usePersistedState("nurnon:kunlikXarajatlar", []);
   // Oxirgi "kunni yakunlash" vaqti (ms). Markaz uchun bugungi karta/brak/xarajat
   // filtri: faqat vaqti > shu qiymat bo'lganlar "hozirgi kun"da hisoblanadi.
   // Yakunlangandan keyin oldingilari avtomatik tarixga o'tadi.
@@ -60,11 +71,26 @@ export function AppDataProvider({ children }) {
   const [lockedDayStats, setLockedDayStats]             = usePersistedState("nurnon:lockedDayStats", null);
   // "Tarixdagilar" — foydalanuvchi o'chirgan barcha narsalar 7 kun saqlanadi va qaytarilishi mumkin.
   // Yozuv: { id, tur, vaqt, element, qoshimcha: { indeks, ... } }
-  const [ochirilganlar, setOchirilganlar]               = usePersistedState("nurnon:ochirilganlar", []);
+  const [ochirilganlar, setOchirilganlarXom]            = usePersistedState("nurnon:ochirilganlar", []);
   // Asosiy akkaunt nomi (Markaz sarlavhasida ko'rinadi, ma'lumot uzatishda birga ketadi)
   const [akkauntNomi, setAkkauntNomi]                   = usePersistedState("nurnon:akkauntNomi", "");
   // Ma'lumot yuklashdan oldingi holat — "Oldingi holatga qaytarish" uchun: { vaqt, akkaunt, data }
   const [importZaxira, setImportZaxira]                 = usePersistedState("nurnon:importZaxira", null);
+
+  // Ro'yxat setterlari — uzunlik o'zgarsa silliq animatsiya bilan (identifikatori barqaror)
+  const setNonlar = useMemo(() => silliqSetter(setNonlarXom), [setNonlarXom]);
+  const setIshchilar = useMemo(() => silliqSetter(setIshchilarXom), [setIshchilarXom]);
+  const setCustomMahsulotlar = useMemo(() => silliqSetter(setCustomMahsulotlarXom), [setCustomMahsulotlarXom]);
+  const setQarzlar = useMemo(() => silliqSetter(setQarzlarXom), [setQarzlarXom]);
+  const setOptomlar = useMemo(() => silliqSetter(setOptomlarXom), [setOptomlarXom]);
+  const setKartalar = useMemo(() => silliqSetter(setKartalarXom), [setKartalarXom]);
+  const setOmborlar = useMemo(() => silliqSetter(setOmborlarXom), [setOmborlarXom]);
+  const setOmborSorovlar = useMemo(() => silliqSetter(setOmborSorovlarXom), [setOmborSorovlarXom]);
+  const setOmborTasdiqlar = useMemo(() => silliqSetter(setOmborTasdiqlarXom), [setOmborTasdiqlarXom]);
+  const setHisobotlarTarixi = useMemo(() => silliqSetter(setHisobotlarTarixiXom), [setHisobotlarTarixiXom]);
+  const setBraklar = useMemo(() => silliqSetter(setBraklarXom), [setBraklarXom]);
+  const setKunlikXarajatlar = useMemo(() => silliqSetter(setKunlikXarajatlarXom), [setKunlikXarajatlarXom]);
+  const setOchirilganlar = useMemo(() => silliqSetter(setOchirilganlarXom), [setOchirilganlarXom]);
 
   // ── Vaqtinchalik oqim bayroqlari (saqlanmaydi) ──
   const [qopTasdiqlandi, setQopTasdiqlandi]       = useState(false);
@@ -78,14 +104,14 @@ export function AppDataProvider({ children }) {
       const now = Date.now();
       const D = 86400000;
       const yosh = (e) => now - (e.vaqt || (e.sana ? Date.parse(e.sana) : now) || now);
-      setKartalar((p) => p.filter((k) => yosh(k) < 7 * D));
-      setOptomlar((p) => p.filter((o) => yosh(o) < 7 * D));
-      setQarzlar((p) => p.filter((q) => !q.tolangan || (now - (q.tolanganVaqt || now)) < 7 * D));
-      setBraklar((p) => p.filter((b) => (now - (b.vaqt || now)) < 7 * D));
-      setHisobotlarTarixi((p) => p.filter((h) => (now - (h.vaqt || now)) < 30 * D));
-      setOmborTasdiqlar((p) => p.filter((t) => (now - (t.vaqt || now)) < 30 * D));
-      setKunlikXarajatlar((p) => p.filter((x) => (now - (x.vaqt || now)) < 7 * D));
-      setOchirilganlar((p) => (p || []).filter((x) => (now - (x.vaqt || now)) < 7 * D));
+      setKartalarXom((p) => p.filter((k) => yosh(k) < 7 * D));
+      setOptomlarXom((p) => p.filter((o) => yosh(o) < 7 * D));
+      setQarzlarXom((p) => p.filter((q) => !q.tolangan || (now - (q.tolanganVaqt || now)) < 7 * D));
+      setBraklarXom((p) => p.filter((b) => (now - (b.vaqt || now)) < 7 * D));
+      setHisobotlarTarixiXom((p) => p.filter((h) => (now - (h.vaqt || now)) < 30 * D));
+      setOmborTasdiqlarXom((p) => p.filter((t) => (now - (t.vaqt || now)) < 30 * D));
+      setKunlikXarajatlarXom((p) => p.filter((x) => (now - (x.vaqt || now)) < 7 * D));
+      setOchirilganlarXom((p) => (p || []).filter((x) => (now - (x.vaqt || now)) < 7 * D));
     };
     // 5s kutamiz (hidratsiya ulgursin), keyin har 6 soatda ham yuritamiz
     const t1 = setTimeout(yuritish, 5000);
