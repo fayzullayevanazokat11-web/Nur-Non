@@ -50,3 +50,17 @@ export function sinovFoyda(r, narx) {
   const foyda = n - r.dona;
   return { foyda, marja: n ? foyda / n : 0, qopFoyda: r.oz ? foyda * (r.nonSoni || 0) : null };
 }
+
+// Narx o'zgarishining nonlarga ta'siri: har bir o'zimiz pishiradigan non uchun 1 dona qanchaga o'zgardi
+const birlikNarx = (p) => (p && son(p.miqdor) > 0 ? son(p.narx) / son(p.miqdor) : 0);
+export function narxTasiri(ozgarish, nonlar) {
+  const farq = birlikNarx(ozgarish.yangi) - birlikNarx(ozgarish.eski);
+  return (nonlar || [])
+    .filter((n) => n.ozIshlab !== false && son(n.nonSoni) > 0)
+    .map((n) => {
+      const m = (n.mahsulotlar || []).find((x) => x.id === ozgarish.xId);
+      if (!m) return null;
+      return { nom: n.nom, dona: (son(m.miqdor) * farq) / son(n.nonSoni) };
+    })
+    .filter((x) => x && Math.abs(x.dona) >= 1);
+}

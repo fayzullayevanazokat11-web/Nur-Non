@@ -15,11 +15,14 @@ import { SahifaSarlavha } from "../src/components/SahifaSarlavha";
 import { Statistika } from "../src/components/Statistika";
 import { C, T, S, R, temaStil } from "../src/theme";
 import { formatSom } from "../src/logic/hisob";
-import { sanaChiroyli } from "../src/logic/davr";
+import { sanaChiroyli, kunTahlili } from "../src/logic/davr";
+import { Qidiruv, qidiruvMos } from "../src/components/Qidiruv";
+import { useState } from "react";
 import { kunlikHtml, kunlikMatn, pdfUlash, matnUlash } from "../src/logic/ulashish";
 
 export default function Tarix() {
   const { nonlar, hisobotlarTarixi, ochirArxivga, akkauntNomi, oylikArxiv } = useApp();
+  const [qidiruv, setQidiruv] = useState("");
   const pdf = (h) => pdfUlash(kunlikHtml(h, { akkaunt: akkauntNomi, nonlar }), `nur-non-${h.sana}`).catch(() => Alert.alert("Xatolik", "PDF tayyorlab bo'lmadi."));
   const matn = (h) => matnUlash(kunlikMatn(h, { akkaunt: akkauntNomi })).catch(() => {});
 
@@ -37,16 +40,20 @@ export default function Tarix() {
         {((hisobotlarTarixi || []).length > 0 || Object.keys(oylikArxiv || {}).length > 0) && <Statistika hisobotlar={hisobotlarTarixi || []} nonlar={nonlar} arxiv={oylikArxiv} akkaunt={akkauntNomi} />}
 
         {(hisobotlarTarixi || []).length > 0 && (
-          <View style={styles.secHead}>
-            <Ionicons name="calendar-outline" size={13} color={C.sub} />
-            <Text style={styles.secTitle}>KUNLIK HISOBOTLAR</Text>
-          </View>
+          <>
+            <View style={styles.secHead}>
+              <Ionicons name="calendar-outline" size={13} color={C.sub} />
+              <Text style={styles.secTitle}>KUNLIK HISOBOTLAR</Text>
+            </View>
+            {(hisobotlarTarixi || []).length > 7 && <Qidiruv value={qidiruv} onChange={setQidiruv} placeholder="Sana yoki kun (masalan: juma, 12)" />}
+          </>
         )}
 
         {(hisobotlarTarixi || []).length === 0 ? (
           <Card><Text style={styles.bosh}>Hali hisobot yo'q. Kunlik qop hisobi sahifasidagi "Kunni yakunlash"ni bossangiz, hisobot shu yerda paydo bo'ladi.</Text></Card>
         ) : (
-          [...hisobotlarTarixi].slice(0, 30).map((h) => {
+          [...hisobotlarTarixi].slice(0, 30).filter((h) => qidiruvMos(`${h.sana} ${sanaChiroyli(h.sana)}`, qidiruv)).map((h) => {
+            const tahlil = kunTahlili(h, hisobotlarTarixi);
             const daromad = parseFloat(h.daromad) || 0;
             const ishchiHaq = parseFloat(h.ishchiHaq) || 0;
             const kunOxiri = daromad - ishchiHaq;
@@ -57,10 +64,26 @@ export default function Tarix() {
                 header={
                   <View style={styles.mHead}>
                     <Text style={[styles.itemIsm, styles.flex1]} numberOfLines={1}>{sanaChiroyli(h.sana)}</Text>
+                    {tahlil && (
+                      <View style={[styles.belgi, tahlil.past ? styles.belgiPast : styles.belgiYaxshi]}>
+                        <Ionicons name={tahlil.past ? "trending-down" : "trending-up"} size={11} color={tahlil.past ? C.red : C.accent} />
+                        <Text style={[styles.belgiTxt, { color: tahlil.past ? C.red : C.accent }]}>{tahlil.foiz > 0 ? "+" : ""}{tahlil.foiz}%</Text>
+                      </View>
+                    )}
                     <Text style={[styles.itemSumma, { color: (h.sofFoyda || 0) >= 0 ? C.green : C.red }]} numberOfLines={1}>{formatSom(h.sofFoyda)} so'm</Text>
                   </View>
                 }
               >
+                {tahlil && (
+                  <View style={[styles.tahlil, tahlil.past && styles.tahlilPast]}>
+                    <Text style={styles.tahlilBosh}>
+                      Sof foyda o'rtachadan {Math.abs(tahlil.foiz)}% {tahlil.past ? "kam" : "ko'p"}
+                    </Text>
+                    <Text style={styles.tahlilMatn}>
+                      {tahlil.sabablar.length ? `Ehtimoliy sabab: ${tahlil.sabablar.join("; ")}.` : "Aniq sabab topilmadi — narxlar yoki qoldiqni tekshiring."}
+                    </Text>
+                  </View>
+                )}
                 <View style={styles.histWrap}>
                   {(h.nonlarSnapshot || nonlar).map((n) => {
                     const oz = n.ozIshlab !== false;
@@ -120,6 +143,14 @@ export default function Tarix() {
 }
 
 const styles = temaStil(() => StyleSheet.create({
+  belgi:    { flexDirection: "row", alignItems: "center", gap: 3, paddingVertical: 2, paddingHorizontal: 7, borderRadius: R.pill, marginRight: S[2] },
+  belgiPast:{ backgroundColor: C.red + "14" },
+  belgiYaxshi:{ backgroundColor: C.accent + "14" },
+  belgiTxt: { fontSize: 11, fontWeight: "800" },
+  tahlil:   { backgroundColor: C.accent + "0D", borderRadius: R.sm, padding: S[3], marginBottom: S[3] },
+  tahlilPast:{ backgroundColor: C.red + "0D" },
+  tahlilBosh:{ fontSize: T.sm, fontWeight: "800", color: C.text },
+  tahlilMatn:{ fontSize: T.xs, color: C.sub, marginTop: 3, lineHeight: 17 },
   safe:     { flex: 1, backgroundColor: C.bg },
   scroll:   { padding: S[5], paddingBottom: S[8] },
   flex1:    { flex: 1 },

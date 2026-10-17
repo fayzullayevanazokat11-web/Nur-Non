@@ -9,15 +9,26 @@ import { Btn } from "./Btn";
 import { C, T, S, R, temaStil } from "../theme";
 import { hisoblaKunlik, qoldiqlarHisobi, formatSom, ishchiHaqlari } from "../logic/hisob";
 import { kunlikHtml, kunlikMatn, pdfUlash, matnUlash } from "../logic/ulashish";
+import { matngaAylantir, hajm } from "../logic/uzatish";
+import * as Clipboard from "expo-clipboard";
 
 export function HisobotModal({ visible, onClose }) {
   const {
-    nonlar, ishchilar, mahsulotNarxlari, braklar,
+    nonlar, ishchilarHaq: ishchilar, mahsulotNarxlari, braklar,
     ozIshlabQoplar, tashqariSonlar, sotilmaganNon,
     boshlangichQoldiq, qoldaYaroqsiz, kunlikXarajatlar,
     qarzlar, optomlar, kartalar,
-    oxirgiYakunlashVaqti, hisobotlarTarixi, akkauntNomi,
+    oxirgiYakunlashVaqti, hisobotlarTarixi, akkauntNomi, eksportMalumot,
   } = useApp();
+
+  // Kun yakunida butun akkauntni boshqa akkauntga ko'chirish uchun nusxa (Akkaunt sahifasidagi bilan bir xil format)
+  const kochir = async () => {
+    try {
+      const m = matngaAylantir(eksportMalumot());
+      await Clipboard.setStringAsync(m);
+      Alert.alert("Nusxa olindi", `Butun akkaunt ma'lumoti (${hajm(m)}) nusxalandi. Boshqa telefonda: logotip → Akkaunt va ma'lumotlar → «Qo'yish» → «Ma'lumotlarni yuklash».`);
+    } catch { Alert.alert("Xatolik", "Nusxa olib bo'lmadi."); }
+  };
 
   const data = useMemo(() => {
     const d = new Date();
@@ -178,6 +189,9 @@ export function HisobotModal({ visible, onClose }) {
               </View>
             );
           })()}
+          <View style={styles.kochirQator}>
+            <Btn secondary icon="swap-horizontal-outline" onPress={kochir}>Akkauntni ko'chirish (nusxa)</Btn>
+          </View>
           <Btn onPress={onClose} icon="checkmark-outline">Yopish</Btn>
         </View>
       </SafeAreaView>
@@ -196,6 +210,7 @@ function Row({ label, value, color = C.text, bold }) {
 
 const styles = temaStil(() => StyleSheet.create({
   ulashQator: { flexDirection: "row", gap: S[2], marginBottom: S[2] },
+  kochirQator: { marginBottom: S[2] },
   overlay:   { ...StyleSheet.absoluteFillObject, backgroundColor: C.bg, zIndex: 9000 },
   safe:      { flex: 1 },
   headerRow: { flexDirection: "row", alignItems: "flex-start", paddingHorizontal: S[5], paddingTop: S[4], paddingBottom: S[3], borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: C.borderSoft },

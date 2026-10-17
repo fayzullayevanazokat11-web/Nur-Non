@@ -11,6 +11,7 @@ import { Card } from "../../src/components/Card";
 import { Btn } from "../../src/components/Btn";
 import { ScreenHeader } from "../../src/components/ScreenHeader";
 import { NavQator } from "../../src/components/NavQator";
+import { Qidiruv, qidiruvMos } from "../../src/components/Qidiruv";
 import { oylikIshHaqi, joriyOy, oyNomi } from "../../src/logic/davr";
 import { ExpandableCard, yopKartalar } from "../../src/components/ExpandableCard";
 import { ScrollBox } from "../../src/components/ScrollBox";
@@ -24,7 +25,8 @@ const BOSH = { ism: "", lavozimId: LAVOZIMLAR[0].id, lavozimCustom: "", haqTuri:
 const HOLATLAR = ["Aktiv", "Ta'tilda"];
 
 export default function Xodimlar() {
-  const { ishchilar, setIshchilar, nonlar, ochirArxivga, hisobotlarTarixi, oylikArxiv, ishHaqiYozuvlari } = useApp();
+  const { ishchilar, setIshchilar, nonlar, ochirArxivga, hisobotlarTarixi, oylikArxiv, ishHaqiYozuvlari, kelmaganlar, kelmadiAlmash } = useApp();
+  const [qidiruv, setQidiruv] = useState("");
   const oylik = useMemo(
     () => oylikIshHaqi({ oy: joriyOy(), hisobotlar: hisobotlarTarixi, arxiv: oylikArxiv, ishchilar, yozuvlar: ishHaqiYozuvlari }),
     [hisobotlarTarixi, oylikArxiv, ishchilar, ishHaqiYozuvlari]
@@ -35,9 +37,12 @@ export default function Xodimlar() {
   const [forma, setForma] = useState(BOSH);
   const scrollRef = useRef(null);
 
-  const aktiv = (ishchilar || []).filter((w) => w.holat === "Aktiv");
-  const tatildagilar = (ishchilar || []).filter((w) => w.holat === "Ta'tilda");
-  const ishdanKetgan = (ishchilar || []).filter((w) => w.holat === "Ishdan ketgan");
+  const hammaAktiv = (ishchilar || []).filter((w) => w.holat === "Aktiv");
+  const mos = (w) => qidiruvMos(`${w.ism} ${getLavozimLabel(w)}`, qidiruv);
+  const aktiv = hammaAktiv.filter(mos);
+  const tatildagilar = (ishchilar || []).filter((w) => w.holat === "Ta'tilda").filter(mos);
+  const ishdanKetgan = (ishchilar || []).filter((w) => w.holat === "Ishdan ketgan").filter(mos);
+  const keldi = hammaAktiv.filter((w) => !kelmaganlar.includes(w.id)).length;
 
   const yangila = (k, v) => setForma((p) => ({ ...p, [k]: v }));
   const yangilaNon = (nom, v) => setForma((p) => ({ ...p, nonNarx: { ...p.nonNarx, [nom]: v } }));
@@ -161,6 +166,43 @@ export default function Xodimlar() {
           onPress={() => router.push("/ishhaqi")}
           style={styles.navQator}
         />
+
+        {/* BUGUNGI DAVOMAT — kelmagan xodimga bugungi kunlik haq yozilmaydi */}
+        {hammaAktiv.length > 0 && (
+          <ExpandableCard
+            style={styles.formCard}
+            header={
+              <View style={styles.formHead}>
+                <Ionicons name="checkbox-outline" size={18} color={C.sub} />
+                <Text style={[styles.formTitle, styles.flex1]}>Bugungi davomat</Text>
+                <Text style={styles.davomatSoni}>{keldi}/{hammaAktiv.length} keldi</Text>
+              </View>
+            }
+          >
+            {hammaAktiv.map((w) => {
+              const kelmadi = kelmaganlar.includes(w.id);
+              return (
+                <Pressable
+                  key={w.id}
+                  accessibilityRole="switch"
+                  accessibilityState={{ checked: !kelmadi }}
+                  accessibilityLabel={`${w.ism}: davomat`}
+                  onPress={() => kelmadiAlmash(w.id)}
+                  style={({ pressed }) => [styles.davomatQator, pressed && { opacity: 0.7 }]}
+                >
+                  <Text style={[styles.davomatIsm, kelmadi && styles.davomatKelmadi]} numberOfLines={1}>{w.ism}</Text>
+                  <View style={[styles.davomatBelgi, kelmadi ? styles.belgiYoq : styles.belgiHa]}>
+                    <Ionicons name={kelmadi ? "close" : "checkmark"} size={13} color={kelmadi ? C.sub : C.onAccent} />
+                    <Text style={[styles.belgiTxt, !kelmadi && { color: C.onAccent }]}>{kelmadi ? "Kelmadi" : "Keldi"}</Text>
+                  </View>
+                </Pressable>
+              );
+            })}
+            <Text style={styles.davomatIzoh}>Kelmagan xodimga bugungi haq hisoblanmaydi (oylik hisobda ham).</Text>
+          </ExpandableCard>
+        )}
+
+        {(ishchilar || []).length > 5 && <Qidiruv value={qidiruv} onChange={setQidiruv} placeholder="Xodimni qidirish" />}
 
         {/* INLINE FORMA — ExpandableCard ichida, default yopiq. Tahrirlash holatida avto-ochiladi. */}
         <ExpandableCard
@@ -419,6 +461,15 @@ const styles = temaStil(() => StyleSheet.create({
   statUnit:  { fontSize: 10, color: C.muted, marginTop: 2 },
   gap14:     { height: S[4] },
   navQator:  { marginBottom: S[4] },
+  davomatSoni:{ fontSize: T.xs, fontWeight: "800", color: C.accent },
+  davomatQator:{ flexDirection: "row", alignItems: "center", paddingVertical: S[2], borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: C.borderSoft },
+  davomatIsm:{ flex: 1, fontSize: T.sm, fontWeight: "700", color: C.text },
+  davomatKelmadi:{ color: C.muted, textDecorationLine: "line-through" },
+  davomatBelgi:{ flexDirection: "row", alignItems: "center", gap: 4, paddingVertical: 5, paddingHorizontal: 10, borderRadius: R.pill },
+  belgiHa:   { backgroundColor: C.accent },
+  belgiYoq:  { backgroundColor: C.panel },
+  belgiTxt:  { fontSize: 11, fontWeight: "800", color: C.sub },
+  davomatIzoh:{ fontSize: 11, color: C.muted, marginTop: S[2] },
 
   // Inline forma
   formCard:  { marginBottom: S[5] },

@@ -12,6 +12,7 @@ import { Btn } from "../src/components/Btn";
 import { ExpandableCard, yopKartalar } from "../src/components/ExpandableCard";
 import { ScrollBox } from "../src/components/ScrollBox";
 import { SahifaSarlavha } from "../src/components/SahifaSarlavha";
+import { BrakTahlili } from "../src/components/BrakTahlili";
 import { C, T, S, R, temaStil } from "../src/theme";
 import { formatSom } from "../src/logic/hisob";
 
@@ -131,6 +132,8 @@ export default function Brak() {
         </Card>
 
         {/* RO'YXAT */}
+        <BrakTahlili />
+
         <View style={styles.secHead}>
           <Ionicons name="alert-circle-outline" size={13} color={C.sub} />
           <Text style={styles.secTitle}>BRAK YOZUVLARI</Text>

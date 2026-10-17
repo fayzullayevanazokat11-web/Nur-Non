@@ -2,6 +2,7 @@
 // uzoq to'lanmagan qarzlar, yakunlanmagan kun. Sof mantiq (UI yo'q).
 import { omborBalans, kunlikXomashyoSarfi, zaxiraMatni, formatSom, bugunSana } from "./hisob";
 import { qarzdorlar, kunOtdi } from "./qarz";
+import { kunTahlili, sanaChiroyli } from "./davr";
 
 export const QARZ_KUN = 7;      // shuncha kundan eski qarz eslatiladi
 export const ZAXIRA_KUN = 2;    // shuncha kunga yetmaydigan xomashyo eslatiladi
@@ -63,6 +64,20 @@ export function eslatmalar({
         yol: "/ombor",
       });
     });
+  }
+
+  // 2b) Oxirgi yakunlangan kun odatdagidan keskin past bo'lsa (2 kun ichida)
+  const oxirgi = (hisobotlar || [])[0];
+  if (oxirgi && hozir.getTime() - (oxirgi.vaqt || 0) < 2 * 864e5) {
+    const t = kunTahlili(oxirgi, hisobotlar);
+    if (t?.past) {
+      r.push({
+        id: `tahlil-${oxirgi.id}`, tur: "tahlil", icon: "trending-down-outline",
+        matn: `${sanaChiroyli(oxirgi.sana).split(" · ")[0]}: foyda o'rtachadan ${Math.abs(t.foiz)}% kam`,
+        izoh: t.sabablar.length ? `Sabab: ${t.sabablar[0]}` : "Statistikada batafsil ko'ring",
+        yol: "/tarix",
+      });
+    }
   }
 
   // 3) Tasdiqlanmagan so'rovnomalar

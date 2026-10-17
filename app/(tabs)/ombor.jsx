@@ -13,12 +13,13 @@ import { ScrollBox } from "../../src/components/ScrollBox";
 import { C, T, S, R, temaStil } from "../../src/theme";
 import { omborBalans, zaxiraMatni, omborKattaBirlik } from "../../src/logic/hisob";
 import { xomashyoRoyxati } from "../../src/logic/konstantalar";
+import { ortachaSarf } from "../../src/logic/eslatma";
 
 // Har bir mahsulot id'si uchun bo'sh maydon (asosiy + Xomashyoda qo'shilganlar)
 const boshForma = (royxat) => Object.fromEntries(royxat.map((m) => [m.id, ""]));
 
 export default function Ombor() {
-  const { omborlar, setOmborlar, omborSorovlar, setOmborSorovlar, omborTasdiqlar, setOmborTasdiqlar, customMahsulotlar, ochirArxivga } = useApp();
+  const { omborlar, setOmborlar, omborSorovlar, setOmborSorovlar, omborTasdiqlar, setOmborTasdiqlar, customMahsulotlar, ochirArxivga, hisobotlarTarixi, nonlar, ozIshlabQoplar, eksportMalumot, bekorTaklif } = useApp();
   // Ishlab chiqarish > Xomashyo'da qo'shilgan mahsulotlar ham omborda avtomatik ko'rinadi
   const royxat = useMemo(() => xomashyoRoyxati(customMahsulotlar), [customMahsulotlar]);
 
@@ -27,6 +28,24 @@ export default function Ombor() {
   const balans = useMemo(() => omborBalans(omborlar, royxat), [omborlar, royxat]);
   const setSoni = (omborlar || []).filter((h) => h.turi === "yangiset").length;
   const zaxiraBor = balans.some((b) => Math.abs(b.qiymat) > 0.0001);
+
+  // Prognoz: o'rtacha kunlik sarf (oxirgi hisobotlar) bo'yicha necha kunga yetadi.
+  // Tasdiqlanmagan so'rovnomalar ham hisobga olinadi (ular baribir ayriladi).
+  const sarf = useMemo(() => ortachaSarf({ hisobotlar: hisobotlarTarixi, nonlar, ozIshlabQoplar, royxat }), [hisobotlarTarixi, nonlar, ozIshlabQoplar, royxat]);
+  const kutilayotgan = useMemo(() => {
+    const k = {};
+    (omborSorovlar || []).forEach((so) => (so.maydonlar || []).forEach((m) => { k[m.id] = (k[m.id] || 0) + (parseFloat(m.qiymat) || 0); }));
+    return k;
+  }, [omborSorovlar]);
+  const prognoz = (b) => {
+    const kunlik = sarf[b.id] || 0;
+    if (kunlik <= 0 || !setSoni) return null;
+    const kun = (b.qiymat - (kutilayotgan[b.id] || 0)) / kunlik;
+    if (kun <= 0) return { kun: 0, matn: "tugagan", kam: true };
+    const d = new Date(); d.setDate(d.getDate() + Math.floor(kun));
+    const sana = `${String(d.getDate()).padStart(2, "0")}.${String(d.getMonth() + 1).padStart(2, "0")}`;
+    return { kun, matn: kun < 1 ? "bugun tugaydi" : `~${Math.floor(kun)} kun · ${sana} gacha`, kam: kun < 2 };
+  };
 
   // Mavjud zaxirani NOLGA tenglashtirish — joriy balansni teskari yozuv bilan bekor qiladi.
   const nollaZaxira = () => {
@@ -38,6 +57,7 @@ export default function Ombor() {
       { text: "Bekor", style: "cancel" },
       {
         text: "Nollash", style: "destructive", onPress: () => {
+          const oldin = eksportMalumot();
           const entry = {
             id: Date.now(),
             sana: new Date().toISOString().split("T")[0],
@@ -48,6 +68,7 @@ export default function Ombor() {
               .map((b) => ({ id: b.id, nom: b.nom, birlik: b.birlik, emoji: b.emoji, qiymat: -b.qiymat })),
           };
           setOmborlar((prev) => [entry, ...prev]);
+          bekorTaklif("Zaxira nollandi", oldin);
         },
       },
     ]);
@@ -145,9 +166,13 @@ export default function Ombor() {
             {balans.map((b) => {
               const matn = zaxiraMatni(b.id, b.qiymat, b.birlik);
               const color = b.qiymat > 0 ? C.green : b.qiymat < 0 ? C.red : C.muted;
+              const p = prognoz(b);
               return (
                 <View key={b.id} style={styles.cell}>
-                  <Text style={styles.cellNom} numberOfLines={1}>{b.nom}</Text>
+                  <View style={styles.cellChap}>
+                    <Text style={styles.cellNom} numberOfLines={1}>{b.nom}</Text>
+                    {p ? <Text style={[styles.prognoz, p.kam && styles.prognozKam]} numberOfLines={1}>{p.matn}</Text> : null}
+                  </View>
                   <Text style={[styles.cellVal, { color }]} numberOfLines={1}>{matn}</Text>
                 </View>
               );
@@ -319,6 +344,9 @@ const styles = temaStil(() => StyleSheet.create({
   cell:      { width: "100%", backgroundColor: C.surface, borderWidth: 1, borderColor: C.borderSoft, borderRadius: R.sm, paddingVertical: S[3], paddingHorizontal: S[4], flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
   cellNom:   { fontSize: T.sm, color: C.sub, fontWeight: "600", flexShrink: 1 },
   cellVal:   { fontSize: T.sm, fontWeight: "700", marginLeft: S[2] },
+  cellChap:  { flexShrink: 1 },
+  prognoz:   { fontSize: 11, color: C.muted, fontWeight: "600", marginTop: 2 },
+  prognozKam:{ color: C.red, fontWeight: "800" },
 
   // So'rovnomalar
   secHead:   { flexDirection: "row", alignItems: "center", gap: 6, marginTop: S[6], marginBottom: S[3] },

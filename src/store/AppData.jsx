@@ -97,6 +97,10 @@ export function AppDataProvider({ children }) {
   const [oylikArxiv, setOylikArxiv]                     = usePersistedState("nurnon:oylikArxiv", {});
   // Kechqurungi "Kunni yakunlash" eslatmasi (bildirishnoma) yoqilganmi
   const [eslatmaYoqilgan, setEslatmaYoqilgan]           = usePersistedState("nurnon:eslatmaYoqilgan", true);
+  // Davomat: { "2026-10-17": [kelmagan ishchi id'lari] } — 60 kun saqlanadi
+  const [davomat, setDavomat]                           = usePersistedState("nurnon:davomat", {});
+  // Xomashyo narxlari o'zgarish tarixi: [{ id, nom, eski, yangi, vaqt }] — 180 kun
+  const [narxTarixi, setNarxTarixi]                     = usePersistedState("nurnon:narxTarixi", []);
   // Barcha saqlangan ma'lumot yuklandi. Tashqi signal sinxron render qiladi, yuklangan
   // qiymatlar esa oddiy navbatda — shuning uchun "tayyor"ni alohida holat orqali
   // keyingi navbatga qo'yamiz: u true bo'lgan renderda barcha qiymatlar allaqachon bor.
@@ -153,6 +157,8 @@ export function AppDataProvider({ children }) {
       setKunlikXarajatlarXom((p) => p.filter((x) => (now - (x.vaqt || now)) < 7 * D));
       setOchirilganlarXom((p) => (p || []).filter((x) => (now - (x.vaqt || now)) < 7 * D));
       setIshHaqiYozuvlariXom((p) => (p || []).filter((x) => (now - (x.vaqt || now)) < 400 * D));
+      setNarxTarixi((p) => (p || []).filter((x) => (now - (x.vaqt || now)) < 180 * D));
+      setDavomat((p) => Object.fromEntries(Object.entries(p || {}).filter(([s]) => (now - (Date.parse(s) || now)) < 60 * D)));
     };
     yuritish();
     const t = setInterval(yuritish, 6 * 60 * 60 * 1000);
@@ -181,6 +187,46 @@ export function AppDataProvider({ children }) {
 
   // Kechqurungi bildirishnoma rejasi — sozlama, yakunlangan kun yoki yozuv o'zgarsa yangilanadi
   const yakunSana = lockedDayStats?.sana || "";
+
+  // ── Xomashyo narxi o'zgarishlarini yozib borish (yozish tugagach, 2.5 soniyadan keyin) ──
+  // Faqat 1 birlik (g/ml) narxi haqiqatan o'zgarganda yoziladi; vaqtincha bo'sh maydon e'tiborsiz.
+  const narxRef = useRef(null);
+  useEffect(() => {
+    if (!tayyor) return undefined;
+    const birlik = (p) => (p && parseFloat(p.miqdor) > 0 && parseFloat(p.narx) > 0 ? parseFloat(p.narx) / parseFloat(p.miqdor) : null);
+    if (narxRef.current === null) { narxRef.current = { ...(mahsulotNarxlari || {}) }; return undefined; }
+    const t = setTimeout(() => {
+      const eski = narxRef.current || {};
+      const yangi = mahsulotNarxlari || {};
+      const vaqt = Date.now();
+      const ozgar = [];
+      const keyingi = { ...eski };
+      Object.keys(yangi).forEach((id) => {
+        const b = birlik(yangi[id]);
+        if (b == null) return;
+        const a = birlik(eski[id]);
+        if (a != null && Math.abs(a - b) > 1e-9) ozgar.push({ id: `${id}-${vaqt}`, xId: id, eski: eski[id], yangi: yangi[id], vaqt });
+        keyingi[id] = yangi[id];
+      });
+      narxRef.current = keyingi;
+      if (ozgar.length) setNarxTarixi((p) => [...ozgar, ...(p || [])].slice(0, 100));
+    }, 2500);
+    return () => clearTimeout(t);
+  }, [tayyor, mahsulotNarxlari]);
+
+  // ── Davomat: bugun kelmagan xodimlarga kunlik haq yozilmaydi ──
+  const bugun = bugunSana();
+  const kelmaganlar = useMemo(() => (davomat || {})[bugun] || [], [davomat, bugun]);
+  const kelmadiAlmash = (id) => setDavomat((p) => {
+    const joriy = (p || {})[bugun] || [];
+    const yangi = joriy.includes(id) ? joriy.filter((x) => x !== id) : [...joriy, id];
+    return { ...(p || {}), [bugun]: yangi };
+  });
+  // Haq hisoblash uchun xodimlar ro'yxati (kelmaganlar belgilangan)
+  const ishchilarHaq = useMemo(
+    () => (ishchilar || []).map((w) => (kelmaganlar.includes(w.id) ? { ...w, kelmadi: true } : w)),
+    [ishchilar, kelmaganlar]
+  );
   useEffect(() => {
     if (!tayyor) return;
     const til = getTil();
@@ -293,6 +339,8 @@ export function AppDataProvider({ children }) {
     ochirilganlar: [ochirilganlar, setOchirilganlar, "array"],
     ishHaqiYozuvlari: [ishHaqiYozuvlari, setIshHaqiYozuvlari, "array"],
     oylikArxiv: [oylikArxiv, setOylikArxiv, "object"],
+    davomat: [davomat, setDavomat, "object"],
+    narxTarixi: [narxTarixi, setNarxTarixi, "array"],
   };
 
   // Joriy bazaning to'liq nusxasi
@@ -342,6 +390,17 @@ export function AppDataProvider({ children }) {
   }, [tayyor]);
   useEffect(() => { if (tayyor && yakunSana) nusxaOl(true); }, [tayyor, yakunSana]);
 
+  // ── Katta amallarni bekor qilish (10 soniya): amal oldidagi holat saqlanadi ──
+  const [bekor, setBekor] = useState(null); // { id, matn, paket }
+  const bekorTaklif = (matn, paket) => setBekor({ id: Date.now(), matn, paket });
+  const bekorQil = () => {
+    if (!bekor) return false;
+    importMalumot(bekor.paket, { zaxiraOl: false });
+    setBekor(null);
+    return true;
+  };
+  const bekorYop = () => setBekor(null);
+
   const zaxiradanQaytar = () => {
     if (!importZaxira) return false;
     importMalumot(importZaxira, { zaxiraOl: false });
@@ -381,7 +440,10 @@ export function AppDataProvider({ children }) {
     ishHaqiYozuvlari, setIshHaqiYozuvlari,
     oylikArxiv, setOylikArxiv,
     eslatmaYoqilgan, setEslatmaYoqilgan,
+    davomat, setDavomat, kelmaganlar, kelmadiAlmash, ishchilarHaq,
+    narxTarixi, setNarxTarixi,
     oxirgiNusxa, nusxaOl,
+    bekor, bekorTaklif, bekorQil, bekorYop,
     tayyor,
     eksportMalumot, importMalumot, importZaxira, zaxiradanQaytar,
     qopTasdiqlandi, setQopTasdiqlandi,

@@ -15,6 +15,8 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import { AppDataProvider } from "../src/store/AppData";
 import { Splash } from "../src/components/Splash";
 import { ErrorBoundary } from "../src/components/ErrorBoundary";
+import { BekorPanel } from "../src/components/BekorPanel";
+import { Tanishuv } from "../src/components/Tanishuv";
 import { C, TEMALAR, useTema, setTema, temaQorongi, temaAlmashtiruvchi } from "../src/theme";
 
 // Mavzu almashish pardasi: eski fon rangida yopiladi → mavzu almashadi →
@@ -83,6 +85,8 @@ export default function RootLayout() {
                 <Stack.Screen name="ishhaqi" />
               </Stack>
             </ThemeProvider>
+            <BekorPanel />
+            <Tanishuv />
             {parda}
           </View>
           {splash && <Splash onDone={() => setSplash(false)} />}

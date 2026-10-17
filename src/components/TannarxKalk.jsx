@@ -9,13 +9,24 @@ import { useApp } from "../store/AppData";
 import { Card } from "./Card";
 import { ExpandableCard } from "./ExpandableCard";
 import { formatSom } from "../logic/hisob";
-import { tannarxHisobi, ortachaKunlikQop, sinovFoyda } from "../logic/tannarx";
+import { tannarxHisobi, ortachaKunlikQop, sinovFoyda, narxTasiri } from "../logic/tannarx";
+import { xomashyoRoyxati } from "../logic/konstantalar";
 import { C, T, S, R, temaStil } from "../theme";
 
 const foiz = (x) => `${Math.round(x * 100)}%`;
 
 export function TannarxKalk() {
-  const { nonlar, mahsulotNarxlari, ishchilar, gazNarx, setGazNarx, elektroNarx, setElektroNarx, hisobotlarTarixi, ozIshlabQoplar } = useApp();
+  const { nonlar, mahsulotNarxlari, ishchilar, gazNarx, setGazNarx, elektroNarx, setElektroNarx, hisobotlarTarixi, ozIshlabQoplar, narxTarixi, customMahsulotlar } = useApp();
+  const royxat = xomashyoRoyxati(customMahsulotlar);
+  const xNom = (id) => royxat.find((m) => m.id === id)?.nom || id;
+  const ikki = (n) => String(n).padStart(2, "0");
+  const sana = (ms) => { const d = new Date(ms); return `${ikki(d.getDate())}.${ikki(d.getMonth() + 1)}`; };
+  // Narxni ko'rsatish: 1 kg / 1 litr (yoki kiritilgan miqdor) uchun
+  const narxMatni = (p, id) => {
+    const m = royxat.find((x) => x.id === id);
+    const b = parseFloat(p?.narx) / (parseFloat(p?.miqdor) || 1);
+    return `${formatSom(b * 1000)}/${m?.birlik === "litr" ? "l" : "kg"}`;
+  };
   const bugungiQop = Object.values(ozIshlabQoplar || {}).reduce((s, v) => s + (parseFloat(v) || 0), 0);
   const ortacha = ortachaKunlikQop(hisobotlarTarixi, bugungiQop);
   const [qopKirit, setQopKirit] = useState("");
@@ -50,6 +61,32 @@ export function TannarxKalk() {
           {ortacha > 0 ? `Oxirgi hisobotlar bo'yicha: ${String(ortacha).replace(".", ",")} qop. ` : ""}Kunlik ishchilar haqi, gaz va elektr shu qoplarga bo'lib hisoblanadi.
         </Text>
       </Card>
+
+      {(narxTarixi || []).length > 0 && (
+        <Card style={styles.card}>
+          <View style={styles.head}>
+            <Ionicons name="pricetags-outline" size={18} color={C.sub} />
+            <Text style={styles.headTxt}>Narx o'zgarishlari</Text>
+          </View>
+          {(narxTarixi || []).slice(0, 5).map((o) => {
+            const tasir = narxTasiri(o, nonlar);
+            return (
+              <View key={o.id} style={styles.narxQator}>
+                <View style={styles.narxBosh}>
+                  <Text style={styles.narxNom} numberOfLines={1}>{xNom(o.xId)}</Text>
+                  <Text style={styles.narxSana}>{sana(o.vaqt)}</Text>
+                </View>
+                <Text style={styles.narxQiymat}>{narxMatni(o.eski, o.xId)} → {narxMatni(o.yangi, o.xId)}</Text>
+                {tasir.map((t) => (
+                  <Text key={t.nom} style={styles.narxTasir}>
+                    {t.nom}: {t.dona > 0 ? "+" : "−"}{formatSom(Math.abs(t.dona))} so'm/dona
+                  </Text>
+                ))}
+              </View>
+            );
+          })}
+        </Card>
+      )}
 
       {natija.map((r) => {
         const s = sinov[r.id] ?? "";
@@ -149,4 +186,10 @@ const styles = temaStil(() => StyleSheet.create({
   qalin:    { fontWeight: "800", color: C.text },
   sinov:    { marginTop: S[2], backgroundColor: C.accent + "0D", borderRadius: R.sm, padding: S[3], gap: 4 },
   sinovTxt: { fontSize: T.sm, color: C.sub },
+  narxQator:{ paddingVertical: S[2], borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: C.borderSoft, marginTop: S[1] },
+  narxBosh: { flexDirection: "row", justifyContent: "space-between" },
+  narxNom:  { fontSize: T.sm, fontWeight: "800", color: C.text, flexShrink: 1 },
+  narxSana: { fontSize: 11, color: C.muted },
+  narxQiymat:{ fontSize: T.xs, color: C.sub, marginTop: 2 },
+  narxTasir:{ fontSize: T.xs, color: C.text, fontWeight: "700", marginTop: 2 },
 }));

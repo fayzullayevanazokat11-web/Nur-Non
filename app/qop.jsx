@@ -1,7 +1,7 @@
 // Kunlik qop hisobi — TO'LIQ sahifa: hisobot sanasi, per-non kiritish (boshlang
 // qoldiq, qop, yaroqsiz, kun oxiri qoldiq), FIFO tafsiloti, ishchilar haqi,
 // moliyaviy xulosa va "Saqlash" / "Kunni yakunlash" tugmalari.
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { View, Text, Image, Pressable, TextInput, StyleSheet, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -26,15 +26,16 @@ const localSana = () => {
 
 export default function Qop() {
   const {
-    nonlar, ishchilar, optomlar, qarzlar, mahsulotNarxlari, braklar, kartalar,
+    nonlar, ishchilarHaq: ishchilar, optomlar, qarzlar, mahsulotNarxlari, braklar, kartalar,
     ozIshlabQoplar, setOzIshlabQoplar, tashqariSonlar, setTashqariSonlar,
     sotilmaganNon, setSotilmaganNon,
     boshlangichQoldiq, setBoshlangichQoldiq, qoldaYaroqsiz, setQoldaYaroqsiz,
     kunlikXarajatlar,
     oxirgiYakunlashVaqti, setOxirgiYakunlashVaqti,
     setLockedDayStats, customMahsulotlar,
-    setHisobotlarTarixi, setOmborSorovlar,
+    setHisobotlarTarixi, setOmborSorovlar, hisobotlarTarixi, eksportMalumot, bekorTaklif,
   } = useApp();
+  const yakunOldidan = useRef(null); // "Bekor qilish" uchun — yakunlashdan oldingi holat
 
   // Hisobot sanasi: bo'sh "" => avtomatik bugun har yakunlash'da.
   const [kunlikSana, setKunlikSana] = useState("");
@@ -53,6 +54,15 @@ export default function Qop() {
   useEffect(() => { if (!tegildi) setFYaroqsiz(toStr(qoldaYaroqsiz)); }, [qoldaYaroqsiz]);
 
   const formaTeg = (setter, key, val) => { setTegildi(true); setter((p) => ({ ...p, [key]: val })); };
+
+  // "Kecha kabi" — oxirgi yakunlangan kunning qop/dona sonlarini bir bosishda to'ldirish
+  const oxirgiHisobot = (hisobotlarTarixi || [])[0];
+  const kechaKabi = () => {
+    if (!oxirgiHisobot) return;
+    setTegildi(true);
+    setFQop(toStr(oxirgiHisobot.ozIshlabQoplar));
+    setFTash(toStr(oxirgiHisobot.tashqariSonlar));
+  };
 
   // Faqat oxirgi yakunlashdan keyingi (bugungi) brak'lar inobatga olinadi.
   const bugungiBrak = useMemo(
@@ -87,6 +97,7 @@ export default function Qop() {
     Alert.alert("Kunni yakunlash", "Bugungi ma'lumot tarixga (history) yoziladi. Ekrandagi ko'rsatkichlar shu kunning oxirigacha (23:59) muhrlangan ko'rinishda qotib turadi. Davom etasizmi?", [
       { text: "Bekor", style: "cancel" },
       { text: "Yakunlash", onPress: () => {
+        yakunOldidan.current = eksportMalumot();
         // ── Avval formani saqlash ──
         setOzIshlabQoplar(fQop); setTashqariSonlar(fTash); setSotilmaganNon(fSot); setQoldaYaroqsiz(fYaroqsiz);
         setTegildi(false);
@@ -180,6 +191,7 @@ export default function Qop() {
     setSotilmaganNon({}); setOzIshlabQoplar({}); setTashqariSonlar({}); setQoldaYaroqsiz({});
     setFQop({}); setFTash({}); setFSot({}); setFYaroqsiz({});
     setKunlikSana(""); setSanaTanlandi(false);
+    if (yakunOldidan.current) { bekorTaklif("Kun yakunlandi", yakunOldidan.current); yakunOldidan.current = null; }
     router.back();
   };
 
@@ -199,7 +211,13 @@ export default function Qop() {
         <Card style={styles.card}>
           <View style={styles.cardTitleRow}>
             <Ionicons name="layers-outline" size={18} color={C.sub} />
-            <Text style={styles.cardTitle}>Non turlari bo'yicha</Text>
+            <Text style={[styles.cardTitle, styles.flex1]}>Non turlari bo'yicha</Text>
+            {oxirgiHisobot && (
+              <Pressable accessibilityLabel="Kecha kabi to'ldirish" onPress={kechaKabi} hitSlop={6} style={({ pressed }) => [styles.kechaBtn, pressed && { opacity: 0.7 }]}>
+                <Ionicons name="repeat-outline" size={14} color={C.accent} />
+                <Text style={styles.kechaTxt}>Kecha kabi</Text>
+              </Pressable>
+            )}
           </View>
           <View style={styles.gap10} />
           {nonlar.map((n) => {
@@ -329,6 +347,8 @@ const styles = temaStil(() => StyleSheet.create({
   card: { marginBottom: S[4] },
   cardTitleRow: { flexDirection: "row", alignItems: "center", gap: 6 },
   cardTitle: { fontSize: T.md, fontWeight: "700", color: C.text },
+  kechaBtn: { flexDirection: "row", alignItems: "center", gap: 4, paddingVertical: 6, paddingHorizontal: 11, borderRadius: R.pill, borderWidth: 1, borderColor: C.border, backgroundColor: C.surface },
+  kechaTxt: { fontSize: T.xs, fontWeight: "800", color: C.accent },
   fieldLabel: { fontSize: T.xs, color: C.sub, fontWeight: "600", marginBottom: 6, letterSpacing: 0.3 },
   sanaHint:   { fontSize: 11, color: C.muted, marginTop: 6, fontStyle: "italic" },
   gap10: { height: S[3] },

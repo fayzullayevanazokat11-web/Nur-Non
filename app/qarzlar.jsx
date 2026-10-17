@@ -17,6 +17,7 @@ import { ScrollBox } from "../src/components/ScrollBox";
 import { SahifaSarlavha } from "../src/components/SahifaSarlavha";
 import { C, T, S, R, temaStil } from "../src/theme";
 import { formatSom, qarzJami, donaFoyda } from "../src/logic/hisob";
+import { Qidiruv, qidiruvMos } from "../src/components/Qidiruv";
 import { qarzdorlar, qarzdorTarixi, tolovQil, tolovniBekorQil, qarzdorKaliti, qarzQoldiq, kunOtdi } from "../src/logic/qarz";
 
 const ikki = (n) => String(n).padStart(2, "0");
@@ -39,8 +40,20 @@ export default function Qarzlar() {
   const takliflar = useMemo(() => {
     const k = qarzdorKaliti(forma.ism);
     if (!k) return [];
-    return guruhlar.filter((g) => g.kalit !== k && g.kalit.includes(k)).slice(0, 4);
+    return guruhlar.filter((g) => g.kalit.includes(k)).slice(0, 4);
   }, [forma.ism, guruhlar]);
+  // Taklif tanlansa — ism va shu kishining oxirgi buyurtmasi (non turlari, soni) to'ladi
+  const taklifTanla = (g) => {
+    const oxirgi = [...g.qarzlar].sort((a, b) => (b.vaqt || 0) - (a.vaqt || 0))[0];
+    const savat = {};
+    (oxirgi?.savat || []).forEach((x) => {
+      const n = (nonlar || []).find((nn) => nn.nom === x.nonNomi);
+      if (n && x.soni) savat[n.id] = String(x.soni);
+    });
+    setForma((p) => ({ ...p, ism: g.ism, savat: Object.keys(savat).length ? savat : p.savat }));
+  };
+  const [qidiruv, setQidiruv] = useState("");
+  const korinadi = guruhlar.filter((g) => qidiruvMos(g.ism, qidiruv));
   const [tolovlar, setTolovlar] = useState({}); // qarzdor kaliti → kiritilayotgan to'lov
 
   const savatHisob = useMemo(() => {
@@ -124,9 +137,9 @@ export default function Qarzlar() {
           {takliflar.length > 0 && (
             <View style={styles.takliflar}>
               {takliflar.map((g) => (
-                <Pressable key={g.kalit} onPress={() => yangila("ism", g.ism)} style={({ pressed }) => [styles.taklif, pressed && styles.pressed]}>
-                  <Ionicons name="person-outline" size={12} color={C.sub} />
-                  <Text style={styles.taklifTxt}>{g.ism}</Text>
+                <Pressable key={g.kalit} accessibilityLabel={`Taklif: ${g.ism}`} onPress={() => taklifTanla(g)} style={({ pressed }) => [styles.taklif, pressed && styles.pressed]}>
+                  <Ionicons name="repeat-outline" size={13} color={C.sub} />
+                  <Text style={styles.taklifTxt}>{g.ism} · oxirgi buyurtma</Text>
                 </Pressable>
               ))}
             </View>
@@ -169,10 +182,12 @@ export default function Qarzlar() {
           <Text style={styles.secCount}>{guruhlar.length} kishi</Text>
         </View>
 
-        {guruhlar.length === 0 ? (
-          <Card><Text style={styles.bosh}>Hali qarz yo'q</Text></Card>
+        {guruhlar.length > 4 && <Qidiruv value={qidiruv} onChange={setQidiruv} placeholder="Qarzdorni qidirish" />}
+
+        {korinadi.length === 0 ? (
+          <Card><Text style={styles.bosh}>{guruhlar.length ? "Topilmadi" : "Hali qarz yo'q"}</Text></Card>
         ) : (
-          guruhlar.map((g) => {
+          korinadi.map((g) => {
             const kun = g.qoldiq > 0 ? kunOtdi(g.enEskiFaol) : 0;
             const tarix = qarzdorTarixi(g);
             return (

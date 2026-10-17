@@ -9,6 +9,7 @@ import { router } from "expo-router";
 import { useApp } from "../src/store/AppData";
 import { Card } from "../src/components/Card";
 import { ScrollBox } from "../src/components/ScrollBox";
+import { Qidiruv, qidiruvMos } from "../src/components/Qidiruv";
 import { SahifaSarlavha } from "../src/components/SahifaSarlavha";
 import { C, T, S, R, temaStil } from "../src/theme";
 import { formatSom } from "../src/logic/hisob";
@@ -49,7 +50,10 @@ export default function Ochirilganlar() {
     [ochirilganlar]
   );
   const mavjudTurlar = useMemo(() => Object.keys(TURLAR).filter((k) => royxat.some((y) => y.tur === k)), [royxat]);
-  const korinadi = filtr === "hammasi" ? royxat : royxat.filter((y) => y.tur === filtr);
+  const [qidiruv, setQidiruv] = useState("");
+  const tavsifOl = (y) => { try { return TURLAR[y.tur].tavsif(y.element || {}); } catch { return ""; } };
+  const korinadi = (filtr === "hammasi" ? royxat : royxat.filter((y) => y.tur === filtr))
+    .filter((y) => qidiruvMos(`${TURLAR[y.tur].nom} ${tavsifOl(y)}`, qidiruv));
 
   // Tanlangan tur ro'yxatda qolmasa — "Hammasi"ga qaytamiz
   useEffect(() => { if (filtr !== "hammasi" && !mavjudTurlar.includes(filtr)) setFiltr("hammasi"); }, [filtr, mavjudTurlar]);
@@ -94,9 +98,11 @@ export default function Ochirilganlar() {
           </ScrollView>
         )}
 
+        {royxat.length > 5 && <Qidiruv value={qidiruv} onChange={setQidiruv} placeholder="Ism, summa yoki sana" />}
+
         {korinadi.length === 0 ? (
           <Card>
-            <Text style={styles.bosh}>Hozircha o'chirilgan narsa yo'q. Biror narsani o'chirsangiz, u shu yerda 7 kun turadi va uni qaytarish mumkin.</Text>
+            <Text style={styles.bosh}>{royxat.length ? "Topilmadi." : "Hozircha o'chirilgan narsa yo'q. Biror narsani o'chirsangiz, u shu yerda 7 kun turadi va uni qaytarish mumkin."}</Text>
           </Card>
         ) : (
           korinadi.map((y) => {

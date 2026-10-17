@@ -32,7 +32,7 @@ const localSana = () => {
 
 export default function Markaz() {
   const {
-    nonlar, ishchilar, qarzlar, optomlar, kartalar,
+    nonlar, ishchilarHaq: ishchilar, qarzlar, optomlar, kartalar,
     ozIshlabQoplar, tashqariSonlar, sotilmaganNon, mahsulotNarxlari,
     hisobotlarTarixi, braklar,
     boshlangichQoldiq, qoldaYaroqsiz, kunlikXarajatlar, oxirgiYakunlashVaqti,

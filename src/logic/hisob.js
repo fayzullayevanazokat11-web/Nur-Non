@@ -153,11 +153,11 @@ export function qoldiqlarHisobi(nonlar, { boshlangichQoldiq = {}, ozIshlabQoplar
   });
 }
 
-// Ishchi haqi hisoblanadimi: faqat Aktiv bo'lsa hisoblanadi.
-// Ta'tilda bo'lsa kunlik ish haqi umuman hisoblanmaydi.
+// Ishchi haqi hisoblanadimi: faqat Aktiv bo'lsa va bugun ishga kelgan bo'lsa.
+// Ta'tilda bo'lsa yoki davomatda "kelmadi" belgilangan bo'lsa — hisoblanmaydi.
 export function ishchiHisoblanadi(w) {
   if (!w) return false;
-  return w.holat === "Aktiv";
+  return w.holat === "Aktiv" && !w.kelmadi;
 }
 
 // Har bir ishchining kunlik haqi taqsimoti (kunlik yoki qop bo'yicha) + brak ayirmasi.

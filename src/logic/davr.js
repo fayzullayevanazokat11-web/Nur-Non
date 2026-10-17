@@ -2,6 +2,8 @@
 // Kunlik hisobotlar 30 kun saqlanadi; eskirganlari "oylikArxiv"ga yig'ma ko'rinishda
 // o'tadi (ixcham — telefon xotirasini to'ldirmaydi), shuning uchun oylar bo'yicha
 // taqqoslash va oylik ish haqi uzoq muddat ishlaydi.
+import { formatSom } from "./hisob";
+
 const son = (x) => parseFloat(x) || 0;
 
 export const oyKaliti = (sana) => String(sana || "").slice(0, 7); // "2026-10"
@@ -143,4 +145,36 @@ export function oylikIshHaqi({ oy, hisobotlar, arxiv, ishchilar, yozuvlar }) {
     berilgan: list.reduce((s, r) => s + r.avans + r.tolov, 0),
     qoldiq: list.reduce((s, r) => s + Math.max(0, r.qoldiq), 0),
   };
+}
+
+// ── Kunni tahlil qilish: odatdagidan keskin farq qilsa — foiz va taxminiy sabablar ──
+// O'rtacha — shu kundan tashqari saqlangan kunlik hisobotlar bo'yicha (kamida 5 kun kerak).
+const ishchiQoplar = (h) => Object.values(h.ozIshlabQoplar || {}).reduce((s, v) => s + son(v), 0);
+export function kunTahlili(h, hisobotlar) {
+  const boshqa = (hisobotlar || []).filter((x) => x && x.id !== h.id);
+  if (boshqa.length < 5) return null;
+  const ort = (f) => boshqa.reduce((s, x) => s + f(x), 0) / boshqa.length;
+  const sof = son(h.sofFoyda), oSof = ort((x) => son(x.sofFoyda));
+  if (Math.abs(oSof) < 1) return null;
+  const foiz = Math.round(((sof - oSof) / Math.abs(oSof)) * 100);
+  if (foiz > -30 && foiz < 30) return null;
+  const sabablar = [];
+  const fmt = (x) => String(Math.round(x * 10) / 10).replace(".", ",");
+  const qop = son(h.jamiQop) || ishchiQoplar(h), oQop = ort((x) => son(x.jamiQop) || ishchiQoplar(x));
+  const xar = son(h.xarajatJami), oXar = ort((x) => son(x.xarajatJami));
+  const brak = son(h.arxiv?.brakSum), oBrak = ort((x) => son(x.arxiv?.brakSum));
+  const haq = son(h.ishchiHaq), oHaq = ort((x) => son(x.ishchiHaq));
+  const sot = son(h.sotilganNon), oSot = ort((x) => son(x.sotilganNon));
+  if (foiz < 0) {
+    if (oQop > 0 && qop < oQop * 0.85) sabablar.push(`qop kam (${fmt(qop)}, o'rtacha ${fmt(oQop)})`);
+    if (oSot > 0 && sot < oSot * 0.85) sabablar.push(`sotilgan non kam (${Math.round(sot)}, o'rtacha ${Math.round(oSot)})`);
+    if (xar > oXar * 1.5 && xar - oXar > 20000) sabablar.push(`qo'shimcha xarajat katta (${formatSom(xar)} so'm)`);
+    if (brak > oBrak * 1.5 && brak - oBrak > 10000) sabablar.push("brak odatdagidan ko'p");
+    if (oHaq > 0 && haq > oHaq * 1.15) sabablar.push("ishchi haqi odatdagidan yuqori");
+  } else {
+    if (oQop > 0 && qop > oQop * 1.15) sabablar.push(`qop ko'p (${fmt(qop)}, o'rtacha ${fmt(oQop)})`);
+    if (oSot > 0 && sot > oSot * 1.15) sabablar.push("sotuv yaxshi bo'lgan");
+    if (xar < oXar * 0.5 && oXar - xar > 20000) sabablar.push("qo'shimcha xarajat kam");
+  }
+  return { foiz, past: foiz < 0, sabablar };
 }
