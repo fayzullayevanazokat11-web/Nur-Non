@@ -54,7 +54,9 @@ function ixchamla(paket) {
     if (!idx.has(k)) { idx.set(k, jadval.length); jadval.push(o); }
     return { $r: idx.get(k) };
   };
-  const h = (paket?.data?.hisobotlarTarixi || []).map((x) => {
+  if (!Array.isArray(paket?.data?.hisobotlarTarixi)) return paket; // hisobot yo'q — o'zgartirmaymiz
+  const h = paket.data.hisobotlarTarixi.map((x) => {
+    if (!x || typeof x !== "object") return x;
     const y = { ...x };
     NUSXALAR.forEach((k) => { if (k in y) y[k] = ref(y[k]); });
     return y;
@@ -62,8 +64,8 @@ function ixchamla(paket) {
   return { ...paket, data: { ...paket.data, hisobotlarTarixi: h }, $jadval: jadval };
 }
 function yoy(p) {
-  const jadval = p.$jadval;
-  if (!Array.isArray(jadval)) return p;
+  const jadval = p?.$jadval;
+  if (!Array.isArray(jadval) || !Array.isArray(p?.data?.hisobotlarTarixi)) return p;
   const och = (v) => (v && typeof v === "object" && typeof v.$r === "number" ? jadval[v.$r] : v);
   const h = (p?.data?.hisobotlarTarixi || []).map((x) => {
     if (!x || typeof x !== "object") return x;
