@@ -12,41 +12,42 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 // Har bir mavzu: bir xil kalitlar to'plami. Grafik ranglari (musbat/manfiy)
 // dataviz validator bilan karta foniga nisbatan tekshirilgan.
 export const TEMALAR = {
+  // "Qobiq" palitrasi — pishgan non qobig'i: iliq oltin-asal aksent, un rangidagi fon.
+  // Kontrast tekshirilgan: aksent ustidagi matn 5:1, aksent karta ustida 4,7:1, matn 12,5:1.
   non: {
     nom: "Non", qorongi: false,
     ranglar: {
-      // Premium minimalist: OQ asosiy fon, QAYMOQ bloklar (qatlamlararo farq + yumshoq soya)
-      bg: "#FFFFFF",          // asosiy ekran foni — oq
-      surface: "#FFFFFF",     // input/inset — oq (qaymoq karta ustida toza ko'rinadi)
-      card: "#FBF6EC",        // bloklar — yumshoq qaymoq
-      panel: "#F6EEDF",       // ichki band / chuqurroq qaymoq
-      border: "#E2D2B4", borderSoft: "#EDE2CF",  // sezilarli, lekin yumshoq chegara chizig'i
-      accent: "#A0612A",      // jigarrang — FAQAT asosiy harakatlar (tugmalar) uchun
-      red: "#3A1E08",         // xavfli harakat — issiq palitra toni (qizil YO'Q)
-      text: "#33200E",        // asosiy matn — iliq quyuq jigarrang
-      sub: "#8A7458",         // ikkilamchi matn / dekorativ ikonkalar
-      muted: "#B5A07E",       // uchlamchi / hint
-      onAccent: "#FFF3E8", onAccentSub: "#EBD8BF", // accent fon ustidagi matn
-      bar: "#FFFFFF",         // pastki panel
-      dangerBg: "#F8EDE7", dangerBorder: "#E8C9B6",
-      accentBg: "#F5EBDA", accentBorder: "#E7D3B4",
-      overlay: "rgba(58,30,8,0.35)",
-      musbat: "#A0612A", manfiy: "#1C7FA8", // grafik: foyda / zarar
+      bg: "#FFFEFA",          // asosiy ekran foni — un oqi (sof oqdan iliqroq)
+      surface: "#FFFFFF",     // input/inset — oq
+      card: "#FBF4E2",        // bloklar — yumshoq non ichi (mag'iz) rangi
+      panel: "#F5EBD3",       // ichki band / chuqurroq
+      border: "#E8D8A8", borderSoft: "#F0E6C8",  // bug'doy rangidagi yumshoq chegara
+      accent: "#93640E",      // qobiq oltini — FAQAT asosiy harakatlar (tugmalar) uchun
+      red: "#5A2E0E",         // xavfli harakat — kuygan qobiq toni (qizil YO'Q)
+      text: "#3B2A12",        // asosiy matn — iliq quyuq jigarrang
+      sub: "#806A33",         // ikkilamchi matn / dekorativ ikonkalar
+      muted: "#A8935C",       // uchlamchi / hint
+      onAccent: "#FFFBF0", onAccentSub: "#F6EBCB", // aksent fon ustidagi matn
+      bar: "#FFFEFA",         // pastki panel
+      dangerBg: "#F9EDE2", dangerBorder: "#EBCDB4",
+      accentBg: "#F6EBCF", accentBorder: "#E7D3A2",
+      overlay: "rgba(59,42,18,0.35)",
+      musbat: "#93640E", manfiy: "#2A7BA6", // grafik: foyda / zarar (validator: PASS)
     },
   },
   tun: {
     nom: "Tun", qorongi: true,
     ranglar: {
-      bg: "#14100C", surface: "#1B1510", card: "#211A13", panel: "#2B2219",
-      border: "#3D3125", borderSoft: "#30271D",
-      accent: "#D9924F", red: "#EFA27E",
-      text: "#F2E6D6", sub: "#BCA88E", muted: "#857259",
-      onAccent: "#23160B", onAccentSub: "#4F3620",
-      bar: "#1A1410",
+      bg: "#15110B", surface: "#1C170F", card: "#211A12", panel: "#2B2318",
+      border: "#3E3322", borderSoft: "#31281B",
+      accent: "#D9A23A", red: "#EFA27E",            // tunda — yorqin oltin qobiq
+      text: "#F3E8D2", sub: "#C2AD84", muted: "#8C7A55",
+      onAccent: "#241806", onAccentSub: "#4E3A12",
+      bar: "#1A150E",
       dangerBg: "#2E1C14", dangerBorder: "#4B2E21",
-      accentBg: "#2A2016", accentBorder: "#47361F",
+      accentBg: "#2A2214", accentBorder: "#4A3A1C",
       overlay: "rgba(0,0,0,0.55)",
-      musbat: "#C47A35", manfiy: "#3A93C6",
+      musbat: "#B5822A", manfiy: "#3A93C6",
     },
   },
 };
