@@ -16,7 +16,8 @@ export function VaqtField({ value, onChange }) {
   // Avtomatik holatda ko'rinadigan vaqt yangilanib turadi
   useEffect(() => {
     if (value) return undefined;
-    const t = setInterval(() => setHozir(hozirgiSoat()), 20000);
+    setHozir(hozirgiSoat());
+    const t = setInterval(() => setHozir(hozirgiSoat()), 5000);
     return () => clearInterval(t);
   }, [value]);
 
