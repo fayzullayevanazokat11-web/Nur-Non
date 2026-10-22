@@ -16,23 +16,23 @@ const son = (x) => parseFloat(x) || 0;
 
 const USLUB = `
   * { box-sizing: border-box; }
-  body { font-family: -apple-system, Roboto, "Segoe UI", Arial, sans-serif; color: #3B2A12; margin: 0; padding: 28px; background: #fff; }
-  .bosh { display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 2px solid #93640E; padding-bottom: 12px; margin-bottom: 18px; }
-  .brend { font-size: 22px; font-weight: 800; color: #93640E; }
-  .akk { font-size: 13px; color: #806A33; margin-top: 2px; }
-  .sana { font-size: 13px; color: #806A33; text-align: right; }
+  body { font-family: -apple-system, Roboto, "Segoe UI", Arial, sans-serif; color: #3A2412; margin: 0; padding: 28px; background: #fff; }
+  .bosh { display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 2px solid #AC5A14; padding-bottom: 12px; margin-bottom: 18px; }
+  .brend { font-size: 22px; font-weight: 800; color: #AC5A14; }
+  .akk { font-size: 13px; color: #86643F; margin-top: 2px; }
+  .sana { font-size: 13px; color: #86643F; text-align: right; }
   h1 { font-size: 18px; margin: 0 0 4px; }
   .katta { display: flex; gap: 10px; margin: 14px 0 18px; }
-  .plitka { flex: 1; background: #FBF4E2; border: 1px solid #F0E6C8; border-radius: 12px; padding: 10px 12px; }
-  .plitka .l { font-size: 11px; color: #806A33; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; }
+  .plitka { flex: 1; background: #FCF4E4; border: 1px solid #F3E5CB; border-radius: 12px; padding: 10px 12px; }
+  .plitka .l { font-size: 11px; color: #86643F; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; }
   .plitka .v { font-size: 18px; font-weight: 800; margin-top: 3px; }
   table { width: 100%; border-collapse: collapse; margin-bottom: 16px; font-size: 13px; }
-  th { text-align: left; font-size: 11px; color: #806A33; text-transform: uppercase; letter-spacing: .5px; padding: 6px 4px; border-bottom: 1px solid #E8D8A8; }
-  td { padding: 7px 4px; border-bottom: 1px solid #F5EDDA; }
+  th { text-align: left; font-size: 11px; color: #86643F; text-transform: uppercase; letter-spacing: .5px; padding: 6px 4px; border-bottom: 1px solid #EBD5AE; }
+  td { padding: 7px 4px; border-bottom: 1px solid #F7ECDA; }
   td.r, th.r { text-align: right; }
-  .jami td { font-weight: 800; border-bottom: none; border-top: 2px solid #E8D8A8; }
-  .bolim { font-size: 12px; font-weight: 800; color: #806A33; letter-spacing: 1px; margin: 18px 0 6px; text-transform: uppercase; }
-  .izoh { font-size: 11px; color: #A8935C; margin-top: 18px; }
+  .jami td { font-weight: 800; border-bottom: none; border-top: 2px solid #EBD5AE; }
+  .bolim { font-size: 12px; font-weight: 800; color: #86643F; letter-spacing: 1px; margin: 18px 0 6px; text-transform: uppercase; }
+  .izoh { font-size: 11px; color: #B0916A; margin-top: 18px; }
 `;
 
 function sahifa({ sarlavha, davr, akkaunt, ichi }) {

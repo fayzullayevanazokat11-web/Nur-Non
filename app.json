@@ -8,14 +8,14 @@
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "icon": "./assets/icon.png",
-    "backgroundColor": "#FBF4E2",
-    "primaryColor": "#93640E",
+    "backgroundColor": "#FCF4E4",
+    "primaryColor": "#AC5A14",
     "newArchEnabled": true,
     "assetBundlePatterns": ["**/*"],
     "android": {
       "package": "com.nurnon.app",
       "versionCode": 2,
-      "backgroundColor": "#FBF4E2",
+      "backgroundColor": "#FCF4E4",
       "adaptiveIcon": {
         "foregroundImage": "./assets/icon.png",
         "backgroundColor": "#FFFFFF"
