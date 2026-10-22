@@ -13,12 +13,10 @@ import { ExpandableCard, yopKartalar } from "../src/components/ExpandableCard";
 import { ScrollBox } from "../src/components/ScrollBox";
 import { SahifaSarlavha } from "../src/components/SahifaSarlavha";
 import { C, T, S, R, temaStil } from "../src/theme";
-import { formatSom, kartaJami, kartaHisob } from "../src/logic/hisob";
+import { formatSom, kartaJami, kartaHisob, bugunSana } from "../src/logic/hisob";
 
-const localSana = () => {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-};
+// Ish kuni sanasi (kun tunda 03:00 da tugaydi)
+const localSana = () => bugunSana();
 const BOSH = { summa: "", izoh: "" };
 
 export default function Karta() {

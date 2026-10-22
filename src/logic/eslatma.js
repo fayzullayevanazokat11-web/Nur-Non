@@ -1,6 +1,6 @@
 // Markazdagi eslatmalar: kam qolgan xomashyo, tasdiqlanmagan so'rovnomalar,
 // uzoq to'lanmagan qarzlar, yakunlanmagan kun. Sof mantiq (UI yo'q).
-import { omborBalans, kunlikXomashyoSarfi, zaxiraMatni, formatSom, bugunSana } from "./hisob";
+import { omborBalans, kunlikXomashyoSarfi, zaxiraMatni, formatSom, bugunSana, KUN_TUGASH_SOAT } from "./hisob";
 import { qarzdorlar, kunOtdi } from "./qarz";
 import { kunTahlili, sanaChiroyli } from "./davr";
 
@@ -37,7 +37,9 @@ export function eslatmalar({
   // 1) Kun yakunlanmagan (kechqurun, bugun ishlab chiqarish kiritilgan bo'lsa)
   const kiritilgan = Object.values(ozIshlabQoplar || {}).some((v) => parseFloat(v) > 0)
     || Object.values(tashqariSonlar || {}).some((v) => parseFloat(v) > 0);
-  if (hozir.getHours() >= YAKUN_SOAT && kiritilgan && lockedDayStats?.sana !== bugun) {
+  // Kechqurun 19:00 dan ish kuni tugaguncha (tunda 03:00) eslatiladi
+  const kechqurun = hozir.getHours() >= YAKUN_SOAT || hozir.getHours() < KUN_TUGASH_SOAT;
+  if (kechqurun && kiritilgan && (lockedDayStats?.kun || lockedDayStats?.sana) !== bugun) {
     r.push({ id: `yakun-${bugun}`, tur: "yakun", icon: "moon-outline", matn: "Bugungi kun hali yakunlanmagan", izoh: "Kunlik qop hisobida «Kunni yakunlash»ni bosing", yol: "/qop" });
   }
 

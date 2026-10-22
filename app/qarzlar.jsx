@@ -16,17 +16,15 @@ import { DateField } from "../src/components/DateField";
 import { ScrollBox } from "../src/components/ScrollBox";
 import { SahifaSarlavha } from "../src/components/SahifaSarlavha";
 import { C, T, S, R, temaStil } from "../src/theme";
-import { formatSom, qarzJami, donaFoyda } from "../src/logic/hisob";
+import { formatSom, qarzJami, donaFoyda, bugunSana } from "../src/logic/hisob";
 import { Qidiruv, qidiruvMos } from "../src/components/Qidiruv";
 import { qarzdorlar, qarzdorTarixi, tolovQil, tolovniBekorQil, qarzdorKaliti, qarzQoldiq, kunOtdi } from "../src/logic/qarz";
 
 const ikki = (n) => String(n).padStart(2, "0");
 const vaqtMatni = (ms) => { const d = new Date(ms); return `${ikki(d.getDate())}.${ikki(d.getMonth() + 1)}.${d.getFullYear()}`; };
 
-const localSana = () => {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-};
+// Ish kuni sanasi (kun tunda 03:00 da tugaydi)
+const localSana = () => bugunSana();
 
 export default function Qarzlar() {
   const { nonlar, qarzlar, setQarzlar, mahsulotNarxlari, ochirArxivga } = useApp();

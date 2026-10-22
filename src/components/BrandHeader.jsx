@@ -5,16 +5,19 @@ import { useEffect, useState } from "react";
 import { View, Text, Image, Pressable, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useApp } from "../store/AppData";
+import { ishKuni } from "../logic/hisob";
 import { C, T, S, R, shadow, temaStil } from "../theme";
 
 const LOGO = require("../../assets/logo-tight.png");
 const OYLAR = ["Yan", "Fev", "Mar", "Apr", "May", "Iyun", "Iyul", "Avg", "Sen", "Okt", "Noy", "Dek"];
 const ikki = (n) => String(n).padStart(2, "0");
 
+// Sana — ISH KUNI (tunda 03:00 gacha hali kechagi kun), soat — haqiqiy vaqt
 function hozir() {
   const d = new Date();
+  const k = ishKuni();
   return {
-    sana: `${ikki(d.getDate())} ${OYLAR[d.getMonth()]}`,
+    sana: `${ikki(k.getDate())} ${OYLAR[k.getMonth()]}`,
     vaqt: `${ikki(d.getHours())}:${ikki(d.getMinutes())}`,
   };
 }

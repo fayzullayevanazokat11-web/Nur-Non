@@ -14,12 +14,10 @@ import { ScrollBox } from "../src/components/ScrollBox";
 import { SahifaSarlavha } from "../src/components/SahifaSarlavha";
 import { BrakTahlili } from "../src/components/BrakTahlili";
 import { C, T, S, R, temaStil } from "../src/theme";
-import { formatSom } from "../src/logic/hisob";
+import { formatSom, bugunSana } from "../src/logic/hisob";
 
-const localSana = () => {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-};
+// Ish kuni sanasi (kun tunda 03:00 da tugaydi)
+const localSana = () => bugunSana();
 const BOSH = { ishchiId: null, dona: {} };
 
 export default function Brak() {

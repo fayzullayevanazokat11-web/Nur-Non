@@ -1,11 +1,29 @@
 // Sof biznes mantiq (React/UI yo'q). Eski App111.jsx hisob-kitoblari 1:1 ko'chirilgan.
 import { HISOBOT_UN_IDLAR, OMBOR_MAYDONLAR } from "./konstantalar";
 
-// LOKAL sana — UTC emas. Yarim tunda noto'g'ri "yesterday" ko'rsatmaslik uchun
-// hamma joyda shu helper ishlatilishi kerak.
+// ISH KUNI — novvoyxona kuni tunda soat 03:00 da tugaydi. 00:00–02:59 oralig'i hali
+// OLDINGI kunga tegishli (masalan, 23-oktabr 01:30 → 22-oktabr ish kuni).
+// Sana bilan bog'liq hamma narsa (yozuvlar sanasi, kunni yakunlash, Markaz, statistika,
+// eslatmalar, zaxira nusxa, davomat) shu helperlardan foydalanadi. LOKAL vaqt, UTC emas.
+export const KUN_TUGASH_SOAT = 3;
+const ikkiS = (n) => String(n).padStart(2, "0");
+
+// Ish kuni boshlanishi (shu kun 00:00 lokal) — Date obyekt
+export function ishKuni(ms = Date.now()) {
+  const d = new Date(ms - KUN_TUGASH_SOAT * 3600000);
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+}
+export function ishKuniSana(ms = Date.now()) {
+  const d = ishKuni(ms);
+  return `${d.getFullYear()}-${ikkiS(d.getMonth() + 1)}-${ikkiS(d.getDate())}`;
+}
 export function bugunSana() {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  return ishKuniSana();
+}
+// Joriy ish kuni qachon tugaydi (keyingi 03:00 dan bir millisoniya oldin)
+export function kunTugashVaqti(ms = Date.now()) {
+  const d = ishKuni(ms);
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1, KUN_TUGASH_SOAT, 0, 0, 0).getTime() - 1;
 }
 
 // ── Ingredient va tannarx ──

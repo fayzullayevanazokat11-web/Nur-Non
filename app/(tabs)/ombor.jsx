@@ -11,7 +11,7 @@ import { ScreenHeader } from "../../src/components/ScreenHeader";
 import { ExpandableCard, yopKartalar } from "../../src/components/ExpandableCard";
 import { ScrollBox } from "../../src/components/ScrollBox";
 import { C, T, S, R, temaStil } from "../../src/theme";
-import { omborBalans, zaxiraMatni, omborKattaBirlik } from "../../src/logic/hisob";
+import { omborBalans, zaxiraMatni, omborKattaBirlik, bugunSana } from "../../src/logic/hisob";
 import { xomashyoRoyxati } from "../../src/logic/konstantalar";
 import { ortachaSarf } from "../../src/logic/eslatma";
 
@@ -60,7 +60,7 @@ export default function Ombor() {
           const oldin = eksportMalumot();
           const entry = {
             id: Date.now(),
-            sana: new Date().toISOString().split("T")[0],
+            sana: bugunSana(),
             vaqt: Date.now(),
             turi: "nollash",
             maydonlar: balans
@@ -77,7 +77,7 @@ export default function Ombor() {
   // So'rovnomani tasdiqlash — xomashyo ombordan AYRILADI (manfiy xarajat yozuvi)
   // + "Tasdiqlangan" tarixiga yoziladi (30 kunda o'chadi).
   const tasdiqlaSorov = (sorov) => {
-    const sana = new Date().toISOString().split("T")[0];
+    const sana = bugunSana();
     const omborId = Date.now();
     const tasdiqId = omborId + 1;
     const vaqt = Date.now();
@@ -141,7 +141,7 @@ export default function Ombor() {
     }
     const entry = {
       id: Date.now(),
-      sana: new Date().toISOString().split("T")[0],
+      sana: bugunSana(),
       vaqt: Date.now(),
       turi: "yangiset",
       maydonlar,

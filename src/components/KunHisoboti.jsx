@@ -52,7 +52,7 @@ export function KunHisoboti({ h }) {
             <Text style={styles.boshIzoh}>{sanaChiroyli(h.sana)} · {soat(h.vaqt)}</Text>
           </View>
         </View>
-        <Text style={styles.eslatma}>Ertaga yangi kun ochiladi. Xato bo'lsa — Markazda kun oxirigacha bekor qilish mumkin.</Text>
+        <Text style={styles.eslatma}>Yangi kun tunda soat 03:00 da ochiladi. Xato bo'lsa — Markazda shu vaqtgacha bekor qilish mumkin.</Text>
       </Card>
 
       <View style={styles.plitkalar}>

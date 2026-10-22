@@ -10,7 +10,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { View, Text, Pressable, Animated, Easing, StyleSheet, LayoutAnimation, Alert } from "react-native";
 import { C, T, S, R, temaStil } from "../theme";
 import { Ionicons } from "@expo/vector-icons";
-import { formatSom } from "../logic/hisob";
+import { formatSom, ishKuni } from "../logic/hisob";
 import { oylar, oyQisqa, oyNomi, joriyOy, oyQosh, haftaKunlari, davrTaqqos } from "../logic/davr";
 import { davrHtml, pdfUlash } from "../logic/ulashish";
 
@@ -53,7 +53,7 @@ export function Statistika({ hisobotlar, nonlar, arxiv, akkaunt }) {
 
   // Davrdagi hisobotlar — sana bo'yicha eskidan yangiga
   const kunlar = useMemo(() => {
-    const chegara = new Date(); chegara.setHours(0, 0, 0, 0); chegara.setDate(chegara.getDate() - (davr - 1));
+    const chegara = ishKuni(); chegara.setDate(chegara.getDate() - (davr - 1)); // ish kuni (03:00 gacha — kecha)
     return [...(hisobotlar || [])]
       .filter((h) => h.sana && new Date(h.sana + "T00:00:00") >= chegara)
       .sort((a, b) => (a.sana < b.sana ? -1 : a.sana > b.sana ? 1 : 0));

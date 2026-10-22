@@ -81,7 +81,7 @@ export function AppDataProvider({ children }) {
   // Yakunlangandan keyin oldingilari avtomatik tarixga o'tadi.
   const [oxirgiYakunlashVaqti, setOxirgiYakunlashVaqti] = usePersistedState("nurnon:oxirgiYakunlashVaqti", 0);
   // "Kunni tugatish" → Markaz ko'rsatkichlari shu kunning oxirigacha
-  // (23:59) muhrlangan qiymatda turadi. Tuzilishi: { sana, lockedUntil, snapshot }.
+  // (ish kuni tugaguncha — tunda 03:00) muhrlangan qiymatda turadi. Tuzilishi: { sana, lockedUntil, snapshot }.
   // Snapshot ichida sofFoyda, kartaSum, brakSum, optomSum, xarajatSum va h.k.
   const [lockedDayStats, setLockedDayStats]             = usePersistedState("nurnon:lockedDayStats", null);
   // Kun yakunini bekor qilish uchun (shu kun oxirigacha): yakunlashdan oldingi holat
@@ -189,12 +189,12 @@ export function AppDataProvider({ children }) {
   }, [nonlar]);
 
   // Kechqurungi bildirishnoma rejasi — sozlama, yakunlangan kun yoki yozuv o'zgarsa yangilanadi
-  const yakunSana = lockedDayStats?.sana || "";
+  const yakunSana = lockedDayStats?.kun || lockedDayStats?.sana || "";
 
   // ── KUNNI YAKUNLASH — kuniga bir marta. Hamma o'zgarish bitta joyda (atomik):
   //    hisobot tarixga, Markaz muhrlanadi, xomashyo so'rovnomasi, ertangi tonggi qoldiq.
   //    Oldingi holat saqlanadi — shu kun oxirigacha Markazdan bekor qilish mumkin.
-  // Har chaqirilganda yangidan tekshiriladi (yarim tundan keyin eski qiymat qolib ketmasin)
+  // Har chaqirilganda yangidan tekshiriladi (tunda 03:00 dan keyin eski qiymat qolib ketmasin)
   const kunYakunlanganmi = () => !!(lockedDayStats
     && (lockedDayStats.kun || lockedDayStats.sana) === bugunSana()
     && (!lockedDayStats.lockedUntil || Date.now() <= lockedDayStats.lockedUntil));

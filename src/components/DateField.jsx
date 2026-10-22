@@ -4,6 +4,7 @@ import { useState } from "react";
 import { View, Text, Pressable, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { C, T, S, R, temaStil } from "../theme";
+import { ishKuni } from "../logic/hisob";
 
 const HAFTA = ["Du", "Se", "Ch", "Pa", "Ju", "Sh", "Ya"];
 const OYLAR = ["Yanvar", "Fevral", "Mart", "Aprel", "May", "Iyun", "Iyul", "Avgust", "Sentabr", "Oktabr", "Noyabr", "Dekabr"];
@@ -13,7 +14,7 @@ const sanaStr = (y, m, d) => `${y}-${ikki(m + 1)}-${ikki(d)}`;
 
 export function DateField({ value, onChange }) {
   const [ochiq, setOchiq] = useState(false);
-  const bugun = new Date();
+  const bugun = ishKuni(); // ish kuni: tunda 03:00 gacha — hali kechagi kun
   const boshlang = value && /^\d{4}-\d{2}-\d{2}$/.test(value)
     ? { y: +value.slice(0, 4), m: +value.slice(5, 7) - 1 }
     : { y: bugun.getFullYear(), m: bugun.getMonth() };
@@ -90,7 +91,7 @@ export function DateField({ value, onChange }) {
           </View>
 
           <View style={styles.actions}>
-            <Pressable style={styles.bugunBtn} onPress={() => { const b = new Date(); setYil(b.getFullYear()); setOy(b.getMonth()); onChange(bugunStr); setOchiq(false); }}>
+            <Pressable style={styles.bugunBtn} onPress={() => { const b = ishKuni(); setYil(b.getFullYear()); setOy(b.getMonth()); onChange(bugunStr); setOchiq(false); }}>
               <Text style={styles.bugunTxt}>Bugun</Text>
             </Pressable>
             <Pressable style={styles.yopBtn} onPress={() => setOchiq(false)}>

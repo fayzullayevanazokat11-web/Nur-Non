@@ -17,13 +17,11 @@ import { KunHisoboti } from "../src/components/KunHisoboti";
 import { ScrollBox } from "../src/components/ScrollBox";
 import { SahifaSarlavha } from "../src/components/SahifaSarlavha";
 import { C, T, S, R, temaStil } from "../src/theme";
-import { hisoblaKunlik, qoldiqlarHisobi, ishchiHaqlari, kunlikXomashyoSarfi, formatSom } from "../src/logic/hisob";
+import { hisoblaKunlik, qoldiqlarHisobi, ishchiHaqlari, kunlikXomashyoSarfi, formatSom, bugunSana, kunTugashVaqti } from "../src/logic/hisob";
 
 const toStr = (obj) => Object.fromEntries(Object.entries(obj || {}).map(([k, v]) => [k, String(v)]));
-const localSana = () => {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-};
+// Ish kuni sanasi (kun tunda 03:00 da tugaydi)
+const localSana = () => bugunSana();
 
 export default function Qop() {
   const {
@@ -111,10 +109,7 @@ export default function Qop() {
       { text: "Yakunlash", onPress: () => {
         setTegildi(false);
         const sana = sanaTekshir;
-        const endOfDay = (() => {
-          const d = new Date(); d.setHours(23, 59, 59, 999);
-          return d.getTime();
-        })();
+        const endOfDay = kunTugashVaqti(); // ish kuni tunda 03:00 da tugaydi
 
         // ── 1) ARXIV: bugungi karta/optom/brak/xarajat yozuvlarini snap ichiga
         //    olamiz (jadval o'chmaydi, ular hisobotlarTarixi'ga ham yoziladi)
@@ -134,7 +129,7 @@ export default function Qop() {
         const optomFoyda  = sum(bugOptom, "sofFoyda");
         const xarajatSum  = sum(bugXarajat, "summa");
 
-        // ── 2) LOCK: 23:59 gacha Markaz'da ko'rsatkichlar shu qiymatda qotib turadi
+        // ── 2) LOCK: kun tugaguncha (tunda 03:00 gacha) Markaz'da ko'rsatkichlar shu qiymatda qotib turadi
         const lock = {
           sana,
           lockedUntil: endOfDay,

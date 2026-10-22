@@ -2,7 +2,7 @@
 // Kunlik hisobotlar 30 kun saqlanadi; eskirganlari "oylikArxiv"ga yig'ma ko'rinishda
 // o'tadi (ixcham — telefon xotirasini to'ldirmaydi), shuning uchun oylar bo'yicha
 // taqqoslash va oylik ish haqi uzoq muddat ishlaydi.
-import { formatSom } from "./hisob";
+import { formatSom, bugunSana, ishKuni } from "./hisob";
 
 const son = (x) => parseFloat(x) || 0;
 
@@ -24,7 +24,7 @@ export function oyQosh(k, n) {
   const d = new Date(y, m - 1 + n, 1);
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
 }
-export const joriyOy = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`; };
+export const joriyOy = () => bugunSana().slice(0, 7); // ish kuni bo'yicha (tunda 03:00 gacha — oldingi kun)
 export const oyKunlari = (k) => { const [y, m] = String(k).split("-").map(Number); return new Date(y, m, 0).getDate(); };
 
 const BOSH = () => ({ kunlar: 0, daromad: 0, sofFoyda: 0, sotilganNon: 0, ishchiHaq: 0, jamiQop: 0, xarajatJami: 0, ishchilar: {}, idlar: [] });
@@ -85,7 +85,7 @@ export function haftaKunlari(hisobotlar, kalit) {
 }
 
 // Oxirgi n kun va undan oldingi n kun — o'zgarish foizi (ma'lumot yetarli bo'lsa)
-export function davrTaqqos(hisobotlar, kalit, n, hozir = new Date()) {
+export function davrTaqqos(hisobotlar, kalit, n, hozir = ishKuni()) {
   const ol = typeof kalit === "function" ? kalit : (h) => son(h[kalit]);
   const kunBoshi = new Date(hozir.getFullYear(), hozir.getMonth(), hozir.getDate()).getTime();
   const D = 86400000;

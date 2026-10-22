@@ -16,7 +16,7 @@ import { useAnimSon } from "../../src/components/useAnimSon";
 import { EslatmalarPanel } from "../../src/components/EslatmalarPanel";
 import { ixcham } from "../../src/components/Statistika";
 import { C, T, S, R, temaStil } from "../../src/theme";
-import { hisoblaKunlik, formatSom, qarzJami, optomJami, kartaJami, ishchiHaqlari } from "../../src/logic/hisob";
+import { hisoblaKunlik, formatSom, qarzJami, optomJami, kartaJami, ishchiHaqlari, bugunSana } from "../../src/logic/hisob";
 // Maxsus rasm ikonkalari (Ionicons o'rniga — premium ko'rinish)
 const ICONS = {
   qop:     require("../../assets/icons/qop.png"),
@@ -27,10 +27,8 @@ const ICONS = {
   xarajat: require("../../assets/icons/xarajat.png"),
 };
 
-const localSana = () => {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-};
+// Ish kuni sanasi (kun tunda 03:00 da tugaydi)
+const localSana = () => bugunSana();
 
 export default function Markaz() {
   const {
@@ -41,7 +39,7 @@ export default function Markaz() {
     lockedDayStats, yakunBekor, yakunBekorMumkinmi, kunYakuniniBekor,
   } = useApp();
 
-  // Har 30 soniyada tick — yarim tundan o'tganda lock va sana ko'rsatkichlari
+  // Har 30 soniyada tick — ish kuni tugaganda (tunda 03:00) lock va sana ko'rsatkichlari
   // o'z-o'zidan yangilanishi uchun. Foydalanuvchi tegmasa ham Markaz tetik turadi.
   // Logotip menyusi (Tarixdagilar, yozuv tanlovi) — boshqa bo'limga o'tganda yoki
   // dasturdan chiqilganda o'zi yopiladi
@@ -64,7 +62,7 @@ export default function Markaz() {
   const bugunSanasi = useMemo(() => localSana(), [tick]);
 
   // ── MUHRLANGAN KUN (Lock) ──
-  // "Kunni tugatish" bosilgan bo'lsa va o'sha kun hali tugamagan bo'lsa (23:59 dan oldin)
+  // "Kunni tugatish" bosilgan bo'lsa va o'sha ish kuni hali tugamagan bo'lsa (tunda 03:00 dan oldin)
   // — Markaz ko'rsatkichlarini yakunlash paytidagi muhrlangan snapshotdan o'qiymiz.
   // Aks holda jonli (live) hisob-kitob bo'ladi. Sana o'zgarishi bilan (ertaga) lock o'z-o'zidan
   // tarqaladi va ko'rsatkichlar yangi kun uchun jonli yangilanadi.
@@ -127,7 +125,7 @@ export default function Markaz() {
     return (kunlikXarajatlar || []).filter((x) => x.sana === bugunSanasi && yangiYozuv(x)).length;
   }, [locked, kunlikXarajatlar, oxirgiYakunlashVaqti, bugunSanasi]);
 
-  // Kun yakunini bekor qilish (shu kun oxirigacha) — tick tufayli yarim tunda o'zi yo'qoladi
+  // Kun yakunini bekor qilish (shu kun oxirigacha) — tick tufayli tunda 03:00 da o'zi yo'qoladi
   const bekorKorinadi = !!locked && yakunBekorMumkinmi();
   const yakunniBekorSora = () =>
     Alert.alert("Kun yakunini bekor qilish", "Bugungi hisobot o'chiriladi, kiritilgan qoplar «Kunlik qop hisobi»ga qaytadi va kunni qayta yakunlash mumkin bo'ladi. Davom etasizmi?", [
@@ -196,7 +194,7 @@ export default function Markaz() {
             <Ionicons name="lock-closed-outline" size={18} color={C.accent} />
             <View style={styles.flex1}>
               <Text style={styles.yakunMatn}>Kun yakunlangan · {soatMatni(yakunBekor?.vaqt)}</Text>
-              <Text style={styles.yakunIzoh}>Xato bo'lsa — bugun oxirigacha bekor qilish mumkin</Text>
+              <Text style={styles.yakunIzoh}>Xato bo'lsa — tunda 03:00 gacha bekor qilish mumkin</Text>
             </View>
             <Pressable
               accessibilityRole="button"
