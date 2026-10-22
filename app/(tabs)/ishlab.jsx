@@ -2,7 +2,7 @@
 // Non: o'zimizniki (ingredient + 1 qopdan non soni → dona foydasi avtomatik)
 // yoki tashqaridan (donadan qoladigan foyda to'g'ridan kiritiladi).
 import { useRef, useState } from "react";
-import { View, Text, Pressable, TextInput, StyleSheet, Alert } from "react-native";
+import { View, Text, Image, Pressable, TextInput, StyleSheet, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 
@@ -13,6 +13,7 @@ import { ScreenHeader } from "../../src/components/ScreenHeader";
 import { ExpandableCard, yopKartalar } from "../../src/components/ExpandableCard";
 import { MahsulotNarxi } from "../../src/components/MahsulotNarxi";
 import { TannarxKalk } from "../../src/components/TannarxKalk";
+import { XomashyoIkon } from "../../src/components/XomashyoIkon";
 import { ScrollBox } from "../../src/components/ScrollBox";
 import { xomashyoRoyxati } from "../../src/logic/konstantalar";
 import { C, T, S, R, temaStil } from "../../src/theme";
@@ -22,6 +23,12 @@ const baseUnit = (birlik) => (birlik === "litr" ? "ml" : "g");
 const BOSH = { nom: "", narx: "", oz: true, nonSoni: "", donaFoyda: "", ing: {} };
 
 // Non uchun dona foydasi
+// Non turi ikonkasi: o'zimiz pishiradigan — non bo'lagi, tashqaridan olinadigan — baton
+const NON_IKON = {
+  oz: require("../../assets/xomashyo/bread-slice-outline.png"),
+  tashqi: require("../../assets/xomashyo/baguette.png"),
+};
+
 function donaFoydasi(non, narxlar) {
   if (non.ozIshlab === false) return parseFloat(non.tashqariFoyda) || 0;
   const son = parseFloat(non.nonSoni) || 0;
@@ -80,7 +87,7 @@ export default function IshlabChiqarish() {
     let yangi;
     if (forma.oz) {
       const mahsulotlar = royxat
-        .map((m) => ({ id: m.id, nom: m.nom, emoji: m.emoji, birlik: baseUnit(m.birlik), miqdor: parseFloat(forma.ing[m.id]) || 0 }))
+        .map((m) => ({ id: m.id, nom: m.nom, ...(m.ikon ? { ikon: m.ikon } : {}), birlik: baseUnit(m.birlik), miqdor: parseFloat(forma.ing[m.id]) || 0 }))
         .filter((m) => m.miqdor > 0);
       yangi = { nom: forma.nom.trim(), narx, ozIshlab: true, nonSoni: parseFloat(forma.nonSoni) || 0, tashqariFoyda: 0, mahsulotlar };
     } else {
@@ -220,7 +227,10 @@ export default function IshlabChiqarish() {
                     const unit = baseUnit(m.birlik);
                     return (
                       <View key={m.id} style={styles.ingEditRow}>
-                        <Text style={styles.ingEditNom} numberOfLines={1}>{m.emoji} {m.nom}</Text>
+                        <View style={styles.ingEditNomQ}>
+                          <XomashyoIkon m={m} size={16} color={C.sub} />
+                          <Text style={styles.ingEditNom} numberOfLines={1}>{m.nom}</Text>
+                        </View>
                         <TextInput value={forma.ing[m.id] ?? ""} onChangeText={(v) => yangilaIng(m.id, v)} placeholder="0" placeholderTextColor={C.muted} keyboardType="numeric" style={styles.ingInput} />
                         <Text style={styles.ingUnit}>{unit}</Text>
                       </View>
@@ -265,10 +275,22 @@ export default function IshlabChiqarish() {
                     key={non.id}
                     style={styles.item}
                     header={
-                      <View>
-                        <Text style={styles.nonNom}>{non.nom}</Text>
-                        <View style={[styles.chip, { backgroundColor: (oz ? C.accent : C.blue) + "16" }]}>
-                          <Text style={[styles.chipTxt, { color: oz ? C.accent : C.blue }]}>{oz ? "O'zimizniki" : "Tashqaridan"}</Text>
+                      <View style={styles.nonBosh}>
+                        <View style={[styles.nonIkon, !oz && styles.nonIkonTashqi]}>
+                          <Image source={oz ? NON_IKON.oz : NON_IKON.tashqi} style={[styles.nonIkonImg, { tintColor: oz ? C.accent : C.sub }]} resizeMode="contain" />
+                        </View>
+                        <View style={styles.flex1}>
+                          <Text style={styles.nonNom} numberOfLines={1}>{non.nom}</Text>
+                          <View style={styles.nonMeta}>
+                            <View style={[styles.chip, oz ? styles.chipOz : styles.chipTashqi]}>
+                              <Text style={[styles.chipTxt, { color: oz ? C.accent : C.sub }]}>{oz ? "O'zimizniki" : "Tashqaridan"}</Text>
+                            </View>
+                            {oz && parseFloat(non.nonSoni) > 0 && <Text style={styles.nonMetaTxt}>qopdan {non.nonSoni} dona</Text>}
+                          </View>
+                        </View>
+                        <View style={styles.nonNarxQ}>
+                          <Text style={styles.nonNarx}>{formatSom(non.narx)}</Text>
+                          <Text style={[styles.nonFoyda, foyda < 0 && { color: C.red }]}>{foyda >= 0 ? "+" : ""}{formatSom(foyda)} foyda</Text>
                         </View>
                       </View>
                     }
@@ -281,7 +303,10 @@ export default function IshlabChiqarish() {
                         <Text style={styles.ingHead}>1 QOPGA XOMASHYO ({non.mahsulotlar.length})</Text>
                         {non.mahsulotlar.map((m) => (
                           <View key={m.id} style={styles.ingRow}>
-                            <Text style={styles.ingNom} numberOfLines={1}>{m.emoji} {m.nom}</Text>
+                            <View style={styles.ingNomQ}>
+                              <XomashyoIkon m={royxat.find((x) => x.id === m.id) || m} size={15} color={C.sub} />
+                              <Text style={styles.ingNom} numberOfLines={1}>{m.nom}</Text>
+                            </View>
                             <Text style={styles.ingMiqdor}>{m.miqdor} {m.birlik}</Text>
                             <Text style={styles.ingNarx}>{formatSom(getIngNarx(m, mahsulotNarxlari))} so'm</Text>
                           </View>
@@ -344,6 +369,7 @@ const styles = temaStil(() => StyleSheet.create({
   turTxt:    { fontSize: T.sm, fontWeight: "700", color: C.sub },
   turTxtActive:{ color: C.onAccent },
   ingEditRow:{ flexDirection: "row", alignItems: "center", gap: S[2], marginBottom: S[2] },
+  ingEditNomQ:{ flex: 1, flexDirection: "row", alignItems: "center", gap: 6 },
   ingEditNom:{ flex: 1, fontSize: T.sm, color: C.text },
   ingInput:  { width: 90, borderWidth: 1, borderColor: C.border, borderRadius: R.sm, paddingVertical: 8, paddingHorizontal: 10, fontSize: T.sm, color: C.text, backgroundColor: C.surface, textAlign: "right" },
   ingUnit:   { width: 28, fontSize: T.xs, color: C.muted },
@@ -363,9 +389,21 @@ const styles = temaStil(() => StyleSheet.create({
   // Ro'yxat
   item:      { marginBottom: S[3] },
   flex1:     { flex: 1 },
-  nonNom:    { fontSize: T.lg, fontWeight: "800", color: C.text },
-  chip:      { alignSelf: "flex-start", paddingVertical: 3, paddingHorizontal: 9, borderRadius: R.pill, marginTop: 5 },
-  chipTxt:   { fontSize: 11, fontWeight: "700", letterSpacing: 0.2 },
+  // Non kartasi sarlavhasi — ikonka, nom, belgi, narx va dona foydasi
+  nonBosh:   { flexDirection: "row", alignItems: "center", gap: S[3] },
+  nonIkon:   { width: 46, height: 46, borderRadius: R.md, alignItems: "center", justifyContent: "center", backgroundColor: C.accent + "16", borderWidth: 1, borderColor: C.accent + "26" },
+  nonIkonTashqi: { backgroundColor: C.panel, borderColor: C.borderSoft },
+  nonIkonImg:{ width: 26, height: 26 },
+  nonNom:    { fontSize: T.md + 1, fontWeight: "800", color: C.text, letterSpacing: -0.2 },
+  nonMeta:   { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 4, flexWrap: "wrap" },
+  nonMetaTxt:{ fontSize: 11, color: C.muted, fontWeight: "600" },
+  nonNarxQ:  { alignItems: "flex-end", marginLeft: S[1] },
+  nonNarx:   { fontSize: T.md + 1, fontWeight: "800", color: C.text },
+  nonFoyda:  { fontSize: 11, fontWeight: "700", color: C.accent, marginTop: 2 },
+  chip:      { alignSelf: "flex-start", paddingVertical: 2, paddingHorizontal: 8, borderRadius: R.pill },
+  chipOz:    { backgroundColor: C.accent + "16" },
+  chipTashqi:{ backgroundColor: C.panel },
+  chipTxt:   { fontSize: 10, fontWeight: "800", letterSpacing: 0.2 },
   row:       { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: S[2] },
   rowLast:   { marginBottom: 0 },
   label:     { fontSize: T.sm, color: C.sub },
@@ -378,6 +416,7 @@ const styles = temaStil(() => StyleSheet.create({
   ingWrap:   { marginTop: S[3], borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: C.borderSoft, paddingTop: S[3] },
   ingHead:   { fontSize: 10, color: C.muted, fontWeight: "700", letterSpacing: 0.8, marginBottom: S[2] },
   ingRow:    { flexDirection: "row", alignItems: "center", marginBottom: 6 },
+  ingNomQ:   { flex: 1, flexDirection: "row", alignItems: "center", gap: 6 },
   ingNom:    { flex: 1, fontSize: T.sm, color: C.text },
   ingMiqdor: { fontSize: T.xs, color: C.muted, width: 78, textAlign: "right" },
   ingNarx:   { fontSize: T.xs, color: C.sub, fontWeight: "700", width: 82, textAlign: "right" },

@@ -98,7 +98,7 @@ export default function TabsLayout() {
     <SwipeTabs
       tabBarPosition="bottom"
       tabBar={(props) => <PastkiPanel {...props} />}
-      screenOptions={{ swipeEnabled: true, animationEnabled: true, lazy: true, lazyPreloadDistance: 1, sceneStyle: { backgroundColor: C.bg } }}
+      screenOptions={{ swipeEnabled: true, animationEnabled: false, lazy: true, lazyPreloadDistance: 1, sceneStyle: { backgroundColor: C.bg } }}
     >
       <SwipeTabs.Screen name="index" options={{ title: t("Markaz") }} />
       <SwipeTabs.Screen name="ishlab" options={{ title: t("Ishlab chiqarish"), tabBarLabel: t("Ishlab") }} />

@@ -71,7 +71,7 @@ export default function RootLayout() {
           <View style={[styles.ildiz, { backgroundColor: C.bg }]}>
             <StatusBar style={splash || temaQorongi() ? "light" : "dark"} />
             <ThemeProvider value={navTema}>
-              <Stack key={tema} screenOptions={{ headerShown: false, animation: "slide_from_right", contentStyle: { backgroundColor: C.bg } }}>
+              <Stack key={tema} screenOptions={{ headerShown: false, animation: "fade", contentStyle: { backgroundColor: C.bg } }}>
                 <Stack.Screen name="(tabs)" />
                 <Stack.Screen name="qarzlar" />
                 <Stack.Screen name="optom" />

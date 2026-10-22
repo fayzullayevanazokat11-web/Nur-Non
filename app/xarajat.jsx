@@ -12,6 +12,7 @@ import { Card } from "../src/components/Card";
 import { Btn } from "../src/components/Btn";
 import { ExpandableCard, yopKartalar } from "../src/components/ExpandableCard";
 import { DateField } from "../src/components/DateField";
+import { VaqtField, hozirgiSoat } from "../src/components/VaqtField";
 import { ScrollBox } from "../src/components/ScrollBox";
 import { SahifaSarlavha } from "../src/components/SahifaSarlavha";
 import { C, T, S, R, temaStil } from "../src/theme";
@@ -24,7 +25,7 @@ export default function Xarajat() {
   const { kunlikXarajatlar, setKunlikXarajatlar, ochirArxivga } = useApp();
   const bugun = localSana();
   // sana: bo'sh bo'lsa => "avtomatik bugun" har save'da yangidan hisoblanadi
-  const BOSH = { summa: "", izoh: "", sana: "", sanaTanlandi: false };
+  const BOSH = { summa: "", izoh: "", sana: "", sanaTanlandi: false, soat: "" };
   const [tahrirId, setTahrirId] = useState(null);
   const scrollRef = useRef(null);
   const [forma, setForma] = useState(BOSH);
@@ -49,7 +50,7 @@ export default function Xarajat() {
 
   const tahrirla = (x) => {
     // Mavjud yozuv sanasi tahrirlash uchun "qo'lda tanlangan" deb hisoblanadi
-    setForma({ summa: String(x.summa || ""), izoh: x.izoh || "", sana: x.sana || bugun, sanaTanlandi: true });
+    setForma({ summa: String(x.summa || ""), izoh: x.izoh || "", sana: x.sana || bugun, sanaTanlandi: true, soat: x.soat || "" });
     yopKartalar();
     setTahrirId(x.id); setTimeout(() => scrollRef.current?.scrollToTop?.(true), 50);
   };
@@ -60,10 +61,11 @@ export default function Xarajat() {
     if (!forma.izoh.trim()) { Alert.alert("Izoh kiritilmagan", "Xarajat nimaga ketganini yozing."); return; }
     // Qo'lda tanlanmagan bo'lsa har save'da joriy kun (uzoq vaqt ochiq qolsa ham to'g'ri)
     const sana = forma.sanaTanlandi && forma.sana ? forma.sana : localSana();
+    const soat = forma.soat || hozirgiSoat(); // qo'lda tanlanmasa — hozirgi vaqt
     if (tahrirId) {
-      setKunlikXarajatlar((prev) => prev.map((x) => x.id === tahrirId ? { ...x, summa, izoh: forma.izoh.trim(), sana } : x));
+      setKunlikXarajatlar((prev) => prev.map((x) => x.id === tahrirId ? { ...x, summa, izoh: forma.izoh.trim(), sana, soat } : x));
     } else {
-      setKunlikXarajatlar((prev) => [{ id: Date.now(), sana, vaqt: Date.now(), summa, izoh: forma.izoh.trim() }, ...(prev || [])]);
+      setKunlikXarajatlar((prev) => [{ id: Date.now(), sana, soat, vaqt: Date.now(), summa, izoh: forma.izoh.trim() }, ...(prev || [])]);
     }
     tozala();
   };
@@ -91,7 +93,9 @@ export default function Xarajat() {
 
           <Text style={styles.inputLabel}>Sana</Text>
           <DateField value={forma.sana || bugun} onChange={yangilaSana} />
-          {!forma.sanaTanlandi && <Text style={styles.hint}>Bugungi kun avtomatik. Boshqa sana uchun kalendarni oching.</Text>}
+          <Text style={styles.inputLabel}>Vaqt</Text>
+          <VaqtField value={forma.soat} onChange={(v) => setForma((p) => ({ ...p, soat: v }))} />
+          {!forma.sanaTanlandi && !forma.soat && <Text style={styles.hint}>Bugungi sana va hozirgi vaqt avtomatik. O'zgartirish uchun bosing.</Text>}
 
           <Text style={styles.inputLabel}>Summa (so'm) *</Text>
           <TextInput value={forma.summa} onChangeText={(v) => yangila("summa", v)} placeholder="0" placeholderTextColor={C.muted} keyboardType="numeric" style={styles.input} />
@@ -123,7 +127,7 @@ export default function Xarajat() {
                 <View style={styles.mHead}>
                   <View style={styles.flex1}>
                     <Text style={styles.itemIsm} numberOfLines={1}>{x.izoh}</Text>
-                    <Text style={styles.itemSana}>{x.sana}{x.sana === bugun ? " · bugun" : ""}</Text>
+                    <Text style={styles.itemSana}>{x.sana}{x.soat ? ` · ${x.soat}` : ""}{x.sana === bugun ? " · bugun" : ""}</Text>
                   </View>
                   <Text style={[styles.itemSumma, { color: C.red }]} numberOfLines={1}>− {formatSom(x.summa)} so'm</Text>
                 </View>

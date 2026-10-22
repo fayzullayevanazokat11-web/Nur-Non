@@ -11,23 +11,24 @@ import { Card } from "../src/components/Card";
 import { Btn } from "../src/components/Btn";
 import { ExpandableCard, yopKartalar } from "../src/components/ExpandableCard";
 import { DateField } from "../src/components/DateField";
+import { VaqtField, hozirgiSoat } from "../src/components/VaqtField";
 import { ScrollBox } from "../src/components/ScrollBox";
 import { SahifaSarlavha } from "../src/components/SahifaSarlavha";
 import { C, T, S, R, temaStil } from "../src/theme";
-import { formatSom, optomJami, donaFoyda, bugunSana } from "../src/logic/hisob";
+import { formatSom, optomJami, bugunSana } from "../src/logic/hisob";
 
 // Ish kuni sanasi (kun tunda 03:00 da tugaydi)
 const localSana = () => bugunSana();
 
 export default function Optom() {
-  const { nonlar, optomlar, setOptomlar, mahsulotNarxlari, ochirArxivga } = useApp();
-  const BOSH = { ism: "", izoh: "", sana: "", sanaTanlandi: false, savat: {}, donaChegirma: "", chegirma: "" };
+  const { nonlar, optomlar, setOptomlar, ochirArxivga } = useApp();
+  const BOSH = { ism: "", izoh: "", sana: "", sanaTanlandi: false, soat: "", savat: {}, donaChegirma: "", chegirma: "" };
   const [forma, setForma] = useState(BOSH);
 
   const optom = useMemo(() => optomJami(optomlar), [optomlar]);
 
   const savatHisob = useMemo(() => {
-    let summa = 0, dona = 0, foyda = 0;
+    let summa = 0, dona = 0;
     const items = [];
     (nonlar || []).forEach((n) => {
       const soni = parseInt(forma.savat[n.id]) || 0;
@@ -35,14 +36,13 @@ export default function Optom() {
       const narx = parseFloat(n.narx) || 0;
       summa += soni * narx;
       dona += soni;
-      foyda += soni * donaFoyda(n, mahsulotNarxlari);
       items.push({ nonNomi: n.nom, soni, narx });
     });
     const dch = parseFloat(forma.donaChegirma) || 0;
     const ch = parseFloat(forma.chegirma) || 0;
     const jamiChegirma = dch * dona + ch;
-    return { summa, dona, foyda, items, jamiChegirma, yakSumma: Math.max(0, summa - jamiChegirma), yakFoyda: foyda - jamiChegirma };
-  }, [forma.savat, forma.donaChegirma, forma.chegirma, nonlar, mahsulotNarxlari]);
+    return { summa, dona, items, jamiChegirma, yakSumma: Math.max(0, summa - jamiChegirma) };
+  }, [forma.savat, forma.donaChegirma, forma.chegirma, nonlar]);
 
   const yangila = (k, v) => setForma((p) => ({ ...p, [k]: v }));
   const yangilaSavat = (id, v) => setForma((p) => ({ ...p, savat: { ...p.savat, [id]: v } }));
@@ -53,10 +53,11 @@ export default function Optom() {
     if (!forma.ism.trim()) { Alert.alert("Ism kiritilmagan", "Iltimos, xaridor ismini kiriting."); return; }
     if (savatHisob.items.length === 0) { Alert.alert("Non tanlanmagan", "Kamida bitta non turidan soni kiriting."); return; }
     const sana = forma.sanaTanlandi && forma.sana ? forma.sana : localSana();
+    const soat = forma.soat || hozirgiSoat(); // qo'lda tanlanmasa — hozirgi vaqt
     setOptomlar((prev) => [...prev, {
-      id: Date.now(), ism: forma.ism.trim(), sana, vaqt: Date.now(),
+      id: Date.now(), ism: forma.ism.trim(), sana, soat, vaqt: Date.now(),
       savat: savatHisob.items, summa: savatHisob.yakSumma, chegirma: savatHisob.jamiChegirma,
-      sofFoyda: savatHisob.yakFoyda, izoh: forma.izoh.trim(),
+      izoh: forma.izoh.trim(),
     }]);
     tozala();
   };
@@ -80,7 +81,9 @@ export default function Optom() {
 
           <Text style={styles.inputLabel}>Sana</Text>
           <DateField value={forma.sana || localSana()} onChange={yangilaSana} />
-          {!forma.sanaTanlandi && <Text style={styles.hint}>Bugungi kun avtomatik. Boshqa sana uchun kalendarni oching.</Text>}
+          <Text style={styles.inputLabel}>Vaqt</Text>
+          <VaqtField value={forma.soat} onChange={(v) => setForma((p) => ({ ...p, soat: v }))} />
+          {!forma.sanaTanlandi && !forma.soat && <Text style={styles.hint}>Bugungi sana va hozirgi vaqt avtomatik. O'zgartirish uchun bosing.</Text>}
 
           <Text style={styles.inputLabel}>Xaridor *</Text>
           <TextInput value={forma.ism} onChangeText={(v) => yangila("ism", v)} placeholder="Ism familiya" placeholderTextColor={C.muted} style={styles.input} />
@@ -109,7 +112,6 @@ export default function Optom() {
                 <View style={styles.previewRow}><Text style={styles.previewLabel}>Chegirma</Text><Text style={styles.previewVal}>− {formatSom(savatHisob.jamiChegirma)} so'm</Text></View>
               )}
               <View style={styles.previewRow}><Text style={styles.previewLabel}>To'lov</Text><Text style={[styles.previewVal, { color: C.accent }]}>{formatSom(savatHisob.yakSumma)} so'm</Text></View>
-              <View style={styles.previewRow}><Text style={styles.previewLabel}>Sof foyda</Text><Text style={[styles.previewVal, { color: savatHisob.yakFoyda >= 0 ? C.green : C.red }]}>{formatSom(savatHisob.yakFoyda)} so'm</Text></View>
             </View>
           )}
 
@@ -146,9 +148,8 @@ export default function Optom() {
                 </View>
               ))}
               {o.chegirma > 0 ? <Text style={styles.itemIzoh}>Chegirma: {formatSom(o.chegirma)} so'm</Text> : null}
-              <Text style={styles.itemIzoh}>Sof foyda: {formatSom(o.sofFoyda || 0)} so'm</Text>
               {o.izoh ? <Text style={styles.itemIzoh}>{o.izoh}</Text> : null}
-              <Text style={styles.itemSana}>{o.sana}</Text>
+              <Text style={styles.itemSana}>{o.sana}{o.soat ? ` · ${o.soat}` : ""}</Text>
               <View style={styles.actions}>
                 <Pressable onPress={() => ochirOptom(o.id)} hitSlop={6} style={styles.actBtn}>
                   <Ionicons name="trash-outline" size={16} color={C.red} />

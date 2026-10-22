@@ -4,6 +4,8 @@
 import { bugunSana } from "./hisob";
 
 const son = (x) => parseFloat(x) || 0;
+const ikki = (n) => String(n).padStart(2, "0");
+const soatMatni = (ms) => { const d = new Date(ms); return `${ikki(d.getHours())}:${ikki(d.getMinutes())}`; };
 
 // Ism bo'yicha bir xil qarzdor (katta-kichik harf va ortiqcha bo'shliq farq qilmaydi)
 export const qarzdorKaliti = (ism) => String(ism || "").trim().replace(/\s+/g, " ").toLowerCase();
@@ -40,11 +42,11 @@ export function qarzdorTarixi(guruh) {
   const v = [];
   const tolovlar = new Map(); // vaqt → yig'ma to'lov
   (guruh?.qarzlar || []).forEach((q) => {
-    v.push({ tur: "qarz", key: `q${q.id}`, qarzId: q.id, vaqt: q.vaqt || Date.parse(q.sana) || 0, sana: q.sana, summa: son(q.summa), savat: q.savat || [], izoh: q.izoh, chegirma: son(q.chegirma) });
+    v.push({ tur: "qarz", key: `q${q.id}`, qarzId: q.id, vaqt: q.vaqt || Date.parse(q.sana) || 0, sana: q.sana, soat: q.soat || "", summa: son(q.summa), savat: q.savat || [], izoh: q.izoh, chegirma: son(q.chegirma) });
     (q.tolovlar || []).forEach((t) => {
       const k = t.vaqt || t.id;
       if (!tolovlar.has(k)) {
-        const y = { tur: "tolov", key: `t${t.id}`, vaqt: t.vaqt || 0, sana: t.sana, summa: 0, qismlar: [] };
+        const y = { tur: "tolov", key: `t${t.id}`, vaqt: t.vaqt || 0, sana: t.sana, soat: t.vaqt ? soatMatni(t.vaqt) : "", summa: 0, qismlar: [] };
         tolovlar.set(k, y);
         v.push(y);
       }

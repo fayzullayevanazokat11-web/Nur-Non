@@ -1,5 +1,6 @@
 // "Xomashyo" — har bir xomashyo narxi (qancha miqdor = qancha so'm).
-// Yangi ingredient qo'shish mumkin: kg/L narxi so'raladi → 1g narxi avtomatik hisoblanadi.
+// Yangi ingredient: mahsulot narxi va necha kg (litr) ekani kiritiladi — 1 kg (1 litr)
+// narxini tizim o'zi topadi. Har xomashyoda ikonka (yangilarida tanlanadi).
 // Bu narxlar Assortimentdagi non foydasi hisobiga ulanadi.
 import { useState } from "react";
 import { View, Text, TextInput, Pressable, StyleSheet, Alert } from "react-native";
@@ -11,6 +12,7 @@ import { ExpandableCard, yopKartalar } from "./ExpandableCard";
 import { OMBOR_MAYDONLAR, xomashyoRoyxati } from "../logic/konstantalar";
 import { formatSom } from "../logic/hisob";
 import { C, T, S, R, temaStil } from "../theme";
+import { XomashyoIkon, IKON_TANLOV } from "./XomashyoIkon";
 
 const baseUnit = (birlik) => (birlik === "litr" ? "ml" : "g");
 const ASOSIY_IDLAR = new Set(OMBOR_MAYDONLAR.map((m) => m.id));
@@ -19,25 +21,29 @@ export function Xomashyo() {
   const { mahsulotNarxlari, setMahsulotNarxlari, customMahsulotlar, setCustomMahsulotlar, ochirArxivga } = useApp();
   const royxat = xomashyoRoyxati(customMahsulotlar);
 
-  const [forma, setForma] = useState({ nom: "", birlik: "kg", narx: "" });
+  const BOSH_F = { nom: "", birlik: "kg", narx: "", miqdor: "", ikon: "package-variant-closed" };
+  const [forma, setForma] = useState(BOSH_F);
+  const sonF = (x) => parseFloat(String(x || "").replace(",", ".").replace(/\s/g, "")) || 0;
+  const birKgNarx = sonF(forma.miqdor) > 0 ? sonF(forma.narx) / sonF(forma.miqdor) : 0;
   const yangilaF = (k, v) => setForma((p) => ({ ...p, [k]: v }));
 
   const yangilaNarx = (id, key, v) =>
     setMahsulotNarxlari((p) => ({ ...p, [id]: { ...(p[id] || {}), [key]: v } }));
 
-  // Yangi ingredient: kg/L narxi → 1000 birlik (g/ml) uchun narx sifatida saqlanadi (1g = narx/1000)
+  // Yangi ingredient: "N kg (litr) = X so'm" — baza birlikda (g/ml) saqlanadi:
+  // miqdor = N × 1000, narx = X. 1 kg narxi = X ÷ N (tizim o'zi hisoblaydi).
   const qoshIngredient = () => {
     const nom = forma.nom.trim();
-    const narx = parseFloat(forma.narx) || 0;
-    if (!nom || narx <= 0) {
-      Alert.alert("To'liq emas", "Ingredient nomi va 1 " + forma.birlik + " narxini kiriting.");
+    const narx = sonF(forma.narx);
+    const miqdor = sonF(forma.miqdor);
+    if (!nom || narx <= 0 || miqdor <= 0) {
+      Alert.alert("To'liq emas", `Ingredient nomi, mahsulot narxi va necha ${forma.birlik} ekanini kiriting.`);
       return;
     }
     const id = "x_" + Date.now();
-    const emoji = "📦";
-    setCustomMahsulotlar((prev) => [...(prev || []), { id, nom, birlik: forma.birlik, emoji }]);
-    setMahsulotNarxlari((p) => ({ ...p, [id]: { miqdor: "1000", narx: String(narx) } }));
-    setForma({ nom: "", birlik: "kg", narx: "" });
+    setCustomMahsulotlar((prev) => [...(prev || []), { id, nom, birlik: forma.birlik, ikon: forma.ikon }]);
+    setMahsulotNarxlari((p) => ({ ...p, [id]: { miqdor: String(Math.round(miqdor * 1000)), narx: String(Math.round(narx)) } }));
+    setForma(BOSH_F);
     yopKartalar(); // qo'shilgandan keyin forma yopiladi
   };
 
@@ -86,10 +92,36 @@ export function Xomashyo() {
           ))}
         </View>
 
-        <Text style={styles.lbl2}>1 {forma.birlik} narxi (so'm) *</Text>
-        <TextInput value={forma.narx} onChangeText={(v) => yangilaF("narx", v)} placeholder="0" placeholderTextColor={C.muted} keyboardType="numeric" style={styles.input} />
-        {(parseFloat(forma.narx) || 0) > 0 && (
-          <Text style={styles.hintLine}>1{baseUnit(forma.birlik === "litr" ? "litr" : "kg")} = {((parseFloat(forma.narx) || 0) / 1000).toFixed(2)} so'm</Text>
+        <Text style={styles.lbl2}>Ikonka</Text>
+        <View style={styles.ikonlar}>
+          {IKON_TANLOV.map((k) => (
+            <Pressable
+              key={k}
+              accessibilityLabel={`Ikonka: ${k}`}
+              accessibilityState={{ selected: forma.ikon === k }}
+              onPress={() => yangilaF("ikon", k)}
+              style={[styles.ikonBtn, forma.ikon === k && styles.ikonBtnActive]}
+            >
+              <XomashyoIkon ikon={k} size={22} color={forma.ikon === k ? C.onAccent : C.sub} />
+            </Pressable>
+          ))}
+        </View>
+
+        <View style={styles.inputs}>
+          <View style={styles.col}>
+            <Text style={styles.lbl2}>Mahsulot narxi (so'm) *</Text>
+            <TextInput value={forma.narx} onChangeText={(v) => yangilaF("narx", v)} placeholder="Masalan: 120000" placeholderTextColor={C.muted} keyboardType="numeric" style={styles.input} />
+          </View>
+          <View style={styles.col}>
+            <Text style={styles.lbl2}>Necha {forma.birlik} *</Text>
+            <TextInput value={forma.miqdor} onChangeText={(v) => yangilaF("miqdor", v)} placeholder="Masalan: 25" placeholderTextColor={C.muted} keyboardType="decimal-pad" style={styles.input} />
+          </View>
+        </View>
+        {birKgNarx > 0 && (
+          <View style={styles.natija}>
+            <Ionicons name="calculator-outline" size={15} color={C.accent} />
+            <Text style={styles.natijaTxt}>1 {forma.birlik} = <Text style={styles.bold}>{formatSom(Math.round(birKgNarx))} so'm</Text></Text>
+          </View>
         )}
 
         <View style={styles.qoshActions}>
@@ -110,14 +142,14 @@ export function Xomashyo() {
           <Card key={m.id} style={styles.item}>
             <View style={styles.head}>
               <View style={styles.headLeft}>
-                <View style={styles.emojiBox}><Text style={styles.emoji}>{m.emoji}</Text></View>
+                <XomashyoIkon m={m} quti size={22} qutiSize={44} />
                 <View style={styles.flex1}>
                   <Text style={styles.nom}>{m.nom}</Text>
                   <Text style={styles.sub}>{unit} bilan o'lchanadi</Text>
                 </View>
               </View>
               <View style={styles.headRight}>
-                <Text style={styles.per}>1{unit} = {perUnit ? perUnit.toFixed(2) : "0"} so'm</Text>
+                <Text style={styles.per}>1 {m.birlik === "litr" ? "litr" : "kg"} = {perUnit ? formatSom(Math.round(perUnit * 1000)) : "0"} so'm</Text>
                 <View style={styles.badge}>
                   <Ionicons name={kiritilgan ? "checkmark-circle-outline" : "ellipse-outline"} size={12} color={kiritilgan ? C.sub : C.muted} />
                   <Text style={kiritilgan ? styles.badgeTxt : styles.badgeNo}> {kiritilgan ? "Narx kiritilgan" : "Narx kiritilmagan"}</Text>
@@ -139,7 +171,7 @@ export function Xomashyo() {
             <View style={styles.footer}>
               <View style={styles.example}>
                 <Ionicons name="bulb-outline" size={13} color={C.muted} />
-                <Text style={styles.exTxt}> Misol: 1000{unit} → <Text style={styles.exBold}>{formatSom(Math.round(perUnit * 1000))} so'm</Text></Text>
+                <Text style={styles.exTxt}> Misol: retseptda 100{unit} → <Text style={styles.exBold}>{formatSom(Math.round(perUnit * 100))} so'm</Text></Text>
               </View>
               {custom && (
                 <Pressable onPress={() => ochirIngredient(m.id)} hitSlop={8} style={styles.delBtn}>
@@ -169,8 +201,7 @@ const styles = temaStil(() => StyleSheet.create({
   item:      { marginBottom: S[3] },
   head:      { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: S[3] },
   headLeft:  { flexDirection: "row", alignItems: "center", gap: S[2], flex: 1 },
-  emojiBox:  { width: 44, height: 44, borderRadius: R.md, alignItems: "center", justifyContent: "center", backgroundColor: C.panel },
-  emoji:     { fontSize: 20 },
+
   flex1:     { flex: 1 },
   nom:       { fontSize: T.md, fontWeight: "800", color: C.text },
   sub:       { fontSize: T.xs, color: C.muted, marginTop: 1 },
@@ -202,5 +233,9 @@ const styles = temaStil(() => StyleSheet.create({
   unitBtnActive: { backgroundColor: C.accent, borderColor: C.accent },
   unitTxt:    { fontSize: T.md, fontWeight: "700", color: C.sub },
   unitTxtActive: { color: C.onAccent },
-  hintLine:   { fontSize: T.xs, color: C.accent, fontWeight: "700", marginTop: 6 },
+  ikonlar:    { flexDirection: "row", flexWrap: "wrap", gap: 6 },
+  ikonBtn:    { width: 42, height: 42, borderRadius: R.sm, alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: C.borderSoft, backgroundColor: C.surface },
+  ikonBtnActive:{ backgroundColor: C.accent, borderColor: C.accent },
+  natija:     { flexDirection: "row", alignItems: "center", gap: 6, marginTop: S[3], backgroundColor: C.accent + "12", borderRadius: R.sm, paddingVertical: S[2], paddingHorizontal: S[3] },
+  natijaTxt:  { fontSize: T.sm, color: C.text },
 }));

@@ -14,6 +14,7 @@ import { C, T, S, R, temaStil } from "../../src/theme";
 import { omborBalans, zaxiraMatni, omborKattaBirlik, bugunSana } from "../../src/logic/hisob";
 import { xomashyoRoyxati } from "../../src/logic/konstantalar";
 import { ortachaSarf } from "../../src/logic/eslatma";
+import { XomashyoIkon } from "../../src/components/XomashyoIkon";
 
 // Har bir mahsulot id'si uchun bo'sh maydon (asosiy + Xomashyoda qo'shilganlar)
 const boshForma = (royxat) => Object.fromEntries(royxat.map((m) => [m.id, ""]));
@@ -169,6 +170,7 @@ export default function Ombor() {
               const p = prognoz(b);
               return (
                 <View key={b.id} style={styles.cell}>
+                  <XomashyoIkon m={b} quti size={17} qutiSize={32} />
                   <View style={styles.cellChap}>
                     <Text style={styles.cellNom} numberOfLines={1}>{b.nom}</Text>
                     {p ? <Text style={[styles.prognoz, p.kam && styles.prognozKam]} numberOfLines={1}>{p.matn}</Text> : null}
@@ -206,7 +208,10 @@ export default function Ombor() {
                 <View style={styles.sorovList}>
                   {sorov.maydonlar.map((m) => (
                     <View key={m.id} style={styles.sorovRow}>
-                      <Text style={styles.sorovNom} numberOfLines={1}>{m.emoji} {m.nom}</Text>
+                      <View style={styles.sorovNomQ}>
+                        <XomashyoIkon m={royxat.find((x) => x.id === m.id) || m} size={15} color={C.sub} />
+                        <Text style={styles.sorovNom} numberOfLines={1}>{m.nom}</Text>
+                      </View>
                       <Text style={styles.sorovVal}>− {zaxiraMatni(m.id, m.qiymat, m.birlik)}</Text>
                     </View>
                   ))}
@@ -276,7 +281,10 @@ export default function Ombor() {
               >
                 {(t.maydonlar || []).map((m) => (
                   <View key={m.id} style={styles.sorovRow}>
-                    <Text style={styles.sorovNom} numberOfLines={1}>{m.emoji} {m.nom}</Text>
+                    <View style={styles.sorovNomQ}>
+                        <XomashyoIkon m={royxat.find((x) => x.id === m.id) || m} size={15} color={C.sub} />
+                        <Text style={styles.sorovNom} numberOfLines={1}>{m.nom}</Text>
+                      </View>
                     <Text style={styles.sorovVal}>− {zaxiraMatni(m.id, m.qiymat, m.birlik)}</Text>
                   </View>
                 ))}
@@ -344,7 +352,7 @@ const styles = temaStil(() => StyleSheet.create({
   cell:      { width: "100%", backgroundColor: C.surface, borderWidth: 1, borderColor: C.borderSoft, borderRadius: R.sm, paddingVertical: S[3], paddingHorizontal: S[4], flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
   cellNom:   { fontSize: T.sm, color: C.sub, fontWeight: "600", flexShrink: 1 },
   cellVal:   { fontSize: T.sm, fontWeight: "700", marginLeft: S[2] },
-  cellChap:  { flexShrink: 1 },
+  cellChap:  { flex: 1, marginLeft: S[3] },
   prognoz:   { fontSize: 11, color: C.muted, fontWeight: "600", marginTop: 2 },
   prognozKam:{ color: C.red, fontWeight: "800" },
 
@@ -360,6 +368,7 @@ const styles = temaStil(() => StyleSheet.create({
   radImg:    { width: 18, height: 18, tintColor: C.red },
   sorovList: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: C.borderSoft, paddingTop: S[3], marginBottom: S[3] },
   sorovRow:  { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: S[2] },
+  sorovNomQ: { flex: 1, flexDirection: "row", alignItems: "center", gap: 6 },
   sorovNom:  { fontSize: T.sm, color: C.text, flex: 1 },
   sorovVal:  { fontSize: T.sm, fontWeight: "800", color: C.red, marginLeft: S[2] },
   tasdiqActions:{ flexDirection: "row", justifyContent: "flex-end", marginTop: S[2], borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: C.borderSoft, paddingTop: S[2] },

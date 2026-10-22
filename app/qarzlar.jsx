@@ -13,6 +13,7 @@ import { Card } from "../src/components/Card";
 import { Btn } from "../src/components/Btn";
 import { ExpandableCard, yopKartalar } from "../src/components/ExpandableCard";
 import { DateField } from "../src/components/DateField";
+import { VaqtField, hozirgiSoat } from "../src/components/VaqtField";
 import { ScrollBox } from "../src/components/ScrollBox";
 import { SahifaSarlavha } from "../src/components/SahifaSarlavha";
 import { C, T, S, R, temaStil } from "../src/theme";
@@ -29,7 +30,7 @@ const localSana = () => bugunSana();
 export default function Qarzlar() {
   const { nonlar, qarzlar, setQarzlar, mahsulotNarxlari, ochirArxivga } = useApp();
   // sana: bo'sh bo'lsa => "avtomatik bugun". Qo'lda tanlansa => shu qiymat.
-  const BOSH = { ism: "", izoh: "", sana: "", sanaTanlandi: false, savat: {}, chegirma: "" };
+  const BOSH = { ism: "", izoh: "", sana: "", sanaTanlandi: false, soat: "", savat: {}, chegirma: "" };
   const [forma, setForma] = useState(BOSH);
 
   const qarz = useMemo(() => qarzJami(qarzlar), [qarzlar]);
@@ -80,8 +81,9 @@ export default function Qarzlar() {
     if (savatHisob.items.length === 0) { Alert.alert("Non tanlanmagan", "Kamida bitta non turidan soni kiriting."); return; }
     // Qo'lda tanlanmagan bo'lsa har safar joriy kun
     const sana = forma.sanaTanlandi && forma.sana ? forma.sana : localSana();
+    const soat = forma.soat || hozirgiSoat(); // qo'lda tanlanmasa — hozirgi vaqt
     setQarzlar((prev) => [...prev, {
-      id: Date.now(), ism: forma.ism.trim(), sana, vaqt: Date.now(),
+      id: Date.now(), ism: forma.ism.trim(), sana, soat, vaqt: Date.now(),
       savat: savatHisob.items, summa: savatHisob.yakSumma, chegirma: savatHisob.chegirma,
       izoh: forma.izoh.trim(), tolangan: false, tolanganVaqt: null, tolovlar: [],
     }]);
@@ -128,7 +130,9 @@ export default function Qarzlar() {
 
           <Text style={styles.inputLabel}>Sana</Text>
           <DateField value={forma.sana || localSana()} onChange={yangilaSana} />
-          {!forma.sanaTanlandi && <Text style={styles.hint}>Bugungi kun avtomatik. Boshqa sana uchun kalendarni oching.</Text>}
+          <Text style={styles.inputLabel}>Vaqt</Text>
+          <VaqtField value={forma.soat} onChange={(v) => setForma((p) => ({ ...p, soat: v }))} />
+          {!forma.sanaTanlandi && !forma.soat && <Text style={styles.hint}>Bugungi sana va hozirgi vaqt avtomatik. O'zgartirish uchun bosing.</Text>}
 
           <Text style={styles.inputLabel}>Qarz oluvchi *</Text>
           <TextInput value={forma.ism} onChangeText={(v) => yangila("ism", v)} placeholder="Ism familiya" placeholderTextColor={C.muted} style={styles.input} />
@@ -248,7 +252,7 @@ export default function Qarzlar() {
                           : v.eski ? "To'landi" : "To'lov"}
                       </Text>
                       <Text style={styles.tarixSana}>
-                        {v.sana || vaqtMatni(v.vaqt)}{v.chegirma > 0 ? ` · chegirma ${formatSom(v.chegirma)}` : ""}{v.izoh ? ` · ${v.izoh}` : ""}
+                        {v.sana || vaqtMatni(v.vaqt)}{v.soat ? ` · ${v.soat}` : ""}{v.chegirma > 0 ? ` · chegirma ${formatSom(v.chegirma)}` : ""}{v.izoh ? ` · ${v.izoh}` : ""}
                       </Text>
                     </View>
                     <Text style={[styles.tarixSumma, { color: v.tur === "qarz" ? C.red : C.accent }]}>

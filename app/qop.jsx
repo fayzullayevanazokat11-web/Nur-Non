@@ -126,7 +126,6 @@ export default function Qop() {
         const kartaFoyda  = sum(bugKarta, "sofFoyda");
         const brakSum     = sum(bugBrak, "summa");
         const optomSum    = sum(bugOptom, "summa");
-        const optomFoyda  = sum(bugOptom, "sofFoyda");
         const xarajatSum  = sum(bugXarajat, "summa");
 
         // ── 2) LOCK: kun tugaguncha (tunda 03:00 gacha) Markaz'da ko'rsatkichlar shu qiymatda qotib turadi
@@ -145,7 +144,7 @@ export default function Qop() {
             xarajatJami: stats.xarajatJami,
             kartaSum, kartaSoni: bugKarta.length, kartaFoyda,
             brakSum,  brakSoni: bugBrak.length,
-            optomSum, optomSoni: bugOptom.length, optomFoyda,
+            optomSum, optomSoni: bugOptom.length,
             xarajatSum, xarajatSoni: bugXarajat.length,
           },
         };
@@ -168,7 +167,7 @@ export default function Qop() {
             braklar:         bugBrak,
             optomlar:        bugOptom,
             kunlikXarajatlar:bugXarajat,
-            kartaSum, kartaFoyda, brakSum, optomSum, optomFoyda, xarajatSum,
+            kartaSum, kartaFoyda, brakSum, optomSum, xarajatSum,
           },
         };
         // ── 4) Xomashyo sarfi — ombor so'rovnomasi
