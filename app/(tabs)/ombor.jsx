@@ -20,7 +20,7 @@ import { XomashyoIkon } from "../../src/components/XomashyoIkon";
 const boshForma = (royxat) => Object.fromEntries(royxat.map((m) => [m.id, ""]));
 
 export default function Ombor() {
-  const { omborlar, setOmborlar, omborSorovlar, setOmborSorovlar, omborTasdiqlar, setOmborTasdiqlar, customMahsulotlar, ochirArxivga, hisobotlarTarixi, nonlar, ozIshlabQoplar, eksportMalumot, bekorTaklif } = useApp();
+  const { omborlar, setOmborlar, omborSorovlar, setOmborSorovlar, omborTasdiqlar, setOmborTasdiqlar, customMahsulotlar, ochirArxivga, amalArxivga, hisobotlarTarixi, nonlar, ozIshlabQoplar, eksportMalumot, bekorTaklif } = useApp();
   // Ishlab chiqarish > Xomashyo'da qo'shilgan mahsulotlar ham omborda avtomatik ko'rinadi
   const royxat = useMemo(() => xomashyoRoyxati(customMahsulotlar), [customMahsulotlar]);
 
@@ -54,7 +54,7 @@ export default function Ombor() {
       Alert.alert("Bo'sh zaxira", "Mavjud zaxira allaqachon nol.");
       return;
     }
-    Alert.alert("Zaxirani nollash", "Mavjud zaxirani nolga tenglashtirasizmi? Bu amalni qaytarib bo'lmaydi.", [
+    Alert.alert("Zaxirani nollash", "Mavjud zaxirani nolga tenglashtirasizmi? Kerak bo'lsa «Tarixdagilar»dan qaytarish mumkin.", [
       { text: "Bekor", style: "cancel" },
       {
         text: "Nollash", style: "destructive", onPress: () => {
@@ -66,9 +66,10 @@ export default function Ombor() {
             turi: "nollash",
             maydonlar: balans
               .filter((b) => Math.abs(b.qiymat) > 0.0001)
-              .map((b) => ({ id: b.id, nom: b.nom, birlik: b.birlik, emoji: b.emoji, qiymat: -b.qiymat })),
+              .map((b) => ({ id: b.id, nom: b.nom, birlik: b.birlik, qiymat: -b.qiymat })),
           };
           setOmborlar((prev) => [entry, ...prev]);
+          amalArxivga("nollash", entry); // Tarixdagilar'dan qaytarilsa — shu yozuv olib tashlanadi
           bekorTaklif("Zaxira nollandi", oldin);
         },
       },

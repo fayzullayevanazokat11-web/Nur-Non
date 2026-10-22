@@ -11,17 +11,20 @@ import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useApp } from "../store/AppData";
 import { ruxsatSora, ESLATMA_SOAT } from "../logic/bildirishnoma";
+import { tanishuvniOch } from "./Tanishuv";
+import { Bosma } from "./Bosma";
 import { useTil, setTil } from "../i18n/til";
 import { C, T, S, R, ANIM, temaStil, TEMALAR, useTema, temaAlmashtir } from "../theme";
 
 export function MarkazMenyu({ onYop }) {
-  const { ochirilganlar, akkauntNomi, eslatmaYoqilgan, setEslatmaYoqilgan } = useApp();
+  const { ochirilganlar, akkauntNomi, eslatmaYoqilgan, setEslatmaYoqilgan, eslatmaYangila } = useApp();
   const eslatmaAlmash = async (v) => {
     if (!v) { setEslatmaYoqilgan(false); return; }
     setEslatmaYoqilgan(true);
     if (Platform.OS === "web") return;
     const bor = await ruxsatSora();
-    if (!bor) Alert.alert("Ruxsat kerak", "Eslatma kelishi uchun telefon sozlamalarida Nur-Non ilovasiga bildirishnomalarni yoqing.");
+    if (bor) eslatmaYangila(); // ruxsat endi berilgan bo'lsa — eslatmalar darhol rejalashtiriladi
+    else Alert.alert("Ruxsat kerak", "Eslatma kelishi uchun telefon sozlamalarida Nur-Non ilovasiga bildirishnomalarni yoqing.");
   };
   const til = useTil();
   const tema = useTema();
@@ -36,11 +39,11 @@ export function MarkazMenyu({ onYop }) {
 
   return (
     <Animated.View style={[styles.wrap, { opacity: a, transform: [{ translateY }] }]}>
-      <Pressable
+      <Bosma
         accessibilityRole="button"
         onPress={() => { onYop?.(); router.push("/akkaunt"); }}
-        android_ripple={{ color: C.accent + "1A" }}
-        style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
+        kichrayish={0.98}
+        style={styles.row}
       >
         <View style={styles.icon}><Ionicons name="person-circle-outline" size={22} color={C.accent} /></View>
         <View style={styles.flex1}>
@@ -48,24 +51,24 @@ export function MarkazMenyu({ onYop }) {
           <Text style={styles.sub} numberOfLines={1}>{akkauntNomi ? `${akkauntNomi} · ` : ""}Ma'lumotlarni yuborish va qabul qilish</Text>
         </View>
         <Ionicons name="chevron-forward" size={18} color={C.muted} />
-      </Pressable>
+      </Bosma>
 
       <View style={styles.divider} />
 
-      <Pressable
+      <Bosma
         accessibilityRole="button"
         onPress={() => { onYop?.(); router.push("/ochirilganlar"); }}
-        android_ripple={{ color: C.accent + "1A" }}
-        style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
+        kichrayish={0.98}
+        style={styles.row}
       >
         <View style={styles.icon}><Ionicons name="archive-outline" size={20} color={C.accent} /></View>
         <View style={styles.flex1}>
           <Text style={styles.label}>Tarixdagilar</Text>
-          <Text style={styles.sub}>O'chirilganlar 7 kun saqlanadi · qaytarish mumkin</Text>
+          <Text style={styles.sub}>O'chirish, nollash, haydash · 7 kun · qaytarish mumkin</Text>
         </View>
         {soni > 0 && <View style={styles.badge}><Text style={styles.badgeTxt}>{soni}</Text></View>}
         <Ionicons name="chevron-forward" size={18} color={C.muted} />
-      </Pressable>
+      </Bosma>
 
       <View style={styles.divider} />
 
@@ -108,6 +111,22 @@ export function MarkazMenyu({ onYop }) {
           ios_backgroundColor={C.border}
         />
       </View>
+
+      <View style={styles.divider} />
+
+      <Bosma
+        accessibilityRole="button"
+        onPress={() => { onYop?.(); tanishuvniOch(); }}
+        kichrayish={0.98}
+        style={styles.row}
+      >
+        <View style={styles.icon}><Ionicons name="help-buoy-outline" size={20} color={C.accent} /></View>
+        <View style={styles.flex1}>
+          <Text style={styles.label}>Yo'riqnoma</Text>
+          <Text style={styles.sub}>Dastur bilan qisqacha tanishuv</Text>
+        </View>
+        <Ionicons name="chevron-forward" size={18} color={C.muted} />
+      </Bosma>
 
       <View style={styles.divider} />
 

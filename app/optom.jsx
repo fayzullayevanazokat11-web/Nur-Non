@@ -11,6 +11,7 @@ import { Card } from "../src/components/Card";
 import { Btn } from "../src/components/Btn";
 import { ExpandableCard, yopKartalar } from "../src/components/ExpandableCard";
 import { DateField } from "../src/components/DateField";
+import { NonIkon } from "../src/components/XomashyoIkon";
 import { VaqtField, hozirgiSoat } from "../src/components/VaqtField";
 import { ScrollBox } from "../src/components/ScrollBox";
 import { SahifaSarlavha } from "../src/components/SahifaSarlavha";
@@ -91,6 +92,7 @@ export default function Optom() {
           <Text style={styles.inputLabel}>Non turlari (soni)</Text>
           {(nonlar || []).map((n) => (
             <View key={n.id} style={styles.savatRow}>
+              <NonIkon non={n} size={16} color={C.sub} />
               <Text style={styles.savatNom} numberOfLines={1}>{n.nom}</Text>
               <Text style={styles.savatNarx}>{formatSom(n.narx)}</Text>
               <TextInput value={forma.savat[n.id] ?? ""} onChangeText={(v) => yangilaSavat(n.id, v)} placeholder="0" placeholderTextColor={C.muted} keyboardType="numeric" style={styles.savatInput} />

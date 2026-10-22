@@ -13,8 +13,11 @@ import { ExpandableCard, yopKartalar } from "../src/components/ExpandableCard";
 import { ScrollBox } from "../src/components/ScrollBox";
 import { SahifaSarlavha } from "../src/components/SahifaSarlavha";
 import { BrakTahlili } from "../src/components/BrakTahlili";
+import { NonIkon } from "../src/components/XomashyoIkon";
 import { C, T, S, R, temaStil } from "../src/theme";
 import { formatSom, bugunSana } from "../src/logic/hisob";
+
+const soatMatni = (ms) => { const d = new Date(ms); return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`; };
 
 // Ish kuni sanasi (kun tunda 03:00 da tugaydi)
 const localSana = () => bugunSana();
@@ -110,6 +113,7 @@ export default function Brak() {
               <Text style={styles.inputLabel}>Qaysi nondan nechta dona brak</Text>
               {(ishchi.nonTurlari || []).map((nom) => (
                 <View key={nom} style={styles.savatRow}>
+                  <NonIkon non={(nonlar || []).find((n) => n.nom === nom)} size={16} color={C.sub} />
                   <Text style={styles.savatNom} numberOfLines={1}>{nom}</Text>
                   <Text style={styles.savatNarx}>{formatSom(donaNarxi(nom))}</Text>
                   <TextInput value={forma.dona[nom] ?? ""} onChangeText={(v) => setDona(nom, v)} placeholder="0" placeholderTextColor={C.muted} keyboardType="numeric" style={styles.savatInput} />
@@ -153,7 +157,7 @@ export default function Brak() {
               }
             >
               <Text style={styles.itemIzoh}>{b.nonNomi} · {b.soni} dona brak</Text>
-              <Text style={styles.itemSana}>{b.sana}</Text>
+              <Text style={styles.itemSana}>{b.sana}{b.vaqt ? ` · ${soatMatni(b.vaqt)}` : ""}</Text>
               <View style={styles.actions}>
                 <Pressable onPress={() => tahrirla(b)} hitSlop={6} style={styles.actBtn}>
                   <Ionicons name="create-outline" size={16} color={C.accent} />

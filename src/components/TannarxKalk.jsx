@@ -3,22 +3,36 @@
 // qopga bo'linadi, oxirgi hisobotlardan avtomatik). Narx o'zgarsa — darhol qayta hisoblanadi.
 // "Sinov narxi" — narxni o'zgartirsangiz qancha foyda qolishini ko'rsatadi (saqlanmaydi).
 import { useMemo, useState } from "react";
-import { View, Text, TextInput, StyleSheet } from "react-native";
+import { View, Text, TextInput, StyleSheet, LayoutAnimation } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
 import { useApp } from "../store/AppData";
 import { Card } from "./Card";
 import { ExpandableCard } from "./ExpandableCard";
-import { formatSom } from "../logic/hisob";
+import { formatSom, getIngNarx } from "../logic/hisob";
 import { tannarxHisobi, ortachaKunlikQop, sinovFoyda, narxTasiri } from "../logic/tannarx";
 import { xomashyoRoyxati } from "../logic/konstantalar";
 import { C, T, S, R, temaStil } from "../theme";
+import { XomashyoIkon, NonIkon, BosiladiganIkon, IkonTanlov, NON_TANLOV, IKON_TANLOV, nonIkonKaliti, xomashyoIkonKaliti } from "./XomashyoIkon";
+
+// Tannarx qismlari ikonkalari
+const QISM_IKON = { xomashyo: "basket-outline", qoplik: "people-outline", kunlik: "person-outline" };
 
 const foiz = (x) => `${Math.round(x * 100)}%`;
 
 export function TannarxKalk() {
-  const { nonlar, mahsulotNarxlari, ishchilar, hisobotlarTarixi, ozIshlabQoplar, narxTarixi, customMahsulotlar } = useApp();
+  const { nonlar, mahsulotNarxlari, ishchilar, hisobotlarTarixi, ozIshlabQoplar, narxTarixi, customMahsulotlar, xomashyoIkonlari, xomashyoIkonQoy, nonIkonQoy } = useApp();
   const royxat = xomashyoRoyxati(customMahsulotlar);
+  const xOl = (m) => royxat.find((x) => x.id === m.id) || m;
+  // Ikonkani bosib o'zgartirish (non va xomashyo) — tanlov shu joyda ochiladi
+  const [ikonOchiq, setIkonOchiq] = useState(null);
+  const ikonAlmash = (k) => {
+    LayoutAnimation.configureNext(LayoutAnimation.create(200, LayoutAnimation.Types.easeInEaseOut, LayoutAnimation.Properties.opacity));
+    setIkonOchiq((o) => (o === k ? null : k));
+  };
+  const xTanlov = (k, m) => ikonOchiq === k && (
+    <IkonTanlov sarlavha={`${m.nom} — ikonka`} variantlar={IKON_TANLOV} tanlangan={xomashyoIkonKaliti(xOl(m), xomashyoIkonlari)} onTanla={(v) => xomashyoIkonQoy(m.id, v)} onYop={() => ikonAlmash(k)} />
+  );
   const xNom = (id) => royxat.find((m) => m.id === id)?.nom || id;
   const ikki = (n) => String(n).padStart(2, "0");
   const sana = (ms) => { const d = new Date(ms); return `${ikki(d.getDate())}.${ikki(d.getMonth() + 1)}`; };
@@ -54,7 +68,10 @@ export function TannarxKalk() {
             return (
               <View key={o.id} style={styles.narxQator}>
                 <View style={styles.narxBosh}>
-                  <Text style={styles.narxNom} numberOfLines={1}>{xNom(o.xId)}</Text>
+                  <View style={styles.narxNomQ}>
+                    <XomashyoIkon m={royxat.find((m) => m.id === o.xId) || { id: o.xId }} size={15} color={C.sub} />
+                    <Text style={styles.narxNom} numberOfLines={1}>{xNom(o.xId)}</Text>
+                  </View>
                   <Text style={styles.narxSana}>{sana(o.vaqt)}</Text>
                 </View>
                 <Text style={styles.narxQiymat}>{narxMatni(o.eski, o.xId)} → {narxMatni(o.yangi, o.xId)}</Text>
@@ -72,12 +89,21 @@ export function TannarxKalk() {
       {natija.map((r) => {
         const s = sinov[r.id] ?? "";
         const sf = s !== "" ? sinovFoyda(r, s) : null;
+        const non = (nonlar || []).find((n) => n.id === r.id) || { id: r.id, ozIshlab: r.oz };
+        const nonK = `non:${r.id}`;
+        const ingr = (non.mahsulotlar || []).filter((m) => parseFloat(m.miqdor) > 0);
         return (
           <ExpandableCard
             key={r.id}
             style={styles.item}
+            ilova={ikonOchiq === nonK ? (
+              <IkonTanlov sarlavha={`${r.nom} — ikonka`} variantlar={NON_TANLOV} tanlangan={nonIkonKaliti(non)} onTanla={(k) => nonIkonQoy(r.id, k)} onYop={() => ikonAlmash(nonK)} />
+            ) : null}
             header={
               <View style={styles.mHead}>
+                <BosiladiganIkon label={`${r.nom}: ikonkani o'zgartirish`} ochiq={ikonOchiq === nonK} onPress={() => ikonAlmash(nonK)} style={[styles.nonIkon, !r.oz && styles.nonIkonTashqi]}>
+                  <NonIkon non={non} size={22} color={r.oz ? C.accent : C.sub} />
+                </BosiladiganIkon>
                 <View style={styles.flex1}>
                   <Text style={styles.nom} numberOfLines={1}>{r.nom}</Text>
                   <Text style={styles.izoh}>Tannarx {formatSom(r.dona)} · narx {formatSom(r.narx)} so'm</Text>
@@ -97,10 +123,35 @@ export function TannarxKalk() {
                   <Text style={[styles.jV, styles.jBosh]}>dona</Text>
                 </View>
                 {r.qismlar.map((q) => (
-                  <View key={q.k} style={styles.jQator}>
-                    <Text style={styles.jNom} numberOfLines={1}>{q.nom}</Text>
-                    <Text style={styles.jV}>{formatSom(q.qop)}</Text>
-                    <Text style={styles.jV}>{formatSom(q.dona)}</Text>
+                  <View key={q.k}>
+                    <View style={styles.jQator}>
+                      <View style={styles.jNomQ}>
+                        <Ionicons name={QISM_IKON[q.k] || "ellipse-outline"} size={14} color={C.sub} />
+                        <Text style={styles.jNom} numberOfLines={1}>{q.nom}</Text>
+                      </View>
+                      <Text style={styles.jV}>{formatSom(q.qop)}</Text>
+                      <Text style={styles.jV}>{formatSom(q.dona)}</Text>
+                    </View>
+                    {/* Xomashyo tarkibi — har biri o'z ikonkasi bilan */}
+                    {q.k === "xomashyo" && ingr.map((m) => {
+                      const k = `x:${r.id}:${m.id}`;
+                      const qop = getIngNarx(m, mahsulotNarxlari);
+                      return (
+                        <View key={m.id}>
+                          <View style={styles.ingQator}>
+                            <View style={styles.jNomQ}>
+                              <BosiladiganIkon belgi={false} label={`${m.nom}: ikonkani o'zgartirish`} ochiq={ikonOchiq === k} onPress={() => ikonAlmash(k)}>
+                                <XomashyoIkon m={xOl(m)} size={14} color={C.sub} />
+                              </BosiladiganIkon>
+                              <Text style={styles.ingNom} numberOfLines={1}>{m.nom}</Text>
+                            </View>
+                            <Text style={styles.ingV}>{formatSom(qop)}</Text>
+                            <Text style={styles.ingV}>{r.nonSoni > 0 ? formatSom(qop / r.nonSoni) : "0"}</Text>
+                          </View>
+                          {xTanlov(k, m)}
+                        </View>
+                      );
+                    })}
                   </View>
                 ))}
                 <View style={[styles.jQator, styles.jJami]}>
@@ -151,7 +202,7 @@ const styles = temaStil(() => StyleSheet.create({
   ogoh:     { fontSize: T.xs, color: C.red, marginTop: S[2], fontWeight: "600" },
 
   item:     { marginBottom: S[3] },
-  mHead:    { flexDirection: "row", alignItems: "center", gap: S[2] },
+  mHead:    { flexDirection: "row", alignItems: "center", gap: S[3] },
   nom:      { fontSize: T.md, fontWeight: "700", color: C.text },
   izoh:     { fontSize: T.xs, color: C.muted, marginTop: 2 },
   foydaBox: { alignItems: "flex-end" },
@@ -163,6 +214,13 @@ const styles = temaStil(() => StyleSheet.create({
   jQator:   { flexDirection: "row", paddingVertical: 6, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: C.borderSoft },
   jJami:    { borderTopWidth: 1, borderTopColor: C.border },
   jNom:     { flex: 1, fontSize: T.sm, color: C.sub },
+  jNomQ:    { flex: 1, flexDirection: "row", alignItems: "center", gap: 6 },
+  ingQator: { flexDirection: "row", alignItems: "center", paddingVertical: 4, paddingLeft: S[4] },
+  ingNom:   { flex: 1, fontSize: T.xs, color: C.muted },
+  ingV:     { width: 78, textAlign: "right", fontSize: T.xs, color: C.sub },
+  nonIkon:  { width: 40, height: 40, borderRadius: R.sm, alignItems: "center", justifyContent: "center", backgroundColor: C.accent + "16", borderWidth: 1, borderColor: C.accent + "26" },
+  nonIkonTashqi: { backgroundColor: C.panel, borderColor: C.borderSoft },
+  narxNomQ: { flexDirection: "row", alignItems: "center", gap: 6, flexShrink: 1 },
   jV:       { width: 78, textAlign: "right", fontSize: T.sm, color: C.text, fontWeight: "600" },
   qalin:    { fontWeight: "800", color: C.text },
   sinov:    { marginTop: S[2], backgroundColor: C.accent + "0D", borderRadius: R.sm, padding: S[3], gap: 4 },

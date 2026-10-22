@@ -1,5 +1,6 @@
 // Tugma — Pressable asosida. Bosilganda silliq (ease-in-out) kichrayadi + shaffoflashadi.
-import { useRef } from "react";
+// Yozuvi o'zgarsa (masalan "Saqlash" → "Saqlandi") — yangi holat yumshoq paydo bo'ladi.
+import { useEffect, useRef } from "react";
 import { Animated, Pressable, Text, Easing, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { C, T, R, ANIM, temaStil } from "../theme";
@@ -27,8 +28,24 @@ export function Btn({
       useNativeDriver: true,
     }).start();
 
-  const scale = v.interpolate({ inputRange: [0, 1], outputRange: [1, 0.97] });
-  const opacity = v.interpolate({ inputRange: [0, 1], outputRange: [1, 0.9] });
+  // Holat almashganda (yozuv yoki ikonka) — qisqa "pop"
+  const holat = `${String(children)}|${icon || ""}`;
+  const pop = useRef(new Animated.Value(1)).current;
+  const birinchi = useRef(true);
+  useEffect(() => {
+    if (birinchi.current) { birinchi.current = false; return; }
+    pop.setValue(0);
+    Animated.timing(pop, { toValue: 1, duration: 260, easing: Easing.out(Easing.back(1.6)), useNativeDriver: true }).start();
+  }, [holat]);
+
+  const scale = Animated.multiply(
+    v.interpolate({ inputRange: [0, 1], outputRange: [1, 0.97] }),
+    pop.interpolate({ inputRange: [0, 1], outputRange: [0.94, 1] })
+  );
+  const opacity = Animated.multiply(
+    v.interpolate({ inputRange: [0, 1], outputRange: [1, 0.9] }),
+    pop.interpolate({ inputRange: [0, 1], outputRange: [0.4, 1] })
+  );
 
   return (
     <Pressable

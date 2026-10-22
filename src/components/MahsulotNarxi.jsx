@@ -3,7 +3,7 @@
 // narxini tizim o'zi topadi. Har xomashyoda ikonka (yangilarida tanlanadi).
 // Bu narxlar Assortimentdagi non foydasi hisobiga ulanadi.
 import { useState } from "react";
-import { View, Text, TextInput, Pressable, StyleSheet, Alert } from "react-native";
+import { View, Text, TextInput, Pressable, StyleSheet, Alert, LayoutAnimation } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useApp } from "../store/AppData";
 import { Card } from "./Card";
@@ -12,14 +12,20 @@ import { ExpandableCard, yopKartalar } from "./ExpandableCard";
 import { OMBOR_MAYDONLAR, xomashyoRoyxati } from "../logic/konstantalar";
 import { formatSom } from "../logic/hisob";
 import { C, T, S, R, temaStil } from "../theme";
-import { XomashyoIkon, IKON_TANLOV } from "./XomashyoIkon";
+import { XomashyoIkon, IKON_TANLOV, IkonTanlov, BosiladiganIkon, xomashyoIkonKaliti } from "./XomashyoIkon";
 
 const baseUnit = (birlik) => (birlik === "litr" ? "ml" : "g");
 const ASOSIY_IDLAR = new Set(OMBOR_MAYDONLAR.map((m) => m.id));
 
 export function Xomashyo() {
-  const { mahsulotNarxlari, setMahsulotNarxlari, customMahsulotlar, setCustomMahsulotlar, ochirArxivga } = useApp();
+  const { mahsulotNarxlari, setMahsulotNarxlari, customMahsulotlar, setCustomMahsulotlar, ochirArxivga, xomashyoIkonlari, xomashyoIkonQoy } = useApp();
   const royxat = xomashyoRoyxati(customMahsulotlar);
+  // Ikonka bosilsa — shu kartaning o'zida tanlov ochiladi
+  const [ikonOchiq, setIkonOchiq] = useState(null);
+  const ikonAlmash = (id) => {
+    LayoutAnimation.configureNext(LayoutAnimation.create(200, LayoutAnimation.Types.easeInEaseOut, LayoutAnimation.Properties.opacity));
+    setIkonOchiq((o) => (o === id ? null : id));
+  };
 
   const BOSH_F = { nom: "", birlik: "kg", narx: "", miqdor: "", ikon: "package-variant-closed" };
   const [forma, setForma] = useState(BOSH_F);
@@ -67,6 +73,7 @@ export function Xomashyo() {
           <Text style={styles.hintTxt}>
             Har bir xomashyo uchun <Text style={styles.bold}>qancha miqdori = qancha so'm</Text> ekanini kiriting.
             Assortimentda gramm kiritilganda narx <Text style={styles.bold}>avtomatik</Text> hisoblanadi.
+            Ikonkani o'zgartirish uchun uning ustiga bosing.
           </Text>
         </View>
       </Card>
@@ -142,7 +149,9 @@ export function Xomashyo() {
           <Card key={m.id} style={styles.item}>
             <View style={styles.head}>
               <View style={styles.headLeft}>
-                <XomashyoIkon m={m} quti size={22} qutiSize={44} />
+                <BosiladiganIkon label={`${m.nom}: ikonkani o'zgartirish`} ochiq={ikonOchiq === m.id} onPress={() => ikonAlmash(m.id)}>
+                  <XomashyoIkon m={m} quti size={22} qutiSize={44} />
+                </BosiladiganIkon>
                 <View style={styles.flex1}>
                   <Text style={styles.nom}>{m.nom}</Text>
                   <Text style={styles.sub}>{unit} bilan o'lchanadi</Text>
@@ -156,6 +165,15 @@ export function Xomashyo() {
                 </View>
               </View>
             </View>
+            {ikonOchiq === m.id && (
+              <IkonTanlov
+                sarlavha={`${m.nom} — ikonka`}
+                variantlar={IKON_TANLOV}
+                tanlangan={xomashyoIkonKaliti(m, xomashyoIkonlari)}
+                onTanla={(k) => xomashyoIkonQoy(m.id, k)}
+                onYop={() => ikonAlmash(m.id)}
+              />
+            )}
 
             <View style={styles.inputs}>
               <View style={styles.col}>

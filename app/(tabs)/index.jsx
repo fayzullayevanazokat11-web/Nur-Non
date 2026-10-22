@@ -12,6 +12,7 @@ import { Card } from "../../src/components/Card";
 import { BrandHeader } from "../../src/components/BrandHeader";
 import { MarkazMenyu } from "../../src/components/MarkazMenyu";
 import { ScrollBox } from "../../src/components/ScrollBox";
+import { Bosma } from "../../src/components/Bosma";
 import { useAnimSon } from "../../src/components/useAnimSon";
 import { EslatmalarPanel } from "../../src/components/EslatmalarPanel";
 import { ixcham } from "../../src/components/Statistika";
@@ -128,7 +129,7 @@ export default function Markaz() {
   // Kun yakunini bekor qilish (shu kun oxirigacha) — tick tufayli tunda 03:00 da o'zi yo'qoladi
   const bekorKorinadi = !!locked && yakunBekorMumkinmi();
   const yakunniBekorSora = () =>
-    Alert.alert("Kun yakunini bekor qilish", "Bugungi hisobot o'chiriladi, kiritilgan qoplar «Kunlik qop hisobi»ga qaytadi va kunni qayta yakunlash mumkin bo'ladi. Davom etasizmi?", [
+    Alert.alert("Kun yakunini bekor qilish", "Bugungi hisobot olib tashlanadi, kiritilgan qoplar «Kunlik qop hisobi»ga qaytadi va kunni qayta yakunlash mumkin bo'ladi. Fikringiz o'zgarsa — «Tarixdagilar»dan tiklaysiz. Davom etasizmi?", [
       { text: "Yo'q", style: "cancel" },
       { text: "Bekor qilish", style: "destructive", onPress: () => {
         LayoutAnimation.configureNext(LayoutAnimation.create(220, LayoutAnimation.Types.easeInEaseOut, LayoutAnimation.Properties.opacity));
@@ -146,17 +147,16 @@ export default function Markaz() {
 
         <View style={styles.statsRow}>
           <StatTile label="Sof foyda" unit="so'm" son={stats.sofFoyda} format={formatSom} color={stats.sofFoyda >= 0 ? C.green : C.red} icon="trending-up-outline" />
-          <StatTile label="Sotilgan non" unit="dona" son={stats.sotilganNon} color={C.text} icon="cube-outline" />
+          <StatTile label="Sotilgan non" unit="dona" son={stats.sotilganNon} color={C.accent} icon="cube-outline" />
           <StatTile label="Kunlik qop" unit="qop" son={stats.jamiQop} color={C.accent} icon="layers-outline" />
         </View>
 
         {/* STATISTIKA — ko'rsatkichlar tagida */}
-        <Pressable
+        <Bosma
           accessibilityLabel="Hisobotlar tarixi"
           accessibilityRole="button"
           onPress={() => router.push("/tarix")}
-          android_ripple={{ color: C.accent + "1A" }}
-          style={({ pressed }) => [styles.xarajatBtn, pressed && styles.xarajatBtnPressed]}
+          style={styles.xarajatBtn}
         >
           <View style={[styles.navIcon, { backgroundColor: C.accent + "14" }]}>
             <Ionicons name="stats-chart-outline" size={22} color={C.accent} />
@@ -166,15 +166,14 @@ export default function Markaz() {
             <Text style={styles.xarajatSub}>{(hisobotlarTarixi || []).length} ta hisobot · 30 kun</Text>
           </View>
           <Ionicons name="chevron-forward" size={18} color={C.muted} />
-        </Pressable>
+        </Bosma>
 
         {/* Kunlik qop hisobi — alohida sahifaga olib boradi (to'liq tafsilot bilan) */}
-        <Pressable
+        <Bosma
           accessibilityLabel="Kunlik qop hisobi"
           accessibilityRole="button"
           onPress={() => router.push("/qop")}
-          android_ripple={{ color: C.accent + "1A" }}
-          style={({ pressed }) => [styles.xarajatBtn, !bekorKorinadi && styles.qopBtn, pressed && styles.xarajatBtnPressed]}
+          style={[styles.xarajatBtn, !bekorKorinadi && styles.qopBtn]}
         >
           <View style={[styles.navIcon, { backgroundColor: C.accent + "14" }]}>
             <Image source={ICONS.qop} style={styles.navIconImg} resizeMode="contain" />
@@ -186,7 +185,7 @@ export default function Markaz() {
             </Text>
           </View>
           <Ionicons name="chevron-forward" size={18} color={C.muted} />
-        </Pressable>
+        </Bosma>
 
         {/* KUN YAKUNINI BEKOR QILISH — yakunlangan kunning oxirigacha turadi */}
         {bekorKorinadi && (
@@ -211,19 +210,18 @@ export default function Markaz() {
 
         {/* 4 ta kichik tugma — bitta qatorda */}
         <View style={styles.miniQator}>
-          <MiniTile image={ICONS.qarz} tint={C.red} label="Qarzlar" qiymat={qarz.summa} soni={qarz.kishi} onPress={() => router.push("/qarzlar")} />
-          <MiniTile image={ICONS.optom} tint={C.accent} label="Optom" qiymat={optom.summa} soni={optom.soni} onPress={() => router.push("/optom")} />
-          <MiniTile image={ICONS.karta} tint={C.green} label="Karta" qiymat={karta.summa} soni={karta.soni} onPress={() => router.push("/karta")} />
-          <MiniTile image={ICONS.brak} tint={C.red} label="Brak" qiymat={brakSumma} soni={brakSoni} onPress={() => router.push("/brak")} />
+          <MiniTile image={ICONS.qarz} label="Qarzlar" qiymat={qarz.summa} soni={qarz.kishi} onPress={() => router.push("/qarzlar")} />
+          <MiniTile image={ICONS.optom} label="Optom" qiymat={optom.summa} soni={optom.soni} onPress={() => router.push("/optom")} />
+          <MiniTile image={ICONS.karta} label="Karta" qiymat={karta.summa} soni={karta.soni} onPress={() => router.push("/karta")} />
+          <MiniTile image={ICONS.brak} label="Brak" qiymat={brakSumma} soni={brakSoni} onPress={() => router.push("/brak")} />
         </View>
 
         {/* Kunlik qo'shimcha xarajatlar — vertikal nav tugma */}
-        <Pressable
+        <Bosma
           accessibilityLabel="Kunlik qo'shimcha xarajatlar"
           accessibilityRole="button"
           onPress={() => router.push("/xarajat")}
-          android_ripple={{ color: C.accent + "1A" }}
-          style={({ pressed }) => [styles.xarajatBtn, pressed && styles.xarajatBtnPressed]}
+          style={styles.xarajatBtn}
         >
           <View style={[styles.navIcon, { backgroundColor: C.accent + "14" }]}>
             <Image source={ICONS.xarajat} style={styles.navIconImg} resizeMode="contain" />
@@ -233,7 +231,7 @@ export default function Markaz() {
             <Text style={styles.xarajatSub}>Bugun: {formatSom(xarajatBugun)} so'm • {xarajatSoni} ta</Text>
           </View>
           <Ionicons name="chevron-forward" size={18} color={C.muted} />
-        </Pressable>
+        </Bosma>
 
         {/* BUGUNGI ISHCHILAR HAQI (jonli) */}
         {bugungiHaq.list.length > 0 && (
@@ -274,15 +272,18 @@ function StatTile({ label, son, format = (x) => String(x), unit, color, icon }) 
   );
 }
 
-// Kichik navigatsiya tugmasi (4 tasi bitta qatorda): ikonka (soni nishonchada), nom, summa
-function MiniTile({ image, tint, label, qiymat, soni, onPress }) {
+// Kichik navigatsiya tugmasi (4 tasi bitta qatorda): ikonka (soni nishonchada), nom, summa.
+// To'rttalasi bir xil aksent rangda.
+function MiniTile({ image, label, qiymat, soni, onPress }) {
+  const tint = C.accent;
   return (
-    <Pressable
+    <Bosma
       accessibilityRole="button"
       accessibilityLabel={label}
       onPress={onPress}
-      android_ripple={{ color: tint + "1A", borderless: false }}
-      style={({ pressed }) => [styles.miniTile, pressed && styles.navTilePressed]}
+      kichrayish={0.95}
+      tashqi={styles.flex1}
+      style={styles.miniTile}
     >
       <View style={[styles.miniIcon, { backgroundColor: tint + "14" }]}>
         <Image source={image} style={[styles.miniIconImg, { tintColor: tint }]} resizeMode="contain" />
@@ -290,7 +291,7 @@ function MiniTile({ image, tint, label, qiymat, soni, onPress }) {
       </View>
       <Text style={styles.miniLabel} numberOfLines={1}>{label}</Text>
       <Text style={styles.miniQiymat} numberOfLines={1}>{qiymat ? ixcham(qiymat) : "0"}</Text>
-    </Pressable>
+    </Bosma>
   );
 }
 
@@ -315,7 +316,7 @@ const styles = temaStil(() => StyleSheet.create({
 
   // 4 ta kichik tugma — bitta qatorda
   miniQator: { flexDirection: "row", gap: S[2], marginBottom: S[3] },
-  miniTile:  { flex: 1, alignItems: "center", backgroundColor: C.card, borderRadius: R.md, paddingVertical: S[3], paddingHorizontal: 4, borderWidth: StyleSheet.hairlineWidth, borderColor: C.borderSoft },
+  miniTile:  { alignItems: "center", backgroundColor: C.card, borderRadius: R.md, paddingVertical: S[3], paddingHorizontal: 4, borderWidth: StyleSheet.hairlineWidth, borderColor: C.borderSoft },
   miniIcon:  { width: 40, height: 40, borderRadius: R.sm, alignItems: "center", justifyContent: "center" },
   miniIconImg:{ width: 22, height: 22 },
   miniSoni:  { position: "absolute", top: -5, right: -7, minWidth: 18, height: 18, paddingHorizontal: 4, borderRadius: 9, backgroundColor: C.accent, alignItems: "center", justifyContent: "center", borderWidth: 1.5, borderColor: C.card },

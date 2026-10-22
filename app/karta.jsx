@@ -15,6 +15,8 @@ import { SahifaSarlavha } from "../src/components/SahifaSarlavha";
 import { C, T, S, R, temaStil } from "../src/theme";
 import { formatSom, kartaJami, kartaHisob, bugunSana } from "../src/logic/hisob";
 
+const soatMatni = (ms) => { const d = new Date(ms); return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`; };
+
 // Ish kuni sanasi (kun tunda 03:00 da tugaydi)
 const localSana = () => bugunSana();
 const BOSH = { summa: "", izoh: "" };
@@ -143,7 +145,7 @@ export default function Karta() {
               }
             >
               <Text style={styles.itemIzoh}>≈ {k.dona} dona non · sof foyda {formatSom(k.sofFoyda)} so'm</Text>
-              <Text style={styles.itemSana}>{k.sana}</Text>
+              <Text style={styles.itemSana}>{k.sana}{k.vaqt ? ` · ${soatMatni(k.vaqt)}` : ""}</Text>
               <View style={styles.actions}>
                 <Pressable onPress={() => tahrirla(k)} hitSlop={6} style={styles.actBtn}>
                   <Ionicons name="create-outline" size={16} color={C.accent} />

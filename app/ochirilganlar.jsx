@@ -34,6 +34,12 @@ const TURLAR = {
   omborTasdiq: { nom: "Ombor chiqimi",     icon: "checkmark-done-outline", tavsif: (e) => `${e.manba} · ${e.sana}` },
   ingredient:  { nom: "Xomashyo",          icon: "leaf-outline",          tavsif: (e) => e.nom },
   ishHaqi:     { nom: "Ish haqi yozuvi",   icon: "wallet-outline",        tavsif: (e) => `${{ avans: "Avans", jarima: "Jarima", bonus: "Bonus", tolov: "To'lov" }[e.tur] || ""} · ${som(e.summa)} · ${e.sana}` },
+  // Salbiy amallar (o'chirish emas) — qaytarilsa amal ortga qaytadi
+  haydash:     { nom: "Ishdan haydaldi",   icon: "person-remove-outline", tavsif: (e) => e.ism },
+  nollash:     { nom: "Zaxira nollandi",   icon: "refresh-outline",       tavsif: (e) => `Ombor · ${(e.maydonlar || []).length} xil xomashyo · ${e.sana}` },
+  tolovBekor:  { nom: "Bekor qilingan to'lov", icon: "cash-outline",      tavsif: (e) => `${e.ism} · ${som(e.summa)}` },
+  kunYakuni:   { nom: "Bekor qilingan kun yakuni", icon: "lock-open-outline", tavsif: (e) => `${e.sana} · sof foyda ${som(e.snap?.sofFoyda)}`, sorab: "Kun yakuni qayta tiklanadi: hisobot tarixga qaytadi va kun yana yopiladi. Davom etasizmi?" },
+  import:      { nom: "Ma'lumot yuklandi", icon: "cloud-download-outline", tavsif: (e) => `Oldingi holat: ${e.akkaunt || "nomsiz akkaunt"}`, sorab: "Yuklashdan oldingi holat qaytadi — yuklangandan keyin kiritilgan o'zgarishlar ham bekor bo'ladi. Davom etasizmi?" },
 };
 
 const silliq = () => LayoutAnimation.configureNext(LayoutAnimation.create(220, LayoutAnimation.Types.easeInEaseOut, LayoutAnimation.Properties.opacity));
@@ -58,13 +64,25 @@ export default function Ochirilganlar() {
   // Tanlangan tur ro'yxatda qolmasa — "Hammasi"ga qaytamiz
   useEffect(() => { if (filtr !== "hammasi" && !mavjudTurlar.includes(filtr)) setFiltr("hammasi"); }, [filtr, mavjudTurlar]);
 
-  const qaytarish = (y) => {
+  const bajar = (y) => {
     silliq();
-    if (qaytar(y.id)) {
+    const n = qaytar(y.id);
+    if (n === true) {
       setXabar(`Qaytarildi: ${TURLAR[y.tur].nom}`);
       clearTimeout(xabarT.current);
       xabarT.current = setTimeout(() => setXabar(""), 2200);
+    } else if (typeof n === "string") {
+      Alert.alert("Qaytarib bo'lmadi", n);
     }
+  };
+  // Katta amallar (kun yakuni, ma'lumot yuklash) — avval so'raladi
+  const qaytarish = (y) => {
+    const sorab = TURLAR[y.tur]?.sorab;
+    if (!sorab) { bajar(y); return; }
+    Alert.alert("Qaytarish", sorab, [
+      { text: "Yo'q", style: "cancel" },
+      { text: "Qaytarish", onPress: () => bajar(y) },
+    ]);
   };
 
   const butunlay = (y) =>
@@ -76,7 +94,7 @@ export default function Ochirilganlar() {
   return (
     <SafeAreaView style={styles.safe} edges={["top"]}>
       <ScrollBox contentContainerStyle={styles.scroll}>
-        <SahifaSarlavha eyebrow="TARIXDAGILAR" title="O'chirilganlar" subtitle={`7 kun saqlanadi · ${royxat.length} ta`} icon="archive-outline" />
+        <SahifaSarlavha eyebrow="TARIXDAGILAR" title="Salbiy o'zgarishlar" subtitle={`O'chirish, nollash, haydash · 7 kun · ${royxat.length} ta`} icon="archive-outline" />
 
         {xabar ? (
           <View style={styles.xabar}>
@@ -102,7 +120,7 @@ export default function Ochirilganlar() {
 
         {korinadi.length === 0 ? (
           <Card>
-            <Text style={styles.bosh}>{royxat.length ? "Topilmadi." : "Hozircha o'chirilgan narsa yo'q. Biror narsani o'chirsangiz, u shu yerda 7 kun turadi va uni qaytarish mumkin."}</Text>
+            <Text style={styles.bosh}>{royxat.length ? "Topilmadi." : "Hozircha hech narsa yo'q. Biror narsani o'chirsangiz, nollasangiz, xodimni haydasangiz yoki bekor qilsangiz — shu yerda 7 kun turadi va uni qaytarish mumkin."}</Text>
           </Card>
         ) : (
           korinadi.map((y) => {
@@ -117,7 +135,7 @@ export default function Ochirilganlar() {
                   <View style={styles.flex1}>
                     <Text style={styles.itemTur}>{tur.nom}</Text>
                     <Text style={styles.itemNom} numberOfLines={2}>{tavsif}</Text>
-                    <Text style={styles.itemMeta}>O'chirildi: {vaqtMatni(y.vaqt)} · {qoldi} kun qoldi</Text>
+                    <Text style={styles.itemMeta}>{y.amal ? "Bo'ldi" : "O'chirildi"}: {vaqtMatni(y.vaqt)} · {qoldi} kun qoldi</Text>
                   </View>
                 </View>
                 <View style={styles.actions}>

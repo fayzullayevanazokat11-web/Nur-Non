@@ -25,7 +25,7 @@ const BOSH = { ism: "", lavozimId: LAVOZIMLAR[0].id, lavozimCustom: "", haqTuri:
 const HOLATLAR = ["Aktiv", "Ta'tilda"];
 
 export default function Xodimlar() {
-  const { ishchilar, setIshchilar, nonlar, ochirArxivga, hisobotlarTarixi, oylikArxiv, ishHaqiYozuvlari, kelmaganlar, kelmadiAlmash } = useApp();
+  const { ishchilar, setIshchilar, nonlar, ochirArxivga, amalArxivga, hisobotlarTarixi, oylikArxiv, ishHaqiYozuvlari, kelmaganlar, kelmadiAlmash } = useApp();
   const [qidiruv, setQidiruv] = useState("");
   const oylik = useMemo(
     () => oylikIshHaqi({ oy: joriyOy(), hisobotlar: hisobotlarTarixi, arxiv: oylikArxiv, ishchilar, yozuvlar: ishHaqiYozuvlari }),
@@ -118,7 +118,12 @@ export default function Xodimlar() {
   const haydash = (w) =>
     Alert.alert("Ishdan haydash", `${w.ism}ni ishdan haydaysizmi? Ishchi "Ishdan ketganlar" ro'yxatiga o'tadi.`, [
       { text: "Bekor", style: "cancel" },
-      { text: "Haydash", style: "destructive", onPress: () => { yopKartalar({ qoldir: "forma" }); setIshchilar((p) => p.map((x) => x.id === w.id ? { ...x, holat: "Ishdan ketgan", tatilQaytishSana: "" } : x)); } },
+      { text: "Haydash", style: "destructive", onPress: () => {
+        yopKartalar({ qoldir: "forma" });
+        // Tarixdagilar'ga — oldingi holatiga qaytarish mumkin
+        amalArxivga("haydash", { id: w.id, ism: w.ism, holat: w.holat, tatilQaytishSana: w.tatilQaytishSana || "" });
+        setIshchilar((p) => p.map((x) => x.id === w.id ? { ...x, holat: "Ishdan ketgan", tatilQaytishSana: "" } : x));
+      } },
     ]);
 
   const qaytarish = (w) =>

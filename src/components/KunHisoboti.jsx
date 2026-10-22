@@ -9,6 +9,7 @@ import * as Clipboard from "expo-clipboard";
 import { useApp } from "../store/AppData";
 import { Card } from "./Card";
 import { Btn } from "./Btn";
+import { NonIkon } from "./XomashyoIkon";
 import { formatSom } from "../logic/hisob";
 import { sanaChiroyli } from "../logic/davr";
 import { kunlikHtml, pdfUlash } from "../logic/ulashish";
@@ -36,7 +37,7 @@ export function KunHisoboti({ h }) {
   const nonQatorlar = (h.nonlarSnapshot || nonlar || []).map((n) => {
     const oz = n.ozIshlab !== false;
     const q = oz ? (parseInt((h.ozIshlabQoplar || {})[n.id]) || 0) : (parseInt((h.tashqariSonlar || {})[n.id]) || 0);
-    return q > 0 ? { id: n.id, nom: n.nom, matn: `${q} ${oz ? "qop" : "dona"}` } : null;
+    return q > 0 ? { id: n.id, nom: n.nom, non: (nonlar || []).find((x) => x.id === n.id) || n, matn: `${q} ${oz ? "qop" : "dona"}` } : null;
   }).filter(Boolean);
   const qoshimcha = [
     ["Karta to'lovlari", a.kartaSum], ["Optom savdo", a.optomSum], ["Brak", a.brakSum], ["Qo'shimcha xarajat", h.xarajatJami],
@@ -64,7 +65,7 @@ export function KunHisoboti({ h }) {
       {nonQatorlar.length > 0 && (
         <Card style={styles.card}>
           <Sarlavha icon="layers-outline" matn="Ishlab chiqarish" />
-          {nonQatorlar.map((x) => <Qator key={x.id} nom={x.nom} qiymat={x.matn} />)}
+          {nonQatorlar.map((x) => <Qator key={x.id} nom={x.nom} qiymat={x.matn} ikon={<NonIkon non={x.non} size={15} color={C.sub} />} />)}
         </Card>
       )}
 
@@ -120,9 +121,10 @@ function Sarlavha({ icon, matn }) {
   );
 }
 
-function Qator({ nom, qiymat, qalin, katta }) {
+function Qator({ nom, qiymat, qalin, katta, ikon }) {
   return (
     <View style={styles.qator}>
+      {ikon}
       <Text style={styles.qatorNom}>{nom}</Text>
       <Text style={[styles.qatorVal, qalin && styles.qalin, katta && styles.katta]}>{qiymat}</Text>
     </View>

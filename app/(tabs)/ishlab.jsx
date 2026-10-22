@@ -2,7 +2,7 @@
 // Non: o'zimizniki (ingredient + 1 qopdan non soni → dona foydasi avtomatik)
 // yoki tashqaridan (donadan qoladigan foyda to'g'ridan kiritiladi).
 import { useRef, useState } from "react";
-import { View, Text, Image, Pressable, TextInput, StyleSheet, Alert } from "react-native";
+import { View, Text, Pressable, TextInput, StyleSheet, Alert, LayoutAnimation } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 
@@ -13,7 +13,7 @@ import { ScreenHeader } from "../../src/components/ScreenHeader";
 import { ExpandableCard, yopKartalar } from "../../src/components/ExpandableCard";
 import { MahsulotNarxi } from "../../src/components/MahsulotNarxi";
 import { TannarxKalk } from "../../src/components/TannarxKalk";
-import { XomashyoIkon } from "../../src/components/XomashyoIkon";
+import { XomashyoIkon, NonIkon, BosiladiganIkon, IkonTanlov, NON_TANLOV, IKON_TANLOV, nonIkonKaliti, xomashyoIkonKaliti } from "../../src/components/XomashyoIkon";
 import { ScrollBox } from "../../src/components/ScrollBox";
 import { xomashyoRoyxati } from "../../src/logic/konstantalar";
 import { C, T, S, R, temaStil } from "../../src/theme";
@@ -22,13 +22,9 @@ import { formatSom, getQopTannarx, getIngNarx } from "../../src/logic/hisob";
 const baseUnit = (birlik) => (birlik === "litr" ? "ml" : "g");
 const BOSH = { nom: "", narx: "", oz: true, nonSoni: "", donaFoyda: "", ing: {} };
 
-// Non uchun dona foydasi
-// Non turi ikonkasi: o'zimiz pishiradigan — non bo'lagi, tashqaridan olinadigan — baton
-const NON_IKON = {
-  oz: require("../../assets/xomashyo/bread-slice-outline.png"),
-  tashqi: require("../../assets/xomashyo/baguette.png"),
-};
+const silliq = () => LayoutAnimation.configureNext(LayoutAnimation.create(200, LayoutAnimation.Types.easeInEaseOut, LayoutAnimation.Properties.opacity));
 
+// Non uchun dona foydasi
 function donaFoydasi(non, narxlar) {
   if (non.ozIshlab === false) return parseFloat(non.tashqariFoyda) || 0;
   const son = parseFloat(non.nonSoni) || 0;
@@ -41,10 +37,32 @@ export default function IshlabChiqarish() {
     nonlar, setNonlar, ishchilar, setIshchilar,
     optomlar, setOptomlar, qarzlar, setQarzlar, braklar, setBraklar,
     mahsulotNarxlari, customMahsulotlar, ochirArxivga,
+    xomashyoIkonlari, xomashyoIkonQoy, nonIkonQoy,
   } = useApp();
   const royxat = xomashyoRoyxati(customMahsulotlar);
 
+  // Ikonkani bosib o'zgartirish: qaysi ikonkaning tanlovi ochiq ("non:<id>", "x:<joy>:<xId>")
+  const [ikonOchiq, setIkonOchiq] = useState(null);
+  const ikonAlmash = (k) => { silliq(); setIkonOchiq((o) => (o === k ? null : k)); };
+  const ikonYop = () => { silliq(); setIkonOchiq(null); };
+  // Xomashyo qatori — ikonka bosilsa shu qator tagida tanlov ochiladi
+  const xIkon = (joy, m, size = 16) => (
+    <BosiladiganIkon belgi={false} label={`${m.nom}: ikonkani o'zgartirish`} ochiq={ikonOchiq === `x:${joy}:${m.id}`} onPress={() => ikonAlmash(`x:${joy}:${m.id}`)}>
+      <XomashyoIkon m={royxat.find((x) => x.id === m.id) || m} size={size} color={C.sub} />
+    </BosiladiganIkon>
+  );
+  const xTanlov = (joy, m) => ikonOchiq === `x:${joy}:${m.id}` && (
+    <IkonTanlov
+      sarlavha={`${m.nom} — ikonka`}
+      variantlar={IKON_TANLOV}
+      tanlangan={xomashyoIkonKaliti(royxat.find((x) => x.id === m.id) || m, xomashyoIkonlari)}
+      onTanla={(k) => xomashyoIkonQoy(m.id, k)}
+      onYop={ikonYop}
+    />
+  );
+
   const [tab, setTab] = useState("assortiment");
+  const tabTanla = (t) => { if (t === tab) return; silliq(); setIkonOchiq(null); setTab(t); };
   const [tahrirId, setTahrirId] = useState(null);
   const [forma, setForma] = useState(BOSH);
   const scrollRef = useRef(null);
@@ -168,15 +186,15 @@ export default function IshlabChiqarish() {
         <ScreenHeader eyebrow="Assortiment" title="Ishlab chiqarish" subtitle={`${nonlar.length} xil non · ${aktivIshchi} aktiv xodim`} image={require("../../assets/tabicons/ishlab.png")} />
 
         <View style={styles.segment}>
-          <Pressable style={[styles.seg, tab === "assortiment" && styles.segActive]} onPress={() => setTab("assortiment")}>
+          <Pressable style={[styles.seg, tab === "assortiment" && styles.segActive]} onPress={() => tabTanla("assortiment")}>
             <Ionicons name="grid-outline" size={15} color={tab === "assortiment" ? C.onAccent : C.sub} />
             <Text style={[styles.segTxt, tab === "assortiment" && styles.segTxtActive]}>Assortiment</Text>
           </Pressable>
-          <Pressable style={[styles.seg, tab === "narx" && styles.segActive]} onPress={() => setTab("narx")}>
+          <Pressable style={[styles.seg, tab === "narx" && styles.segActive]} onPress={() => tabTanla("narx")}>
             <Ionicons name="leaf-outline" size={15} color={tab === "narx" ? C.onAccent : C.sub} />
             <Text style={[styles.segTxt, tab === "narx" && styles.segTxtActive]}>Xomashyo</Text>
           </Pressable>
-          <Pressable style={[styles.seg, tab === "tannarx" && styles.segActive]} onPress={() => setTab("tannarx")}>
+          <Pressable style={[styles.seg, tab === "tannarx" && styles.segActive]} onPress={() => tabTanla("tannarx")}>
             <Ionicons name="calculator-outline" size={15} color={tab === "tannarx" ? C.onAccent : C.sub} />
             <Text style={[styles.segTxt, tab === "tannarx" && styles.segTxtActive]}>Tannarx</Text>
           </Pressable>
@@ -226,13 +244,16 @@ export default function IshlabChiqarish() {
                   {royxat.map((m) => {
                     const unit = baseUnit(m.birlik);
                     return (
-                      <View key={m.id} style={styles.ingEditRow}>
-                        <View style={styles.ingEditNomQ}>
-                          <XomashyoIkon m={m} size={16} color={C.sub} />
-                          <Text style={styles.ingEditNom} numberOfLines={1}>{m.nom}</Text>
+                      <View key={m.id}>
+                        <View style={styles.ingEditRow}>
+                          <View style={styles.ingEditNomQ}>
+                            {xIkon("forma", m)}
+                            <Text style={styles.ingEditNom} numberOfLines={1}>{m.nom}</Text>
+                          </View>
+                          <TextInput value={forma.ing[m.id] ?? ""} onChangeText={(v) => yangilaIng(m.id, v)} placeholder="0" placeholderTextColor={C.muted} keyboardType="numeric" style={styles.ingInput} />
+                          <Text style={styles.ingUnit}>{unit}</Text>
                         </View>
-                        <TextInput value={forma.ing[m.id] ?? ""} onChangeText={(v) => yangilaIng(m.id, v)} placeholder="0" placeholderTextColor={C.muted} keyboardType="numeric" style={styles.ingInput} />
-                        <Text style={styles.ingUnit}>{unit}</Text>
+                        {xTanlov("forma", m)}
                       </View>
                     );
                   })}
@@ -263,6 +284,7 @@ export default function IshlabChiqarish() {
               <Text style={styles.secTitle}>NON TURLARI</Text>
               <Text style={styles.secCount}>{nonlar.length} ta</Text>
             </View>
+            {nonlar.length > 0 && <Text style={styles.ikonHint}>Ikonkani o'zgartirish uchun uning ustiga bosing</Text>}
 
             {nonlar.length === 0 ? (
               <Card><Text style={styles.muted}>Hali non turi qo'shilmagan</Text></Card>
@@ -270,15 +292,30 @@ export default function IshlabChiqarish() {
               nonlar.map((non) => {
                 const oz = non.ozIshlab !== false;
                 const foyda = donaFoydasi(non, mahsulotNarxlari);
+                const nonKalit = `non:${non.id}`;
                 return (
                   <ExpandableCard
                     key={non.id}
                     style={styles.item}
+                    ilova={ikonOchiq === nonKalit ? (
+                      <IkonTanlov
+                        sarlavha={`${non.nom} — ikonka`}
+                        variantlar={NON_TANLOV}
+                        tanlangan={nonIkonKaliti(non)}
+                        onTanla={(k) => nonIkonQoy(non.id, k)}
+                        onYop={ikonYop}
+                      />
+                    ) : null}
                     header={
                       <View style={styles.nonBosh}>
-                        <View style={[styles.nonIkon, !oz && styles.nonIkonTashqi]}>
-                          <Image source={oz ? NON_IKON.oz : NON_IKON.tashqi} style={[styles.nonIkonImg, { tintColor: oz ? C.accent : C.sub }]} resizeMode="contain" />
-                        </View>
+                        <BosiladiganIkon
+                          label={`${non.nom}: ikonkani o'zgartirish`}
+                          ochiq={ikonOchiq === nonKalit}
+                          onPress={() => ikonAlmash(nonKalit)}
+                          style={[styles.nonIkon, !oz && styles.nonIkonTashqi]}
+                        >
+                          <NonIkon non={non} size={26} color={oz ? C.accent : C.sub} />
+                        </BosiladiganIkon>
                         <View style={styles.flex1}>
                           <Text style={styles.nonNom} numberOfLines={1}>{non.nom}</Text>
                           <View style={styles.nonMeta}>
@@ -302,13 +339,16 @@ export default function IshlabChiqarish() {
                       <View style={styles.ingWrap}>
                         <Text style={styles.ingHead}>1 QOPGA XOMASHYO ({non.mahsulotlar.length})</Text>
                         {non.mahsulotlar.map((m) => (
-                          <View key={m.id} style={styles.ingRow}>
-                            <View style={styles.ingNomQ}>
-                              <XomashyoIkon m={royxat.find((x) => x.id === m.id) || m} size={15} color={C.sub} />
-                              <Text style={styles.ingNom} numberOfLines={1}>{m.nom}</Text>
+                          <View key={m.id}>
+                            <View style={styles.ingRow}>
+                              <View style={styles.ingNomQ}>
+                                {xIkon(non.id, m, 15)}
+                                <Text style={styles.ingNom} numberOfLines={1}>{m.nom}</Text>
+                              </View>
+                              <Text style={styles.ingMiqdor}>{m.miqdor} {m.birlik}</Text>
+                              <Text style={styles.ingNarx}>{formatSom(getIngNarx(m, mahsulotNarxlari))} so'm</Text>
                             </View>
-                            <Text style={styles.ingMiqdor}>{m.miqdor} {m.birlik}</Text>
-                            <Text style={styles.ingNarx}>{formatSom(getIngNarx(m, mahsulotNarxlari))} so'm</Text>
+                            {xTanlov(non.id, m)}
                           </View>
                         ))}
                         <View style={styles.ingTotalRow}>
@@ -385,6 +425,7 @@ const styles = temaStil(() => StyleSheet.create({
   secHead:   { flexDirection: "row", alignItems: "center", gap: 6, marginBottom: S[3] },
   secTitle:  { fontSize: T.xs, color: C.sub, fontWeight: "700", letterSpacing: 1, flex: 1 },
   secCount:  { fontSize: T.sm, color: C.sub, fontWeight: "700" },
+  ikonHint:  { fontSize: 11, color: C.muted, marginTop: -S[2], marginBottom: S[3] },
 
   // Ro'yxat
   item:      { marginBottom: S[3] },
@@ -393,7 +434,6 @@ const styles = temaStil(() => StyleSheet.create({
   nonBosh:   { flexDirection: "row", alignItems: "center", gap: S[3] },
   nonIkon:   { width: 46, height: 46, borderRadius: R.md, alignItems: "center", justifyContent: "center", backgroundColor: C.accent + "16", borderWidth: 1, borderColor: C.accent + "26" },
   nonIkonTashqi: { backgroundColor: C.panel, borderColor: C.borderSoft },
-  nonIkonImg:{ width: 26, height: 26 },
   nonNom:    { fontSize: T.md + 1, fontWeight: "800", color: C.text, letterSpacing: -0.2 },
   nonMeta:   { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 4, flexWrap: "wrap" },
   nonMetaTxt:{ fontSize: 11, color: C.muted, fontWeight: "600" },
@@ -418,8 +458,8 @@ const styles = temaStil(() => StyleSheet.create({
   ingRow:    { flexDirection: "row", alignItems: "center", marginBottom: 6 },
   ingNomQ:   { flex: 1, flexDirection: "row", alignItems: "center", gap: 6 },
   ingNom:    { flex: 1, fontSize: T.sm, color: C.text },
-  ingMiqdor: { fontSize: T.xs, color: C.muted, width: 78, textAlign: "right" },
-  ingNarx:   { fontSize: T.xs, color: C.sub, fontWeight: "700", width: 82, textAlign: "right" },
+  ingMiqdor: { fontSize: T.xs, color: C.muted, width: 72, textAlign: "right" },
+  ingNarx:   { fontSize: T.xs, color: C.sub, fontWeight: "700", width: 92, marginLeft: 6, textAlign: "right" },
   ingTotalRow:{ flexDirection: "row", justifyContent: "space-between", marginTop: 4, paddingTop: 6, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: C.borderSoft },
   ingTotalLbl:{ fontSize: T.xs, color: C.sub, fontWeight: "700" },
   ingTotalV: { fontSize: T.xs, color: C.text, fontWeight: "800" },

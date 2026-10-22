@@ -10,7 +10,7 @@ import { getTil } from "../i18n/til";
 import { ogir } from "../i18n/translit";
 import { SEED_NONLAR, SEED_ISHCHILAR, SEED_MAHSULOT_NARXLARI } from "../logic/data";
 
-const AppDataContext = createContext(null);
+export const AppDataContext = createContext(null);
 
 export function useApp() {
   const ctx = useContext(AppDataContext);
@@ -104,6 +104,8 @@ export function AppDataProvider({ children }) {
   const [davomat, setDavomat]                           = usePersistedState("nurnon:davomat", {});
   // Xomashyo narxlari o'zgarish tarixi: [{ id, nom, eski, yangi, vaqt }] — 180 kun
   const [narxTarixi, setNarxTarixi]                     = usePersistedState("nurnon:narxTarixi", []);
+  // Foydalanuvchi o'zgartirgan xomashyo ikonkalari: { xomashyoId: ikonKaliti }
+  const [xomashyoIkonlari, setXomashyoIkonlari]         = usePersistedState("nurnon:xomashyoIkonlari", {});
   // Barcha saqlangan ma'lumot yuklandi. Tashqi signal sinxron render qiladi, yuklangan
   // qiymatlar esa oddiy navbatda — shuning uchun "tayyor"ni alohida holat orqali
   // keyingi navbatga qo'yamiz: u true bo'lgan renderda barcha qiymatlar allaqachon bor.
@@ -231,6 +233,22 @@ export function AppDataProvider({ children }) {
   const kunYakuniniBekor = () => {
     if (!yakunBekorMumkinmi()) return false;
     const { snapId, sorovId, oldin } = yakunBekor;
+    // Tarixdagilar'ga: bekor qilingan yakunni qayta tiklash mumkin bo'lsin
+    const snap = (hisobotlarTarixi || []).find((h) => h.id === snapId);
+    if (snap) {
+      const tasdiq = sorovId ? (omborTasdiqlar || []).find((t) => t.sorovId === sorovId) : null;
+      const sorov = sorovId
+        ? (omborSorovlar || []).find((s) => s.id === sorovId)
+          || (tasdiq ? { id: sorovId, sana: tasdiq.sana, vaqt: tasdiq.vaqt, manba: tasdiq.manba, maydonlar: tasdiq.maydonlar } : null)
+        : null;
+      amalArxivga("kunYakuni", {
+        kun: yakunBekor.kun, sana: snap.sana, snap, lock: lockedDayStats, sorov,
+        forma: {
+          ozIshlabQoplar: oldin.ozIshlabQoplar || {}, tashqariSonlar: oldin.tashqariSonlar || {},
+          sotilmaganNon: oldin.sotilmaganNon || {}, qoldaYaroqsiz: oldin.qoldaYaroqsiz || {},
+        },
+      });
+    }
     setHisobotlarTarixi((prev) => {
       const qolgan = (prev || []).filter((h) => h.id !== snapId);
       if (oldin.almashganHisobot && !qolgan.some((h) => h.id === oldin.almashganHisobot.id)) qolgan.push(oldin.almashganHisobot);
@@ -298,6 +316,9 @@ export function AppDataProvider({ children }) {
     () => (ishchilar || []).map((w) => (kelmaganlar.includes(w.id) ? { ...w, kelmadi: true } : w)),
     [ishchilar, kelmaganlar]
   );
+  // Bildirishnoma ruxsati berilgach eslatmalarni qayta rejalashtirish uchun
+  const [eslatmaKalit, setEslatmaKalit] = useState(0);
+  const eslatmaYangila = () => setEslatmaKalit((k) => k + 1);
   useEffect(() => {
     if (!tayyor) return;
     const til = getTil();
@@ -307,7 +328,7 @@ export function AppDataProvider({ children }) {
       sarlavha: ogir("Kunni yakunlashni unutmang", til),
       matn: ogir("Bugungi qop hisobini kiriting va «Kunni yakunlash»ni bosing.", til),
     });
-  }, [tayyor, eslatmaYoqilgan, yakunSana]);
+  }, [tayyor, eslatmaYoqilgan, yakunSana, eslatmaKalit]);
 
   // ── Tarixdagilar: o'chirish (arxivga) va qaytarish ──
   // tur → [joriy ro'yxat, setter]
@@ -343,10 +364,74 @@ export function AppDataProvider({ children }) {
     ]);
   };
 
-  // Elementni asl ro'yxatiga, asl o'rniga qaytaradi
+  // Salbiy amallar (haydash, zaxirani nollash, to'lovni bekor qilish, kun yakunini
+  // bekor qilish, ma'lumot yuklash) — ro'yxatdan hech narsa olinmaydi, faqat qaytarish
+  // uchun "Tarixdagilar"ga yoziladi. element — amalni ortga qaytarishga yetadigan ma'lumot.
+  const amalArxivga = (tur, element, qoshimcha = {}) => setOchirilganlar((p) => [
+    { id: `${Date.now()}-${Math.floor(Math.random() * 1e6)}`, tur, vaqt: Date.now(), amal: true, element, qoshimcha },
+    ...(p || []),
+  ]);
+
+  // Har bir amalni ortga qaytarish. Natija: true yoki nima uchun bo'lmagani (matn)
+  const AMALLAR = {
+    haydash: (e) => {
+      if (!(ishchilar || []).some((w) => w.id === e.id)) return "Xodim topilmadi — o'chirilgan bo'lishi mumkin.";
+      setIshchilar((p) => (p || []).map((w) => (w.id === e.id ? { ...w, holat: e.holat || "Aktiv", tatilQaytishSana: e.tatilQaytishSana || "" } : w)));
+      return true;
+    },
+    nollash: (e) => {
+      if (!(omborlar || []).some((h) => h.id === e.id)) return "Bu nollash allaqachon bekor qilingan.";
+      setOmborlar((p) => (p || []).filter((h) => h.id !== e.id));
+      return true;
+    },
+    tolovBekor: (e) => {
+      const qismlar = (e.qismlar || []).filter((x) => x && x.tolov);
+      if (!qismlar.some((x) => (qarzlar || []).some((q) => q.id === x.qarzId))) return "Qarz topilmadi — o'chirilgan bo'lishi mumkin.";
+      setQarzlar((p) => (p || []).map((q) => {
+        const mos = qismlar.filter((x) => x.qarzId === q.id);
+        if (!mos.length) return q;
+        const tolovlar = [...(q.tolovlar || [])];
+        mos.forEach((x) => { if (!tolovlar.some((t) => t.id === x.tolov.id)) tolovlar.push(x.tolov); });
+        tolovlar.sort((a, b) => (a.vaqt || 0) - (b.vaqt || 0));
+        const yopiq = tolovlar.reduce((s, t) => s + (parseFloat(t.summa) || 0), 0) >= (parseFloat(q.summa) || 0) - 0.5;
+        return { ...q, tolovlar, tolangan: yopiq, tolanganVaqt: yopiq ? (q.tolanganVaqt || mos[0].tolanganVaqt || mos[0].tolov.vaqt) : null };
+      }));
+      return true;
+    },
+    kunYakuni: (e) => {
+      if (!e.snap) return "Hisobot ma'lumoti topilmadi.";
+      if (e.kun === bugunSana()) {
+        // Shu ish kuni hali tugamagan — kun xuddi avvalgidek qayta yakunlanadi
+        if (kunYakunlanganmi()) return "Bugun kun qayta yakunlangan. Avval uni Markazdan bekor qiling.";
+        kunYakunla({ snap: e.snap, lock: e.lock, sorov: e.sorov, forma: e.forma || {} });
+        return true;
+      }
+      // Kun o'tib ketgan — hisobot tarixga qaytadi
+      if ((hisobotlarTarixi || []).some((h) => h.sana === e.snap.sana)) return `${e.snap.sana} uchun hisobot allaqachon bor.`;
+      setHisobotlarTarixi((p) => [...(p || []), e.snap].sort((a, b) => (b.vaqt || 0) - (a.vaqt || 0)));
+      return true;
+    },
+    import: (e) => {
+      if (!importZaxira || importZaxira.vaqt !== e.zaxiraVaqt) return "Yuklashdan oldingi holat nusxasi topilmadi.";
+      zaxiradanQaytar();
+      return true;
+    },
+  };
+
+  // Elementni asl ro'yxatiga, asl o'rniga qaytaradi (amal bo'lsa — amalni ortga qaytaradi).
+  // Natija: true, false yoki qaytarib bo'lmaganining sababi (matn)
   const qaytar = (yozuvId) => {
     const y = (ochirilganlar || []).find((x) => x.id === yozuvId);
-    if (!y || !KOLLEKSIYA[y.tur]) return false;
+    if (!y) return false;
+    if (y.amal) {
+      const f = AMALLAR[y.tur];
+      if (!f) return false;
+      const n = f(y.element || {}, y.qoshimcha || {});
+      if (n !== true) return n || false;
+      setOchirilganlar((p) => (p || []).filter((x) => x.id !== yozuvId));
+      return true;
+    }
+    if (!KOLLEKSIYA[y.tur]) return false;
     const q = y.qoshimcha || {};
     const kirit = (set, el, indeks) => set((p) => {
       const a = [...(p || [])];
@@ -378,6 +463,13 @@ export function AppDataProvider({ children }) {
   };
 
   const butunlayOchir = (yozuvId) => setOchirilganlar((p) => (p || []).filter((x) => x.id !== yozuvId));
+
+  // ── Ikonkalar: xomashyo (asosiylari ham) va non ikonkasini almashtirish ──
+  const xomashyoIkonQoy = (id, kalit) => {
+    setXomashyoIkonlari((p) => ({ ...(p || {}), [id]: kalit }));
+    setCustomMahsulotlarXom((p) => (p || []).map((m) => (m.id === id ? { ...m, ikon: kalit } : m)));
+  };
+  const nonIkonQoy = (id, kalit) => setNonlarXom((p) => (p || []).map((n) => (n.id === id ? { ...n, ikon: kalit } : n)));
 
   // ── Ma'lumotlarni uzatish: butun baza bitta matnga va qaytib ──
   // kalit → [joriy qiymat, setter, kutilgan tur]
@@ -412,6 +504,7 @@ export function AppDataProvider({ children }) {
     oylikArxiv: [oylikArxiv, setOylikArxiv, "object"],
     davomat: [davomat, setDavomat, "object"],
     narxTarixi: [narxTarixi, setNarxTarixi, "array"],
+    xomashyoIkonlari: [xomashyoIkonlari, setXomashyoIkonlari, "object"],
   };
 
   // Joriy bazaning to'liq nusxasi
@@ -425,13 +518,16 @@ export function AppDataProvider({ children }) {
   // holat zaxiraga olinadi — kerak bo'lsa "Oldingi holatga qaytarish" mumkin.
   const importMalumot = (paket, { zaxiraOl = true } = {}) => {
     const data = paket?.data || {};
-    if (zaxiraOl) setImportZaxira(eksportMalumot());
+    const zaxira = zaxiraOl ? eksportMalumot() : null;
+    if (zaxira) setImportZaxira(zaxira);
     let soni = 0;
     Object.keys(BAZA).forEach((k) => {
       if (!(k in data) || !BAZA_TUR_MOS(data[k], BAZA[k][2])) return;
       BAZA[k][1](tozalaRoyxat(k, data[k]));
       soni++;
     });
+    // Tarixdagilar'ga (yuklangan ro'yxat ustiga): oldingi holatga qaytarish mumkin
+    if (zaxira && soni > 0) amalArxivga("import", { akkaunt: zaxira.akkaunt || "", zaxiraVaqt: zaxira.vaqt, yangiAkkaunt: String(paket?.akkaunt || "") });
     if (typeof paket?.akkaunt === "string" && paket.akkaunt.trim()) setAkkauntNomi(paket.akkaunt.trim());
     if (zaxiraOl) setYakunBekor(null); // boshqa ma'lumot yuklandi — eski kun yakunini bekor qilib bo'lmaydi
     setQopTasdiqlandi(false);
@@ -508,13 +604,14 @@ export function AppDataProvider({ children }) {
     oxirgiYakunlashVaqti, setOxirgiYakunlashVaqti,
     lockedDayStats, setLockedDayStats,
     kunYakunlangan, kunYakunlanganmi, kunYakunla, yakunBekor, yakunBekorMumkin, yakunBekorMumkinmi, kunYakuniniBekor,
-    ochirilganlar, ochirArxivga, qaytar, butunlayOchir,
+    ochirilganlar, ochirArxivga, amalArxivga, qaytar, butunlayOchir,
     akkauntNomi, setAkkauntNomi,
     ishHaqiYozuvlari, setIshHaqiYozuvlari,
     oylikArxiv, setOylikArxiv,
-    eslatmaYoqilgan, setEslatmaYoqilgan,
+    eslatmaYoqilgan, setEslatmaYoqilgan, eslatmaYangila,
     davomat, setDavomat, kelmaganlar, kelmadiAlmash, ishchilarHaq,
     narxTarixi, setNarxTarixi,
+    xomashyoIkonlari, xomashyoIkonQoy, nonIkonQoy,
     oxirgiNusxa, nusxaOl,
     bekor, bekorTaklif, bekorQil, bekorYop,
     tayyor,

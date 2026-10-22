@@ -10,6 +10,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { C, temaStil } from "../../src/theme";
 import { useTil } from "../../src/i18n/til";
 import { ogir } from "../../src/i18n/translit";
+import { tabBosildi } from "../../src/components/ScrollBox";
 
 const { Navigator } = createMaterialTopTabNavigator();
 const SwipeTabs = withLayoutContext(Navigator);
@@ -61,7 +62,10 @@ function PastkiPanel({ state, descriptors, navigation, position }) {
           : 1;
         const onPress = () => {
           const ev = navigation.emit({ type: "tabPress", target: route.key, canPreventDefault: true });
-          if (!tanlangan && !ev.defaultPrevented) navigation.navigate(route.name, route.params);
+          if (!tanlangan && !ev.defaultPrevented) {
+            tabBosildi(); // ochilayotgan bo'lim kontenti silliq paydo bo'ladi
+            navigation.navigate(route.name, route.params);
+          }
         };
         const nom = options.tabBarLabel ?? options.title ?? route.name;
         return (

@@ -1,9 +1,16 @@
 // Scroll konteyneri — o'ng chetда doim ko'rinadigan thumb (faqat vizual indikator).
 // Sudrash xususiyati olib tashlandi — kontent bo'ylab oddiy swipe scroll ishlatiladi
 // (Android'da thumb tile'larning tap sohasini bloklab qo'yardi).
-import { forwardRef, useImperativeHandle, useRef, useState } from "react";
-import { View, ScrollView, StyleSheet } from "react-native";
+// Sahifa ochilganda va pastki paneldan bo'lim tanlanganda kontent silliq paydo bo'ladi
+// (shaffoflik + biroz ko'tarilish) — sahifalar sakrab emas, yumshoq almashadi.
+import { forwardRef, useContext, useEffect, useImperativeHandle, useRef, useState } from "react";
+import { View, ScrollView, Animated, Easing, StyleSheet } from "react-native";
+import { NavigationContext } from "@react-navigation/native";
 import { C, temaStil } from "../theme";
+
+// Pastki paneldagi bo'lim bosilgan vaqt (surib o'tishda kontent allaqachon ko'rinib turadi)
+let oxirgiTabBosish = 0;
+export const tabBosildi = () => { oxirgiTabBosish = Date.now(); };
 
 export const ScrollBox = forwardRef(function ScrollBox(
   { children, contentContainerStyle, keyboardShouldPersistTaps, style },
@@ -14,6 +21,20 @@ export const ScrollBox = forwardRef(function ScrollBox(
     scrollTo: (opts) => ref.current?.scrollTo(opts),
     scrollToTop: (animated = true) => ref.current?.scrollTo({ y: 0, animated }),
   }), []);
+  // Paydo bo'lish animatsiyasi
+  const kir = useRef(new Animated.Value(0)).current;
+  const korsat = () => {
+    kir.setValue(0);
+    Animated.timing(kir, { toValue: 1, duration: 260, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start();
+  };
+  useEffect(() => { korsat(); }, []);
+  const navigation = useContext(NavigationContext);
+  useEffect(() => {
+    if (!navigation?.addListener) return undefined;
+    return navigation.addListener("focus", () => { if (Date.now() - oxirgiTabBosish < 600) korsat(); });
+  }, [navigation]);
+  const kirish = { opacity: kir, transform: [{ translateY: kir.interpolate({ inputRange: [0, 1], outputRange: [10, 0] }) }] };
+
   const [vh, setVh] = useState(0);
   const [ch, setCh] = useState(0);
   const [sy, setSy] = useState(0);
@@ -27,7 +48,7 @@ export const ScrollBox = forwardRef(function ScrollBox(
   const top = Math.max(0, Math.min(usable, (sy / maxScroll) * usable));
 
   return (
-    <View style={[styles.wrap, style]}>
+    <Animated.View style={[styles.wrap, style, kirish]}>
       <ScrollView
         ref={ref}
         contentContainerStyle={contentContainerStyle}
@@ -46,7 +67,7 @@ export const ScrollBox = forwardRef(function ScrollBox(
           <View style={[styles.thumb, { height: thumbH, transform: [{ translateY: top }] }]} />
         </View>
       )}
-    </View>
+    </Animated.View>
   );
 });
 

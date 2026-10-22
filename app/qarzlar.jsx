@@ -13,6 +13,7 @@ import { Card } from "../src/components/Card";
 import { Btn } from "../src/components/Btn";
 import { ExpandableCard, yopKartalar } from "../src/components/ExpandableCard";
 import { DateField } from "../src/components/DateField";
+import { NonIkon } from "../src/components/XomashyoIkon";
 import { VaqtField, hozirgiSoat } from "../src/components/VaqtField";
 import { ScrollBox } from "../src/components/ScrollBox";
 import { SahifaSarlavha } from "../src/components/SahifaSarlavha";
@@ -28,7 +29,7 @@ const vaqtMatni = (ms) => { const d = new Date(ms); return `${ikki(d.getDate())}
 const localSana = () => bugunSana();
 
 export default function Qarzlar() {
-  const { nonlar, qarzlar, setQarzlar, mahsulotNarxlari, ochirArxivga } = useApp();
+  const { nonlar, qarzlar, setQarzlar, mahsulotNarxlari, ochirArxivga, amalArxivga } = useApp();
   // sana: bo'sh bo'lsa => "avtomatik bugun". Qo'lda tanlansa => shu qiymat.
   const BOSH = { ism: "", izoh: "", sana: "", sanaTanlandi: false, soat: "", savat: {}, chegirma: "" };
   const [forma, setForma] = useState(BOSH);
@@ -109,7 +110,17 @@ export default function Qarzlar() {
   };
   const tolovBekor = (v) => Alert.alert("To'lovni bekor qilish", `${formatSom(v.summa)} so'm to'lov bekor qilinsinmi? Qarz qayta ochiladi.`, [
     { text: "Yo'q", style: "cancel" },
-    { text: "Bekor qilish", style: "destructive", onPress: () => setQarzlar((prev) => tolovniBekorQil(prev, v.qismlar)) },
+    { text: "Bekor qilish", style: "destructive", onPress: () => {
+      // Tarixdagilar'ga — to'lovni (barcha qismlari bilan) qayta tiklash mumkin
+      const qismlar = (v.qismlar || []).map(({ qarzId, tolovId }) => {
+        const q = (qarzlar || []).find((x) => x.id === qarzId);
+        const tolov = (q?.tolovlar || []).find((t) => t.id === tolovId);
+        return tolov ? { qarzId, tolov, tolanganVaqt: q.tolanganVaqt || null } : null;
+      }).filter(Boolean);
+      const ism = (qarzlar || []).find((x) => x.id === qismlar[0]?.qarzId)?.ism || "";
+      if (qismlar.length) amalArxivga("tolovBekor", { ism, summa: v.summa, sana: v.sana || "", qismlar });
+      setQarzlar((prev) => tolovniBekorQil(prev, v.qismlar));
+    } },
   ]);
   const ochirQarz = (id) => Alert.alert("O'chirish", "Bu qarzni o'chirasizmi?", [
     { text: "Bekor", style: "cancel" },
@@ -150,6 +161,7 @@ export default function Qarzlar() {
           <Text style={styles.inputLabel}>Non turlari (soni)</Text>
           {(nonlar || []).map((n) => (
             <View key={n.id} style={styles.savatRow}>
+              <NonIkon non={n} size={16} color={C.sub} />
               <Text style={styles.savatNom} numberOfLines={1}>{n.nom}</Text>
               <Text style={styles.savatNarx}>{formatSom(n.narx)}</Text>
               <TextInput value={forma.savat[n.id] ?? ""} onChangeText={(v) => yangilaSavat(n.id, v)} placeholder="0" placeholderTextColor={C.muted} keyboardType="numeric" style={styles.savatInput} />

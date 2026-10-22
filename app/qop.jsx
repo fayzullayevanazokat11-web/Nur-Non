@@ -14,12 +14,18 @@ import { Btn } from "../src/components/Btn";
 import { xomashyoRoyxati } from "../src/logic/konstantalar";
 import { DateField } from "../src/components/DateField";
 import { KunHisoboti } from "../src/components/KunHisoboti";
+import { NonIkon } from "../src/components/XomashyoIkon";
 import { ScrollBox } from "../src/components/ScrollBox";
 import { SahifaSarlavha } from "../src/components/SahifaSarlavha";
 import { C, T, S, R, temaStil } from "../src/theme";
 import { hisoblaKunlik, qoldiqlarHisobi, ishchiHaqlari, kunlikXomashyoSarfi, formatSom, bugunSana, kunTugashVaqti } from "../src/logic/hisob";
 
 const toStr = (obj) => Object.fromEntries(Object.entries(obj || {}).map(([k, v]) => [k, String(v)]));
+// Taqqoslash uchun: bo'sh maydonlar tashlanadi, kalitlar tartiblanadi
+const tekisla = (obj) => JSON.stringify(Object.keys(obj || {})
+  .filter((k) => String(obj[k] ?? "").trim() !== "")
+  .sort()
+  .map((k) => [k, String(obj[k]).trim()]));
 // Ish kuni sanasi (kun tunda 03:00 da tugaydi)
 const localSana = () => bugunSana();
 
@@ -79,13 +85,19 @@ export default function Qop() {
   const qoldiqlar = useMemo(() => qoldiqlarHisobi(nonlar, args), [fQop, fTash, fSot, fYaroqsiz, nonlar, boshlangichQoldiq, optomlar, qarzlar, oxirgiYakunlashVaqti]);
   const haq = useMemo(() => ishchiHaqlari(nonlar, ishchilar, fQop, bugungiBrak), [nonlar, ishchilar, fQop, bugungiBrak]);
 
+  // Forma saqlanganidan farq qilmasa (va ichida ma'lumot bo'lsa) — tugma "Saqlandi"
+  const saqlandi = useMemo(() => {
+    const juft = [[fQop, ozIshlabQoplar], [fTash, tashqariSonlar], [fSot, sotilmaganNon], [fYaroqsiz, qoldaYaroqsiz]];
+    return juft.every(([f, s]) => tekisla(f) === tekisla(s)) && juft.some(([, s]) => tekisla(s) !== "[]");
+  }, [fQop, fTash, fSot, fYaroqsiz, ozIshlabQoplar, tashqariSonlar, sotilmaganNon, qoldaYaroqsiz]);
+
   const saqla = () => {
+    if (saqlandi) return;
     setOzIshlabQoplar(fQop);
     setTashqariSonlar(fTash);
     setSotilmaganNon(fSot);
     setQoldaYaroqsiz(fYaroqsiz);
     setTegildi(false);
-    Alert.alert("Saqlandi", "Kunlik kiritmalar saqlandi.");
   };
 
   const kunniYakunla = () => {
@@ -230,6 +242,7 @@ export default function Qop() {
             return (
               <View key={n.id} style={styles.nonRow}>
                 <View style={styles.nonHead}>
+                  <View style={styles.nonIkon}><NonIkon non={n} size={16} color={oz ? C.accent : C.sub} /></View>
                   <Text style={styles.nonNom} numberOfLines={1}>{n.nom}</Text>
                   {q.boshlang > 0 && (
                     <View style={styles.boshlangPill}>
@@ -257,7 +270,11 @@ export default function Qop() {
               </View>
             );
           })}
-          <Btn onPress={saqla} icon="save-outline">Saqlash</Btn>
+          {saqlandi ? (
+            <Btn onPress={saqla} icon="checkmark-circle" color={C.accent + "1F"} textColor={C.accent}>Saqlandi</Btn>
+          ) : (
+            <Btn onPress={saqla} icon="save-outline">Saqlash</Btn>
+          )}
         </Card>
 
         {/* Umumiy son hisoboti */}
@@ -359,6 +376,7 @@ const styles = temaStil(() => StyleSheet.create({
   nonRow: { marginBottom: S[3], paddingBottom: S[3], borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: C.borderSoft },
   nonHead: { flexDirection: "row", alignItems: "center", gap: S[2], marginBottom: 6, flexWrap: "wrap" },
   nonNom: { fontSize: T.md, fontWeight: "700", color: C.text },
+  nonIkon: { width: 28, height: 28, borderRadius: 9, alignItems: "center", justifyContent: "center", backgroundColor: C.accent + "14" },
   boshlangPill: { flexDirection: "row", alignItems: "center", paddingHorizontal: 8, paddingVertical: 2, borderRadius: R.pill, backgroundColor: C.accent + "14" },
   boshlangTxt: { fontSize: 11, color: C.accent, fontWeight: "700" },
   inputs: { flexDirection: "row", gap: S[2] },

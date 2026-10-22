@@ -35,7 +35,8 @@ export function yopKartalar({ qoldir } = {}) {
   if (biror) silliq();
 }
 
-export function ExpandableCard({ header, children, defaultOpen = false, ochKaliti, id, style }) {
+// `ilova` — sarlavha tagida doim ko'rinadigan qism (masalan, ikonka tanlovi); bosilganda karta ochilmaydi
+export function ExpandableCard({ header, children, defaultOpen = false, ochKaliti, id, style, ilova }) {
   const [open, setOpen] = useState(defaultOpen || !!ochKaliti);
   const openRef = useRef(open);
   openRef.current = open;
@@ -99,6 +100,7 @@ export function ExpandableCard({ header, children, defaultOpen = false, ochKalit
           </Animated.View>
         </Animated.View>
       </Pressable>
+      {ilova ? <View style={styles.ilova}>{ilova}</View> : null}
       {open ? <View style={styles.body}>{children}</View> : null}
     </Card>
   );
@@ -111,4 +113,5 @@ const styles = temaStil(() => StyleSheet.create({
   headOpen:   { borderTopLeftRadius: R.lg, borderTopRightRadius: R.lg, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: C.borderSoft },
   headLeft:   { flex: 1 },
   body:       { paddingVertical: S[4], paddingHorizontal: S[5] },
+  ilova:      { paddingHorizontal: S[4], paddingBottom: S[2] },
 }));
