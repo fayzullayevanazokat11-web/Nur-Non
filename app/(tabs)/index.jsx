@@ -1,7 +1,8 @@
-// "Markaz" ekrani — kunlik ko'rsatkichlar + navigatsiya tugmalari (qop hisobi,
-// 2x2 grid: Qarz/Optom/Karta/Brak, qo'shimcha xarajatlar) + hisobotlar tarixi.
+// "Markaz" ekrani — kunlik ko'rsatkichlar, ularning tagida Statistika, kunlik qop
+// hisobi (yakunlangan bo'lsa — kun oxirigacha "bekor qilish"), bir qatorda 4 ta
+// kichik tugma (Qarz/Optom/Karta/Brak), qo'shimcha xarajatlar va ishchilar haqi.
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { View, Text, Pressable, Image, StyleSheet, LayoutAnimation, AppState } from "react-native";
+import { View, Text, Pressable, Image, StyleSheet, LayoutAnimation, AppState, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { router, useFocusEffect } from "expo-router";
@@ -13,6 +14,7 @@ import { MarkazMenyu } from "../../src/components/MarkazMenyu";
 import { ScrollBox } from "../../src/components/ScrollBox";
 import { useAnimSon } from "../../src/components/useAnimSon";
 import { EslatmalarPanel } from "../../src/components/EslatmalarPanel";
+import { ixcham } from "../../src/components/Statistika";
 import { C, T, S, R, temaStil } from "../../src/theme";
 import { hisoblaKunlik, formatSom, qarzJami, optomJami, kartaJami, ishchiHaqlari } from "../../src/logic/hisob";
 // Maxsus rasm ikonkalari (Ionicons o'rniga — premium ko'rinish)
@@ -36,7 +38,7 @@ export default function Markaz() {
     ozIshlabQoplar, tashqariSonlar, sotilmaganNon, mahsulotNarxlari,
     hisobotlarTarixi, braklar,
     boshlangichQoldiq, qoldaYaroqsiz, kunlikXarajatlar, oxirgiYakunlashVaqti,
-    lockedDayStats,
+    lockedDayStats, yakunBekor, yakunBekorMumkinmi, kunYakuniniBekor,
   } = useApp();
 
   // Har 30 soniyada tick — yarim tundan o'tganda lock va sana ko'rsatkichlari
@@ -68,7 +70,7 @@ export default function Markaz() {
   // tarqaladi va ko'rsatkichlar yangi kun uchun jonli yangilanadi.
   const locked = useMemo(() => {
     if (!lockedDayStats) return null;
-    if (lockedDayStats.sana !== bugunSanasi) return null;
+    if ((lockedDayStats.kun || lockedDayStats.sana) !== bugunSanasi) return null;
     if (lockedDayStats.lockedUntil && Date.now() > lockedDayStats.lockedUntil) return null;
     return lockedDayStats.snapshot || null;
   }, [lockedDayStats, bugunSanasi, tick]);
@@ -89,10 +91,16 @@ export default function Markaz() {
   // Lock bo'lsa — snapshot, aks holda jonli hisob:
   const stats = locked ? { ...liveStats, ...locked } : liveStats;
 
-  const bugungiHaq = useMemo(
-    () => ishchiHaqlari(nonlar, ishchilar, ozIshlabQoplar, bugungiBrak),
-    [nonlar, ishchilar, ozIshlabQoplar, bugungiBrak]
-  );
+  // Kun yakunlangan bo'lsa — o'sha kun hisobotidagi ishchilar haqi (kiritmalar tozalangan)
+  const yakunHisoboti = useMemo(() => {
+    if (!locked) return null;
+    return (hisobotlarTarixi || []).find((h) => h.id === yakunBekor?.snapId)
+      || (hisobotlarTarixi || []).find((h) => h.sana === lockedDayStats?.sana) || null;
+  }, [locked, hisobotlarTarixi, yakunBekor, lockedDayStats]);
+  const bugungiHaq = useMemo(() => {
+    if (yakunHisoboti) return { list: yakunHisoboti.ishchiHaqlari || [] };
+    return ishchiHaqlari(nonlar, ishchilar, ozIshlabQoplar, bugungiBrak);
+  }, [yakunHisoboti, nonlar, ishchilar, ozIshlabQoplar, bugungiBrak]);
 
   // Qarzlar — Lock ta'sir qilmaydi (doimiy qoldiq).
   const qarz = useMemo(() => qarzJami(qarzlar), [qarzlar]);
@@ -119,6 +127,17 @@ export default function Markaz() {
     return (kunlikXarajatlar || []).filter((x) => x.sana === bugunSanasi && yangiYozuv(x)).length;
   }, [locked, kunlikXarajatlar, oxirgiYakunlashVaqti, bugunSanasi]);
 
+  // Kun yakunini bekor qilish (shu kun oxirigacha) — tick tufayli yarim tunda o'zi yo'qoladi
+  const bekorKorinadi = !!locked && yakunBekorMumkinmi();
+  const yakunniBekorSora = () =>
+    Alert.alert("Kun yakunini bekor qilish", "Bugungi hisobot o'chiriladi, kiritilgan qoplar «Kunlik qop hisobi»ga qaytadi va kunni qayta yakunlash mumkin bo'ladi. Davom etasizmi?", [
+      { text: "Yo'q", style: "cancel" },
+      { text: "Bekor qilish", style: "destructive", onPress: () => {
+        LayoutAnimation.configureNext(LayoutAnimation.create(220, LayoutAnimation.Types.easeInEaseOut, LayoutAnimation.Properties.opacity));
+        kunYakuniniBekor();
+      } },
+    ]);
+
   return (
     <SafeAreaView style={styles.safe} edges={["top"]}>
       <ScrollBox contentContainerStyle={styles.scroll}>
@@ -133,13 +152,31 @@ export default function Markaz() {
           <StatTile label="Kunlik qop" unit="qop" son={stats.jamiQop} color={C.accent} icon="layers-outline" />
         </View>
 
+        {/* STATISTIKA — ko'rsatkichlar tagida */}
+        <Pressable
+          accessibilityLabel="Hisobotlar tarixi"
+          accessibilityRole="button"
+          onPress={() => router.push("/tarix")}
+          android_ripple={{ color: C.accent + "1A" }}
+          style={({ pressed }) => [styles.xarajatBtn, pressed && styles.xarajatBtnPressed]}
+        >
+          <View style={[styles.navIcon, { backgroundColor: C.accent + "14" }]}>
+            <Ionicons name="stats-chart-outline" size={22} color={C.accent} />
+          </View>
+          <View style={styles.flex1}>
+            <Text style={styles.xarajatLabel}>Statistika va tarix</Text>
+            <Text style={styles.xarajatSub}>{(hisobotlarTarixi || []).length} ta hisobot · 30 kun</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={18} color={C.muted} />
+        </Pressable>
+
         {/* Kunlik qop hisobi — alohida sahifaga olib boradi (to'liq tafsilot bilan) */}
         <Pressable
           accessibilityLabel="Kunlik qop hisobi"
           accessibilityRole="button"
           onPress={() => router.push("/qop")}
           android_ripple={{ color: C.accent + "1A" }}
-          style={({ pressed }) => [styles.xarajatBtn, styles.qopBtn, pressed && styles.xarajatBtnPressed]}
+          style={({ pressed }) => [styles.xarajatBtn, !bekorKorinadi && styles.qopBtn, pressed && styles.xarajatBtnPressed]}
         >
           <View style={[styles.navIcon, { backgroundColor: C.accent + "14" }]}>
             <Image source={ICONS.qop} style={styles.navIconImg} resizeMode="contain" />
@@ -147,37 +184,39 @@ export default function Markaz() {
           <View style={styles.flex1}>
             <Text style={styles.xarajatLabel}>Kunlik qop hisobi</Text>
             <Text style={styles.xarajatSub}>
-              {stats.jamiBoshlang > 0 ? `${stats.jamiBoshlang} tonggi · ` : ""}
-              {stats.jamiQop} qop · {stats.jamiNon} dona ishlab
+              {locked ? "Kun yakunlangan · hisobot va PDF" : `${stats.jamiBoshlang > 0 ? `${stats.jamiBoshlang} tonggi · ` : ""}${stats.jamiQop} qop · ${stats.jamiNon} dona ishlab`}
             </Text>
           </View>
           <Ionicons name="chevron-forward" size={18} color={C.muted} />
         </Pressable>
 
-        {/* 2×2 navigatsiya grid — har kvadrat o'z sub-ekraniga olib o'tadi */}
-        <View style={styles.gridRow}>
-          <NavTile image={ICONS.qarz} tint={C.red}
-            label="Qarzlar"
-            sub={`${formatSom(qarz.summa)} so'm • ${qarz.kishi} kishi`}
-            onPress={() => router.push("/qarzlar")}
-          />
-          <NavTile image={ICONS.optom} tint={C.accent}
-            label="Optom"
-            sub={`${formatSom(optom.summa)} so'm • ${optom.soni} ta`}
-            onPress={() => router.push("/optom")}
-          />
-        </View>
-        <View style={styles.gridRow}>
-          <NavTile image={ICONS.karta} tint={C.green}
-            label="Karta"
-            sub={`${formatSom(karta.summa)} so'm • ${karta.soni} ta`}
-            onPress={() => router.push("/karta")}
-          />
-          <NavTile image={ICONS.brak} tint={C.red}
-            label="Brak"
-            sub={`${formatSom(brakSumma)} so'm • ${brakSoni} ta`}
-            onPress={() => router.push("/brak")}
-          />
+        {/* KUN YAKUNINI BEKOR QILISH — yakunlangan kunning oxirigacha turadi */}
+        {bekorKorinadi && (
+          <View style={styles.yakunQator}>
+            <Ionicons name="lock-closed-outline" size={18} color={C.accent} />
+            <View style={styles.flex1}>
+              <Text style={styles.yakunMatn}>Kun yakunlangan · {soatMatni(yakunBekor?.vaqt)}</Text>
+              <Text style={styles.yakunIzoh}>Xato bo'lsa — bugun oxirigacha bekor qilish mumkin</Text>
+            </View>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Kun yakunini bekor qilish"
+              onPress={yakunniBekorSora}
+              hitSlop={6}
+              style={({ pressed }) => [styles.yakunBtn, pressed && { opacity: 0.7 }]}
+            >
+              <Ionicons name="arrow-undo-outline" size={14} color={C.accent} />
+              <Text style={styles.yakunBtnTxt}>Bekor qilish</Text>
+            </Pressable>
+          </View>
+        )}
+
+        {/* 4 ta kichik tugma — bitta qatorda */}
+        <View style={styles.miniQator}>
+          <MiniTile image={ICONS.qarz} tint={C.red} label="Qarzlar" qiymat={qarz.summa} soni={qarz.kishi} onPress={() => router.push("/qarzlar")} />
+          <MiniTile image={ICONS.optom} tint={C.accent} label="Optom" qiymat={optom.summa} soni={optom.soni} onPress={() => router.push("/optom")} />
+          <MiniTile image={ICONS.karta} tint={C.green} label="Karta" qiymat={karta.summa} soni={karta.soni} onPress={() => router.push("/karta")} />
+          <MiniTile image={ICONS.brak} tint={C.red} label="Brak" qiymat={brakSumma} soni={brakSoni} onPress={() => router.push("/brak")} />
         </View>
 
         {/* Kunlik qo'shimcha xarajatlar — vertikal nav tugma */}
@@ -215,23 +254,6 @@ export default function Markaz() {
           </Card>
         )}
 
-        {/* HISOBOTLAR TARIXI — alohida sahifaga olib boradi (Markaz toza turishi uchun) */}
-        <Pressable
-          accessibilityLabel="Hisobotlar tarixi"
-          accessibilityRole="button"
-          onPress={() => router.push("/tarix")}
-          android_ripple={{ color: C.accent + "1A" }}
-          style={({ pressed }) => [styles.xarajatBtn, pressed && styles.xarajatBtnPressed]}
-        >
-          <View style={[styles.navIcon, { backgroundColor: C.accent + "14" }]}>
-            <Ionicons name="stats-chart-outline" size={22} color={C.accent} />
-          </View>
-          <View style={styles.flex1}>
-            <Text style={styles.xarajatLabel}>Statistika va tarix</Text>
-            <Text style={styles.xarajatSub}>{(hisobotlarTarixi || []).length} ta hisobot · 30 kun</Text>
-          </View>
-          <Ionicons name="chevron-forward" size={18} color={C.muted} />
-        </Pressable>
       </ScrollBox>
 
     </SafeAreaView>
@@ -254,29 +276,33 @@ function StatTile({ label, son, format = (x) => String(x), unit, color, icon }) 
   );
 }
 
-function NavTile({ icon, image, tint, label, sub, onPress }) {
+// Kichik navigatsiya tugmasi (4 tasi bitta qatorda): ikonka (soni nishonchada), nom, summa
+function MiniTile({ image, tint, label, qiymat, soni, onPress }) {
   return (
     <Pressable
       accessibilityRole="button"
+      accessibilityLabel={label}
       onPress={onPress}
       android_ripple={{ color: tint + "1A", borderless: false }}
-      style={({ pressed }) => [styles.navTile, pressed && styles.navTilePressed]}
+      style={({ pressed }) => [styles.miniTile, pressed && styles.navTilePressed]}
     >
-      <View style={[styles.navIcon, { backgroundColor: tint + "14" }]}>
-        {image
-          ? <Image source={image} style={[styles.navIconImg, { tintColor: tint }]} resizeMode="contain" />
-          : <Ionicons name={icon} size={22} color={tint} />}
+      <View style={[styles.miniIcon, { backgroundColor: tint + "14" }]}>
+        <Image source={image} style={[styles.miniIconImg, { tintColor: tint }]} resizeMode="contain" />
+        {soni > 0 && <View style={styles.miniSoni}><Text style={styles.miniSoniTxt}>{soni}</Text></View>}
       </View>
-      <Text style={styles.navLabel}>{label}</Text>
-      <Text style={styles.navSub} numberOfLines={1}>{sub}</Text>
+      <Text style={styles.miniLabel} numberOfLines={1}>{label}</Text>
+      <Text style={styles.miniQiymat} numberOfLines={1}>{qiymat ? ixcham(qiymat) : "0"}</Text>
     </Pressable>
   );
 }
 
+const ikkiR = (n) => String(n).padStart(2, "0");
+const soatMatni = (ms) => { const d = new Date(ms || Date.now()); return `${ikkiR(d.getHours())}:${ikkiR(d.getMinutes())}`; };
+
 const styles = temaStil(() => StyleSheet.create({
   safe:      { flex: 1, backgroundColor: C.bg },
   scroll:    { padding: S[5], paddingBottom: S[8] },
-  statsRow:  { flexDirection: "row", gap: S[2], marginBottom: S[5] },
+  statsRow:  { flexDirection: "row", gap: S[2], marginBottom: S[3] },
   statTile:  { flex: 1, paddingVertical: S[3], paddingHorizontal: S[3] },
   statIcon:  { marginBottom: S[1] },
   statLabel: { fontSize: 9, color: C.muted, fontWeight: "700", letterSpacing: 0.8, textTransform: "uppercase", marginBottom: S[2] },
@@ -289,14 +315,24 @@ const styles = temaStil(() => StyleSheet.create({
   muted:     { fontSize: T.sm, color: C.sub },
   gap10:     { height: S[3] },
 
-  // 2x2 grid
-  gridRow:   { width: "100%", flexDirection: "row", justifyContent: "space-between", marginBottom: S[3] },
-  navTile:   { width: "48%", aspectRatio: 1, backgroundColor: C.card, borderRadius: R.lg, padding: S[4], justifyContent: "space-between", borderWidth: StyleSheet.hairlineWidth, borderColor: C.borderSoft },
-  navTilePressed: { opacity: 0.7, transform: [{ scale: 0.98 }] },
+  // 4 ta kichik tugma — bitta qatorda
+  miniQator: { flexDirection: "row", gap: S[2], marginBottom: S[3] },
+  miniTile:  { flex: 1, alignItems: "center", backgroundColor: C.card, borderRadius: R.md, paddingVertical: S[3], paddingHorizontal: 4, borderWidth: StyleSheet.hairlineWidth, borderColor: C.borderSoft },
+  miniIcon:  { width: 40, height: 40, borderRadius: R.sm, alignItems: "center", justifyContent: "center" },
+  miniIconImg:{ width: 22, height: 22 },
+  miniSoni:  { position: "absolute", top: -5, right: -7, minWidth: 18, height: 18, paddingHorizontal: 4, borderRadius: 9, backgroundColor: C.accent, alignItems: "center", justifyContent: "center", borderWidth: 1.5, borderColor: C.card },
+  miniSoniTxt:{ fontSize: 10, fontWeight: "800", color: C.onAccent },
+  miniLabel: { fontSize: T.xs, fontWeight: "800", color: C.text, marginTop: S[2] },
+  miniQiymat:{ fontSize: 11, fontWeight: "600", color: C.muted, marginTop: 1 },
+  navTilePressed: { opacity: 0.7, transform: [{ scale: 0.97 }] },
+  // Kun yakuni — bekor qilish qatori
+  yakunQator:{ flexDirection: "row", alignItems: "center", gap: S[3], backgroundColor: C.accent + "0F", borderRadius: R.md, borderWidth: 1, borderColor: C.accent + "33", paddingVertical: S[3], paddingHorizontal: S[4], marginBottom: S[5] },
+  yakunMatn: { fontSize: T.sm, fontWeight: "800", color: C.text },
+  yakunIzoh: { fontSize: 11, color: C.sub, marginTop: 2 },
+  yakunBtn:  { flexDirection: "row", alignItems: "center", gap: 4, paddingVertical: 7, paddingHorizontal: 11, borderRadius: R.pill, borderWidth: 1, borderColor: C.accent + "66", backgroundColor: C.surface },
+  yakunBtnTxt:{ fontSize: T.xs, fontWeight: "800", color: C.accent },
   navIcon:   { width: 40, height: 40, borderRadius: R.md, alignItems: "center", justifyContent: "center", overflow: "hidden" },
   navIconImg:{ width: 24, height: 24, tintColor: C.accent },
-  navLabel:  { fontSize: T.md, fontWeight: "800", color: C.text, letterSpacing: -0.2, marginTop: S[2] },
-  navSub:    { fontSize: 11, color: C.muted, fontWeight: "600", marginTop: 2 },
 
   // Vertikal nav tugmalari (Qop hisobi, Xarajatlar)
   xarajatBtn: { flexDirection: "row", alignItems: "center", gap: S[3], backgroundColor: C.card, borderRadius: R.lg, padding: S[4], borderWidth: StyleSheet.hairlineWidth, borderColor: C.borderSoft, marginTop: S[1], marginBottom: S[3] },

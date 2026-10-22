@@ -1,5 +1,6 @@
 // "Tannarx" — har bir non uchun 1 dona tannarxi, foyda va foiz.
-// Gaz/elektr (kunlik) va o'rtacha kunlik qop o'zgartirilsa — darhol qayta hisoblanadi.
+// Tannarx = xomashyo + qoplik ishchilar + kunlik ishchilar ulushi (o'rtacha kunlik
+// qopga bo'linadi, oxirgi hisobotlardan avtomatik). Narx o'zgarsa — darhol qayta hisoblanadi.
 // "Sinov narxi" — narxni o'zgartirsangiz qancha foyda qolishini ko'rsatadi (saqlanmaydi).
 import { useMemo, useState } from "react";
 import { View, Text, TextInput, StyleSheet } from "react-native";
@@ -16,7 +17,7 @@ import { C, T, S, R, temaStil } from "../theme";
 const foiz = (x) => `${Math.round(x * 100)}%`;
 
 export function TannarxKalk() {
-  const { nonlar, mahsulotNarxlari, ishchilar, gazNarx, setGazNarx, elektroNarx, setElektroNarx, hisobotlarTarixi, ozIshlabQoplar, narxTarixi, customMahsulotlar } = useApp();
+  const { nonlar, mahsulotNarxlari, ishchilar, hisobotlarTarixi, ozIshlabQoplar, narxTarixi, customMahsulotlar } = useApp();
   const royxat = xomashyoRoyxati(customMahsulotlar);
   const xNom = (id) => royxat.find((m) => m.id === id)?.nom || id;
   const ikki = (n) => String(n).padStart(2, "0");
@@ -29,38 +30,18 @@ export function TannarxKalk() {
   };
   const bugungiQop = Object.values(ozIshlabQoplar || {}).reduce((s, v) => s + (parseFloat(v) || 0), 0);
   const ortacha = ortachaKunlikQop(hisobotlarTarixi, bugungiQop);
-  const [qopKirit, setQopKirit] = useState("");
-  const kunlikQop = qopKirit !== "" ? qopKirit : String(ortacha || "");
   const [sinov, setSinov] = useState({});
 
   const natija = useMemo(
-    () => tannarxHisobi({ nonlar, mahsulotNarxlari, ishchilar, gazKunlik: gazNarx, elektrKunlik: elektroNarx, kunlikQop }),
-    [nonlar, mahsulotNarxlari, ishchilar, gazNarx, elektroNarx, kunlikQop]
+    () => tannarxHisobi({ nonlar, mahsulotNarxlari, ishchilar, kunlikQop: ortacha }),
+    [nonlar, mahsulotNarxlari, ishchilar, ortacha]
   );
 
   return (
     <View>
-      <Card style={styles.card}>
-        <View style={styles.head}>
-          <Ionicons name="options-outline" size={18} color={C.sub} />
-          <Text style={styles.headTxt}>Umumiy xarajatlar</Text>
-        </View>
-        <View style={styles.qator2}>
-          <View style={styles.flex1}>
-            <Text style={styles.lbl}>Gaz (kunlik, so'm)</Text>
-            <TextInput value={String(gazNarx ?? "")} onChangeText={setGazNarx} keyboardType="numeric" placeholder="0" placeholderTextColor={C.muted} style={styles.input} />
-          </View>
-          <View style={styles.flex1}>
-            <Text style={styles.lbl}>Elektr (kunlik, so'm)</Text>
-            <TextInput value={String(elektroNarx ?? "")} onChangeText={setElektroNarx} keyboardType="numeric" placeholder="0" placeholderTextColor={C.muted} style={styles.input} />
-          </View>
-        </View>
-        <Text style={styles.lbl}>O'rtacha kunlik qop</Text>
-        <TextInput value={kunlikQop} onChangeText={setQopKirit} keyboardType="numeric" placeholder="0" placeholderTextColor={C.muted} style={styles.input} />
-        <Text style={styles.hint}>
-          {ortacha > 0 ? `Oxirgi hisobotlar bo'yicha: ${String(ortacha).replace(".", ",")} qop. ` : ""}Kunlik ishchilar haqi, gaz va elektr shu qoplarga bo'lib hisoblanadi.
-        </Text>
-      </Card>
+      <Text style={styles.yoriq}>
+        1 dona non tannarxi: xomashyo + ishchilar haqi.{ortacha > 0 ? ` Kunlik ishchilar haqi o'rtacha ${String(ortacha).replace(".", ",")} qopga bo'lib hisoblanadi.` : ""}
+      </Text>
 
       {(narxTarixi || []).length > 0 && (
         <Card style={styles.card}>
@@ -163,7 +144,7 @@ const styles = temaStil(() => StyleSheet.create({
   card:     { marginBottom: S[4] },
   head:     { flexDirection: "row", alignItems: "center", gap: S[2], marginBottom: S[1] },
   headTxt:  { fontSize: T.md, fontWeight: "800", color: C.text },
-  qator2:   { flexDirection: "row", gap: S[2] },
+  yoriq:    { fontSize: T.xs, color: C.sub, lineHeight: 17, marginBottom: S[3] },
   lbl:      { fontSize: T.xs, color: C.sub, fontWeight: "600", marginBottom: 6, marginTop: S[3], letterSpacing: 0.3 },
   input:    { borderWidth: 1, borderColor: C.border, borderRadius: R.md, paddingVertical: 11, paddingHorizontal: 14, fontSize: T.md, color: C.text, backgroundColor: C.surface },
   hint:     { fontSize: 11, color: C.muted, marginTop: S[2], lineHeight: 16 },

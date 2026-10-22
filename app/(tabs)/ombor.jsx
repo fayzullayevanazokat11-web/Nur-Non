@@ -86,7 +86,7 @@ export default function Ombor() {
       maydonlar: (sorov.maydonlar || []).map((m) => ({ ...m, qiymat: -(parseFloat(m.qiymat) || 0) })),
     };
     setOmborlar((prev) => [entry, ...prev]);
-    setOmborTasdiqlar((prev) => [{ id: tasdiqId, omborId, sana, vaqt, manba: sorov.manba, maydonlar: sorov.maydonlar }, ...(prev || [])]);
+    setOmborTasdiqlar((prev) => [{ id: tasdiqId, omborId, sorovId: sorov.id, sana, vaqt, manba: sorov.manba, maydonlar: sorov.maydonlar }, ...(prev || [])]);
     setOmborSorovlar((prev) => (prev || []).filter((s) => s.id !== sorov.id));
     yopKartalar();
   };

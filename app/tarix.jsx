@@ -18,13 +18,12 @@ import { formatSom } from "../src/logic/hisob";
 import { sanaChiroyli, kunTahlili } from "../src/logic/davr";
 import { Qidiruv, qidiruvMos } from "../src/components/Qidiruv";
 import { useState } from "react";
-import { kunlikHtml, kunlikMatn, pdfUlash, matnUlash } from "../src/logic/ulashish";
+import { kunlikHtml, pdfUlash } from "../src/logic/ulashish";
 
 export default function Tarix() {
   const { nonlar, hisobotlarTarixi, ochirArxivga, akkauntNomi, oylikArxiv } = useApp();
   const [qidiruv, setQidiruv] = useState("");
   const pdf = (h) => pdfUlash(kunlikHtml(h, { akkaunt: akkauntNomi, nonlar }), `nur-non-${h.sana}`).catch(() => Alert.alert("Xatolik", "PDF tayyorlab bo'lmadi."));
-  const matn = (h) => matnUlash(kunlikMatn(h, { akkaunt: akkauntNomi })).catch(() => {});
 
   const ochirHisobot = (id) =>
     Alert.alert("O'chirish", "Shu sanadagi hisobotni o'chirasizmi?", [
@@ -122,10 +121,6 @@ export default function Tarix() {
                   <Pressable accessibilityLabel={`${h.sana}: PDF ulashish`} onPress={() => pdf(h)} hitSlop={6} style={styles.actBtn}>
                     <Ionicons name="document-outline" size={16} color={C.accent} />
                     <Text style={[styles.actTxt, { color: C.accent }]}> PDF</Text>
-                  </Pressable>
-                  <Pressable accessibilityLabel={`${h.sana}: matn ulashish`} onPress={() => matn(h)} hitSlop={6} style={styles.actBtn}>
-                    <Ionicons name="share-social-outline" size={16} color={C.accent} />
-                    <Text style={[styles.actTxt, { color: C.accent }]}> Matn</Text>
                   </Pressable>
                   <View style={styles.flex1} />
                   <Pressable accessibilityLabel="O'chirish" onPress={() => ochirHisobot(h.id)} hitSlop={6} style={styles.actBtn}>

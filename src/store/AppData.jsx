@@ -84,6 +84,9 @@ export function AppDataProvider({ children }) {
   // (23:59) muhrlangan qiymatda turadi. Tuzilishi: { sana, lockedUntil, snapshot }.
   // Snapshot ichida sofFoyda, kartaSum, brakSum, optomSum, xarajatSum va h.k.
   const [lockedDayStats, setLockedDayStats]             = usePersistedState("nurnon:lockedDayStats", null);
+  // Kun yakunini bekor qilish uchun (shu kun oxirigacha): yakunlashdan oldingi holat
+  // { kun, vaqt, snapId, sorovId, oldin: { ... } }
+  const [yakunBekor, setYakunBekor]                     = usePersistedState("nurnon:yakunBekor", null);
   // "Tarixdagilar" — foydalanuvchi o'chirgan barcha narsalar 7 kun saqlanadi va qaytarilishi mumkin.
   // Yozuv: { id, tur, vaqt, element, qoshimcha: { indeks, ... } }
   const [ochirilganlar, setOchirilganlarXom]            = usePersistedState("nurnon:ochirilganlar", []);
@@ -187,6 +190,74 @@ export function AppDataProvider({ children }) {
 
   // Kechqurungi bildirishnoma rejasi — sozlama, yakunlangan kun yoki yozuv o'zgarsa yangilanadi
   const yakunSana = lockedDayStats?.sana || "";
+
+  // ── KUNNI YAKUNLASH — kuniga bir marta. Hamma o'zgarish bitta joyda (atomik):
+  //    hisobot tarixga, Markaz muhrlanadi, xomashyo so'rovnomasi, ertangi tonggi qoldiq.
+  //    Oldingi holat saqlanadi — shu kun oxirigacha Markazdan bekor qilish mumkin.
+  // Har chaqirilganda yangidan tekshiriladi (yarim tundan keyin eski qiymat qolib ketmasin)
+  const kunYakunlanganmi = () => !!(lockedDayStats
+    && (lockedDayStats.kun || lockedDayStats.sana) === bugunSana()
+    && (!lockedDayStats.lockedUntil || Date.now() <= lockedDayStats.lockedUntil));
+  const kunYakunlangan = kunYakunlanganmi();
+
+  const kunYakunla = ({ snap, lock, sorov, forma }) => {
+    if (kunYakunlanganmi()) return false;
+    const vaqt = Date.now();
+    const almashganHisobot = (hisobotlarTarixi || []).find((h) => h.sana === snap.sana) || null;
+    const almashganSorov = sorov ? (omborSorovlar || []).find((s) => s.sana === sorov.sana) || null : null;
+    setYakunBekor({
+      kun: bugunSana(), vaqt, snapId: snap.id, sorovId: sorov?.id || null,
+      oldin: {
+        lockedDayStats, oxirgiYakunlashVaqti, boshlangichQoldiq,
+        ozIshlabQoplar: forma.ozIshlabQoplar, tashqariSonlar: forma.tashqariSonlar,
+        sotilmaganNon: forma.sotilmaganNon, qoldaYaroqsiz: forma.qoldaYaroqsiz,
+        almashganHisobot, almashganSorov,
+      },
+    });
+    setLockedDayStats({ ...lock, kun: bugunSana() });
+    setHisobotlarTarixi((prev) => [snap, ...(prev || []).filter((h) => h.sana !== snap.sana)]);
+    if (sorov) setOmborSorovlar((prev) => [sorov, ...(prev || []).filter((s) => s.sana !== sorov.sana)]);
+    setOxirgiYakunlashVaqti(vaqt);
+    // Kun oxiri qoldiq → ertangi tonggi zaxira; bugungi kiritmalar tozalanadi
+    setBoshlangichQoldiq(forma.sotilmaganNon || {});
+    setSotilmaganNon({}); setOzIshlabQoplar({}); setTashqariSonlar({}); setQoldaYaroqsiz({});
+    return true;
+  };
+
+  // Bekor qilish mumkinmi: faqat shu kuni va yakun hali turgan bo'lsa
+  const yakunBekorMumkinmi = () => !!(yakunBekor && yakunBekor.kun === bugunSana() && kunYakunlanganmi());
+  const yakunBekorMumkin = yakunBekorMumkinmi();
+
+  const kunYakuniniBekor = () => {
+    if (!yakunBekorMumkinmi()) return false;
+    const { snapId, sorovId, oldin } = yakunBekor;
+    setHisobotlarTarixi((prev) => {
+      const qolgan = (prev || []).filter((h) => h.id !== snapId);
+      if (oldin.almashganHisobot && !qolgan.some((h) => h.id === oldin.almashganHisobot.id)) qolgan.push(oldin.almashganHisobot);
+      return qolgan.sort((a, b) => (b.vaqt || 0) - (a.vaqt || 0));
+    });
+    if (sorovId) {
+      // So'rovnoma tasdiqlangan bo'lsa — ombor chiqimi ham qaytariladi
+      const tasdiq = (omborTasdiqlar || []).find((t) => t.sorovId === sorovId);
+      if (tasdiq) {
+        setOmborTasdiqlar((prev) => (prev || []).filter((t) => t.id !== tasdiq.id));
+        setOmborlar((prev) => (prev || []).filter((h) => h.id !== tasdiq.omborId));
+      }
+      setOmborSorovlar((prev) => {
+        const q = (prev || []).filter((s) => s.id !== sorovId);
+        return oldin.almashganSorov && !q.some((s) => s.id === oldin.almashganSorov.id) ? [oldin.almashganSorov, ...q] : q;
+      });
+    }
+    setLockedDayStats(oldin.lockedDayStats || null);
+    setOxirgiYakunlashVaqti(oldin.oxirgiYakunlashVaqti || 0);
+    setBoshlangichQoldiq(oldin.boshlangichQoldiq || {});
+    setOzIshlabQoplar(oldin.ozIshlabQoplar || {});
+    setTashqariSonlar(oldin.tashqariSonlar || {});
+    setSotilmaganNon(oldin.sotilmaganNon || {});
+    setQoldaYaroqsiz(oldin.qoldaYaroqsiz || {});
+    setYakunBekor(null);
+    return true;
+  };
 
   // ── Xomashyo narxi o'zgarishlarini yozib borish (yozish tugagach, 2.5 soniyadan keyin) ──
   // Faqat 1 birlik (g/ml) narxi haqiqatan o'zgarganda yoziladi; vaqtincha bo'sh maydon e'tiborsiz.
@@ -362,6 +433,7 @@ export function AppDataProvider({ children }) {
       soni++;
     });
     if (typeof paket?.akkaunt === "string" && paket.akkaunt.trim()) setAkkauntNomi(paket.akkaunt.trim());
+    if (zaxiraOl) setYakunBekor(null); // boshqa ma'lumot yuklandi — eski kun yakunini bekor qilib bo'lmaydi
     setQopTasdiqlandi(false);
     setHisobotYopildi(false);
     return soni;
@@ -435,6 +507,7 @@ export function AppDataProvider({ children }) {
     kunlikXarajatlar, setKunlikXarajatlar,
     oxirgiYakunlashVaqti, setOxirgiYakunlashVaqti,
     lockedDayStats, setLockedDayStats,
+    kunYakunlangan, kunYakunlanganmi, kunYakunla, yakunBekor, yakunBekorMumkin, yakunBekorMumkinmi, kunYakuniniBekor,
     ochirilganlar, ochirArxivga, qaytar, butunlayOchir,
     akkauntNomi, setAkkauntNomi,
     ishHaqiYozuvlari, setIshHaqiYozuvlari,

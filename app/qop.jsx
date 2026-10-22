@@ -1,18 +1,19 @@
 // Kunlik qop hisobi — TO'LIQ sahifa: hisobot sanasi, per-non kiritish (boshlang
 // qoldiq, qop, yaroqsiz, kun oxiri qoldiq), FIFO tafsiloti, ishchilar haqi,
 // moliyaviy xulosa va "Saqlash" / "Kunni yakunlash" tugmalari.
-import { useEffect, useMemo, useRef, useState } from "react";
+// Kun KUNIGA BIR MARTA yakunlanadi. Yakunlangach sahifada faqat shu kunning hisoboti
+// (o'qish uchun) va PDF turadi; bekor qilish — Markazda, kun oxirigacha.
+import { useEffect, useMemo, useState } from "react";
 import { View, Text, Image, Pressable, TextInput, StyleSheet, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import { router } from "expo-router";
 
 import { useApp } from "../src/store/AppData";
 import { Card } from "../src/components/Card";
 import { Btn } from "../src/components/Btn";
 import { xomashyoRoyxati } from "../src/logic/konstantalar";
 import { DateField } from "../src/components/DateField";
-import { HisobotModal } from "../src/components/HisobotModal";
+import { KunHisoboti } from "../src/components/KunHisoboti";
 import { ScrollBox } from "../src/components/ScrollBox";
 import { SahifaSarlavha } from "../src/components/SahifaSarlavha";
 import { C, T, S, R, temaStil } from "../src/theme";
@@ -29,18 +30,20 @@ export default function Qop() {
     nonlar, ishchilarHaq: ishchilar, optomlar, qarzlar, mahsulotNarxlari, braklar, kartalar,
     ozIshlabQoplar, setOzIshlabQoplar, tashqariSonlar, setTashqariSonlar,
     sotilmaganNon, setSotilmaganNon,
-    boshlangichQoldiq, setBoshlangichQoldiq, qoldaYaroqsiz, setQoldaYaroqsiz,
+    boshlangichQoldiq, qoldaYaroqsiz, setQoldaYaroqsiz,
     kunlikXarajatlar,
-    oxirgiYakunlashVaqti, setOxirgiYakunlashVaqti,
-    setLockedDayStats, customMahsulotlar,
-    setHisobotlarTarixi, setOmborSorovlar, hisobotlarTarixi, eksportMalumot, bekorTaklif,
+    oxirgiYakunlashVaqti, customMahsulotlar,
+    hisobotlarTarixi, kunYakunlanganmi, kunYakunla, lockedDayStats, yakunBekor,
   } = useApp();
-  const yakunOldidan = useRef(null); // "Bekor qilish" uchun — yakunlashdan oldingi holat
+  // Bugun yakunlangan bo'lsa — faqat hisobot ko'rinishi
+  const yakunlangan = kunYakunlanganmi();
+  const yakunHisoboti = yakunlangan
+    ? (hisobotlarTarixi || []).find((h) => h.id === yakunBekor?.snapId) || (hisobotlarTarixi || []).find((h) => h.sana === lockedDayStats?.sana)
+    : null;
 
   // Hisobot sanasi: bo'sh "" => avtomatik bugun har yakunlash'da.
   const [kunlikSana, setKunlikSana] = useState("");
   const [sanaTanlandi, setSanaTanlandi] = useState(false);
-  const [hisobotOchiq, setHisobotOchiq] = useState(false);
   const [fQop, setFQop] = useState(toStr(ozIshlabQoplar));
   const [fTash, setFTash] = useState(toStr(tashqariSonlar));
   const [fSot, setFSot] = useState(toStr(sotilmaganNon));
@@ -94,14 +97,20 @@ export default function Qop() {
       Alert.alert("Ma'lumot yo'q", "Avval kunlik qop hisobiga ma'lumot kiriting.");
       return;
     }
-    Alert.alert("Kunni yakunlash", "Bugungi ma'lumot tarixga (history) yoziladi. Ekrandagi ko'rsatkichlar shu kunning oxirigacha (23:59) muhrlangan ko'rinishda qotib turadi. Davom etasizmi?", [
+    if (kunYakunlanganmi()) {
+      Alert.alert("Kun yakunlangan", "Bugun kun allaqachon yakunlangan. Bir kunda faqat bir marta yakunlanadi.");
+      return;
+    }
+    const sanaTekshir = sanaTanlandi && kunlikSana ? kunlikSana : localSana();
+    if ((hisobotlarTarixi || []).some((h) => h.sana === sanaTekshir)) {
+      Alert.alert("Hisobot bor", `${sanaTekshir} sanasi uchun hisobot allaqachon yozilgan. Bir kun ikki marta yakunlanmaydi.`);
+      return;
+    }
+    Alert.alert("Kunni yakunlash", "Bugungi ma'lumot tarixga yoziladi va kun yopiladi. Bugun qayta yakunlab bo'lmaydi; xato bo'lsa — Markazdan kun oxirigacha bekor qilish mumkin. Davom etasizmi?", [
       { text: "Bekor", style: "cancel" },
       { text: "Yakunlash", onPress: () => {
-        yakunOldidan.current = eksportMalumot();
-        // ── Avval formani saqlash ──
-        setOzIshlabQoplar(fQop); setTashqariSonlar(fTash); setSotilmaganNon(fSot); setQoldaYaroqsiz(fYaroqsiz);
         setTegildi(false);
-        const sana = sanaTanlandi && kunlikSana ? kunlikSana : localSana();
+        const sana = sanaTekshir;
         const endOfDay = (() => {
           const d = new Date(); d.setHours(23, 59, 59, 999);
           return d.getTime();
@@ -126,7 +135,7 @@ export default function Qop() {
         const xarajatSum  = sum(bugXarajat, "summa");
 
         // ── 2) LOCK: 23:59 gacha Markaz'da ko'rsatkichlar shu qiymatda qotib turadi
-        setLockedDayStats({
+        const lock = {
           sana,
           lockedUntil: endOfDay,
           snapshot: {
@@ -144,7 +153,7 @@ export default function Qop() {
             optomSum, optomSoni: bugOptom.length, optomFoyda,
             xarajatSum, xarajatSoni: bugXarajat.length,
           },
-        });
+        };
 
         // ── 3) HISTORY: hisobotlarTarixi jadvaliga to'liq snap yoziladi
         //    (bugungi karta/optom/brak/xarajat yozuvlari ham sana bilan birga)
@@ -167,33 +176,34 @@ export default function Qop() {
             kartaSum, kartaFoyda, brakSum, optomSum, optomFoyda, xarajatSum,
           },
         };
-        setHisobotlarTarixi((prev) => [snap, ...(prev || []).filter((h) => h.sana !== sana)]);
-
+        // ── 4) Xomashyo sarfi — ombor so'rovnomasi
         const sarf = kunlikXomashyoSarfi(nonlar, fQop, xomashyoRoyxati(customMahsulotlar));
-        if (sarf.length > 0) {
-          setOmborSorovlar((prev) => [{ id: Date.now() + 1, sana, vaqt: Date.now(), manba: "Kunlik qop hisobi", maydonlar: sarf }, ...(prev || []).filter((s) => s.sana !== sana)]);
-        }
+        const sorov = sarf.length > 0 ? { id: Date.now() + 1, sana, vaqt: Date.now(), manba: "Kunlik qop hisobi", maydonlar: sarf } : null;
 
-        // ── 4) Yakunlash vaqti yangilanadi (kelajakdagi yangi yozuvlar uchun)
-        setOxirgiYakunlashVaqti(Date.now());
-
-        setHisobotOchiq(true);
+        // ── 5) Hammasi bitta amalda: tarix, muhr, so'rovnoma, ertangi tonggi qoldiq
+        //    (Karta / Brak / Xarajatlar TOZALANMAYDI — ular o'z tarixida 7 kun saqlanadi)
+        kunYakunla({
+          snap, lock, sorov,
+          forma: { ozIshlabQoplar: fQop, tashqariSonlar: fTash, sotilmaganNon: fSot, qoldaYaroqsiz: fYaroqsiz },
+        });
+        setKunlikSana(""); setSanaTanlandi(false);
       }},
     ]);
   };
 
-  const hisobotYop = () => {
-    setHisobotOchiq(false);
-    // Kun oxiri qoldiq → ertangi tonggi zaxiraga ko'chadi.
-    // Karta / Brak / Xarajatlar — TOZALANMAYDI, ular tarixida 7 kun saqlanadi
-    // (AppData useEffect avtomatik tozalaydi).
-    setBoshlangichQoldiq(fSot || {});
-    setSotilmaganNon({}); setOzIshlabQoplar({}); setTashqariSonlar({}); setQoldaYaroqsiz({});
-    setFQop({}); setFTash({}); setFSot({}); setFYaroqsiz({});
-    setKunlikSana(""); setSanaTanlandi(false);
-    if (yakunOldidan.current) { bekorTaklif("Kun yakunlandi", yakunOldidan.current); yakunOldidan.current = null; }
-    router.back();
-  };
+  // ── Yakunlangan kun: faqat hisobot va PDF ──
+  if (yakunlangan) {
+    return (
+      <SafeAreaView style={styles.safe} edges={["top"]}>
+        <ScrollBox contentContainerStyle={styles.scroll}>
+          <SahifaSarlavha eyebrow="KUNLIK HISOB" title="Kunlik qop hisobi" subtitle="Bugungi kun yakunlangan" image={require("../assets/icons/qop.png")} />
+          {yakunHisoboti ? <KunHisoboti h={yakunHisoboti} /> : (
+            <Card><Text style={styles.rowLabel}>Bugungi hisobot topilmadi.</Text></Card>
+          )}
+        </ScrollBox>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.safe} edges={["top"]}>
@@ -309,8 +319,6 @@ export default function Qop() {
         <Btn secondary onPress={kunniYakunla} icon="checkmark-done-outline">Kunni yakunlash</Btn>
         <View style={styles.gap14} />
       </ScrollBox>
-
-      <HisobotModal visible={hisobotOchiq} onClose={hisobotYop} />
     </SafeAreaView>
   );
 }

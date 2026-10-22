@@ -1,6 +1,6 @@
-// Hisobotni ulashish: PDF (Telegram'ga fayl bo'lib boradi) yoki oddiy matn.
+// Hisobotni ulashish: PDF (Telegram'ga fayl bo'lib boradi).
 // Barcha matn joriy yozuvda (lotin/kirill) chiqadi. PDF har doim yorug' fonda.
-import { Platform, Share } from "react-native";
+import { Platform } from "react-native";
 import * as Print from "expo-print";
 import * as Sharing from "expo-sharing";
 import * as FileSystem from "expo-file-system";
@@ -73,19 +73,6 @@ export function kunlikHtml(h, { akkaunt, nonlar } = {}) {
   return sahifa({ sarlavha: "Kunlik hisobot", davr: h.sana, akkaunt, ichi });
 }
 
-export function kunlikMatn(h, { akkaunt } = {}) {
-  const daromad = son(h.daromad), haq = son(h.ishchiHaq);
-  const q = [
-    `📊 ${t("Nur-Non — kunlik hisobot")}`, `📅 ${h.sana}`, akkaunt ? `👤 ${t(akkaunt)}` : null, "",
-    `${t("Daromad")}: ${som(daromad)}`, `${t("Ishchi haqi")}: ${som(haq)}`, `${t("Kun oxiri")}: ${som(daromad - haq)}`,
-    son(h.xarajatJami) > 0 ? `${t("Qo'shimcha xarajat")}: ${som(h.xarajatJami)}` : null,
-    `${t("Sof foyda")}: ${som(h.sofFoyda)}`, "",
-    `${t("Ishlab chiqarilgan")}: ${formatSom(h.jamiNon)} ${t("dona")} (${formatSom(h.jamiQop)} ${t("qop")})`,
-    `${t("Sotilgan")}: ${formatSom(h.sotilganNon)} ${t("dona")}`,
-  ];
-  return q.filter((x) => x !== null).join("\n");
-}
-
 // ── Davr (7/30 kun) hisoboti ──
 export function davrHtml({ hisobotlar, kunlar, akkaunt }) {
   const list = [...(hisobotlar || [])].sort((a, b) => String(a.sana).localeCompare(String(b.sana)));
@@ -112,8 +99,4 @@ export async function pdfUlash(html, nom) {
   if (!(await Sharing.isAvailableAsync())) return false;
   await Sharing.shareAsync(fayl, { mimeType: "application/pdf", UTI: "com.adobe.pdf", dialogTitle: t("Hisobotni ulashish") });
   return true;
-}
-
-export async function matnUlash(matn) {
-  await Share.share({ message: matn });
 }

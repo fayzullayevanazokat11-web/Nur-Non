@@ -1,6 +1,6 @@
 // Tannarx kalkulyatori: 1 dona non qancha turadi va qancha foyda qoladi.
 // 1 qop uchun: xomashyo (retsept × narxlar) + qoplik ishchilar stavkasi +
-// kunlik ishchilar ulushi + gaz/elektr ulushi (kunlik xarajat ÷ kunlik qoplar).
+// kunlik ishchilar ulushi (kunlik haq ÷ o'rtacha kunlik qop).
 import { getQopTannarx } from "./hisob";
 
 const son = (x) => parseFloat(String(x ?? "").replace(/\s/g, "")) || 0;
@@ -12,12 +12,11 @@ export function ortachaKunlikQop(hisobotlar, bugungiQop = 0) {
   return son(bugungiQop);
 }
 
-export function tannarxHisobi({ nonlar, mahsulotNarxlari, ishchilar, gazKunlik, elektrKunlik, kunlikQop }) {
+export function tannarxHisobi({ nonlar, mahsulotNarxlari, ishchilar, kunlikQop }) {
   const aktiv = (ishchilar || []).filter((w) => w.holat === "Aktiv");
   const kunlikIshchilar = aktiv.filter((w) => w.haqTuri !== "qop").reduce((s, w) => s + son(w.miqdor), 0);
   const qoplar = son(kunlikQop);
   const ulush = (x) => (qoplar > 0 ? x / qoplar : 0);
-  const energiyaQop = ulush(son(gazKunlik) + son(elektrKunlik));
   const kunlikUlushQop = ulush(kunlikIshchilar);
 
   return (nonlar || []).map((n) => {
@@ -35,7 +34,6 @@ export function tannarxHisobi({ nonlar, mahsulotNarxlari, ishchilar, gazKunlik, 
       { k: "xomashyo", nom: "Xomashyo", qop: xomashyo },
       { k: "qoplik", nom: "Qoplik ishchilar", qop: qoplik },
       { k: "kunlik", nom: "Kunlik ishchilar ulushi", qop: kunlikUlushQop },
-      { k: "energiya", nom: "Gaz va elektr ulushi", qop: energiyaQop },
     ].map((q) => ({ ...q, dona: nonSoni > 0 ? q.qop / nonSoni : 0 }));
     const qopJami = qismlar.reduce((s, q) => s + q.qop, 0);
     const dona = nonSoni > 0 ? qopJami / nonSoni : 0;
