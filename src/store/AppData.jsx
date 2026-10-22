@@ -387,6 +387,15 @@ export function AppDataProvider({ children }) {
     tolovBekor: (e) => {
       const qismlar = (e.qismlar || []).filter((x) => x && x.tolov);
       if (!qismlar.some((x) => (qarzlar || []).some((q) => q.id === x.qarzId))) return "Qarz topilmadi — o'chirilgan bo'lishi mumkin.";
+      // Qarz keyinroq boshqa to'lov bilan yopilgan bo'lsa — qayta tiklash ikki marta to'lash bo'lardi
+      const ortiqcha = qismlar.some((x) => {
+        const q = (qarzlar || []).find((y) => y.id === x.qarzId);
+        if (!q || (q.tolovlar || []).some((t) => t.id === x.tolov.id)) return false;
+        const tolangan = (q.tolovlar || []).reduce((s, t) => s + (parseFloat(t.summa) || 0), 0);
+        const qoldiq = q.tolangan && !(q.tolovlar || []).length ? 0 : (parseFloat(q.summa) || 0) - tolangan;
+        return (parseFloat(x.tolov.summa) || 0) > qoldiq + 0.5;
+      });
+      if (ortiqcha) return "Bu qarz keyinroq boshqa to'lov bilan yopilgan — eski to'lovni qayta tiklab bo'lmaydi.";
       setQarzlar((p) => (p || []).map((q) => {
         const mos = qismlar.filter((x) => x.qarzId === q.id);
         if (!mos.length) return q;
