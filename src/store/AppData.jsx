@@ -325,6 +325,17 @@ export function AppDataProvider({ children }) {
     return () => clearTimeout(t);
   }, [tayyor, mahsulotNarxlari]);
 
+  // ── Ish kuni almashishini kuzatish ──
+  // Ilova tun 03:00 dan oshib ochiq tursa, "bugun" eskirib qolmasin: kun o'zgargan zahoti
+  // butun ilova qayta chiziladi (davomat, ertalabgi tekshiruv va h.k. yangi kunga o'tadi).
+  const [, setKunKalit] = useState(bugunSana());
+  useEffect(() => {
+    const tekshir = () => setKunKalit((p) => { const b = bugunSana(); return p === b ? p : b; });
+    const t = setInterval(tekshir, 30000);
+    const sub = AppState.addEventListener("change", (h) => { if (h === "active") tekshir(); });
+    return () => { clearInterval(t); sub.remove(); };
+  }, []);
+
   // ── Davomat: bugun kelmagan xodimlarga kunlik haq yozilmaydi ──
   const bugun = bugunSana();
   const kelmaganlar = useMemo(() => (davomat || {})[bugun] || [], [davomat, bugun]);
