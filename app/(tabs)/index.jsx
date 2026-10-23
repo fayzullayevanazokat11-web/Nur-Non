@@ -38,7 +38,7 @@ export default function Markaz() {
     ozIshlabQoplar, tashqariSonlar, sotilmaganNon, mahsulotNarxlari,
     hisobotlarTarixi, braklar,
     boshlangichQoldiq, qoldaYaroqsiz, kunlikXarajatlar, oxirgiYakunlashVaqti,
-    lockedDayStats, yakunBekor, yakunBekorMumkinmi, kunYakuniniBekor,
+    lockedDayStats, yakunBekor, yakunBekorMumkinmi, kunYakuniniBekor, setErtalabYonalish,
   } = useApp();
 
   // Har 30 soniyada tick — ish kuni tugaganda (tunda 03:00) lock va sana ko'rsatkichlari
@@ -51,6 +51,8 @@ export default function Markaz() {
     setMenu((m) => !m);
   };
   useFocusEffect(useCallback(() => () => setMenu(false), []));
+  // Markazga qaytilgach ertalabgi qadam bannerlari ("Tayyor") boshqa sahifalarda qolib ketmasin
+  useFocusEffect(useCallback(() => { setErtalabYonalish(null); }, []));
   useEffect(() => {
     const sub = AppState.addEventListener("change", (h) => { if (h !== "active") setMenu(false); });
     return () => sub.remove();

@@ -15,15 +15,16 @@ import { DateField } from "../src/components/DateField";
 import { VaqtField, hozirgiSoat } from "../src/components/VaqtField";
 import { ScrollBox } from "../src/components/ScrollBox";
 import { SahifaSarlavha } from "../src/components/SahifaSarlavha";
+import { YakunIzoh } from "../src/components/YakunIzoh";
 import { C, T, S, R, temaStil } from "../src/theme";
 import { formatSom, bugunSana, sonOl } from "../src/logic/hisob";
 
-// Ish kuni sanasi (kun tunda 03:00 da tugaydi)
-const localSana = () => bugunSana();
 
 export default function Xarajat() {
-  const { kunlikXarajatlar, setKunlikXarajatlar, ochirArxivga } = useApp();
-  const bugun = localSana();
+  const { kunlikXarajatlar, setKunlikXarajatlar, ochirArxivga, yozuvSanasi } = useApp();
+  // Bugun yakunlangan bo'lsa — yangi yozuv ertangi ish kuniga tushadi
+  const localSana = yozuvSanasi;
+  const bugun = bugunSana();
   // sana: bo'sh bo'lsa => "avtomatik bugun" har save'da yangidan hisoblanadi
   const BOSH = { summa: "", izoh: "", sana: "", sanaTanlandi: false, soat: "" };
   const [tahrirId, setTahrirId] = useState(null);
@@ -85,6 +86,7 @@ export default function Xarajat() {
         <SahifaSarlavha eyebrow="QO'SHIMCHA XARAJATLAR" title="Kunlik xarajatlar" subtitle={`Bugun: ${formatSom(bugungiJami)} so'm · Jami: ${formatSom(jami7Kun)} so'm`} image={require("../assets/icons/xarajat.png")} />
 
         {/* INLINE FORMA */}
+        <YakunIzoh />
         <Card style={styles.formCard}>
           <View style={styles.formHead}>
             <Ionicons name={tahrirId ? "create-outline" : "add-circle-outline"} size={18} color={C.sub} />
@@ -92,7 +94,7 @@ export default function Xarajat() {
           </View>
 
           <Text style={styles.inputLabel}>Sana</Text>
-          <DateField value={forma.sana || bugun} onChange={yangilaSana} />
+          <DateField value={forma.sana || localSana()} onChange={yangilaSana} />
           <Text style={styles.inputLabel}>Vaqt</Text>
           <VaqtField value={forma.soat} onChange={(v) => setForma((p) => ({ ...p, soat: v }))} />
           {!forma.sanaTanlandi && !forma.soat && <Text style={styles.hint}>Bugungi sana va hozirgi vaqt avtomatik. O'zgartirish uchun bosing.</Text>}

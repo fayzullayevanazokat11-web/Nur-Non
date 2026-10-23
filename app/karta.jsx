@@ -12,17 +12,18 @@ import { Btn } from "../src/components/Btn";
 import { ExpandableCard, yopKartalar } from "../src/components/ExpandableCard";
 import { ScrollBox } from "../src/components/ScrollBox";
 import { SahifaSarlavha } from "../src/components/SahifaSarlavha";
+import { YakunIzoh } from "../src/components/YakunIzoh";
 import { C, T, S, R, temaStil } from "../src/theme";
 import { formatSom, kartaJami, kartaHisob, bugunSana, sonOl } from "../src/logic/hisob";
 
 const soatMatni = (ms) => { const d = new Date(ms); return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`; };
 
-// Ish kuni sanasi (kun tunda 03:00 da tugaydi)
-const localSana = () => bugunSana();
 const BOSH = { summa: "", izoh: "" };
 
 export default function Karta() {
-  const { nonlar, kartalar, setKartalar, mahsulotNarxlari, ochirArxivga } = useApp();
+  const { nonlar, kartalar, setKartalar, mahsulotNarxlari, ochirArxivga, yozuvSanasi } = useApp();
+  // Bugun yakunlangan bo'lsa — yangi yozuv ertangi ish kuniga tushadi
+  const localSana = yozuvSanasi;
   const [tahrirId, setTahrirId] = useState(null);
   const scrollRef = useRef(null);
   const [forma, setForma] = useState(BOSH);
@@ -75,6 +76,7 @@ export default function Karta() {
         <SahifaSarlavha eyebrow="KARTA TO'LOVLARI" title="Karta orqali" subtitle={`${formatSom(karta.summa)} so'm · ${karta.soni} ta`} image={require("../assets/icons/karta.png")} />
 
         {/* INLINE FORMA — Markaz>Karta'ga kirish bilan darrov ko'rinadi */}
+        <YakunIzoh />
         <Card style={styles.formCard}>
           <View style={styles.formHead}>
             <Ionicons name={tahrirId ? "create-outline" : "add-circle-outline"} size={18} color={C.sub} />

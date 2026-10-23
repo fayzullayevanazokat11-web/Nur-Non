@@ -69,6 +69,11 @@ export default function Xodimlar() {
       Alert.alert("Ism kiritilmagan", "Iltimos, xodim ismini kiriting.");
       return;
     }
+    const nomKalit = forma.ism.trim().toLowerCase();
+    if ((ishchilar || []).some((w) => w.id !== tahrirId && String(w.ism || "").trim().toLowerCase() === nomKalit)) {
+      Alert.alert("Takroriy ism", `"${forma.ism.trim()}" ismli xodim allaqachon bor. Farqlash uchun boshqacha yozing (masalan, familiya qo'shing).`);
+      return;
+    }
     if (forma.lavozimId === "boshqasi" && !forma.lavozimCustom.trim()) {
       Alert.alert("Lavozim kiritilmagan", "Iltimos, lavozim nomini kiriting.");
       return;
@@ -78,7 +83,7 @@ export default function Xodimlar() {
       const nonNarxlari = {};
       const nonTurlari = [];
       Object.entries(forma.nonNarx).forEach(([nom, narx]) => {
-        const n = parseFloat(narx) || 0;
+        const n = sonOl(narx);
         if (n > 0) { nonNarxlari[nom] = n; nonTurlari.push(nom); }
       });
       qoshimcha = { haqTuri: "qop", miqdor: 0, nonTurlari, nonNarxlari };

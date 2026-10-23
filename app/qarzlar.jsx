@@ -17,6 +17,7 @@ import { NonIkon } from "../src/components/XomashyoIkon";
 import { VaqtField, hozirgiSoat } from "../src/components/VaqtField";
 import { ScrollBox } from "../src/components/ScrollBox";
 import { SahifaSarlavha } from "../src/components/SahifaSarlavha";
+import { YakunIzoh } from "../src/components/YakunIzoh";
 import { C, T, S, R, temaStil } from "../src/theme";
 import { formatSom, qarzJami, donaFoyda, bugunSana, sonOl } from "../src/logic/hisob";
 import { Qidiruv, qidiruvMos } from "../src/components/Qidiruv";
@@ -25,11 +26,11 @@ import { qarzdorlar, qarzdorTarixi, tolovQil, tolovniBekorQil, qarzdorKaliti, qa
 const ikki = (n) => String(n).padStart(2, "0");
 const vaqtMatni = (ms) => { const d = new Date(ms); return `${ikki(d.getDate())}.${ikki(d.getMonth() + 1)}.${d.getFullYear()}`; };
 
-// Ish kuni sanasi (kun tunda 03:00 da tugaydi)
-const localSana = () => bugunSana();
 
 export default function Qarzlar() {
-  const { nonlar, qarzlar, setQarzlar, mahsulotNarxlari, ochirArxivga, amalArxivga } = useApp();
+  const { nonlar, qarzlar, setQarzlar, mahsulotNarxlari, ochirArxivga, amalArxivga, yozuvSanasi } = useApp();
+  // Bugun yakunlangan bo'lsa — yangi yozuv ertangi ish kuniga tushadi
+  const localSana = yozuvSanasi;
   // sana: bo'sh bo'lsa => "avtomatik bugun". Qo'lda tanlansa => shu qiymat.
   const BOSH = { ism: "", izoh: "", sana: "", sanaTanlandi: false, soat: "", savat: {}, chegirma: "" };
   const [forma, setForma] = useState(BOSH);
@@ -140,6 +141,7 @@ export default function Qarzlar() {
         <SahifaSarlavha eyebrow="QARZLAR" title="Qarzdorlar" subtitle={`${formatSom(qarz.summa)} so'm · ${qarz.kishi} qarzdor`} image={require("../assets/icons/qarz.png")} ton="red" />
 
         {/* INLINE FORMA */}
+        <YakunIzoh />
         <Card style={styles.formCard}>
           <View style={styles.formHead}>
             <Ionicons name="add-circle-outline" size={18} color={C.sub} />

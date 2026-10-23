@@ -5,7 +5,7 @@ import usePersistedState, { useHidratsiya } from "./usePersistedState";
 import { arxivla } from "../logic/davr";
 import { kunYakunEslatmalari } from "../logic/bildirishnoma";
 import { nusxaSaqla, nusxaBormi } from "../logic/avtoZaxira";
-import { bugunSana } from "../logic/hisob";
+import { bugunSana, keyingiSana } from "../logic/hisob";
 import { rasmSaqla, rasmFaylOchir } from "../logic/qopRasm";
 import { getTil } from "../i18n/til";
 import { ogir } from "../i18n/translit";
@@ -217,6 +217,9 @@ export function AppDataProvider({ children }) {
     && (lockedDayStats.kun || lockedDayStats.sana) === bugunSana()
     && (!lockedDayStats.lockedUntil || Date.now() <= lockedDayStats.lockedUntil));
   const kunYakunlangan = kunYakunlanganmi();
+  // Yangi yozuv (karta, brak, optom, qarz, xarajat) sanasi: bugun yakunlangan bo'lsa —
+  // ertangi ish kuni (aks holda 03:00 gacha kiritilgani hech bir hisobotga tushmay qolardi).
+  const yozuvSanasi = () => (kunYakunlanganmi() ? keyingiSana(bugunSana()) : bugunSana());
 
   const kunYakunla = ({ snap, lock, sorov, forma }) => {
     // O'tgan sana bilan yakunlash (unutilgan kun): hisobot tarixga yoziladi, qoldiq ertangi
@@ -288,6 +291,13 @@ export function AppDataProvider({ children }) {
         return oldin.almashganSorov && !q.some((s) => s.id === oldin.almashganSorov.id) ? [oldin.almashganSorov, ...q] : q;
       });
     }
+    // Yakundan keyin ertangi sanaga yozilganlar — yana bugungi kunga qaytadi
+    const ertaga = keyingiSana(yakunBekor.kun), bugun = yakunBekor.kun;
+    const bugungaQaytar = (arr) => {
+      if (!(arr || []).some((e) => e.sana === ertaga && (e.vaqt || 0) > (yakunBekor.vaqt || 0))) return arr;
+      return arr.map((e) => (e.sana === ertaga && (e.vaqt || 0) > (yakunBekor.vaqt || 0) ? { ...e, sana: bugun } : e));
+    };
+    setKartalarXom(bugungaQaytar); setBraklarXom(bugungaQaytar); setOptomlarXom(bugungaQaytar); setQarzlarXom(bugungaQaytar); setKunlikXarajatlarXom(bugungaQaytar);
     setLockedDayStats(oldin.lockedDayStats || null);
     setOxirgiYakunlashVaqti(oldin.oxirgiYakunlashVaqti || 0);
     setBoshlangichQoldiq(oldin.boshlangichQoldiq || {});
@@ -481,6 +491,9 @@ export function AppDataProvider({ children }) {
       return true;
     }
     if (!KOLLEKSIYA[y.tur]) return false;
+    // Bir sanaga ikkita hisobot bo'lmasin (o'chirilgandan keyin shu kun qayta yakunlangan bo'lishi mumkin)
+    if (y.tur === "hisobot" && (hisobotlarTarixi || []).some((h) => h.sana === y.element?.sana && h.id !== y.element?.id))
+      return `${y.element.sana} uchun hisobot allaqachon bor.`;
     const q = y.qoshimcha || {};
     const kirit = (set, el, indeks) => set((p) => {
       const a = [...(p || [])];
@@ -692,7 +705,7 @@ export function AppDataProvider({ children }) {
     kunlikXarajatlar, setKunlikXarajatlar,
     oxirgiYakunlashVaqti, setOxirgiYakunlashVaqti,
     lockedDayStats, setLockedDayStats,
-    kunYakunlangan, kunYakunlanganmi, kunYakunla, yakunBekor, yakunBekorMumkin, yakunBekorMumkinmi, kunYakuniniBekor,
+    kunYakunlangan, kunYakunlanganmi, yozuvSanasi, kunYakunla, yakunBekor, yakunBekorMumkin, yakunBekorMumkinmi, kunYakuniniBekor,
     ochirilganlar, ochirArxivga, amalArxivga, qaytar, butunlayOchir,
     akkauntNomi, setAkkauntNomi,
     ishHaqiYozuvlari, setIshHaqiYozuvlari,

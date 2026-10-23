@@ -15,14 +15,15 @@ import { NonIkon } from "../src/components/XomashyoIkon";
 import { VaqtField, hozirgiSoat } from "../src/components/VaqtField";
 import { ScrollBox } from "../src/components/ScrollBox";
 import { SahifaSarlavha } from "../src/components/SahifaSarlavha";
+import { YakunIzoh } from "../src/components/YakunIzoh";
 import { C, T, S, R, temaStil } from "../src/theme";
 import { formatSom, optomJami, bugunSana, sonOl } from "../src/logic/hisob";
 
-// Ish kuni sanasi (kun tunda 03:00 da tugaydi)
-const localSana = () => bugunSana();
 
 export default function Optom() {
-  const { nonlar, optomlar, setOptomlar, ochirArxivga } = useApp();
+  const { nonlar, optomlar, setOptomlar, ochirArxivga, yozuvSanasi } = useApp();
+  // Bugun yakunlangan bo'lsa — yangi yozuv ertangi ish kuniga tushadi
+  const localSana = yozuvSanasi;
   const BOSH = { ism: "", izoh: "", sana: "", sanaTanlandi: false, soat: "", savat: {}, donaChegirma: "", chegirma: "" };
   const [forma, setForma] = useState(BOSH);
   // Kalkulyatordan kelgan hisob — savat tayyor holda to'ldiriladi
@@ -81,6 +82,7 @@ export default function Optom() {
         <SahifaSarlavha eyebrow="OPTOM SAVDOLAR" title="Ulgurji savdo" subtitle={`${formatSom(optom.summa)} so'm · ${optom.soni} ta`} image={require("../assets/icons/optom.png")} />
 
         {/* INLINE FORMA */}
+        <YakunIzoh />
         <Card style={styles.formCard}>
           <View style={styles.formHead}>
             <Ionicons name="add-circle-outline" size={18} color={C.sub} />

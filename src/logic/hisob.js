@@ -20,6 +20,12 @@ export function ishKuniSana(ms = Date.now()) {
 export function bugunSana() {
   return ishKuniSana();
 }
+// "YYYY-MM-DD" dan keyingi kalendar kuni
+export function keyingiSana(sana) {
+  const [y, m, d] = String(sana).split("-").map(Number);
+  const t = new Date(y, m - 1, d + 1);
+  return `${t.getFullYear()}-${ikkiS(t.getMonth() + 1)}-${ikkiS(t.getDate())}`;
+}
 // Joriy ish kuni qachon tugaydi (keyingi 03:00 dan bir millisoniya oldin)
 export function kunTugashVaqti(ms = Date.now()) {
   const d = ishKuni(ms);

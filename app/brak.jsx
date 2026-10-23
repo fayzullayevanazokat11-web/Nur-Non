@@ -12,6 +12,7 @@ import { Btn } from "../src/components/Btn";
 import { ExpandableCard, yopKartalar } from "../src/components/ExpandableCard";
 import { ScrollBox } from "../src/components/ScrollBox";
 import { SahifaSarlavha } from "../src/components/SahifaSarlavha";
+import { YakunIzoh } from "../src/components/YakunIzoh";
 import { BrakTahlili } from "../src/components/BrakTahlili";
 import { NonIkon } from "../src/components/XomashyoIkon";
 import { C, T, S, R, temaStil } from "../src/theme";
@@ -19,12 +20,12 @@ import { formatSom, bugunSana, sonOl } from "../src/logic/hisob";
 
 const soatMatni = (ms) => { const d = new Date(ms); return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`; };
 
-// Ish kuni sanasi (kun tunda 03:00 da tugaydi)
-const localSana = () => bugunSana();
 const BOSH = { ishchiId: null, dona: {} };
 
 export default function Brak() {
-  const { nonlar, ishchilar, braklar, setBraklar, ochirArxivga } = useApp();
+  const { nonlar, ishchilar, braklar, setBraklar, ochirArxivga, yozuvSanasi } = useApp();
+  // Bugun yakunlangan bo'lsa — yangi yozuv ertangi ish kuniga tushadi
+  const localSana = yozuvSanasi;
   const [tahrirId, setTahrirId] = useState(null);
   const scrollRef = useRef(null);
   const [forma, setForma] = useState(BOSH);
@@ -90,6 +91,7 @@ export default function Brak() {
         <SahifaSarlavha eyebrow="BRAK" title="Yaroqsizlar" subtitle={`${formatSom(jamiSumma)} so'm · ${(braklar || []).length} ta yozuv`} image={require("../assets/icons/brak.png")} ton="red" />
 
         {/* INLINE FORMA */}
+        <YakunIzoh />
         <Card style={styles.formCard}>
           <View style={styles.formHead}>
             <Ionicons name={tahrirId ? "create-outline" : "alert-circle-outline"} size={18} color={C.sub} />
