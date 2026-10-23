@@ -32,7 +32,6 @@ export function KunHisoboti({ h }) {
   }).filter(Boolean);
   // Sof foyda tenglamasi: daromad − tashqaridan olingan non − ishchi haqi − qo'shimcha xarajat
   const ayirma = [
-    ...(h.xomashyoAyrilgan ? [["Xomashyo tannarxi", son(h.xomashyo)]] : []),
     ["Tashqaridan olingan non", moliyaTashqari(h)], ["Ishchi haqi", haq], ["Qo'shimcha xarajat", son(h.xarajatJami)],
   ].filter(([, v]) => v > 0);
   const tarkib = son(h.optomDaromad) || son(h.qarzDaromad) ? [

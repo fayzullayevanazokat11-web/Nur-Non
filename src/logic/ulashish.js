@@ -66,7 +66,7 @@ const savatMatn = (savat) => (savat || []).map((x) => `${t(x.nonNomi)} × ${x.so
 // Tashqaridan olingan non tannarxi: yangi hisobotda saqlangan, eskisida tenglamadan tiklanadi
 export function moliyaTashqari(h) {
   if (h.tashqariTannarx !== undefined) return son(h.tashqariTannarx);
-  return Math.max(0, son(h.daromad) - (h.xomashyoAyrilgan ? son(h.xomashyo) : 0) - son(h.ishchiHaq) - son(h.xarajatJami) - son(h.sofFoyda));
+  return Math.max(0, son(h.daromad) - son(h.ishchiHaq) - son(h.xarajatJami) - son(h.sofFoyda));
 }
 
 export function kunlikHtml(h, { akkaunt, nonlar } = {}) {
@@ -88,7 +88,6 @@ export function kunlikHtml(h, { akkaunt, nonlar } = {}) {
   // Sof foyda tenglamasi: daromad − tashqaridan olingan non − ishchi haqi − qo'shimcha xarajat
   const tashqari = moliyaTashqari(h);
   const ayirma = [
-    ...(h.xomashyoAyrilgan ? [["Xomashyo tannarxi", son(h.xomashyo)]] : []),
     ["Tashqaridan olingan non", tashqari], ["Ishchi haqi", haq], ["Qo'shimcha xarajat", son(h.xarajatJami)],
   ].filter(([, v]) => v > 0).map(([l, v]) => [t(l), `− ${som(v)}`]);
   // Faqat ma'lumot uchun (sof foydaga alohida ta'sir qilmaydi)
@@ -130,7 +129,7 @@ export function kunlikHtml(h, { akkaunt, nonlar } = {}) {
       ...(son(h.qarzDaromad) ? [[t("  · qarzga"), som(son(h.qarzDaromad))]] : []),
     ] : []),
     ...ayirma, ...malumot,
-    ...(!h.xomashyoAyrilgan && son(h.xomashyo) ? [[t("Xomashyo (ma'lumot uchun)"), som(h.xomashyo)]] : []),
+    ...(son(h.xomashyo) ? [[t("Xomashyo (ombordan, ma'lumot uchun)"), som(h.xomashyo)]] : []),
   ], [t("Sof foyda"), som(h.sofFoyda)]));
 
   // Kun davomidagi yozuvlar — vaqti bilan
