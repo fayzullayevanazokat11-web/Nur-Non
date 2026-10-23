@@ -22,7 +22,7 @@ export const TextInput = forwardRef(function TextInput(props, ref) {
   return <RNTextInput ref={ref} {...props} placeholder={ogir(props.placeholder, til)} />;
 });
 
-// Pressable — bosilganda yengil tebranish va yumshoq ovoz (sozlamaga qarab).
+// Pressable — bosilganda yengil tebranish (doim yoqiq).
 // sezgiTuri: "bos" (sukut), "otish" (sahifa/bo'lim almashishi), "tayyor" yoki false (jim).
 export const Pressable = forwardRef(function Pressable({ onPress, sezgiTuri = "bos", ...props }, ref) {
   const bosildi = onPress

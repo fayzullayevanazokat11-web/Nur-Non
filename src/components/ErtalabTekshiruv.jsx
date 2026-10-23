@@ -1,7 +1,8 @@
 // Markazdagi "Kunni boshlash" — ertalabgi tekshiruv (ish kuni 03:00 da boshlanadi):
 //   1) Ishchilar davomati  → Xodimlar bo'limi (kim keldi / kelmadi)
 //   2) Omborni tekshirish  → Ombor bo'limi (zaxira, so'rovnomalar)
-// Ikkalasi ko'rilgach "Ertalabgi tekshiruv tugallandi" bosiladi — Markazda kun oxirigacha
+//   3) Qoplar rasmi        → kamera yoki galereyadan (7 kun saqlanadi)
+// Uchalasi bajarilgach "Ertalabgi tekshiruv tugallandi" bosiladi — Markazda kun oxirigacha
 // "Ertalabgi tekshiruv tugallangan" belgisi turadi. Kun yakunlangan bo'lsa ko'rinmaydi.
 import { View, Text, Pressable, StyleSheet, Alert, LayoutAnimation } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
@@ -20,10 +21,11 @@ const soat = (ms) => { const d = new Date(ms); return `${ikki(d.getHours())}:${i
 const QADAMLAR = [
   { k: "davomat", nom: "Ishchilar davomati", izoh: "Kim keldi, kim kelmadi", icon: "people-outline", yol: "/xodimlar" },
   { k: "ombor", nom: "Omborni tekshirish", izoh: "Zaxira va so'rovnomalar", icon: "cube-outline", yol: "/ombor" },
+  { k: "rasm", nom: "Qoplar rasmi", izoh: "Ertalabgi qoplarni rasmga oling", icon: "camera-outline", yol: "/rasmlar" },
 ];
 
 export function ErtalabTekshiruv({ kunYopiq }) {
-  const { ertalab, ertalabBelgila, ertalabTugalla, setErtalabYonalish, ertalabPanel, setErtalabPanel, ishchilarHaq, kelmaganlar } = useApp();
+  const { ertalab, ertalabBelgila, ertalabTugalla, setErtalabYonalish, ertalabPanel, setErtalabPanel, ishchilarHaq, kelmaganlar, bugungiRasmlar } = useApp();
   if (kunYopiq && !ertalab.tugallandi) return null;
 
   // Tugallangan — ixcham belgi
@@ -82,7 +84,7 @@ export function ErtalabTekshiruv({ kunYopiq }) {
                   <Ionicons name={q.icon} size={18} color={C.accent} />
                   <View style={styles.flex1}>
                     <Text style={[styles.qadamNom, ok && styles.qadamOk]}>{q.nom}</Text>
-                    <Text style={styles.qadamIzoh}>{q.k === "davomat" && aktiv > 0 ? `${keldi}/${aktiv} keldi · ${q.izoh}` : q.izoh}</Text>
+                    <Text style={styles.qadamIzoh}>{q.k === "davomat" && aktiv > 0 ? `${keldi}/${aktiv} keldi · ${q.izoh}` : q.k === "rasm" && bugungiRasmlar.length ? `${bugungiRasmlar.length} ta rasm · ${q.izoh}` : q.izoh}</Text>
                   </View>
                   <Ionicons name="chevron-forward" size={16} color={C.muted} />
                 </Bosma>

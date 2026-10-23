@@ -6,6 +6,7 @@ import { arxivla } from "../logic/davr";
 import { kunYakunEslatmalari } from "../logic/bildirishnoma";
 import { nusxaSaqla, nusxaBormi } from "../logic/avtoZaxira";
 import { bugunSana } from "../logic/hisob";
+import { rasmSaqla, rasmFaylOchir } from "../logic/qopRasm";
 import { getTil } from "../i18n/til";
 import { ogir } from "../i18n/translit";
 import { SEED_NONLAR, SEED_ISHCHILAR, SEED_MAHSULOT_NARXLARI } from "../logic/data";
@@ -106,7 +107,9 @@ export function AppDataProvider({ children }) {
   const [narxTarixi, setNarxTarixi]                     = usePersistedState("nurnon:narxTarixi", []);
   // Kun xulosasi (03:00) va ertalabki salom ekranlari yoqilganmi (qurilma sozlamasi)
   const [salomYoqilgan, setSalomYoqilgan]               = usePersistedState("nurnon:salomYoqilgan", true);
-  // Ertalabgi tekshiruv (har ish kuni, 03:00 dan): { kun, davomat, ombor, tugallandi: ms }
+  // Ertalabgi qop rasmlari (7 kun, faqat shu telefonda): [{ id, kun, uri, vaqt }]
+  const [qopRasmlari, setQopRasmlari]                   = usePersistedState("nurnon:qopRasmlari", []);
+  // Ertalabgi tekshiruv (har ish kuni, 03:00 dan): { kun, davomat, ombor, rasm, tugallandi: ms }
   const [ertalabTekshiruv, setErtalabTekshiruv]         = usePersistedState("nurnon:ertalabTekshiruv", null);
   // Foydalanuvchi o'zgartirgan xomashyo ikonkalari: { xomashyoId: ikonKaliti }
   const [xomashyoIkonlari, setXomashyoIkonlari]         = usePersistedState("nurnon:xomashyoIkonlari", {});
@@ -167,6 +170,12 @@ export function AppDataProvider({ children }) {
       setOchirilganlarXom((p) => (p || []).filter((x) => (now - (x.vaqt || now)) < 7 * D));
       setIshHaqiYozuvlariXom((p) => (p || []).filter((x) => (now - (x.vaqt || now)) < 400 * D));
       setNarxTarixi((p) => (p || []).filter((x) => (now - (x.vaqt || now)) < 180 * D));
+      // Qop rasmlari 7 kun saqlanadi — eskilari fayli bilan o'chiriladi
+      setQopRasmlari((p) => (p || []).filter((r) => {
+        const qol = (now - (r.vaqt || now)) < 7 * D;
+        if (!qol) rasmFaylOchir(r.uri);
+        return qol;
+      }));
       setDavomat((p) => Object.fromEntries(Object.entries(p || {}).filter(([s]) => (now - (Date.parse(s) || now)) < 60 * D)));
     };
     yuritish();
@@ -481,7 +490,7 @@ export function AppDataProvider({ children }) {
   // Faqat joriy ish kuniga tegishli; yangi kun (03:00) boshlanganda o'zi bo'shaydi.
   const ertalabOl = () => {
     const e = ertalabTekshiruv;
-    return e && e.kun === bugunSana() ? e : { kun: bugunSana(), davomat: false, ombor: false, tugallandi: 0 };
+    return e && e.kun === bugunSana() ? e : { kun: bugunSana(), davomat: false, ombor: false, rasm: false, tugallandi: 0 };
   };
   const ertalab = ertalabOl();
   const ertalabBelgila = (qadam, qiymat = true) => setErtalabTekshiruv(() => ({ ...ertalabOl(), [qadam]: !!qiymat }));
@@ -491,6 +500,26 @@ export function AppDataProvider({ children }) {
   const [ertalabPanel, setErtalabPanel] = useState(false);
   // Kalkulyatordan Qarz/Optom formasiga o'tkaziladigan savat: { tur: "qarz" | "optom", savat }
   const [tayyorSavat, setTayyorSavat] = useState(null);
+
+  // ── Ertalabgi qop rasmlari ──
+  const bugungiRasmlar = (qopRasmlari || []).filter((r) => r.kun === bugunSana());
+  const qopRasmQosh = async (urilar) => {
+    const kun = bugunSana();
+    const yangilar = [];
+    for (const [i, uri] of (urilar || []).entries()) {
+      const id = `${Date.now()}-${i}`;
+      yangilar.push({ id, kun, uri: await rasmSaqla(uri, id), vaqt: Date.now() });
+    }
+    if (!yangilar.length) return 0;
+    setQopRasmlari((p) => [...(p || []), ...yangilar]);
+    ertalabBelgila("rasm", true); // ertalabgi tekshiruvning 3-qadami bajarildi
+    return yangilar.length;
+  };
+  const qopRasmOchir = (id) => setQopRasmlari((p) => (p || []).filter((r) => {
+    if (r.id !== id) return true;
+    rasmFaylOchir(r.uri);
+    return false;
+  }));
 
   // ── Ikonkalar: xomashyo (asosiylari ham) va non ikonkasini almashtirish ──
   const xomashyoIkonQoy = (id, kalit) => {
@@ -643,6 +672,7 @@ export function AppDataProvider({ children }) {
     xomashyoIkonlari, xomashyoIkonQoy, nonIkonQoy,
     salomYoqilgan, setSalomYoqilgan,
     tayyorSavat, setTayyorSavat,
+    qopRasmlari, bugungiRasmlar, qopRasmQosh, qopRasmOchir,
     ertalab, ertalabBelgila, ertalabTugalla, ertalabYonalish, setErtalabYonalish, ertalabPanel, setErtalabPanel,
     oxirgiNusxa, nusxaOl,
     bekor, bekorTaklif, bekorQil, bekorYop,

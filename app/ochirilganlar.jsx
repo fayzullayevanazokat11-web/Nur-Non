@@ -13,6 +13,7 @@ import { Qidiruv, qidiruvMos } from "../src/components/Qidiruv";
 import { SahifaSarlavha } from "../src/components/SahifaSarlavha";
 import { C, T, S, R, temaStil } from "../src/theme";
 import { formatSom } from "../src/logic/hisob";
+import { sanaChiroyli } from "../src/logic/davr";
 import { sezgi } from "../src/logic/sezgi";
 
 const D = 86400000;
@@ -46,7 +47,13 @@ const TURLAR = {
 const silliq = () => LayoutAnimation.configureNext(LayoutAnimation.create(220, LayoutAnimation.Types.easeInEaseOut, LayoutAnimation.Properties.opacity));
 
 export default function Ochirilganlar() {
-  const { ochirilganlar, qaytar, butunlayOchir } = useApp();
+  const { ochirilganlar, qaytar, butunlayOchir, qopRasmlari } = useApp();
+  // Ertalabgi qop rasmlari — kunlar bo'yicha (7 kun)
+  const rasmKunlar = useMemo(() => {
+    const m = new Map();
+    (qopRasmlari || []).forEach((r) => { if (!m.has(r.kun)) m.set(r.kun, []); m.get(r.kun).push(r); });
+    return [...m.entries()].sort((a, b) => String(b[0]).localeCompare(String(a[0])));
+  }, [qopRasmlari]);
   const [filtr, setFiltr] = useState("hammasi");
   const [xabar, setXabar] = useState("");
   const xabarT = useRef(null);
@@ -96,7 +103,36 @@ export default function Ochirilganlar() {
   return (
     <SafeAreaView style={styles.safe} edges={["top"]}>
       <ScrollBox contentContainerStyle={styles.scroll}>
-        <SahifaSarlavha eyebrow="TARIXDAGILAR" title="Salbiy o'zgarishlar" subtitle={`O'chirish, nollash, haydash · 7 kun · ${royxat.length} ta`} icon="archive-outline" />
+        <SahifaSarlavha eyebrow="TARIXDAGILAR" title="Salbiy o'zgarishlar" subtitle={`O'chirish, nollash, haydash, qop rasmlari · 7 kun`} icon="archive-outline" />
+
+        {rasmKunlar.length > 0 && (
+          <Card style={styles.rasmKarta}>
+            <View style={styles.rasmBosh}>
+              <Ionicons name="camera-outline" size={18} color={C.sub} />
+              <Text style={styles.rasmSarlavha}>Ertalabgi qop rasmlari</Text>
+              <Text style={styles.rasmMuddat}>7 kun</Text>
+            </View>
+            {rasmKunlar.map(([kun, list]) => (
+              <Pressable
+                key={kun}
+                accessibilityRole="button"
+                accessibilityLabel={`Qop rasmlari: ${kun}`}
+                onPress={() => router.push({ pathname: "/rasmlar", params: { kun } })}
+                sezgiTuri="otish"
+                style={({ pressed }) => [styles.rasmQator, pressed && styles.pressed]}
+              >
+                <View style={styles.flex1}>
+                  <Text style={styles.rasmKun}>{sanaChiroyli(kun)}</Text>
+                  <Text style={styles.rasmSoni}>{list.length} ta rasm</Text>
+                </View>
+                <View style={styles.rasmKichik}>
+                  {list.slice(0, 4).map((r) => <Image key={r.id} source={{ uri: r.uri }} style={styles.rasmMini} />)}
+                </View>
+                <Ionicons name="chevron-forward" size={16} color={C.muted} />
+              </Pressable>
+            ))}
+          </Card>
+        )}
 
         {xabar ? (
           <View style={styles.xabar}>
@@ -194,4 +230,13 @@ const styles = temaStil(() => StyleSheet.create({
   qaytarBtn:{ flexDirection: "row", alignItems: "center", gap: 6, backgroundColor: C.accent, borderRadius: R.pill, paddingVertical: 9, paddingHorizontal: 16 },
   qaytarTxt:{ fontSize: T.sm, fontWeight: "800", color: C.onAccent },
   pressed:  { opacity: 0.7, transform: [{ scale: 0.97 }] },
+  rasmKarta:{ marginBottom: S[4], paddingVertical: S[3] },
+  rasmBosh: { flexDirection: "row", alignItems: "center", gap: 6, marginBottom: S[1] },
+  rasmSarlavha:{ flex: 1, fontSize: T.md, fontWeight: "800", color: C.text },
+  rasmMuddat:{ fontSize: 11, fontWeight: "800", color: C.muted },
+  rasmQator:{ flexDirection: "row", alignItems: "center", gap: S[2], paddingVertical: S[2], borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: C.borderSoft },
+  rasmKun:  { fontSize: T.sm, fontWeight: "700", color: C.text },
+  rasmSoni: { fontSize: 11, color: C.muted, marginTop: 1 },
+  rasmKichik:{ flexDirection: "row", gap: 4 },
+  rasmMini: { width: 34, height: 34, borderRadius: 8, backgroundColor: C.panel },
 }));

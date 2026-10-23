@@ -5,7 +5,7 @@
 //     bayram va kechagi natijaga qarab salom (kecha xulosasi ko'rilmagan bo'lsa — shu yerda).
 // Har biri kuniga bir marta; "Markazga qaytish" bilan yopiladi. Menyuda o'chirib qo'yish mumkin.
 import { useEffect, useRef, useState } from "react";
-import { View, Text, Pressable, Animated, Easing, StyleSheet, AppState } from "react-native";
+import { View, Text, Pressable, Animated, Easing, StyleSheet, AppState, BackHandler } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { markazga, markazdan } from "../logic/yol";
@@ -86,6 +86,16 @@ export function KunOtishi() {
     a.setValue(0);
     Animated.timing(a, { toValue: 1, duration: 420, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start();
     sezgi("tayyor");
+  }, [ekran]);
+
+  // Ekran ochiq bo'lsa telefonning "Orqaga" tugmasi uni yopib Markazga qaytaradi
+  useEffect(() => {
+    if (!ekran) return undefined;
+    const sub = BackHandler.addEventListener("hardwareBackPress", () => {
+      Animated.timing(a, { toValue: 0, duration: 200, useNativeDriver: true }).start(() => { setEkran(null); markazga(); });
+      return true;
+    });
+    return () => sub.remove();
   }, [ekran]);
 
   if (!ekran) return null;

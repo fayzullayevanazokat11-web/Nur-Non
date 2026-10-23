@@ -5,8 +5,8 @@
 // Mavzu (dizayn) almashganda ekranlar yangi ranglar bilan qayta chiziladi —
 // o'tish silliq parda (fade) bilan yashiriladi.
 import { useEffect, useMemo, useRef, useState } from "react";
-import { View, Animated, Easing, StyleSheet } from "react-native";
-import { Stack } from "expo-router";
+import { View, Animated, Easing, StyleSheet, BackHandler } from "react-native";
+import { Stack, router, usePathname } from "expo-router";
 import { ThemeProvider, DefaultTheme, DarkTheme } from "@react-navigation/native";
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaProvider } from "react-native-safe-area-context";
@@ -18,7 +18,6 @@ import { ErrorBoundary } from "../src/components/ErrorBoundary";
 import { BekorPanel } from "../src/components/BekorPanel";
 import { Tanishuv } from "../src/components/Tanishuv";
 import { KunOtishi } from "../src/components/KunOtishi";
-import { sezgiTayyorla } from "../src/logic/sezgi";
 import { C, TEMALAR, useTema, setTema, temaQorongi, temaAlmashtiruvchi } from "../src/theme";
 
 // Mavzu almashish pardasi: eski fon rangida yopiladi → mavzu almashadi →
@@ -55,8 +54,23 @@ export default function RootLayout() {
   useFonts(Ionicons.font); // best-effort; render'ni bloklamaydi
   const tema = useTema();
   const parda = useTemaParda();
-  // Bosish ovozlari oldindan yuklanadi (birinchi bosishda kechikmasin)
-  useEffect(() => { const t = setTimeout(sezgiTayyorla, 2500); return () => clearTimeout(t); }, []);
+
+  // Telefonning "Orqaga" tugmasi dasturdan chiqarib yubormaydi: avval oxirgi ochilgan
+  // sahifa yopiladi, keyin boshqa bo'limdan Markazga qaytiladi, Markazda esa hech narsa
+  // bo'lmaydi (dastur ochiq qoladi).
+  const yol = usePathname();
+  const yolRef = useRef(yol);
+  yolRef.current = yol;
+  useEffect(() => {
+    const sub = BackHandler.addEventListener("hardwareBackPress", () => {
+      try {
+        if (router.canDismiss()) { router.back(); return true; }
+        if (yolRef.current !== "/") { router.navigate("/"); return true; }
+      } catch { /* navigatsiya hali tayyor emas */ }
+      return true;
+    });
+    return () => sub.remove();
+  }, []);
 
   // Navigatsiya foni ham mavzuga mos (o'tishlarda oq chaqnash bo'lmasin)
   const navTema = useMemo(() => {
@@ -87,6 +101,7 @@ export default function RootLayout() {
                 <Stack.Screen name="ochirilganlar" />
                 <Stack.Screen name="akkaunt" />
                 <Stack.Screen name="ishhaqi" />
+                <Stack.Screen name="rasmlar" />
               </Stack>
             </ThemeProvider>
             <BekorPanel />

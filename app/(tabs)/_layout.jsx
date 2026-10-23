@@ -36,7 +36,7 @@ function PastkiPanel({ state, descriptors, navigation }) {
     const b = Keyboard.addListener("keyboardDidHide", () => setKlaviatura(false));
     return () => { a.remove(); b.remove(); };
   }, []);
-  // Surib o'tilganda ham (bosilmasdan) yengil tebranish va o'tish ovozi
+  // Surib o'tilganda ham (bosilmasdan) yengil tebranish
   const oxirgiBosish = useRef(0);
   const oldingi = useRef(state.index);
   useEffect(() => {

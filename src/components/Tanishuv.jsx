@@ -3,7 +3,7 @@
 // (ma'lumoti bor — yangilangan — ilovada chiqmaydi); menyudagi «Yo'riqnoma»dan qayta ochiladi.
 // Qadamlar orasida tugmalar yoki chapga-o'ngga surish bilan o'tiladi.
 import { useEffect, useRef, useState } from "react";
-import { View, Text, Image, Pressable, TextInput, Animated, Easing, PanResponder, LayoutAnimation, Platform, StyleSheet } from "react-native";
+import { View, Text, Image, Pressable, TextInput, Animated, Easing, PanResponder, LayoutAnimation, Platform, StyleSheet, BackHandler } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useApp } from "../store/AppData";
@@ -102,6 +102,13 @@ export function Tanishuv() {
       else if (g.dx > 50) otishRef.current(iRef.current - 1);
     },
   })).current;
+
+  // "Orqaga" — oldingi qadamga (birinchi qadamda dasturdan chiqmaydi)
+  useEffect(() => {
+    if (!korsat) return undefined;
+    const sub = BackHandler.addEventListener("hardwareBackPress", () => { if (iRef.current > 0) otishRef.current(iRef.current - 1); return true; });
+    return () => sub.remove();
+  }, [korsat]);
 
   if (!korsat) return null;
   const q = QADAMLAR[i];
