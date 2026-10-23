@@ -191,7 +191,7 @@ export default function Qop() {
           ishchilarSnapshot: JSON.parse(JSON.stringify(ishchilar)),
           mahsulotNarxlariSnapshot: JSON.parse(JSON.stringify(mahsulotNarxlari)),
           daromad: stats.daromad, chakanaDaromad: stats.chakanaDaromad, optomDaromad: stats.optomDaromad, qarzDaromad: stats.qarzDaromad,
-          xomashyo: stats.xomashyo, tashqariTannarx: stats.tashqariTannarx, ishchiHaq: stats.ishchiHaq,
+          xomashyo: stats.xomashyo, xomashyoAyrilgan: true, tashqariTannarx: stats.tashqariTannarx, ishchiHaq: stats.ishchiHaq,
           sofFoyda: stats.sofFoyda, sotilganNon: stats.sotilganNon, jamiQop: stats.jamiQop, jamiNon: stats.jamiNon,
           jamiBoshlang: stats.jamiBoshlang, jamiQoldiq: stats.jamiQoldiq, jamiYaroqsiz: stats.jamiYaroqsiz,
           xarajatJami: stats.xarajatJami, ishchiHaqlari: haq.list,
@@ -345,6 +345,12 @@ export default function Qop() {
               {stats.optomDaromad > 0 && <Row label="  · optom" value={`${formatSom(stats.optomDaromad)} so'm`} color={C.sub} />}
               {stats.qarzDaromad > 0 && <Row label="  · qarzga" value={`${formatSom(stats.qarzDaromad)} so'm`} color={C.sub} />}
             </>
+          )}
+          {stats.xomashyo > 0 && (
+            <Row label="Xomashyo tannarxi" value={`− ${formatSom(stats.xomashyo)} so'm`} color={C.red} />
+          )}
+          {stats.tannarxsiz.length > 0 && (
+            <Text style={styles.ogoh}>{stats.tannarxsiz.join(", ")}: tarkibi yoki xomashyo narxi kiritilmagan — tannarx 0 deb olindi. Ishlab chiqarish bo'limida (non tarkibi va «Xomashyo» narxlari) to'ldiring.</Text>
           )}
           {stats.tashqariTannarx > 0 && (
             <Row label="Tashqaridan olingan non" value={`− ${formatSom(stats.tashqariTannarx)} so'm`} color={C.red} />

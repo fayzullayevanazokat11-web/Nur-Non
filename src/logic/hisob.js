@@ -91,9 +91,10 @@ export function hisoblaKunlik({
   let jamiNon = 0, jamiQop = 0, jamiBoshlang = 0, jamiQoldiq = 0, jamiYaroqsiz = 0;
   // Sotilgan non — har bir non bo'yicha alohida (bitta nonning ortiqcha qoldig'i boshqasini kamaytirmasin)
   let sotilgan = 0;
-  // xomashyo — o'z ishlab chiqarishimiz xomashyosi (faqat ma'lumot uchun, sof foydadan ayrilmaydi).
+  // xomashyo — bugun pishirilgan qoplar xomashyo tannarxi (sof foydadan ayriladi).
   // tashqariTannarx — tashqaridan olingan nonning sotib olish narxi (sof foydadan ayriladi).
   let daromad = 0, xomashyo = 0, tashqariTannarx = 0;
+  const tannarxsiz = []; // bugun pishirilgan, lekin xomashyo narxi kiritilmagan nonlar
 
   nonlar.forEach((non) => {
     const norma = parseFloat(non.nonSoni) || 0;
@@ -117,6 +118,7 @@ export function hisoblaKunlik({
       const qopTannarx = getQopTannarx(non, mahsulotNarxlari);
       // Bugungi xomashyo: faqat bugun pishirilgan qop (kechagi qoldiq tannarxi kecha hisoblangan).
       xomashyo += qopSoni * qopTannarx;
+      if (qopSoni > 0 && qopTannarx <= 0) tannarxsiz.push(non.nom);
     } else {
       const olingan = parseInt(tashqariSonlar[non.id]) || 0;
       jamiNon += olingan;
@@ -154,9 +156,9 @@ export function hisoblaKunlik({
   // xarajat bo'lishi kerak. Faqat kechagi qoldiq (boshlang) bo'lsa — sofFoyda 0
   // (aks holda kunlik ishchi haqi darrov ayrilib, kun boshidan minusga kirib ketadi).
   const kunBoshlandi = jamiQop > 0 || jamiNon > 0 || xarajatJami > 0 || oq.optom + oq.qarz > 0;
-  // O'z xomashyomiz sof foydadan AYRILMAYDI — u ombor (keltirilgan set) orqali alohida
-  // hisoblanadi. Tashqaridan olingan non narxi esa omborda yo'q, shuning uchun ayriladi.
-  const sofFoyda = kunBoshlandi ? Math.round(daromad - tashqariTannarx - ishchiHaq - xarajatJami) : 0;
+  // Sof foyda = daromad − bugun pishirilgan qoplar xomashyo tannarxi (Tannarx narxlaridan)
+  //            − tashqaridan olingan non narxi − ishchi haqi − qo'shimcha xarajat
+  const sofFoyda = kunBoshlandi ? Math.round(daromad - xomashyo - tashqariTannarx - ishchiHaq - xarajatJami) : 0;
   // Bugun sotilgan jami (retail + diverted) — nonlar bo'yicha yig'indi
   const sotilganNon = sotilgan;
 
@@ -166,7 +168,7 @@ export function hisoblaKunlik({
     daromad: Math.round(daromad), chakanaDaromad: Math.round(chakanaDaromad),
     optomDaromad: Math.round(oq.optom), qarzDaromad: Math.round(oq.qarz), xomashyo: Math.round(xomashyo), tashqariTannarx: Math.round(tashqariTannarx),
     ishchiHaq: Math.round(ishchiHaq), brakAyirma: Math.round(brakAyirma),
-    xarajatJami: Math.round(xarajatJami),
+    xarajatJami: Math.round(xarajatJami), tannarxsiz,
   };
 }
 
