@@ -98,7 +98,7 @@ export function davrTaqqos(hisobotlar, kalit, n, hozir = ishKuni()) {
     if (farq >= 0 && farq < n) { joriy += ol(h); jSoni++; }
     else if (farq >= n && farq < 2 * n) { oldingi += ol(h); oSoni++; }
   });
-  if (!jSoni || !oSoni) return null;
+  if (jSoni < 3 || oSoni < 3) return null; // kamida 3 kunlik ma'lumot bo'lsagina taqqoslash ma'noli
   // Kunlik o'rtachalarni taqqoslaymiz — kunlar soni farq qilsa ham adolatli
   const a = joriy / jSoni, b = oldingi / oSoni;
   if (Math.abs(b) < 1) return null;

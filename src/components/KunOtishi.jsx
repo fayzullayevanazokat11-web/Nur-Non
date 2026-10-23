@@ -13,6 +13,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useApp } from "../store/AppData";
 import { ishKuni, formatSom } from "../logic/hisob";
 import { sanaChiroyli } from "../logic/davr";
+import { ixcham as ixchamSon } from "./Statistika";
 import { kunXulosasi, ertalabSalomi } from "../logic/kunGaplari";
 import { sezgi } from "../logic/sezgi";
 import { C, T, S, R, temaStil } from "../theme";
@@ -172,7 +173,7 @@ function Raqamlar({ x, ixcham }) {
   const foiz = x.foiz;
   return (
     <View style={[styles.raqamlar, ixcham && styles.raqamlarIxcham]}>
-      <Plitka nom="Sof foyda" qiymat={formatSom(son(h.sofFoyda))} birlik="so'm" ixcham={ixcham} />
+      <Plitka nom="Sof foyda" qiymat={Math.abs(son(h.sofFoyda)) >= 1e6 ? ixchamSon(son(h.sofFoyda)) : formatSom(son(h.sofFoyda))} birlik="so'm" ixcham={ixcham} />
       <Plitka nom="Sotilgan" qiymat={formatSom(son(h.sotilganNon))} birlik="dona" ixcham={ixcham} />
       <Plitka nom={foiz != null ? "O'rtachaga" : "Qop"} qiymat={foiz != null ? `${foiz >= 0 ? "+" : "−"}${Math.abs(foiz)}%` : String(son(h.jamiQop))} birlik={foiz != null ? "nisbatan" : "qop"} ixcham={ixcham} />
     </View>
