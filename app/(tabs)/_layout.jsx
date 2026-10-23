@@ -1,11 +1,11 @@
 // Pastki tab navigatsiya — 4 ta ekran. Bo'limlar orasida chapga/o'ngga SURISH
 // (swipe) orqali ham o'tiladi: ekranlar sahifalovchi (pager) ichida turadi,
-// pastki panel esa o'zimizniki — barmoq harakatiga ergashuvchi silliq indikator bilan.
+// pastki panel esa o'zimizniki — tanlangan bo'limga silliq suriladigan indikator bilan.
 // Ikonkalar — maxsus rasmlar (tintColor bilan bo'yaladi).
 import { useEffect, useRef, useState } from "react";
 import { withLayoutContext } from "expo-router";
 import { createMaterialTopTabNavigator } from "@react-navigation/material-top-tabs";
-import { View, Text, Image, Pressable, Animated, StyleSheet, Keyboard } from "react-native";
+import { View, Text, Image, Pressable, Animated, Easing, StyleSheet, Keyboard } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { C, temaStil } from "../../src/theme";
 import { useTil } from "../../src/i18n/til";
@@ -19,13 +19,14 @@ const SwipeTabs = withLayoutContext(Navigator);
 const ICONS = {
   index: require("../../assets/tabicons/markaz.png"),
   ishlab: require("../../assets/tabicons/ishlab.png"),
+  kalkulyator: require("../../assets/tabicons/kalkulyator.png"),
   xodimlar: require("../../assets/tabicons/xodimlar.png"),
   ombor: require("../../assets/tabicons/ombor.png"),
 };
 
 const PILL_W = 56;
 
-function PastkiPanel({ state, descriptors, navigation, position }) {
+function PastkiPanel({ state, descriptors, navigation }) {
   const insets = useSafeAreaInsets();
   const [kenglik, setKenglik] = useState(0);
   // Klaviatura ochiq bo'lsa panel yashirinadi — formalarga ko'proq joy qoladi
@@ -47,9 +48,15 @@ function PastkiPanel({ state, descriptors, navigation, position }) {
   const tabW = kenglik / soni;
   const kirishlar = state.routes.map((_, i) => i);
 
-  // Indikator barmoq bilan birga suriladi (position — 0..n-1 oralig'idagi kasr son)
-  const pillX = kenglik
-    ? position.interpolate({ inputRange: kirishlar, outputRange: kirishlar.map((i) => i * tabW + (tabW - PILL_W) / 2) })
+  // Indikator tanlangan bo'limga silliq suriladi. Pager pozitsiyasiga bog'lanmaydi —
+  // bosib o'tilganda (animatsiyasiz sakrash) u eski joyda qolib, boshqa bo'limni
+  // ko'rsatib qo'yardi. Endi faqat haqiqiy tanlangan bo'lim (state.index) asos.
+  const idx = useRef(new Animated.Value(state.index)).current;
+  useEffect(() => {
+    Animated.timing(idx, { toValue: state.index, duration: 240, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start();
+  }, [state.index]);
+  const pillX = kenglik && soni > 1
+    ? idx.interpolate({ inputRange: kirishlar, outputRange: kirishlar.map((i) => i * tabW + (tabW - PILL_W) / 2), extrapolate: "clamp" })
     : 0;
 
   if (klaviatura) return null;
@@ -67,7 +74,7 @@ function PastkiPanel({ state, descriptors, navigation, position }) {
         const tanlangan = state.index === i;
         // Rang ham surish bilan silliq almashadi
         const faollik = soni > 1
-          ? position.interpolate({ inputRange: kirishlar, outputRange: kirishlar.map((j) => (j === i ? 1 : 0)), extrapolate: "clamp" })
+          ? idx.interpolate({ inputRange: kirishlar, outputRange: kirishlar.map((j) => (j === i ? 1 : 0)), extrapolate: "clamp" })
           : 1;
         const onPress = () => {
           const ev = navigation.emit({ type: "tabPress", target: route.key, canPreventDefault: true });
@@ -117,6 +124,7 @@ export default function TabsLayout() {
     >
       <SwipeTabs.Screen name="index" options={{ title: t("Markaz") }} />
       <SwipeTabs.Screen name="ishlab" options={{ title: t("Ishlab chiqarish"), tabBarLabel: t("Ishlab") }} />
+      <SwipeTabs.Screen name="kalkulyator" options={{ title: t("Kalkulyator") }} />
       <SwipeTabs.Screen name="xodimlar" options={{ title: t("Xodimlar") }} />
       <SwipeTabs.Screen name="ombor" options={{ title: t("Ombor") }} />
     </SwipeTabs>

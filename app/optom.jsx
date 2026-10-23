@@ -1,6 +1,6 @@
 // Optom savdolar ekrani — inline forma yuqorida (modal yo'q). Donadan/umumiy
 // chegirma + sof foyda jonli.
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { View, Text, Image, Pressable, TextInput, StyleSheet, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -25,6 +25,13 @@ export default function Optom() {
   const { nonlar, optomlar, setOptomlar, ochirArxivga } = useApp();
   const BOSH = { ism: "", izoh: "", sana: "", sanaTanlandi: false, soat: "", savat: {}, donaChegirma: "", chegirma: "" };
   const [forma, setForma] = useState(BOSH);
+  // Kalkulyatordan kelgan hisob — savat tayyor holda to'ldiriladi
+  const { tayyorSavat, setTayyorSavat } = useApp();
+  useEffect(() => {
+    if (tayyorSavat?.tur !== "optom") return;
+    setForma((p) => ({ ...p, savat: tayyorSavat.savat || {} }));
+    setTayyorSavat(null);
+  }, [tayyorSavat]);
 
   const optom = useMemo(() => optomJami(optomlar), [optomlar]);
 

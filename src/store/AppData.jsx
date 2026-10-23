@@ -489,6 +489,8 @@ export function AppDataProvider({ children }) {
   // Markazdagi havoladan kelinganini bildiradi — sahifada "Tayyor" belgisi chiqadi
   const [ertalabYonalish, setErtalabYonalish] = useState(null); // "davomat" | "ombor" | null
   const [ertalabPanel, setErtalabPanel] = useState(false);
+  // Kalkulyatordan Qarz/Optom formasiga o'tkaziladigan savat: { tur: "qarz" | "optom", savat }
+  const [tayyorSavat, setTayyorSavat] = useState(null);
 
   // ── Ikonkalar: xomashyo (asosiylari ham) va non ikonkasini almashtirish ──
   const xomashyoIkonQoy = (id, kalit) => {
@@ -640,6 +642,7 @@ export function AppDataProvider({ children }) {
     narxTarixi, setNarxTarixi,
     xomashyoIkonlari, xomashyoIkonQoy, nonIkonQoy,
     salomYoqilgan, setSalomYoqilgan,
+    tayyorSavat, setTayyorSavat,
     ertalab, ertalabBelgila, ertalabTugalla, ertalabYonalish, setErtalabYonalish, ertalabPanel, setErtalabPanel,
     oxirgiNusxa, nusxaOl,
     bekor, bekorTaklif, bekorQil, bekorYop,

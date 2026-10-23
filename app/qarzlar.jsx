@@ -2,7 +2,7 @@
 // chegirma, izoh darrov sahifa ichida.
 // Pastda QARZDORLAR: bir xil ismli qarzlar bitta kishiga yig'iladi — olgan,
 // to'lagan, qoldiq; qisman to'lov (eng eski qarzdan boshlab yopiladi) va to'liq tarix.
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { View, Text, Image, Pressable, TextInput, StyleSheet, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -33,6 +33,13 @@ export default function Qarzlar() {
   // sana: bo'sh bo'lsa => "avtomatik bugun". Qo'lda tanlansa => shu qiymat.
   const BOSH = { ism: "", izoh: "", sana: "", sanaTanlandi: false, soat: "", savat: {}, chegirma: "" };
   const [forma, setForma] = useState(BOSH);
+  // Kalkulyatordan kelgan hisob — savat tayyor holda to'ldiriladi
+  const { tayyorSavat, setTayyorSavat } = useApp();
+  useEffect(() => {
+    if (tayyorSavat?.tur !== "qarz") return;
+    setForma((p) => ({ ...p, savat: tayyorSavat.savat || {} }));
+    setTayyorSavat(null);
+  }, [tayyorSavat]);
 
   const qarz = useMemo(() => qarzJami(qarzlar), [qarzlar]);
   const guruhlar = useMemo(() => qarzdorlar(qarzlar), [qarzlar]);
