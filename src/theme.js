@@ -12,9 +12,9 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 // Har bir mavzu: bir xil kalitlar to'plami. Grafik ranglari (musbat/manfiy)
 // dataviz validator bilan karta foniga nisbatan tekshirilgan.
 export const TEMALAR = {
-  // "Tandir" palitrasi — tandirdan endi chiqqan non: iliq to'q sariq-oltin aksent,
-  // un oqi fon, non mag'zi rangidagi kartalar.
-  // Kontrast tekshirilgan: matn 13,3:1, tugma matni 4,7:1, aksent karta ustida 4,5:1.
+  // "Tandir" palitrasi — tandir qobig'ining to'q jigarrangi (#A05F27) asosiy rang,
+  // un oqi fon, non mag'zi rangidagi kartalar; ikkilamchi matn ham shu tusda.
+  // Kontrast tekshirilgan: tugma matni 4,8:1, aksent karta ustida 4,6:1, ikkilamchi 5,5:1.
   non: {
     nom: "Non", qorongi: false,
     ranglar: {
@@ -23,17 +23,17 @@ export const TEMALAR = {
       card: "#FCF4E4",        // bloklar — non mag'zi rangi
       panel: "#F7EAD2",       // ichki band / chuqurroq
       border: "#EBD5AE", borderSoft: "#F3E5CB",  // bug'doy rangidagi yumshoq chegara
-      accent: "#AC5A14",      // tandir qobig'i — FAQAT asosiy harakatlar (tugmalar) uchun
+      accent: "#A05F27",      // tandir qobig'i — tugmalar, ko'rsatkichlar, ikonkalar
       red: "#5C220C",         // xavfli harakat — kuygan qobiq toni (qizil YO'Q)
       text: "#3A2412",        // asosiy matn — iliq quyuq jigarrang
-      sub: "#86643F",         // ikkilamchi matn / dekorativ ikonkalar
+      sub: "#855A33",         // ikkilamchi matn / ikonkalar — aksent tusida
       muted: "#B0916A",       // uchlamchi / hint
       onAccent: "#FFF8EC", onAccentSub: "#FBE6CC", // aksent fon ustidagi matn
       bar: "#FFFDF8",         // pastki panel
       dangerBg: "#FAECE3", dangerBorder: "#EDCDB8",
-      accentBg: "#F8E8D2", accentBorder: "#ECCFA8",
+      accentBg: "#F6E7D6", accentBorder: "#E6C9A8",
       overlay: "rgba(58,36,18,0.35)",
-      musbat: "#AC5A14", manfiy: "#2A7BA6", // grafik: foyda / zarar (validator: PASS)
+      musbat: "#A05F27", manfiy: "#2A7BA6", // grafik: foyda / zarar
     },
   },
   tun: {
@@ -41,14 +41,14 @@ export const TEMALAR = {
     ranglar: {
       bg: "#16100A", surface: "#1D150E", card: "#22180F", panel: "#2C2016",
       border: "#403020", borderSoft: "#33261A",
-      accent: "#E58E40", red: "#EFA27E",            // tunda — yorqin tandir olovi
-      text: "#F4E6D4", sub: "#C4A888", muted: "#8E7758",
+      accent: "#E48C42", red: "#EFA27E",            // tunda — ochiq sabzi rang (tandir olovi)
+      text: "#F4E6D4", sub: "#D3AE85", muted: "#9A7E5E",
       onAccent: "#26150A", onAccentSub: "#55301A",
       bar: "#1B130C",
       dangerBg: "#2E1C14", dangerBorder: "#4B2E21",
-      accentBg: "#2C1F14", accentBorder: "#4D3520",
+      accentBg: "#33210F", accentBorder: "#5A3A1C",
       overlay: "rgba(0,0,0,0.55)",
-      musbat: "#C2702C", manfiy: "#3A93C6",
+      musbat: "#E48C42", manfiy: "#3A93C6",
     },
   },
 };

@@ -9,7 +9,7 @@
     "userInterfaceStyle": "light",
     "icon": "./assets/icon.png",
     "backgroundColor": "#FCF4E4",
-    "primaryColor": "#AC5A14",
+    "primaryColor": "#A05F27",
     "newArchEnabled": true,
     "assetBundlePatterns": ["**/*"],
     "android": {

@@ -17,8 +17,8 @@ const son = (x) => parseFloat(x) || 0;
 const USLUB = `
   * { box-sizing: border-box; }
   body { font-family: -apple-system, Roboto, "Segoe UI", Arial, sans-serif; color: #3A2412; margin: 0; padding: 28px; background: #fff; }
-  .bosh { display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 2px solid #AC5A14; padding-bottom: 12px; margin-bottom: 18px; }
-  .brend { font-size: 22px; font-weight: 800; color: #AC5A14; }
+  .bosh { display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 2px solid #A05F27; padding-bottom: 12px; margin-bottom: 18px; }
+  .brend { font-size: 22px; font-weight: 800; color: #A05F27; }
   .akk { font-size: 13px; color: #86643F; margin-top: 2px; }
   .sana { font-size: 13px; color: #86643F; text-align: right; }
   h1 { font-size: 18px; margin: 0 0 4px; }
@@ -47,30 +47,90 @@ function sahifa({ sarlavha, davr, akkaunt, ichi }) {
 }
 
 const plitkalar = (arr) => `<div class="katta">${arr.map(([l, v]) => `<div class="plitka"><div class="l">${tx(l)}</div><div class="v">${esc(v)}</div></div>`).join("")}</div>`;
-const jadval = (bosh, qatorlar, jami) => `<table><tr>${bosh.map((b, i) => `<th class="${i ? "r" : ""}">${tx(b)}</th>`).join("")}</tr>
-  ${qatorlar.map((q) => `<tr>${q.map((c, i) => `<td class="${i ? "r" : ""}">${esc(c)}</td>`).join("")}</tr>`).join("")}
-  ${jami ? `<tr class="jami">${jami.map((c, i) => `<td class="${i ? "r" : ""}">${esc(c)}</td>`).join("")}</tr>` : ""}</table>`;
+// Raqamli ustunlar o'ngga, matnli ustunlar chapga tekislanadi
+const raqammi = (c) => /^[−+\-]?[\d\s.,:%]+(\s?\S{0,5}|so'm|dona|qop|litr|ta)?$|^—$|^$/.test(String(c ?? "").trim());
+const jadval = (bosh, qatorlar, jami) => {
+  const ong = bosh.map((_, i) => i > 0 && qatorlar.every((q) => raqammi(q[i])));
+  const k = (i) => (ong[i] ? "r" : "");
+  return `<table><tr>${bosh.map((b, i) => `<th class="${k(i)}">${tx(b)}</th>`).join("")}</tr>
+  ${qatorlar.map((q) => `<tr>${q.map((c, i) => `<td class="${k(i)}">${esc(c)}</td>`).join("")}</tr>`).join("")}
+  ${jami ? `<tr class="jami">${jami.map((c, i) => `<td class="${k(i)}">${esc(c)}</td>`).join("")}</tr>` : ""}</table>`;
+};
 
-// ── Bitta kunlik hisobot ──
+// ── Bitta kunlik hisobot — kunning barcha muhim tafsilotlari (vaqtlari bilan) ──
+const ikki = (n) => String(n).padStart(2, "0");
+const soat = (ms) => { if (!ms) return ""; const d = new Date(ms); return `${ikki(d.getHours())}:${ikki(d.getMinutes())}`; };
+const vaqtOl = (e) => e?.soat || soat(e?.vaqt);
+const savatMatn = (savat) => (savat || []).map((x) => `${t(x.nonNomi)} × ${x.soni}`).join(", ");
+
 export function kunlikHtml(h, { akkaunt, nonlar } = {}) {
   const daromad = son(h.daromad), haq = son(h.ishchiHaq);
+  const a = h.arxiv || {};
+  const tf = h.tafsilot || {};
+  const qiy = (o, id) => parseInt((o || {})[id]) || 0;
+
+  // Ishlab chiqarish — har bir non bo'yicha to'liq oqim
   const nonQatorlar = (h.nonlarSnapshot || nonlar || []).map((n) => {
     const oz = n.ozIshlab !== false;
-    const q = oz ? (parseInt((h.ozIshlabQoplar || {})[n.id]) || 0) : (parseInt((h.tashqariSonlar || {})[n.id]) || 0);
-    return q > 0 ? [t(n.nom), `${q} ${t(oz ? "qop" : "dona")}`] : null;
+    const ishlab = oz ? qiy(h.ozIshlabQoplar, n.id) : qiy(h.tashqariSonlar, n.id);
+    const dona = oz ? ishlab * (son(n.nonSoni) || 0) : ishlab;
+    const tonggi = qiy(h.boshlangichQoldiq, n.id), yaroqsiz = qiy(h.qoldaYaroqsiz, n.id), qoldiq = qiy(h.sotilmaganNon, n.id);
+    if (!ishlab && !tonggi && !qoldiq && !yaroqsiz) return null;
+    return [t(n.nom), oz ? `${ishlab} ${t("qop")}` : "—", formatSom(dona), formatSom(tonggi), formatSom(yaroqsiz), formatSom(qoldiq)];
   }).filter(Boolean);
-  const ishchilar = (h.ishchiHaqlari || []).map((w) => [t(w.ism), som(w.net)]);
-  const a = h.arxiv || {};
+
   const qoshimcha = [
     ["Karta to'lovlari", a.kartaSum], ["Optom savdo", a.optomSum], ["Brak", a.brakSum], ["Qo'shimcha xarajat", h.xarajatJami],
   ].filter(([, v]) => son(v) > 0).map(([l, v]) => [t(l), som(v)]);
-  const ichi = plitkalar([["Sof foyda", som(h.sofFoyda)], ["Daromad", som(daromad)], ["Sotilgan non", `${formatSom(h.sotilganNon)} ${t("dona")}`]])
-    + (nonQatorlar.length ? `<div class="bolim">${tx("Ishlab chiqarish")}</div>` + jadval(["Non turi", "Miqdor"], nonQatorlar) : "")
-    + `<div class="bolim">${tx("Moliya")}</div>` + jadval(["Ko'rsatkich", "Summa"], [
-      [t("Daromad"), som(daromad)], [t("Ishchi haqi"), som(haq)], [t("Kun oxiri (daromad − ishchi haqi)"), som(daromad - haq)], ...qoshimcha,
-    ], [t("Sof foyda"), som(h.sofFoyda)])
-    + (ishchilar.length ? `<div class="bolim">${tx("Ishchilar haqi")}</div>` + jadval(["Xodim", "Haq"], ishchilar, [t("Jami"), som(haq)]) : "");
-  return sahifa({ sarlavha: "Kunlik hisobot", davr: h.sana, akkaunt, ichi });
+
+  const bolim = (nom, ich) => `<div class="bolim">${tx(nom)}</div>${ich}`;
+  const vaqtli = (arr) => [...(arr || [])].sort((x, y) => (x.vaqt || 0) - (y.vaqt || 0));
+
+  let ichi = plitkalar([["Sof foyda", som(h.sofFoyda)], ["Daromad", som(daromad)], ["Sotilgan non", `${formatSom(h.sotilganNon)} ${t("dona")}`]]);
+
+  // Kun tartibi: ertalabgi tekshiruv va yakunlash vaqti
+  const tartib = [];
+  if (tf.ertalab) {
+    const holat = (b) => t(b ? "bajarildi" : "bajarilmadi");
+    tartib.push([t("Ertalabgi tekshiruv"), tf.ertalab.tugallandi ? `${t("tugallandi")} ${soat(tf.ertalab.tugallandi)}` : t("tugallanmagan")]);
+    tartib.push([t("Ishchilar davomati"), holat(tf.ertalab.davomat)], [t("Ombor tekshiruvi"), holat(tf.ertalab.ombor)]);
+  }
+  if (tf.rasmSoni != null) tartib.push([t("Qop rasmlari"), `${tf.rasmSoni} ${t("ta")}`]);
+  if ((tf.kelmaganlar || []).length) tartib.push([t("Kelmagan xodimlar"), tf.kelmaganlar.map(t).join(", ")]);
+  tartib.push([t("Kun yakunlandi"), soat(h.vaqt)]);
+  ichi += bolim("Kun tartibi", jadval(["Ko'rsatkich", "Holat"], tartib));
+
+  if (nonQatorlar.length) ichi += bolim("Ishlab chiqarish", jadval(["Non turi", "Qop", "Ishlab (dona)", "Tonggi qoldiq", "Yaroqsiz", "Kun oxiri qoldiq"], nonQatorlar));
+  ichi += bolim("Umumiy son", jadval(["Ko'rsatkich", "Dona"], [
+    [t("Tonggi qoldiq"), formatSom(h.jamiBoshlang)], [t("Ishlab chiqarilgan"), formatSom(h.jamiNon)], [t("Sotilgan"), formatSom(h.sotilganNon)],
+    [t("Yaroqsiz"), formatSom(h.jamiYaroqsiz)], [t("Ertangi qoldiq"), formatSom(h.jamiQoldiq)],
+  ]));
+
+  ichi += bolim("Moliya", jadval(["Ko'rsatkich", "Summa"], [
+    [t("Daromad"), som(daromad)], ...(son(h.xomashyo) ? [[t("Xomashyo"), som(h.xomashyo)]] : []), [t("Ishchi haqi"), som(haq)],
+    [t("Kun oxiri (daromad − ishchi haqi)"), som(daromad - haq)], ...qoshimcha,
+  ], [t("Sof foyda"), som(h.sofFoyda)]));
+
+  // Kun davomidagi yozuvlar — vaqti bilan
+  const kartalar = vaqtli(a.kartalar);
+  if (kartalar.length) ichi += bolim("Karta to'lovlari", jadval(["Vaqt", "Izoh", "Summa"], kartalar.map((k) => [vaqtOl(k), t(k.izoh || "Karta to'lovi"), som(k.summa)]), [t("Jami"), "", som(a.kartaSum)]));
+  const optomlar = vaqtli(a.optomlar);
+  if (optomlar.length) ichi += bolim("Optom savdo", jadval(["Vaqt", "Xaridor", "Nonlar", "Summa"], optomlar.map((o) => [vaqtOl(o), t(o.ism), savatMatn(o.savat), som(o.summa)]), [t("Jami"), "", "", som(a.optomSum)]));
+  const qarzlar = vaqtli(tf.qarzlar);
+  if (qarzlar.length) ichi += bolim("Qarzga berilgan", jadval(["Vaqt", "Qarzdor", "Nonlar", "Summa"], qarzlar.map((q) => [vaqtOl(q), t(q.ism), savatMatn(q.savat), som(q.summa)])));
+  const tolovlar = vaqtli(tf.tolovlar);
+  if (tolovlar.length) ichi += bolim("Qarz to'lovlari", jadval(["Vaqt", "Qarzdor", "Summa"], tolovlar.map((x) => [soat(x.vaqt), t(x.ism), som(x.summa)])));
+  const braklar = vaqtli(a.braklar);
+  if (braklar.length) ichi += bolim("Brak", jadval(["Vaqt", "Xodim", "Non", "Soni", "Summa"], braklar.map((b) => [vaqtOl(b), t(b.ishchiIsm), t(b.nonNomi), String(b.soni), som(b.summa)]), [t("Jami"), "", "", "", som(a.brakSum)]));
+  const xarajatlar = vaqtli(a.kunlikXarajatlar);
+  if (xarajatlar.length) ichi += bolim("Qo'shimcha xarajatlar", jadval(["Vaqt", "Izoh", "Summa"], xarajatlar.map((x) => [vaqtOl(x), t(x.izoh), som(x.summa)]), [t("Jami"), "", som(h.xarajatJami)]));
+
+  const ishchilar = (h.ishchiHaqlari || []).map((w) => [t(w.ism), son(w.brak) > 0 ? `−${formatSom(w.brak)}` : "", som(w.net)]);
+  if (ishchilar.length) ichi += bolim("Ishchilar haqi", jadval(["Xodim", "Brak", "Haq"], ishchilar, [t("Jami"), "", som(haq)]));
+  const xom = (tf.xomashyo || []).filter((x) => son(x.qiymat) > 0);
+  if (xom.length) ichi += bolim("Xomashyo sarfi", jadval(["Xomashyo", "Miqdor"], xom.map((x) => [t(x.nom), `${String(Math.round(son(x.qiymat) * 100) / 100).replace(".", ",")} ${t(x.birlik)}`])));
+
+  return sahifa({ sarlavha: "Kunlik hisobot", davr: `${h.sana} · ${soat(h.vaqt)}`, akkaunt, ichi });
 }
 
 // ── Davr (7/30 kun) hisoboti ──

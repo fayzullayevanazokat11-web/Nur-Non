@@ -39,6 +39,7 @@ export default function Qop() {
     kunlikXarajatlar,
     oxirgiYakunlashVaqti, customMahsulotlar,
     hisobotlarTarixi, kunYakunlanganmi, kunYakunla, lockedDayStats, yakunBekor,
+    ertalab, bugungiRasmlar,
   } = useApp();
   // Bugun yakunlangan bo'lsa — faqat hisobot ko'rinishi
   const yakunlangan = kunYakunlanganmi();
@@ -185,6 +186,18 @@ export default function Qop() {
         };
         // ── 4) Xomashyo sarfi — ombor so'rovnomasi
         const sarf = kunlikXomashyoSarfi(nonlar, fQop, xomashyoRoyxati(customMahsulotlar));
+        // PDF uchun kunning to'liq tafsiloti: qarzlar va to'lovlar (vaqti bilan),
+        // ertalabgi tekshiruv, kelmagan xodimlar, qop rasmlari, xomashyo sarfi
+        Object.assign(snap, {
+          tafsilot: {
+            qarzlar: (qarzlar || []).filter((q) => q.sana === sana).map((q) => ({ ism: q.ism, soat: q.soat || "", vaqt: q.vaqt, summa: q.summa, savat: q.savat })),
+            tolovlar: (qarzlar || []).flatMap((q) => (q.tolovlar || []).filter((t) => t.sana === sana).map((t) => ({ ism: q.ism, vaqt: t.vaqt, summa: t.summa }))),
+            ertalab: ertalab.kun === sana ? { davomat: !!ertalab.davomat, ombor: !!ertalab.ombor, rasm: !!ertalab.rasm, tugallandi: ertalab.tugallandi || 0 } : null,
+            kelmaganlar: (ishchilar || []).filter((w) => w.kelmadi).map((w) => w.ism),
+            rasmSoni: (bugungiRasmlar || []).length,
+            xomashyo: sarf.map((x) => ({ nom: x.nom, birlik: x.birlik, qiymat: x.qiymat })),
+          },
+        });
         const sorov = sarf.length > 0 ? { id: Date.now() + 1, sana, vaqt: Date.now(), manba: "Kunlik qop hisobi", maydonlar: sarf } : null;
 
         // ── 5) Hammasi bitta amalda: tarix, muhr, so'rovnoma, ertangi tonggi qoldiq

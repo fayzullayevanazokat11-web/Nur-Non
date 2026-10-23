@@ -526,7 +526,6 @@ export function AppDataProvider({ children }) {
     setXomashyoIkonlari((p) => ({ ...(p || {}), [id]: kalit }));
     setCustomMahsulotlarXom((p) => (p || []).map((m) => (m.id === id ? { ...m, ikon: kalit } : m)));
   };
-  const nonIkonQoy = (id, kalit) => setNonlarXom((p) => (p || []).map((n) => (n.id === id ? { ...n, ikon: kalit } : n)));
 
   // ── Ma'lumotlarni uzatish: butun baza bitta matnga va qaytib ──
   // kalit → [joriy qiymat, setter, kutilgan tur]
@@ -669,7 +668,7 @@ export function AppDataProvider({ children }) {
     eslatmaYoqilgan, setEslatmaYoqilgan, eslatmaYangila,
     davomat, setDavomat, kelmaganlar, kelmadiAlmash, ishchilarHaq,
     narxTarixi, setNarxTarixi,
-    xomashyoIkonlari, xomashyoIkonQoy, nonIkonQoy,
+    xomashyoIkonlari, xomashyoIkonQoy,
     salomYoqilgan, setSalomYoqilgan,
     tayyorSavat, setTayyorSavat,
     qopRasmlari, bugungiRasmlar, qopRasmQosh, qopRasmOchir,

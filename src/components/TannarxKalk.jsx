@@ -13,7 +13,7 @@ import { formatSom, getIngNarx } from "../logic/hisob";
 import { tannarxHisobi, ortachaKunlikQop, sinovFoyda, narxTasiri } from "../logic/tannarx";
 import { xomashyoRoyxati } from "../logic/konstantalar";
 import { C, T, S, R, temaStil } from "../theme";
-import { XomashyoIkon, NonIkon, BosiladiganIkon, IkonTanlov, NON_TANLOV, IKON_TANLOV, nonIkonKaliti, xomashyoIkonKaliti } from "./XomashyoIkon";
+import { XomashyoIkon, NonIkon, BosiladiganIkon, IkonTanlov, IKON_TANLOV, xomashyoIkonKaliti } from "./XomashyoIkon";
 
 // Tannarx qismlari ikonkalari
 const QISM_IKON = { xomashyo: "basket-outline", qoplik: "people-outline", kunlik: "person-outline" };
@@ -21,7 +21,7 @@ const QISM_IKON = { xomashyo: "basket-outline", qoplik: "people-outline", kunlik
 const foiz = (x) => `${Math.round(x * 100)}%`;
 
 export function TannarxKalk() {
-  const { nonlar, mahsulotNarxlari, ishchilar, hisobotlarTarixi, ozIshlabQoplar, narxTarixi, customMahsulotlar, xomashyoIkonlari, xomashyoIkonQoy, nonIkonQoy } = useApp();
+  const { nonlar, mahsulotNarxlari, ishchilar, hisobotlarTarixi, ozIshlabQoplar, narxTarixi, customMahsulotlar, xomashyoIkonlari, xomashyoIkonQoy } = useApp();
   const royxat = xomashyoRoyxati(customMahsulotlar);
   const xOl = (m) => royxat.find((x) => x.id === m.id) || m;
   // Ikonkani bosib o'zgartirish (non va xomashyo) — tanlov shu joyda ochiladi
@@ -90,20 +90,16 @@ export function TannarxKalk() {
         const s = sinov[r.id] ?? "";
         const sf = s !== "" ? sinovFoyda(r, s) : null;
         const non = (nonlar || []).find((n) => n.id === r.id) || { id: r.id, ozIshlab: r.oz };
-        const nonK = `non:${r.id}`;
         const ingr = (non.mahsulotlar || []).filter((m) => parseFloat(m.miqdor) > 0);
         return (
           <ExpandableCard
             key={r.id}
             style={styles.item}
-            ilova={ikonOchiq === nonK ? (
-              <IkonTanlov sarlavha={`${r.nom} — ikonka`} variantlar={NON_TANLOV} tanlangan={nonIkonKaliti(non)} onTanla={(k) => nonIkonQoy(r.id, k)} onYop={() => ikonAlmash(nonK)} />
-            ) : null}
             header={
               <View style={styles.mHead}>
-                <BosiladiganIkon label={`${r.nom}: ikonkani o'zgartirish`} ochiq={ikonOchiq === nonK} onPress={() => ikonAlmash(nonK)} style={[styles.nonIkon, !r.oz && styles.nonIkonTashqi]}>
-                  <NonIkon non={non} size={22} color={r.oz ? C.accent : C.sub} />
-                </BosiladiganIkon>
+                <View style={[styles.nonIkon, !r.oz && styles.nonIkonTashqi]}>
+                  <NonIkon non={non} size={24} color={r.oz ? C.accent : C.sub} />
+                </View>
                 <View style={styles.flex1}>
                   <Text style={styles.nom} numberOfLines={1}>{r.nom}</Text>
                   <Text style={styles.izoh}>Tannarx {formatSom(r.dona)} · narx {formatSom(r.narx)} so'm</Text>

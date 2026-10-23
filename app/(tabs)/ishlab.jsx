@@ -13,7 +13,7 @@ import { ScreenHeader } from "../../src/components/ScreenHeader";
 import { ExpandableCard, yopKartalar } from "../../src/components/ExpandableCard";
 import { MahsulotNarxi } from "../../src/components/MahsulotNarxi";
 import { TannarxKalk } from "../../src/components/TannarxKalk";
-import { XomashyoIkon, NonIkon, BosiladiganIkon, IkonTanlov, NON_TANLOV, IKON_TANLOV, nonIkonKaliti, xomashyoIkonKaliti } from "../../src/components/XomashyoIkon";
+import { XomashyoIkon, NonIkon, BosiladiganIkon, IkonTanlov, IKON_TANLOV, xomashyoIkonKaliti } from "../../src/components/XomashyoIkon";
 import { ScrollBox } from "../../src/components/ScrollBox";
 import { xomashyoRoyxati } from "../../src/logic/konstantalar";
 import { C, T, S, R, temaStil } from "../../src/theme";
@@ -37,7 +37,7 @@ export default function IshlabChiqarish() {
     nonlar, setNonlar, ishchilar, setIshchilar,
     optomlar, setOptomlar, qarzlar, setQarzlar, braklar, setBraklar,
     mahsulotNarxlari, customMahsulotlar, ochirArxivga,
-    xomashyoIkonlari, xomashyoIkonQoy, nonIkonQoy,
+    xomashyoIkonlari, xomashyoIkonQoy,
   } = useApp();
   const royxat = xomashyoRoyxati(customMahsulotlar);
 
@@ -284,7 +284,7 @@ export default function IshlabChiqarish() {
               <Text style={styles.secTitle}>NON TURLARI</Text>
               <Text style={styles.secCount}>{nonlar.length} ta</Text>
             </View>
-            {nonlar.length > 0 && <Text style={styles.ikonHint}>Ikonkani o'zgartirish uchun uning ustiga bosing</Text>}
+            {nonlar.length > 0 && <Text style={styles.ikonHint}>Xomashyo ikonkasini o'zgartirish uchun uning ustiga bosing</Text>}
 
             {nonlar.length === 0 ? (
               <Card><Text style={styles.muted}>Hali non turi qo'shilmagan</Text></Card>
@@ -292,30 +292,15 @@ export default function IshlabChiqarish() {
               nonlar.map((non) => {
                 const oz = non.ozIshlab !== false;
                 const foyda = donaFoydasi(non, mahsulotNarxlari);
-                const nonKalit = `non:${non.id}`;
                 return (
                   <ExpandableCard
                     key={non.id}
                     style={styles.item}
-                    ilova={ikonOchiq === nonKalit ? (
-                      <IkonTanlov
-                        sarlavha={`${non.nom} — ikonka`}
-                        variantlar={NON_TANLOV}
-                        tanlangan={nonIkonKaliti(non)}
-                        onTanla={(k) => nonIkonQoy(non.id, k)}
-                        onYop={ikonYop}
-                      />
-                    ) : null}
                     header={
                       <View style={styles.nonBosh}>
-                        <BosiladiganIkon
-                          label={`${non.nom}: ikonkani o'zgartirish`}
-                          ochiq={ikonOchiq === nonKalit}
-                          onPress={() => ikonAlmash(nonKalit)}
-                          style={[styles.nonIkon, !oz && styles.nonIkonTashqi]}
-                        >
-                          <NonIkon non={non} size={26} color={oz ? C.accent : C.sub} />
-                        </BosiladiganIkon>
+                        <View style={[styles.nonIkon, !oz && styles.nonIkonTashqi]}>
+                          <NonIkon non={non} size={28} color={oz ? C.accent : C.sub} />
+                        </View>
                         <View style={styles.flex1}>
                           <Text style={styles.nonNom} numberOfLines={1}>{non.nom}</Text>
                           <View style={styles.nonMeta}>

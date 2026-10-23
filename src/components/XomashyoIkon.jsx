@@ -1,6 +1,6 @@
 // Ikonkalar — emoji o'rniga bir xil uslubdagi rasmlar (mavzu rangida bo'yaladi).
 // Xomashyo: asosiylari id bo'yicha, foydalanuvchi o'zgartirgani `xomashyoIkonlari`da.
-// Non: `non.ikon`, bo'lmasa turiga qarab (o'zimizniki / tashqaridan).
+// Non: barcha nonlar uchun yagona logo (dumaloq non, muhr naqshlari).
 // IkonTanlov — ikonka bosilganda shu yerning o'zida ochiladigan tanlov paneli (modal yo'q).
 import { useContext, useEffect, useRef } from "react";
 import { View, Text, Image, Pressable, Animated, Easing, StyleSheet } from "react-native";
@@ -34,20 +34,8 @@ const RASM = {
   "corn": require("../../assets/xomashyo/corn.png"),
   "chili-mild-outline": require("../../assets/xomashyo/chili-mild-outline.png"),
   "spoon-sugar": require("../../assets/xomashyo/spoon-sugar.png"),
-  // Nonlar
-  "record-circle-outline": require("../../assets/xomashyo/record-circle-outline.png"),
-  "circle-double": require("../../assets/xomashyo/circle-double.png"),
-  "bread-slice-outline": require("../../assets/xomashyo/bread-slice-outline.png"),
-  "bread-slice": require("../../assets/xomashyo/bread-slice.png"),
-  "baguette": require("../../assets/xomashyo/baguette.png"),
-  "food-croissant": require("../../assets/xomashyo/food-croissant.png"),
-  "pretzel": require("../../assets/xomashyo/pretzel.png"),
-  "cookie-outline": require("../../assets/xomashyo/cookie-outline.png"),
-  "cupcake": require("../../assets/xomashyo/cupcake.png"),
-  "muffin": require("../../assets/xomashyo/muffin.png"),
-  "cake-variant-outline": require("../../assets/xomashyo/cake-variant-outline.png"),
-  "pizza": require("../../assets/xomashyo/pizza.png"),
-  "fire": require("../../assets/xomashyo/fire.png"),
+  // Non — yagona logo (dumaloq o'zbek noni, muhr naqshlari bilan)
+  "non-logo": require("../../assets/xomashyo/non-logo.png"),
 };
 
 // Asosiy xomashyolar (va retseptdagi suv/tuz/shakar)
@@ -66,12 +54,6 @@ export const IKON_TANLOV = [
   "spoon-sugar", "bee", "peanut-outline", "fruit-cherries", "corn", "chili-mild-outline",
 ];
 
-// Non uchun tanlanadigan ikonkalar
-export const NON_TANLOV = [
-  "record-circle-outline", "circle-double", "bread-slice-outline", "bread-slice", "baguette",
-  "food-croissant", "pretzel", "cookie-outline", "cupcake", "muffin", "cake-variant-outline",
-  "pizza", "fire", "barley",
-];
 
 export const ikonBormi = (k) => !!k && !!RASM[k];
 
@@ -83,8 +65,8 @@ export const xomashyoIkonKaliti = (m, ozgartirilgan) => {
   return ID_IKON[m?.id] || "package-variant-closed";
 };
 
-export const nonIkonKaliti = (non) =>
-  ikonBormi(non?.ikon) ? non.ikon : non?.ozIshlab === false ? "baguette" : "bread-slice-outline";
+// Barcha nonlar uchun bitta logo
+export const nonIkonKaliti = () => "non-logo";
 
 function Rasm({ kalit, size, color }) {
   return <Image source={RASM[kalit] || RASM["package-variant-closed"]} style={{ width: size, height: size, tintColor: color || C.accent }} resizeMode="contain" />;
