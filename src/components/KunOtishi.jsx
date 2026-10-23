@@ -1,6 +1,6 @@
 // Kun almashishi ekrani (to'liq ekran, Modal emas):
-//   • Kun xulosasi — ish kuni tunda 03:00 da tugaganda (03:00–03:59 orasida ochiq bo'lsa
-//     yoki ochilsa): kechagi statistikaga qarab gap, asosiy raqamlar.
+//   • Kun xulosasi — Kunlik qop hisobida «Kunni yakunlash» bosilgandan keyin darhol:
+//     shu kun statistikasiga qarab rag'batlantiruvchi gap, asosiy raqamlar.
 //   • Ertalabki salom — 04:00 dan keyin dastur birinchi ochilganda: vaqt, hafta kuni,
 //     bayram va kechagi natijaga qarab salom (kecha xulosasi ko'rilmagan bo'lsa — shu yerda).
 // Har biri kuniga bir marta; "Markazga qaytish" bilan yopiladi. Menyuda o'chirib qo'yish mumkin.
@@ -23,6 +23,11 @@ const ikki = (n) => String(n).padStart(2, "0");
 const sanaStr = (d) => `${d.getFullYear()}-${ikki(d.getMonth() + 1)}-${ikki(d.getDate())}`;
 const son = (x) => parseFloat(x) || 0;
 
+// «Kunni yakunlash»dan keyin chaqiriladi — hisobot tarixga tushgach xulosa ko'rsatiladi
+let kutilgan = null;
+let tinglovchi = null;
+export function kunXulosasiniKorsat(sana) { kutilgan = sana; tinglovchi?.(sana); }
+
 export function KunOtishi() {
   const {
     tayyor, hisobotlarTarixi, ozIshlabQoplar, tashqariSonlar, akkauntNomi,
@@ -32,7 +37,25 @@ export function KunOtishi() {
   const [tanishuv, setTanishuv] = useState(null);    // yo'riqnoma ko'rilganmi
   const [ekran, setEkran] = useState(null);
   const [tick, setTick] = useState(0);
+  const [soralgan, setSoralgan] = useState(null);
   const a = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    tinglovchi = (sana) => setSoralgan(sana);
+    if (kutilgan) setSoralgan(kutilgan);
+    return () => { tinglovchi = null; };
+  }, []);
+
+  // Kun yakunlangach — shu kun xulosasi (hisobot tarixga yozilishini kutamiz)
+  useEffect(() => {
+    if (!soralgan || !holat) return;
+    const tarix = hisobotlarTarixi || [];
+    if (!tarix.some((h) => h.sana === soralgan)) return;
+    kutilgan = null;
+    setSoralgan(null);
+    if (salomYoqilgan === false) return;
+    setEkran({ tur: "xulosa", sana: soralgan, xulosa: kunXulosasi({ sana: soralgan, hisobotlar: tarix, bugun: true }) });
+    saqla({ ...holat, xulosa: soralgan });
+  }, [soralgan, hisobotlarTarixi, holat]);
 
   // Saqlangan holat va yo'riqnoma belgisi
   useEffect(() => {
@@ -70,11 +93,8 @@ export function KunOtishi() {
     const salomKerak = holat.salom !== bugun && hozir.getHours() >= 4;
     const xulosa = xulosaKerak ? kunXulosasi({ sana: kecha, hisobotlar: tarix, faollik }) : null;
 
-    if (hozir.getHours() === 3 && xulosaKerak) {
-      setEkran({ tur: "xulosa", sana: kecha, xulosa });
-      saqla({ ...holat, xulosa: kecha });
-    } else if (salomKerak) {
-      // Kecha xulosasi tunda ko'rilmagan bo'lsa — salom ichida qisqa ko'rinishda
+    if (salomKerak) {
+      // Kecha xulosasi ko'rilmagan bo'lsa (masalan, kun yakunlanmay qolgan) — salom ichida
       const tur = (xulosa || kunXulosasi({ sana: kecha, hisobotlar: tarix, faollik })).tur;
       setEkran({ tur: "salom", sana: bugun, salom: ertalabSalomi({ sana: bugun, hozir, kechaTur: tarix.length || faollik ? tur : null }), kecha: xulosa, kechaSana: kecha });
       saqla({ xulosa: kecha, salom: bugun });

@@ -174,7 +174,18 @@ const IKON = {
 
 // Hisobot (yoki uning yo'qligi) bo'yicha kun xulosasi.
 // sana — xulosa qilinayotgan ish kuni ("YYYY-MM-DD"); faollik — hisobot yo'q, lekin kiritma bor edi.
-export function kunXulosasi({ sana, hisobotlar, faollik = false }) {
+// bugun — xulosa kun yakunlangan zahoti ko'rsatiladi: "Kecha" o'rniga "Bugun" deyiladi
+// (avvalgi "Bugun ..." — ertangi kun haqida, shuning uchun "Ertaga" bo'ladi)
+const bugungaAylantir = (m) => String(m)
+  .replace(/\bBugun\b/g, "Ertaga").replace(/\bbugun\b/g, "ertaga")
+  .replace(/\bKechagi\b/g, "Bugungi").replace(/\bkechagi\b/g, "bugungi")
+  .replace(/\bKecha\b/g, "Bugun").replace(/\bkecha\b/g, "bugun");
+export function kunXulosasi(arg) {
+  const x = kunXulosasiAsl(arg);
+  if (!arg.bugun) return x;
+  return { ...x, sarlavha: bugungaAylantir(x.sarlavha), matn: bugungaAylantir(x.matn), qoshimcha: x.qoshimcha.map(bugungaAylantir) };
+}
+function kunXulosasiAsl({ sana, hisobotlar, faollik = false }) {
   const h = (hisobotlar || []).find((x) => x.sana === sana) || null;
   const d = sanaD(sana);
   const v = { kun: HAFTA[d.getDay()] };

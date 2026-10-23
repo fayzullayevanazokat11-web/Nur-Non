@@ -9,6 +9,7 @@ import { View, Animated, Easing, StyleSheet, BackHandler } from "react-native";
 import { Stack, router, usePathname } from "expo-router";
 import { ThemeProvider, DefaultTheme, DarkTheme } from "@react-navigation/native";
 import { StatusBar } from "expo-status-bar";
+import * as SystemUI from "expo-system-ui";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { useFonts } from "expo-font";
 import Ionicons from "@expo/vector-icons/Ionicons";
@@ -71,6 +72,10 @@ export default function RootLayout() {
     });
     return () => sub.remove();
   }, []);
+
+  // Oyna (root view) foni ham mavzu rangida: sahifalar almashganda ikki ekran bir-biriga
+  // o'tib turgan lahzada ostidagi fon ko'rinadi — u qora bo'lsa ekran qorayib ketardi.
+  useEffect(() => { SystemUI.setBackgroundColorAsync(C.bg).catch(() => {}); }, [tema]);
 
   // Navigatsiya foni ham mavzuga mos (o'tishlarda oq chaqnash bo'lmasin)
   const navTema = useMemo(() => {

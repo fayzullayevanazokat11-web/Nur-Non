@@ -1,6 +1,6 @@
 // "Xodimlar" — inline forma yuqorida (modal yo'q). Yangi ishchi qo'shish va
 // tahrirlash to'g'ridan-to'g'ri sahifa ichida.
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { router } from "expo-router";
 import { View, Text, Pressable, TextInput, StyleSheet, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -26,7 +26,7 @@ const BOSH = { ism: "", lavozimId: LAVOZIMLAR[0].id, lavozimCustom: "", haqTuri:
 const HOLATLAR = ["Aktiv", "Ta'tilda"];
 
 export default function Xodimlar() {
-  const { ishchilar, setIshchilar, nonlar, ochirArxivga, amalArxivga, hisobotlarTarixi, oylikArxiv, ishHaqiYozuvlari, kelmaganlar, kelmadiAlmash, ertalabYonalish } = useApp();
+  const { ishchilar, setIshchilar, nonlar, ochirArxivga, amalArxivga, hisobotlarTarixi, oylikArxiv, ishHaqiYozuvlari, kelmaganlar, kelmadiAlmash, ertalabYonalish, kelishVaqti, kelishVaqtiQoy } = useApp();
   const [qidiruv, setQidiruv] = useState("");
   const oylik = useMemo(
     () => oylikIshHaqi({ oy: joriyOy(), hisobotlar: hisobotlarTarixi, arxiv: oylikArxiv, ishchilar, yozuvlar: ishHaqiYozuvlari }),
@@ -190,23 +190,24 @@ export default function Xodimlar() {
             {hammaAktiv.map((w) => {
               const kelmadi = kelmaganlar.includes(w.id);
               return (
-                <Pressable
-                  key={w.id}
-                  accessibilityRole="switch"
-                  accessibilityState={{ checked: !kelmadi }}
-                  accessibilityLabel={`${w.ism}: davomat`}
-                  onPress={() => kelmadiAlmash(w.id)}
-                  style={({ pressed }) => [styles.davomatQator, pressed && { opacity: 0.7 }]}
-                >
+                <View key={w.id} style={styles.davomatQator}>
                   <Text style={[styles.davomatIsm, kelmadi && styles.davomatKelmadi]} numberOfLines={1}>{w.ism}</Text>
-                  <View style={[styles.davomatBelgi, kelmadi ? styles.belgiYoq : styles.belgiHa]}>
+                  {!kelmadi && <KelishVaqti ism={w.ism} qiymat={kelishVaqti[w.id] || ""} onSaqla={(v) => kelishVaqtiQoy(w.id, v)} />}
+                  <Pressable
+                    accessibilityRole="switch"
+                    accessibilityState={{ checked: !kelmadi }}
+                    accessibilityLabel={`${w.ism}: davomat`}
+                    onPress={() => kelmadiAlmash(w.id)}
+                    hitSlop={6}
+                    style={({ pressed }) => [styles.davomatBelgi, kelmadi ? styles.belgiYoq : styles.belgiHa, pressed && { opacity: 0.7 }]}
+                  >
                     <Ionicons name={kelmadi ? "close" : "checkmark"} size={13} color={kelmadi ? C.sub : C.onAccent} />
                     <Text style={[styles.belgiTxt, !kelmadi && { color: C.onAccent }]}>{kelmadi ? "Kelmadi" : "Keldi"}</Text>
-                  </View>
-                </Pressable>
+                  </Pressable>
+                </View>
               );
             })}
-            <Text style={styles.davomatIzoh}>Kelmagan xodimga bugungi haq hisoblanmaydi (oylik hisobda ham).</Text>
+            <Text style={styles.davomatIzoh}>Kelgan vaqtni qo'lda yozing (masalan, 0730 → 07:30). Kelmagan xodimga bugungi haq hisoblanmaydi (oylik hisobda ham).</Text>
           </ExpandableCard>
         )}
 
@@ -367,6 +368,36 @@ function Bolim({ icon, tint, nom, soni, children }) {
       </View>
       {children}
     </>
+  );
+}
+
+// Kelgan vaqt — qo'lda kiritiladi ("0730" → "07:30"); noto'g'ri vaqt saqlanmaydi
+const soatTozala = (v) => {
+  const r = String(v || "").replace(/\D/g, "").slice(0, 4);
+  return r.length > 2 ? `${r.slice(0, 2)}:${r.slice(2)}` : r;
+};
+const soatTogri = (v) => /^([01]\d|2[0-3]):[0-5]\d$/.test(v);
+function KelishVaqti({ ism, qiymat, onSaqla }) {
+  const [matn, setMatn] = useState(qiymat);
+  useEffect(() => { setMatn(qiymat); }, [qiymat]);
+  const xato = matn.length > 0 && !soatTogri(matn);
+  const ozgar = (v) => {
+    const t = soatTozala(v);
+    setMatn(t);
+    if (soatTogri(t)) onSaqla(t);
+    else if (!t) onSaqla("");
+  };
+  return (
+    <TextInput
+      accessibilityLabel={`${ism}: kelgan vaqti`}
+      value={matn}
+      onChangeText={ozgar}
+      placeholder="--:--"
+      placeholderTextColor={C.muted}
+      keyboardType="number-pad"
+      maxLength={5}
+      style={[styles.kelishInput, soatTogri(matn) && styles.kelishTayyor, xato && styles.kelishXato]}
+    />
   );
 }
 
@@ -533,4 +564,7 @@ const styles = temaStil(() => StyleSheet.create({
   bodyActions:{ flexDirection: "row", flexWrap: "wrap", justifyContent: "flex-end", gap: S[3], rowGap: S[2], marginTop: S[3], borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: C.borderSoft, paddingTop: S[3] },
   actBtn:    { flexDirection: "row", alignItems: "center" },
   actTxt:    { fontSize: T.sm, fontWeight: "700" },
+  kelishInput:{ width: 64, marginRight: S[2], borderWidth: 1, borderColor: C.border, borderRadius: R.sm, paddingVertical: 6, paddingHorizontal: 6, fontSize: T.sm, fontWeight: "800", color: C.text, backgroundColor: C.surface, textAlign: "center" },
+  kelishTayyor:{ borderColor: C.accent, color: C.accent },
+  kelishXato:{ borderColor: C.red },
 }));

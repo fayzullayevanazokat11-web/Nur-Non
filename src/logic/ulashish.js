@@ -96,9 +96,13 @@ export function kunlikHtml(h, { akkaunt, nonlar } = {}) {
     tartib.push([t("Ishchilar davomati"), holat(tf.ertalab.davomat)], [t("Ombor tekshiruvi"), holat(tf.ertalab.ombor)]);
   }
   if (tf.rasmSoni != null) tartib.push([t("Qop rasmlari"), `${tf.rasmSoni} ${t("ta")}`]);
-  if ((tf.kelmaganlar || []).length) tartib.push([t("Kelmagan xodimlar"), tf.kelmaganlar.map(t).join(", ")]);
+  if ((tf.kelmaganlar || []).length && !(tf.davomat || []).length) tartib.push([t("Kelmagan xodimlar"), tf.kelmaganlar.map(t).join(", ")]);
   tartib.push([t("Kun yakunlandi"), soat(h.vaqt)]);
   ichi += bolim("Kun tartibi", jadval(["Ko'rsatkich", "Holat"], tartib));
+
+  // Davomat — har bir xodim, kelgan vaqti bilan (erta kelganlar avval)
+  const davomat = [...(tf.davomat || [])].sort((x, y) => (y.keldi - x.keldi) || String(x.soat || "99").localeCompare(String(y.soat || "99")));
+  if (davomat.length) ichi += bolim("Davomat", jadval(["Xodim", "Holat", "Kelgan vaqti"], davomat.map((d) => [t(d.ism), t(d.keldi ? "Keldi" : "Kelmadi"), d.keldi ? (d.soat || "—") : "—"])));
 
   if (nonQatorlar.length) ichi += bolim("Ishlab chiqarish", jadval(["Non turi", "Qop", "Ishlab (dona)", "Tonggi qoldiq", "Yaroqsiz", "Kun oxiri qoldiq"], nonQatorlar));
   ichi += bolim("Umumiy son", jadval(["Ko'rsatkich", "Dona"], [

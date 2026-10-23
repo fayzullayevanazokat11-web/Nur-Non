@@ -103,6 +103,8 @@ export function AppDataProvider({ children }) {
   const [eslatmaYoqilgan, setEslatmaYoqilgan]           = usePersistedState("nurnon:eslatmaYoqilgan", true);
   // Davomat: { "2026-10-17": [kelmagan ishchi id'lari] } — 60 kun saqlanadi
   const [davomat, setDavomat]                           = usePersistedState("nurnon:davomat", {});
+  // Xodimlar kelgan vaqti (qo'lda kiritiladi): { "2026-10-17": { ishchiId: "07:30" } } — 60 kun
+  const [kelishVaqtlari, setKelishVaqtlari]             = usePersistedState("nurnon:kelishVaqtlari", {});
   // Xomashyo narxlari o'zgarish tarixi: [{ id, nom, eski, yangi, vaqt }] — 180 kun
   const [narxTarixi, setNarxTarixi]                     = usePersistedState("nurnon:narxTarixi", []);
   // Kun xulosasi (03:00) va ertalabki salom ekranlari yoqilganmi (qurilma sozlamasi)
@@ -177,6 +179,7 @@ export function AppDataProvider({ children }) {
         return qol;
       }));
       setDavomat((p) => Object.fromEntries(Object.entries(p || {}).filter(([s]) => (now - (Date.parse(s) || now)) < 60 * D)));
+      setKelishVaqtlari((p) => Object.fromEntries(Object.entries(p || {}).filter(([s]) => (now - (Date.parse(s) || now)) < 60 * D)));
     };
     yuritish();
     const t = setInterval(yuritish, 6 * 60 * 60 * 1000);
@@ -323,6 +326,13 @@ export function AppDataProvider({ children }) {
     const joriy = (p || {})[bugun] || [];
     const yangi = joriy.includes(id) ? joriy.filter((x) => x !== id) : [...joriy, id];
     return { ...(p || {}), [bugun]: yangi };
+  });
+  // Bugun kelgan vaqtlar va ularni o'rnatish ("" — o'chirish)
+  const kelishVaqti = useMemo(() => (kelishVaqtlari || {})[bugun] || {}, [kelishVaqtlari, bugun]);
+  const kelishVaqtiQoy = (id, soat) => setKelishVaqtlari((p) => {
+    const kun = { ...((p || {})[bugun] || {}) };
+    if (soat) kun[id] = soat; else delete kun[id];
+    return { ...(p || {}), [bugun]: kun };
   });
   // Haq hisoblash uchun xodimlar ro'yxati (kelmaganlar belgilangan)
   const ishchilarHaq = useMemo(
@@ -559,6 +569,7 @@ export function AppDataProvider({ children }) {
     ishHaqiYozuvlari: [ishHaqiYozuvlari, setIshHaqiYozuvlari, "array"],
     oylikArxiv: [oylikArxiv, setOylikArxiv, "object"],
     davomat: [davomat, setDavomat, "object"],
+    kelishVaqtlari: [kelishVaqtlari, setKelishVaqtlari, "object"],
     narxTarixi: [narxTarixi, setNarxTarixi, "array"],
     xomashyoIkonlari: [xomashyoIkonlari, setXomashyoIkonlari, "object"],
     ertalabTekshiruv: [ertalabTekshiruv, setErtalabTekshiruv, "objectOrNull"],
@@ -667,6 +678,7 @@ export function AppDataProvider({ children }) {
     oylikArxiv, setOylikArxiv,
     eslatmaYoqilgan, setEslatmaYoqilgan, eslatmaYangila,
     davomat, setDavomat, kelmaganlar, kelmadiAlmash, ishchilarHaq,
+    kelishVaqtlari, kelishVaqti, kelishVaqtiQoy,
     narxTarixi, setNarxTarixi,
     xomashyoIkonlari, xomashyoIkonQoy,
     salomYoqilgan, setSalomYoqilgan,

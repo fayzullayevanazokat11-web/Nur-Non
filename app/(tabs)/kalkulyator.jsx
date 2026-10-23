@@ -23,6 +23,19 @@ const son = (x) => Math.max(0, parseInt(String(x ?? "").replace(/\s/g, ""), 10) 
 export default function Kalkulyator() {
   const { nonlar, setTayyorSavat } = useApp();
   const [soni, setSoni] = useState({}); // nonId → "12"
+  // Soni kiritilgan nonlar ro'yxat tepasiga chiqadi (oxirgisi eng tepada) va
+  // "Tozalash" bosilmaguncha o'sha yerda turadi
+  const [tepada, setTepada] = useState([]);
+  const tepagaChiqar = (id) => setTepada((p) => {
+    if (p.includes(id)) return p;
+    silliq();
+    return [id, ...p];
+  });
+  const tartibli = useMemo(() => {
+    const royxat = nonlar || [];
+    const ust = tepada.map((id) => royxat.find((n) => n.id === id)).filter(Boolean);
+    return [...ust, ...royxat.filter((n) => !tepada.includes(n.id))];
+  }, [nonlar, tepada]);
 
   const hisob = useMemo(() => {
     let summa = 0, dona = 0;
@@ -35,9 +48,12 @@ export default function Kalkulyator() {
   }, [soni, nonlar]);
   const korinish = useAnimSon(hisob.summa);
 
-  const qoy = (id, v) => setSoni((p) => ({ ...p, [id]: v }));
-  const qosh = (id, d) => setSoni((p) => ({ ...p, [id]: String(Math.max(0, son(p[id]) + d)) }));
-  const tozala = () => { silliq(); setSoni({}); };
+  const qoy = (id, v) => { if (son(v) > 0) tepagaChiqar(id); setSoni((p) => ({ ...p, [id]: v })); };
+  const qosh = (id, d) => {
+    if (son(soni[id]) + d > 0) tepagaChiqar(id);
+    setSoni((p) => ({ ...p, [id]: String(Math.max(0, son(p[id]) + d)) }));
+  };
+  const tozala = () => { silliq(); setSoni({}); setTepada([]); };
   // Hisobni qarz / optom formasiga o'tkazish
   const otkaz = (tur) => {
     const savat = {};
@@ -56,7 +72,7 @@ export default function Kalkulyator() {
             <Text style={styles.jamiQiymat} numberOfLines={1} adjustsFontSizeToFit>{formatSom(Math.round(korinish))} so'm</Text>
             <Text style={styles.jamiDona}>{hisob.dona} dona non</Text>
           </View>
-          {hisob.dona > 0 && (
+          {(hisob.dona > 0 || tepada.length > 0) && (
             <Pressable accessibilityRole="button" accessibilityLabel="Hisobni tozalash" onPress={tozala} hitSlop={8} style={({ pressed }) => [styles.tozala, pressed && styles.bosildi]}>
               <Ionicons name="refresh" size={16} color={C.onAccent} />
               <Text style={styles.tozalaTxt}>Tozalash</Text>
@@ -72,7 +88,7 @@ export default function Kalkulyator() {
           <Card><Text style={styles.bosh}>Hali non turi qo'shilmagan. Ishlab chiqarish bo'limida qo'shing.</Text></Card>
         ) : (
           <Card style={styles.royxat}>
-            {(nonlar || []).map((n, i) => {
+            {tartibli.map((n, i) => {
               const k = son(soni[n.id]);
               return (
                 <View key={n.id} style={[styles.qator, i > 0 && styles.chiziq]}>

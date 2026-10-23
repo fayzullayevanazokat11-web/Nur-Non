@@ -134,13 +134,14 @@ export const S = { 1: 4, 2: 8, 3: 12, 4: 16, 5: 20, 6: 24, 7: 32, 8: 40 };
 // Burchak radiuslari — yumshoqroq (premium)
 export const R = { sm: 14, md: 18, lg: 24, xl: 30, pill: 999 };
 
-// Juda yengil neytral soya — burchaklarda qalin halo bermaydi (chegara asosiy)
+// Juda yengil neytral soya (iOS). Android'da elevation yo'q — u sahifa almashish va
+// shaffoflik animatsiyalarida kartalar chetini qoraytirib yuborardi; ajratishni chegara beradi.
 export const shadow = {
   shadowColor: "#000000",
   shadowOpacity: 0.05,
   shadowRadius: 5,
   shadowOffset: { width: 0, height: 1 },
-  elevation: 1,
+  elevation: 0,
 };
 
 // Animatsiya — yagona ease-in-out konfiguratsiyasi
