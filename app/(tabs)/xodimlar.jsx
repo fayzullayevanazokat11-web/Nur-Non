@@ -19,7 +19,7 @@ import { ScrollBox } from "../../src/components/ScrollBox";
 import { DateField } from "../../src/components/DateField";
 import { Avatar } from "../../src/components/Avatar";
 import { C, T, S, R, temaStil } from "../../src/theme";
-import { formatSom } from "../../src/logic/hisob";
+import { formatSom, sonOl } from "../../src/logic/hisob";
 import { LAVOZIMLAR, getLavozimLabel } from "../../src/logic/konstantalar";
 
 const BOSH = { ism: "", lavozimId: LAVOZIMLAR[0].id, lavozimCustom: "", haqTuri: "kunlik", miqdor: "", nonNarx: {}, holat: "Aktiv", tatilSana: "" };
@@ -83,7 +83,7 @@ export default function Xodimlar() {
       });
       qoshimcha = { haqTuri: "qop", miqdor: 0, nonTurlari, nonNarxlari };
     } else {
-      qoshimcha = { haqTuri: "kunlik", miqdor: parseFloat(forma.miqdor) || 0, nonTurlari: [], nonNarxlari: {} };
+      qoshimcha = { haqTuri: "kunlik", miqdor: sonOl(forma.miqdor), nonTurlari: [], nonNarxlari: {} };
     }
     const asos = {
       ism: forma.ism.trim(), lavozimId: forma.lavozimId,

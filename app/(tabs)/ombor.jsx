@@ -14,7 +14,7 @@ import { router } from "expo-router";
 import { ExpandableCard, yopKartalar } from "../../src/components/ExpandableCard";
 import { ScrollBox } from "../../src/components/ScrollBox";
 import { C, T, S, R, temaStil } from "../../src/theme";
-import { omborBalans, zaxiraMatni, omborKattaBirlik, bugunSana } from "../../src/logic/hisob";
+import { omborBalans, zaxiraMatni, omborKattaBirlik, bugunSana, sonOl } from "../../src/logic/hisob";
 import { xomashyoRoyxati } from "../../src/logic/konstantalar";
 import { ortachaSarf } from "../../src/logic/eslatma";
 import { XomashyoIkon } from "../../src/components/XomashyoIkon";
@@ -137,7 +137,7 @@ export default function Ombor() {
   const saqla = () => {
     const maydonlar = royxat.map((m) => {
       const faktor = omborKattaBirlik(m.id)?.faktor || 1;
-      const kiritilgan = parseFloat(forma[m.id]) || 0;
+      const kiritilgan = sonOl(forma[m.id]);
       return { id: m.id, nom: m.nom, birlik: m.birlik, emoji: m.emoji, qiymat: kiritilgan * faktor };
     });
     if (!maydonlar.some((m) => m.qiymat > 0)) {
@@ -251,7 +251,7 @@ export default function Ombor() {
           {royxat.map((m) => {
             const katta = omborKattaBirlik(m.id);
             const birlik = katta ? katta.birlik : m.birlik;
-            const qty = parseFloat(forma[m.id]) || 0;
+            const qty = sonOl(forma[m.id]);
             return (
               <View key={m.id} style={styles.field}>
                 <Text style={styles.inputLabel}>{m.nom} ({birlik})</Text>

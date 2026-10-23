@@ -13,7 +13,7 @@ import { ExpandableCard, yopKartalar } from "../src/components/ExpandableCard";
 import { ScrollBox } from "../src/components/ScrollBox";
 import { SahifaSarlavha } from "../src/components/SahifaSarlavha";
 import { C, T, S, R, temaStil } from "../src/theme";
-import { formatSom, kartaJami, kartaHisob, bugunSana } from "../src/logic/hisob";
+import { formatSom, kartaJami, kartaHisob, bugunSana, sonOl } from "../src/logic/hisob";
 
 const soatMatni = (ms) => { const d = new Date(ms); return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`; };
 
@@ -29,7 +29,7 @@ export default function Karta() {
 
   const karta = useMemo(() => kartaJami(kartalar), [kartalar]);
   const preview = useMemo(
-    () => kartaHisob(parseFloat(forma.summa) || 0, nonlar, mahsulotNarxlari),
+    () => kartaHisob(sonOl(forma.summa), nonlar, mahsulotNarxlari),
     [forma.summa, nonlar, mahsulotNarxlari]
   );
 
@@ -44,7 +44,7 @@ export default function Karta() {
   };
 
   const saqla = () => {
-    const summa = parseFloat(forma.summa) || 0;
+    const summa = sonOl(forma.summa);
     if (!summa) { Alert.alert("Maydon to'liq emas", "Iltimos, summani kiriting."); return; }
     const pv = kartaHisob(summa, nonlar, mahsulotNarxlari);
     if (tahrirId) {
@@ -101,7 +101,7 @@ export default function Karta() {
             style={[styles.input, styles.inputMulti]}
           />
 
-          {(parseFloat(forma.summa) || 0) > 0 && (
+          {(sonOl(forma.summa)) > 0 && (
             <View style={styles.preview}>
               <Text style={styles.previewTitle}>Hisob (o'rtacha narx asosida)</Text>
               <View style={styles.previewRow}>

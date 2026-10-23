@@ -11,7 +11,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { markazga, markazdan } from "../logic/yol";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useApp } from "../store/AppData";
-import { ishKuni, formatSom } from "../logic/hisob";
+import { ishKuni, ishKuniSana, formatSom } from "../logic/hisob";
 import { sanaChiroyli } from "../logic/davr";
 import { ixcham as ixchamSon } from "./Statistika";
 import { kunXulosasi, ertalabSalomi } from "../logic/kunGaplari";
@@ -53,7 +53,7 @@ export function KunOtishi() {
     kutilgan = null;
     setSoralgan(null);
     if (salomYoqilgan === false) return;
-    setEkran({ tur: "xulosa", sana: soralgan, xulosa: kunXulosasi({ sana: soralgan, hisobotlar: tarix, bugun: true }) });
+    setEkran({ tur: "xulosa", sana: soralgan, xulosa: kunXulosasi({ sana: soralgan, hisobotlar: tarix, bugun: soralgan === ishKuniSana() }) });
     saqla({ ...holat, xulosa: soralgan });
   }, [soralgan, hisobotlarTarixi, holat]);
 

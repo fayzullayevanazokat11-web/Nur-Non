@@ -33,14 +33,14 @@ const localSana = () => bugunSana();
 
 export default function Qop() {
   const {
-    nonlar, ishchilarHaq: ishchilar, optomlar, qarzlar, mahsulotNarxlari, braklar, kartalar,
+    nonlar, ishchilar: xomIshchilar, optomlar, qarzlar, mahsulotNarxlari, braklar, kartalar,
     ozIshlabQoplar, setOzIshlabQoplar, tashqariSonlar, setTashqariSonlar,
     sotilmaganNon, setSotilmaganNon,
     boshlangichQoldiq, qoldaYaroqsiz, setQoldaYaroqsiz,
     kunlikXarajatlar,
     oxirgiYakunlashVaqti, customMahsulotlar,
     hisobotlarTarixi, kunYakunlanganmi, kunYakunla, lockedDayStats, yakunBekor,
-    ertalab, bugungiRasmlar, kelishVaqti,
+    ertalab, qopRasmlari, davomat, kelishVaqtlari,
   } = useApp();
   // Bugun yakunlangan bo'lsa — faqat hisobot ko'rinishi
   const yakunlangan = kunYakunlanganmi();
@@ -56,6 +56,17 @@ export default function Qop() {
   const [fSot, setFSot] = useState(toStr(sotilmaganNon));
   const [fYaroqsiz, setFYaroqsiz] = useState(toStr(qoldaYaroqsiz));
   const [tegildi, setTegildi] = useState(false);
+
+  // Hisob qaysi ish kuni uchun yuritiladi: sukut bugun; unutilgan kunni yakunlashda — tanlangan sana.
+  // Davomat, kelgan vaqt, brak, xarajat va rasmlar ham SHU sana bo'yicha olinadi.
+  const tanSana = sanaTanlandi && kunlikSana ? kunlikSana : localSana();
+  const kelmaganlarSana = (davomat || {})[tanSana] || [];
+  const kelishVaqti = (kelishVaqtlari || {})[tanSana] || {};
+  const ishchilar = useMemo(
+    () => (xomIshchilar || []).map((w) => (kelmaganlarSana.includes(w.id) ? { ...w, kelmadi: true } : w)),
+    [xomIshchilar, davomat, tanSana]
+  );
+  const sanaRasmlari = (qopRasmlari || []).filter((r) => r.kun === tanSana);
 
   // Boshqa joydan yangilansa, joriy formani yangilab turamiz (faqat formaga tegilmasa)
   useEffect(() => { if (!tegildi) setFQop(toStr(ozIshlabQoplar)); }, [ozIshlabQoplar]);
@@ -76,16 +87,16 @@ export default function Qop() {
 
   // Faqat oxirgi yakunlashdan keyingi (bugungi) brak'lar inobatga olinadi.
   const bugungiBrak = useMemo(
-    () => (braklar || []).filter((b) => (b.vaqt || 0) > (oxirgiYakunlashVaqti || 0)),
-    [braklar, oxirgiYakunlashVaqti]
+    () => (braklar || []).filter((b) => (b.vaqt || 0) > (oxirgiYakunlashVaqti || 0) && (!b.sana || b.sana === tanSana)),
+    [braklar, oxirgiYakunlashVaqti, tanSana]
   );
   const args = {
     nonlar, ishchilar, optomlar, qarzlar, mahsulotNarxlari, braklar,
     ozIshlabQoplar: fQop, tashqariSonlar: fTash, sotilmaganNon: fSot,
-    boshlangichQoldiq, qoldaYaroqsiz: fYaroqsiz, kunlikXarajatlar, oxirgiYakunlashVaqti,
+    boshlangichQoldiq, qoldaYaroqsiz: fYaroqsiz, kunlikXarajatlar, oxirgiYakunlashVaqti, sana: tanSana,
   };
-  const stats = useMemo(() => hisoblaKunlik(args), [fQop, fTash, fSot, fYaroqsiz, nonlar, ishchilar, optomlar, qarzlar, mahsulotNarxlari, braklar, boshlangichQoldiq, kunlikXarajatlar, oxirgiYakunlashVaqti]);
-  const qoldiqlar = useMemo(() => qoldiqlarHisobi(nonlar, args), [fQop, fTash, fSot, fYaroqsiz, nonlar, boshlangichQoldiq, optomlar, qarzlar, oxirgiYakunlashVaqti]);
+  const stats = useMemo(() => hisoblaKunlik(args), [fQop, fTash, fSot, fYaroqsiz, nonlar, ishchilar, optomlar, qarzlar, mahsulotNarxlari, braklar, boshlangichQoldiq, kunlikXarajatlar, oxirgiYakunlashVaqti, tanSana]);
+  const qoldiqlar = useMemo(() => qoldiqlarHisobi(nonlar, args), [fQop, fTash, fSot, fYaroqsiz, nonlar, boshlangichQoldiq, optomlar, qarzlar, oxirgiYakunlashVaqti, tanSana]);
   const haq = useMemo(() => ishchiHaqlari(nonlar, ishchilar, fQop, bugungiBrak), [nonlar, ishchilar, fQop, bugungiBrak]);
 
   // Forma saqlanganidan farq qilmasa (va ichida ma'lumot bo'lsa) — tugma "Saqlandi"
@@ -114,12 +125,19 @@ export default function Qop() {
       Alert.alert("Kun yakunlangan", "Bugun kun allaqachon yakunlangan. Bir kunda faqat bir marta yakunlanadi.");
       return;
     }
-    const sanaTekshir = sanaTanlandi && kunlikSana ? kunlikSana : localSana();
+    const sanaTekshir = tanSana;
+    if (sanaTekshir > localSana()) {
+      Alert.alert("Sana noto'g'ri", "Kelajak sana bilan kunni yakunlab bo'lmaydi.");
+      return;
+    }
     if ((hisobotlarTarixi || []).some((h) => h.sana === sanaTekshir)) {
       Alert.alert("Hisobot bor", `${sanaTekshir} sanasi uchun hisobot allaqachon yozilgan. Bir kun ikki marta yakunlanmaydi.`);
       return;
     }
-    Alert.alert("Kunni yakunlash", "Bugungi ma'lumot tarixga yoziladi va kun yopiladi. Bugun qayta yakunlab bo'lmaydi; xato bo'lsa — Markazdan kun oxirigacha bekor qilish mumkin. Davom etasizmi?", [
+    const oldingiKun = sanaTekshir !== localSana();
+    Alert.alert("Kunni yakunlash", oldingiKun
+      ? `${sanaTekshir} sanasi uchun hisobot yoziladi. Bugungi kun yakunlanmaydi: bugungi yozuvlar saqlanadi, kun oxiri qoldig'i bugungi tonggi qoldiq bo'ladi. Davom etasizmi?`
+      : "Bugungi ma'lumot tarixga yoziladi va kun yopiladi. Bugun qayta yakunlab bo'lmaydi; xato bo'lsa — Markazdan kun oxirigacha bekor qilish mumkin. Davom etasizmi?", [
       { text: "Bekor", style: "cancel" },
       { text: "Yakunlash", onPress: () => {
         setTegildi(false);
@@ -196,7 +214,7 @@ export default function Qop() {
             ertalab: ertalab.kun === sana ? { davomat: !!ertalab.davomat, ombor: !!ertalab.ombor, rasm: !!ertalab.rasm, tugallandi: ertalab.tugallandi || 0 } : null,
             kelmaganlar: (ishchilar || []).filter((w) => w.kelmadi).map((w) => w.ism),
             davomat: (ishchilar || []).filter((w) => w.holat === "Aktiv").map((w) => ({ ism: w.ism, keldi: !w.kelmadi, soat: w.kelmadi ? "" : (kelishVaqti || {})[w.id] || "" })),
-            rasmSoni: (bugungiRasmlar || []).length,
+            rasmSoni: sanaRasmlari.length,
             xomashyo: sarf.map((x) => ({ nom: x.nom, birlik: x.birlik, qiymat: x.qiymat })),
           },
         });
@@ -280,6 +298,9 @@ export default function Qop() {
                     value={fSot[n.id] ?? ""}
                     onChange={(v) => formaTeg(setFSot, n.id, v)} />
                 </View>
+                {q.yaroqsiz + q.qoldiq > q.jamiZaxira && (
+                  <Text style={styles.ogoh}>Qoldiq va yaroqsiz ({q.yaroqsiz + q.qoldiq}) zaxiradan ({q.jamiZaxira}) ko'p — sonlarni tekshiring.</Text>
+                )}
                 {(q.jamiZaxira > 0 || q.boshlang > 0) && (
                   <Text style={styles.flow}>
                     {q.boshlang} + {q.ishlab} = {q.jamiZaxira} · Sotilgan {q.jamiSotilgan}{q.divertedShu > 0 ? ` (${q.divertedShu} optom/qarz)` : ""}{q.yaroqsiz > 0 ? ` · Yaroqsiz ${q.yaroqsiz}` : ""}
@@ -358,8 +379,8 @@ function Field({ label, value, onChange }) {
       <Text style={styles.lbl}>{label}</Text>
       <TextInput
         value={value}
-        onChangeText={onChange}
-        keyboardType="numeric"
+        onChangeText={(v) => onChange(v.replace(/[^\d]/g, ""))}
+        keyboardType="number-pad"
         placeholder="0"
         placeholderTextColor={C.muted}
         style={styles.input}
@@ -402,6 +423,7 @@ const styles = temaStil(() => StyleSheet.create({
   lbl: { fontSize: 10, color: C.sub, fontWeight: "700", marginBottom: 4, letterSpacing: 0.3, textTransform: "uppercase" },
   input: { borderWidth: 1, borderColor: C.border, borderRadius: R.sm, paddingVertical: 9, paddingHorizontal: 10, fontSize: T.sm, color: C.text, backgroundColor: C.surface, textAlign: "center" },
   flow: { fontSize: 11, color: C.muted, marginTop: 6, lineHeight: 15 },
+  ogoh: { fontSize: 11, color: C.red, fontWeight: "700", marginTop: 6, lineHeight: 15 },
 
   row: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 6 },
   rowLabel: { flex: 1, fontSize: T.sm, color: C.sub },

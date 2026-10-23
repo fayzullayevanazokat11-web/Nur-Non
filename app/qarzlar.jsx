@@ -18,7 +18,7 @@ import { VaqtField, hozirgiSoat } from "../src/components/VaqtField";
 import { ScrollBox } from "../src/components/ScrollBox";
 import { SahifaSarlavha } from "../src/components/SahifaSarlavha";
 import { C, T, S, R, temaStil } from "../src/theme";
-import { formatSom, qarzJami, donaFoyda, bugunSana } from "../src/logic/hisob";
+import { formatSom, qarzJami, donaFoyda, bugunSana, sonOl } from "../src/logic/hisob";
 import { Qidiruv, qidiruvMos } from "../src/components/Qidiruv";
 import { qarzdorlar, qarzdorTarixi, tolovQil, tolovniBekorQil, qarzdorKaliti, qarzQoldiq, kunOtdi } from "../src/logic/qarz";
 
@@ -75,7 +75,7 @@ export default function Qarzlar() {
       foyda += soni * donaFoyda(n, mahsulotNarxlari);
       items.push({ nonNomi: n.nom, soni, narx });
     });
-    const chegirma = parseFloat(forma.chegirma) || 0;
+    const chegirma = sonOl(forma.chegirma);
     return { summa, dona, foyda, items, chegirma, yakSumma: Math.max(0, summa - chegirma) };
   }, [forma.savat, forma.chegirma, nonlar, mahsulotNarxlari]);
 
@@ -100,7 +100,7 @@ export default function Qarzlar() {
 
   // Qisman yoki to'liq to'lov — eng eski ochiq qarzdan boshlab yopiladi
   const tolovKirit = (g, toliq = false) => {
-    const summa = toliq ? g.qoldiq : parseFloat(String(tolovlar[g.kalit] || "").replace(/\s/g, "")) || 0;
+    const summa = toliq ? g.qoldiq : sonOl(tolovlar[g.kalit]);
     if (summa <= 0) { Alert.alert("Summa kiritilmagan", "To'lov summasini kiriting."); return; }
     if (summa > g.qoldiq + 0.5) { Alert.alert("Ortiqcha summa", `${g.ism}ning qarzi ${formatSom(g.qoldiq)} so'm. Undan ko'p to'lab bo'lmaydi.`); return; }
     const bajar = () => {

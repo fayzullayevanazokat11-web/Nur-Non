@@ -219,23 +219,29 @@ export function AppDataProvider({ children }) {
   const kunYakunlangan = kunYakunlanganmi();
 
   const kunYakunla = ({ snap, lock, sorov, forma }) => {
-    if (kunYakunlanganmi()) return false;
+    // O'tgan sana bilan yakunlash (unutilgan kun): hisobot tarixga yoziladi, qoldiq ertangi
+    // tonggiga o'tadi, lekin BUGUNGI kun yakunlangan deb belgilanmaydi va bugungi yozuvlar
+    // (karta, xarajat...) yo'qolmaydi — shuning uchun muhr va "oxirgi yakunlash vaqti" tegilmaydi.
+    const bugunmi = snap.sana === bugunSana();
+    if (bugunmi && kunYakunlanganmi()) return false;
     const vaqt = Date.now();
     const almashganHisobot = (hisobotlarTarixi || []).find((h) => h.sana === snap.sana) || null;
     const almashganSorov = sorov ? (omborSorovlar || []).find((s) => s.sana === sorov.sana) || null : null;
-    setYakunBekor({
-      kun: bugunSana(), vaqt, snapId: snap.id, sorovId: sorov?.id || null,
-      oldin: {
-        lockedDayStats, oxirgiYakunlashVaqti, boshlangichQoldiq,
-        ozIshlabQoplar: forma.ozIshlabQoplar, tashqariSonlar: forma.tashqariSonlar,
-        sotilmaganNon: forma.sotilmaganNon, qoldaYaroqsiz: forma.qoldaYaroqsiz,
-        almashganHisobot, almashganSorov,
-      },
-    });
-    setLockedDayStats({ ...lock, kun: bugunSana() });
-    setHisobotlarTarixi((prev) => [snap, ...(prev || []).filter((h) => h.sana !== snap.sana)]);
+    if (bugunmi) {
+      setYakunBekor({
+        kun: bugunSana(), vaqt, snapId: snap.id, sorovId: sorov?.id || null,
+        oldin: {
+          lockedDayStats, oxirgiYakunlashVaqti, boshlangichQoldiq,
+          ozIshlabQoplar: forma.ozIshlabQoplar, tashqariSonlar: forma.tashqariSonlar,
+          sotilmaganNon: forma.sotilmaganNon, qoldaYaroqsiz: forma.qoldaYaroqsiz,
+          almashganHisobot, almashganSorov,
+        },
+      });
+      setLockedDayStats({ ...lock, kun: bugunSana() });
+    }
+    setHisobotlarTarixi((prev) => [snap, ...(prev || []).filter((h) => h.sana !== snap.sana)].sort((a, b) => String(b.sana).localeCompare(String(a.sana))));
     if (sorov) setOmborSorovlar((prev) => [sorov, ...(prev || []).filter((s) => s.sana !== sorov.sana)]);
-    setOxirgiYakunlashVaqti(vaqt);
+    if (bugunmi) setOxirgiYakunlashVaqti(vaqt);
     // Kun oxiri qoldiq → ertangi tonggi zaxira; bugungi kiritmalar tozalanadi
     setBoshlangichQoldiq(forma.sotilmaganNon || {});
     setSotilmaganNon({}); setOzIshlabQoplar({}); setTashqariSonlar({}); setQoldaYaroqsiz({});
@@ -268,7 +274,7 @@ export function AppDataProvider({ children }) {
     setHisobotlarTarixi((prev) => {
       const qolgan = (prev || []).filter((h) => h.id !== snapId);
       if (oldin.almashganHisobot && !qolgan.some((h) => h.id === oldin.almashganHisobot.id)) qolgan.push(oldin.almashganHisobot);
-      return qolgan.sort((a, b) => (b.vaqt || 0) - (a.vaqt || 0));
+      return qolgan.sort((a, b) => String(b.sana).localeCompare(String(a.sana)));
     });
     if (sorovId) {
       // So'rovnoma tasdiqlangan bo'lsa — ombor chiqimi ham qaytariladi
@@ -440,7 +446,7 @@ export function AppDataProvider({ children }) {
       }
       // Kun o'tib ketgan — hisobot tarixga qaytadi
       if ((hisobotlarTarixi || []).some((h) => h.sana === e.snap.sana)) return `${e.snap.sana} uchun hisobot allaqachon bor.`;
-      setHisobotlarTarixi((p) => [...(p || []), e.snap].sort((a, b) => (b.vaqt || 0) - (a.vaqt || 0)));
+      setHisobotlarTarixi((p) => [...(p || []), e.snap].sort((a, b) => String(b.sana).localeCompare(String(a.sana))));
       return true;
     },
     import: (e) => {
@@ -503,8 +509,12 @@ export function AppDataProvider({ children }) {
     return e && e.kun === bugunSana() ? e : { kun: bugunSana(), davomat: false, ombor: false, rasm: false, tugallandi: 0 };
   };
   const ertalab = ertalabOl();
-  const ertalabBelgila = (qadam, qiymat = true) => setErtalabTekshiruv(() => ({ ...ertalabOl(), [qadam]: !!qiymat }));
-  const ertalabTugalla = () => setErtalabTekshiruv(() => ({ ...ertalabOl(), tugallandi: Date.now() }));
+  // Funksional yangilash: ketma-ket chaqiruvlar (rasm qo'shish, belgilash) bir-birining ustiga yozmasin
+  const ertalabBosh = () => ({ kun: bugunSana(), davomat: false, ombor: false, rasm: false, tugallandi: 0 });
+  const ertalabBelgila = (qadam, qiymat = true) =>
+    setErtalabTekshiruv((p) => ({ ...(p && p.kun === bugunSana() ? p : ertalabBosh()), [qadam]: !!qiymat }));
+  const ertalabTugalla = () =>
+    setErtalabTekshiruv((p) => ({ ...(p && p.kun === bugunSana() ? p : ertalabBosh()), tugallandi: Date.now() }));
   // Markazdagi havoladan kelinganini bildiradi — sahifada "Tayyor" belgisi chiqadi
   const [ertalabYonalish, setErtalabYonalish] = useState(null); // "davomat" | "ombor" | null
   const [ertalabPanel, setErtalabPanel] = useState(false);

@@ -27,7 +27,8 @@ export function oyQosh(k, n) {
 export const joriyOy = () => bugunSana().slice(0, 7); // ish kuni bo'yicha (tunda 03:00 gacha — oldingi kun)
 export const oyKunlari = (k) => { const [y, m] = String(k).split("-").map(Number); return new Date(y, m, 0).getDate(); };
 
-const BOSH = () => ({ kunlar: 0, daromad: 0, sofFoyda: 0, sotilganNon: 0, ishchiHaq: 0, jamiQop: 0, xarajatJami: 0, ishchilar: {}, idlar: [] });
+// ishKunlari — har bir xodim shu oyda necha kun ishlagani (arxivga o'tgandan keyin ham saqlanadi)
+const BOSH = () => ({ kunlar: 0, daromad: 0, sofFoyda: 0, sotilganNon: 0, ishchiHaq: 0, jamiQop: 0, xarajatJami: 0, ishchilar: {}, ishKunlari: {}, idlar: [] });
 
 function qoshHisobot(a, h) {
   a.kunlar += 1;
@@ -37,7 +38,10 @@ function qoshHisobot(a, h) {
   a.ishchiHaq += son(h.ishchiHaq);
   a.jamiQop += son(h.jamiQop);
   a.xarajatJami += son(h.xarajatJami);
-  (h.ishchiHaqlari || []).forEach((w) => { a.ishchilar[w.id] = (a.ishchilar[w.id] || 0) + son(w.net); });
+  (h.ishchiHaqlari || []).forEach((w) => {
+    a.ishchilar[w.id] = (a.ishchilar[w.id] || 0) + son(w.net);
+    a.ishKunlari[w.id] = (a.ishKunlari[w.id] || 0) + 1;
+  });
 }
 
 // Eskirgan hisobotlarni arxivga qo'shadi (har bir hisobot faqat bir marta)
@@ -46,7 +50,7 @@ export function arxivla(arxiv, hisobotlar) {
   (hisobotlar || []).forEach((h) => {
     const k = oyKaliti(h.sana);
     if (!k) return;
-    const a = yangi[k] ? { ...yangi[k], ishchilar: { ...yangi[k].ishchilar }, idlar: [...(yangi[k].idlar || [])] } : BOSH();
+    const a = yangi[k] ? { ...yangi[k], ishchilar: { ...yangi[k].ishchilar }, ishKunlari: { ...(yangi[k].ishKunlari || {}) }, idlar: [...(yangi[k].idlar || [])] } : BOSH();
     if (a.idlar.includes(h.id)) return;
     qoshHisobot(a, h);
     a.idlar.push(h.id);
@@ -58,7 +62,7 @@ export function arxivla(arxiv, hisobotlar) {
 // Oy → yig'ma (arxiv + hali saqlanayotgan kunlik hisobotlar)
 export function oylar(hisobotlar, arxiv) {
   const natija = {};
-  Object.entries(arxiv || {}).forEach(([k, a]) => { natija[k] = { ...BOSH(), ...a, ishchilar: { ...(a.ishchilar || {}) } }; });
+  Object.entries(arxiv || {}).forEach(([k, a]) => { natija[k] = { ...BOSH(), ...a, ishchilar: { ...(a.ishchilar || {}) }, ishKunlari: { ...(a.ishKunlari || {}) } }; });
   (hisobotlar || []).forEach((h) => {
     const k = oyKaliti(h.sana);
     if (!k) return;
@@ -117,9 +121,8 @@ export const ISH_HAQI_TURLAR = {
 // Oy bo'yicha har bir xodim: hisoblangan (yakunlangan kunlar), bonus, avans, jarima, to'langan, qoldiq
 export function oylikIshHaqi({ oy, hisobotlar, arxiv, ishchilar, yozuvlar }) {
   const yig = oylar(hisobotlar, arxiv)[oy] || BOSH();
-  const kunlar = {};
-  (hisobotlar || []).filter((h) => oyKaliti(h.sana) === oy).forEach((h) =>
-    (h.ishchiHaqlari || []).forEach((w) => { kunlar[w.id] = (kunlar[w.id] || 0) + 1; }));
+  // Ishlagan kunlar: arxivlangan (30 kundan eski) va hozirgi hisobotlar birgalikda
+  const kunlar = yig.ishKunlari || {};
   const oyYozuvlari = (yozuvlar || []).filter((y) => oyKaliti(y.sana) === oy);
   const idlar = new Set([
     ...(ishchilar || []).filter((w) => w.holat !== "Ishdan ketgan").map((w) => w.id),

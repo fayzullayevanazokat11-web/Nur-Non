@@ -13,7 +13,7 @@ import { ExpandableCard, yopKartalar } from "../src/components/ExpandableCard";
 import { ScrollBox } from "../src/components/ScrollBox";
 import { SahifaSarlavha } from "../src/components/SahifaSarlavha";
 import { C, T, S, R, temaStil } from "../src/theme";
-import { formatSom, bugunSana } from "../src/logic/hisob";
+import { formatSom, bugunSana, sonOl } from "../src/logic/hisob";
 import { oylikIshHaqi, joriyOy, oyQosh, oyNomi, oyKunlari, ISH_HAQI_TURLAR } from "../src/logic/davr";
 
 const TURLAR = ["avans", "jarima", "bonus", "tolov"];
@@ -39,7 +39,7 @@ export default function IshHaqi() {
 
   const saqla = (r) => {
     const x = f(r.id);
-    const summa = parseFloat(String(x.summa).replace(/\s/g, "")) || 0;
+    const summa = sonOl(x.summa);
     if (summa <= 0) { Alert.alert("Summa kiritilmagan", "Iltimos, summani kiriting."); return; }
     qosh(r, x.tur, summa, (x.izoh || "").trim());
     setForma((p) => ({ ...p, [r.id]: { tur: x.tur, summa: "", izoh: "" } }));
@@ -92,7 +92,7 @@ export default function IshHaqi() {
                   <View style={styles.mHead}>
                     <View style={styles.flex1}>
                       <Text style={styles.ism} numberOfLines={1}>{r.ism}</Text>
-                      <Text style={styles.izoh} numberOfLines={1}>{r.kunlar ? `${r.kunlar} kun ishladi` : "Bu oyda yakunlangan kun yo'q"}{r.avans + r.tolov > 0 ? ` · berildi ${formatSom(r.avans + r.tolov)}` : ""}</Text>
+                      <Text style={styles.izoh} numberOfLines={1}>{r.kunlar ? `${r.kunlar} kun ishladi` : r.hisoblangan > 0 ? "Arxivlangan kunlar bo'yicha" : "Bu oyda yakunlangan kun yo'q"}{r.avans + r.tolov > 0 ? ` · berildi ${formatSom(r.avans + r.tolov)}` : ""}</Text>
                     </View>
                     <Text style={[styles.qoldiq, r.qoldiq <= 0 && { color: C.muted }]}>{r.qoldiq > 0 ? `${formatSom(r.qoldiq)} so'm` : r.qoldiq < 0 ? `+${formatSom(-r.qoldiq)}` : "✓"}</Text>
                   </View>

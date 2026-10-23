@@ -16,7 +16,7 @@ import { VaqtField, hozirgiSoat } from "../src/components/VaqtField";
 import { ScrollBox } from "../src/components/ScrollBox";
 import { SahifaSarlavha } from "../src/components/SahifaSarlavha";
 import { C, T, S, R, temaStil } from "../src/theme";
-import { formatSom, bugunSana } from "../src/logic/hisob";
+import { formatSom, bugunSana, sonOl } from "../src/logic/hisob";
 
 // Ish kuni sanasi (kun tunda 03:00 da tugaydi)
 const localSana = () => bugunSana();
@@ -56,7 +56,7 @@ export default function Xarajat() {
   };
 
   const saqla = () => {
-    const summa = parseFloat(forma.summa) || 0;
+    const summa = sonOl(forma.summa);
     if (!summa) { Alert.alert("Summa kiritilmagan", "Iltimos, xarajat summasini kiriting."); return; }
     if (!forma.izoh.trim()) { Alert.alert("Izoh kiritilmagan", "Xarajat nimaga ketganini yozing."); return; }
     // Qo'lda tanlanmagan bo'lsa har save'da joriy kun (uzoq vaqt ochiq qolsa ham to'g'ri)

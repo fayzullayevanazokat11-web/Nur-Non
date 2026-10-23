@@ -17,7 +17,7 @@ import { XomashyoIkon, NonIkon, BosiladiganIkon, IkonTanlov, IKON_TANLOV, xomash
 import { ScrollBox } from "../../src/components/ScrollBox";
 import { xomashyoRoyxati } from "../../src/logic/konstantalar";
 import { C, T, S, R, temaStil } from "../../src/theme";
-import { formatSom, getQopTannarx, getIngNarx } from "../../src/logic/hisob";
+import { formatSom, getQopTannarx, getIngNarx, sonOl } from "../../src/logic/hisob";
 
 const baseUnit = (birlik) => (birlik === "litr" ? "ml" : "g");
 const BOSH = { nom: "", narx: "", oz: true, nonSoni: "", donaFoyda: "", ing: {} };
@@ -88,28 +88,35 @@ export default function IshlabChiqarish() {
 
   // Forma jonli hisoblari
   const formaQopNarx = royxat.reduce((s, m) => {
-    const miq = parseFloat(forma.ing[m.id]) || 0;
+    const miq = sonOl(forma.ing[m.id]);
     return miq > 0 ? s + getIngNarx({ id: m.id, miqdor: miq }, mahsulotNarxlari) : s;
   }, 0);
-  const formaSon = parseFloat(forma.nonSoni) || 0;
+  const formaSon = sonOl(forma.nonSoni);
   const formaDonaFoyda = forma.oz
-    ? Math.round((parseFloat(forma.narx) || 0) - (formaSon > 0 ? formaQopNarx / formaSon : 0))
-    : (parseFloat(forma.donaFoyda) || 0);
+    ? Math.round((sonOl(forma.narx)) - (formaSon > 0 ? formaQopNarx / formaSon : 0))
+    : (sonOl(forma.donaFoyda));
 
   const saqla = () => {
     if (!forma.nom.trim() || !forma.narx) {
       Alert.alert("Maydonlar to'liq emas", "Non nomi va sotuv narxini kiriting.");
       return;
     }
-    const narx = parseFloat(forma.narx) || 0;
+    // Nom bo'yicha bog'langan ma'lumotlar (xodim stavkalari, optom/qarz savati) aralashib ketmasligi uchun
+    // ikki non bir xil nomda bo'lmaydi
+    const nomi = forma.nom.trim().toLowerCase();
+    if ((nonlar || []).some((n) => n.id !== tahrirId && String(n.nom || "").trim().toLowerCase() === nomi)) {
+      Alert.alert("Bunday non bor", "Bu nomdagi non allaqachon qo'shilgan. Boshqa nom kiriting.");
+      return;
+    }
+    const narx = sonOl(forma.narx);
     let yangi;
     if (forma.oz) {
       const mahsulotlar = royxat
-        .map((m) => ({ id: m.id, nom: m.nom, ...(m.ikon ? { ikon: m.ikon } : {}), birlik: baseUnit(m.birlik), miqdor: parseFloat(forma.ing[m.id]) || 0 }))
+        .map((m) => ({ id: m.id, nom: m.nom, ...(m.ikon ? { ikon: m.ikon } : {}), birlik: baseUnit(m.birlik), miqdor: sonOl(forma.ing[m.id]) }))
         .filter((m) => m.miqdor > 0);
-      yangi = { nom: forma.nom.trim(), narx, ozIshlab: true, nonSoni: parseFloat(forma.nonSoni) || 0, tashqariFoyda: 0, mahsulotlar };
+      yangi = { nom: forma.nom.trim(), narx, ozIshlab: true, nonSoni: sonOl(forma.nonSoni), tashqariFoyda: 0, mahsulotlar };
     } else {
-      yangi = { nom: forma.nom.trim(), narx, ozIshlab: false, nonSoni: 0, tashqariFoyda: parseFloat(forma.donaFoyda) || 0, mahsulotlar: [] };
+      yangi = { nom: forma.nom.trim(), narx, ozIshlab: false, nonSoni: 0, tashqariFoyda: sonOl(forma.donaFoyda), mahsulotlar: [] };
     }
     if (tahrirId) {
       // Tahrirlash: nomi o'zgargan yoki "tashqaridan"ga o'zgargan bo'lsa ishchilar nonNarxlari/nonTurlari'ni sinxronlaymiz

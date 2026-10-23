@@ -16,7 +16,7 @@ import { VaqtField, hozirgiSoat } from "../src/components/VaqtField";
 import { ScrollBox } from "../src/components/ScrollBox";
 import { SahifaSarlavha } from "../src/components/SahifaSarlavha";
 import { C, T, S, R, temaStil } from "../src/theme";
-import { formatSom, optomJami, bugunSana } from "../src/logic/hisob";
+import { formatSom, optomJami, bugunSana, sonOl } from "../src/logic/hisob";
 
 // Ish kuni sanasi (kun tunda 03:00 da tugaydi)
 const localSana = () => bugunSana();
@@ -46,8 +46,8 @@ export default function Optom() {
       dona += soni;
       items.push({ nonNomi: n.nom, soni, narx });
     });
-    const dch = parseFloat(forma.donaChegirma) || 0;
-    const ch = parseFloat(forma.chegirma) || 0;
+    const dch = sonOl(forma.donaChegirma);
+    const ch = sonOl(forma.chegirma);
     const jamiChegirma = dch * dona + ch;
     return { summa, dona, items, jamiChegirma, yakSumma: Math.max(0, summa - jamiChegirma) };
   }, [forma.savat, forma.donaChegirma, forma.chegirma, nonlar]);

@@ -15,7 +15,7 @@ import { SahifaSarlavha } from "../src/components/SahifaSarlavha";
 import { BrakTahlili } from "../src/components/BrakTahlili";
 import { NonIkon } from "../src/components/XomashyoIkon";
 import { C, T, S, R, temaStil } from "../src/theme";
-import { formatSom, bugunSana } from "../src/logic/hisob";
+import { formatSom, bugunSana, sonOl } from "../src/logic/hisob";
 
 const soatMatni = (ms) => { const d = new Date(ms); return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`; };
 
@@ -33,7 +33,7 @@ export default function Brak() {
   const ishchi = qopIshchilar.find((w) => w.id === forma.ishchiId);
   const donaNarxi = (nom) => parseFloat((nonlar || []).find((n) => n.nom === nom)?.narx) || 0;
   const summa = useMemo(() =>
-    (ishchi?.nonTurlari || []).reduce((s, nom) => s + donaNarxi(nom) * (parseFloat(forma.dona[nom]) || 0), 0),
+    (ishchi?.nonTurlari || []).reduce((s, nom) => s + donaNarxi(nom) * (sonOl(forma.dona[nom])), 0),
     [ishchi, forma.dona, nonlar]
   );
 
@@ -52,7 +52,7 @@ export default function Brak() {
     if (tahrirId) {
       const b = (braklar || []).find((x) => x.id === tahrirId);
       const nom = b?.nonNomi;
-      const soni = parseFloat(forma.dona[nom]) || 0;
+      const soni = sonOl(forma.dona[nom]);
       if (soni <= 0) { Alert.alert("To'liq emas", "Brak sonini kiriting (0 dan katta)."); return; }
       setBraklar((prev) => prev.map((x) => x.id === tahrirId
         ? { ...x, ishchiId: ishchi.id, ishchiIsm: ishchi.ism, soni, summa: Math.round(donaNarxi(nom) * soni) }
@@ -61,7 +61,7 @@ export default function Brak() {
       return;
     }
     const yozuvlar = (ishchi.nonTurlari || [])
-      .map((nom) => ({ nom, soni: parseFloat(forma.dona[nom]) || 0 }))
+      .map((nom) => ({ nom, soni: sonOl(forma.dona[nom]) }))
       .filter((x) => x.soni > 0)
       .map((x) => ({
         id: Date.now() + Math.floor(Math.random() * 1000), sana: localSana(), vaqt: Date.now(),

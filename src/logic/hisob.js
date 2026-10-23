@@ -49,8 +49,9 @@ export function donaFoyda(non, narxlar) {
 
 // Bugun optom/qarz orqali ketgan nonlar (kunlik hisobdan ayriladi).
 // oxirgiYakunlashVaqti'dan keyin yaratilganlargina kiradi — eskilar tarixga ketgan.
-function divertedByNon(optomlar, qarzlar, oxirgiYakunlashVaqti = 0) {
-  const bugun = bugunSana();
+// sana — hisob qaysi ish kuni uchun yuritilayotgani (sukut: bugun; o'tgan sana bilan yakunlashda boshqa)
+function divertedByNon(optomlar, qarzlar, oxirgiYakunlashVaqti = 0, sana = bugunSana()) {
+  const bugun = sana;
   const yangi = (e) => (e.vaqt || 0) > (oxirgiYakunlashVaqti || 0);
   const map = {};
   (optomlar || []).filter((o) => o.sana === bugun && yangi(o)).forEach((o) =>
@@ -70,9 +71,12 @@ export function hisoblaKunlik({
   nonlar = [], ishchilar = [], ozIshlabQoplar = {}, tashqariSonlar = {},
   sotilmaganNon = {}, optomlar = [], qarzlar = [], mahsulotNarxlari = {}, braklar = [],
   boshlangichQoldiq = {}, qoldaYaroqsiz = {}, kunlikXarajatlar = [], oxirgiYakunlashVaqti = 0,
+  sana = bugunSana(),
 }) {
-  const diverted = divertedByNon(optomlar, qarzlar, oxirgiYakunlashVaqti);
+  const diverted = divertedByNon(optomlar, qarzlar, oxirgiYakunlashVaqti, sana);
   let jamiNon = 0, jamiQop = 0, jamiBoshlang = 0, jamiQoldiq = 0, jamiYaroqsiz = 0;
+  // Sotilgan non — har bir non bo'yicha alohida (bitta nonning ortiqcha qoldig'i boshqasini kamaytirmasin)
+  let sotilgan = 0;
   // xomashyo — o'z ishlab chiqarishimiz xomashyosi (faqat ma'lumot uchun, sof foydadan ayrilmaydi).
   // tashqariTannarx — tashqaridan olingan nonning sotib olish narxi (sof foydadan ayriladi).
   let daromad = 0, xomashyo = 0, tashqariTannarx = 0;
@@ -92,6 +96,7 @@ export function hisoblaKunlik({
       const qopSoni = parseInt(ozIshlabQoplar[non.id]) || 0;
       const ishlab = qopSoni * norma;
       jamiQop += qopSoni; jamiNon += ishlab;
+      sotilgan += Math.max(0, boshlang + ishlab - yaroqsiz - qoldiq);
       // Sotilgan retail = umumiy zaxira − chiqimlar (yaroqsiz, qoldiq, diverted)
       const retailSold = Math.max(0, boshlang + ishlab - yaroqsiz - qoldiq - divertedShu);
       daromad += retailSold * narx;
@@ -103,22 +108,25 @@ export function hisoblaKunlik({
     } else {
       const olingan = parseInt(tashqariSonlar[non.id]) || 0;
       jamiNon += olingan;
+      sotilgan += Math.max(0, boshlang + olingan - yaroqsiz - qoldiq);
       const retailSold = Math.max(0, boshlang + olingan - yaroqsiz - qoldiq - divertedShu);
       daromad += retailSold * narx;
-      const tannarx = Math.max(0, narx - (parseFloat(non.tashqariFoyda) || 2000));
+      // Foyda kiritilmagan (eski yozuv) bo'lsa 2000, aniq 0 kiritilgan bo'lsa 0 (Tannarx bo'limi bilan bir xil)
+      const foydaKiritilgan = non.tashqariFoyda !== undefined && non.tashqariFoyda !== null && String(non.tashqariFoyda).trim() !== "";
+      const tannarx = Math.max(0, narx - (foydaKiritilgan ? (parseFloat(non.tashqariFoyda) || 0) : 2000));
       tashqariTannarx += (olingan - Math.min(divertedShu, olingan)) * tannarx;
     }
   });
 
-  // Faqat oxirgi yakunlashdan keyingi (bugungi) brak'lar gross'dan ayrilsin.
-  const bugungiBrak = (braklar || []).filter((b) => (b.vaqt || 0) > (oxirgiYakunlashVaqti || 0));
+  // Faqat oxirgi yakunlashdan keyingi va shu kunga tegishli brak'lar gross'dan ayrilsin.
+  const bugungiBrak = (braklar || []).filter((b) => (b.vaqt || 0) > (oxirgiYakunlashVaqti || 0) && (!b.sana || b.sana === sana));
   const haq = ishchiHaqlari(nonlar, ishchilar, ozIshlabQoplar, bugungiBrak);
   const ishchiHaq = haq.jami;
   const brakAyirma = haq.list.reduce((s, x) => s + (x.gross - x.net), 0);
 
   // Bugungi qo'shimcha xarajatlar — bugungi sanali VA oxirgi yakunlashdan keyin
   // yaratilgani sof foydadan ayriladi. Yakunlash bo'lganidan oldingilari tarix.
-  const bugun = bugunSana();
+  const bugun = sana;
   const yangi = (e) => (e.vaqt || 0) > (oxirgiYakunlashVaqti || 0);
   const xarajatJami = (kunlikXarajatlar || [])
     .filter((x) => x.sana === bugun && yangi(x))
@@ -131,8 +139,8 @@ export function hisoblaKunlik({
   // O'z xomashyomiz sof foydadan AYRILMAYDI — u ombor (keltirilgan set) orqali alohida
   // hisoblanadi. Tashqaridan olingan non narxi esa omborda yo'q, shuning uchun ayriladi.
   const sofFoyda = kunBoshlandi ? Math.round(daromad - tashqariTannarx - ishchiHaq - xarajatJami) : 0;
-  // Bugun sotilgan jami (retail + diverted), boshlang va ishlab dan
-  const sotilganNon = Math.max(0, jamiBoshlang + jamiNon - jamiQoldiq - jamiYaroqsiz);
+  // Bugun sotilgan jami (retail + diverted) — nonlar bo'yicha yig'indi
+  const sotilganNon = sotilgan;
 
   return {
     sofFoyda, jamiNon, jamiQop, sotilganNon,
@@ -146,8 +154,8 @@ export function hisoblaKunlik({
 // Har non uchun partiyaviy zaxira tafsiloti: boshlang + ishlab − sotilgan − yaroqsiz − qoldiq.
 // FIFO ko'rinishi (boshlang avval, keyin bugungi). Sotilgan tafsiloti: avval boshlang,
 // keyin ishlab partiyasidan ketadi.
-export function qoldiqlarHisobi(nonlar, { boshlangichQoldiq = {}, ozIshlabQoplar = {}, tashqariSonlar = {}, qoldaYaroqsiz = {}, sotilmaganNon = {}, optomlar = [], qarzlar = [], oxirgiYakunlashVaqti = 0 } = {}) {
-  const diverted = divertedByNon(optomlar, qarzlar, oxirgiYakunlashVaqti);
+export function qoldiqlarHisobi(nonlar, { boshlangichQoldiq = {}, ozIshlabQoplar = {}, tashqariSonlar = {}, qoldaYaroqsiz = {}, sotilmaganNon = {}, optomlar = [], qarzlar = [], oxirgiYakunlashVaqti = 0, sana = bugunSana() } = {}) {
+  const diverted = divertedByNon(optomlar, qarzlar, oxirgiYakunlashVaqti, sana);
   return (nonlar || []).map((non) => {
     const norma = parseFloat(non.nonSoni) || 0;
     const oz = non.ozIshlab !== false;
@@ -297,6 +305,13 @@ export function kartaHisob(summa, nonlar, mahsulotNarxlari) {
   const dona = avgNarx > 0 ? Math.round(summa / avgNarx) : 0;
   const sofFoyda = Math.round(summa - dona * avgTannarx);
   return { dona, sofFoyda, avgNarx: Math.round(avgNarx) };
+}
+
+// Foydalanuvchi kiritgan sonni o'qish: "12,5" (vergul), "50 000" (bo'shliq) ham to'g'ri o'qiladi.
+// parseFloat("12,5") jimgina 12 qaytarardi — kasr yo'qolardi.
+export function sonOl(x) {
+  const n = parseFloat(String(x ?? "").replace(/\s/g, "").replace(",", "."));
+  return Number.isFinite(n) ? n : 0;
 }
 
 // So'm formatlash (Hermes Intl'ga bog'liq emas)
