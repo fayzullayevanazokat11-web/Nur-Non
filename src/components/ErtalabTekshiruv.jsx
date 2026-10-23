@@ -10,6 +10,7 @@ import { useApp } from "../store/AppData";
 import { Bosma } from "./Bosma";
 import { Btn } from "./Btn";
 import { sezgi } from "../logic/sezgi";
+import { markazga } from "../logic/yol";
 import { C, T, S, R, temaStil } from "../theme";
 
 const silliq = () => LayoutAnimation.configureNext(LayoutAnimation.create(220, LayoutAnimation.Types.easeInEaseOut, LayoutAnimation.Properties.opacity));
@@ -103,7 +104,7 @@ export function ErtalabTekshiruv({ kunYopiq }) {
 export function ErtalabQadamBelgisi({ qadam, matn }) {
   const { ertalab, ertalabYonalish, setErtalabYonalish } = useApp();
   if (ertalabYonalish !== qadam || ertalab.tugallandi) return null;
-  const tayyor = () => { setErtalabYonalish(null); sezgi("otish"); router.navigate("/"); };
+  const tayyor = () => { setErtalabYonalish(null); sezgi("otish"); markazga(); };
   return (
     <View style={styles.qadamBelgi}>
       <Ionicons name="sunny-outline" size={18} color={C.accent} />

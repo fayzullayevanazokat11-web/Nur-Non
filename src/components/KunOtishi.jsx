@@ -8,7 +8,7 @@ import { useEffect, useRef, useState } from "react";
 import { View, Text, Pressable, Animated, Easing, StyleSheet, AppState } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import { router } from "expo-router";
+import { markazga, markazdan } from "../logic/yol";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useApp } from "../store/AppData";
 import { ishKuni, formatSom } from "../logic/hisob";
@@ -96,9 +96,9 @@ export function KunOtishi() {
       keyin?.();
     });
   };
-  const markazga = () => yop(() => router.navigate("/"));
-  const statistika = () => yop(() => router.navigate("/tarix"));
-  const kunniBoshla = () => yop(() => { setErtalabPanel(true); router.navigate("/"); });
+  const markazgaQayt = () => yop(markazga);
+  const statistika = () => yop(() => markazdan("/tarix"));
+  const kunniBoshla = () => yop(() => { setErtalabPanel(true); markazga(); });
   const tekshiruvKerak = ekran.tur === "salom" && !ertalab.tugallandi && !kunYakunlanganmi();
 
   const kirish = { opacity: a, transform: [{ translateY: a.interpolate({ inputRange: [0, 1], outputRange: [24, 0] }) }] };
@@ -149,7 +149,7 @@ export function KunOtishi() {
           )}
           <Pressable
             accessibilityRole="button"
-            onPress={markazga}
+            onPress={markazgaQayt}
             sezgiTuri="otish"
             style={({ pressed }) => [tekshiruvKerak ? styles.btn2 : styles.btn, pressed && styles.bosildi]}
           >

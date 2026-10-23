@@ -3,7 +3,7 @@
 // ishchilar haqi. "PDF" — hisobotni fayl qilib ulashish; "Markazga qaytish" — bosh sahifaga.
 import { View, Text, StyleSheet, Alert } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { router } from "expo-router";
+import { markazga } from "../logic/yol";
 
 import { useApp } from "../store/AppData";
 import { Card } from "./Card";
@@ -24,7 +24,6 @@ export function KunHisoboti({ h }) {
 
   const pdf = () => pdfUlash(kunlikHtml(h, { akkaunt: akkauntNomi, nonlar }), `nur-non-${h.sana}`)
     .catch(() => Alert.alert("Xatolik", "PDF tayyorlab bo'lmadi."));
-  const markazga = () => router.navigate("/");
 
   const nonQatorlar = (h.nonlarSnapshot || nonlar || []).map((n) => {
     const oz = n.ozIshlab !== false;
