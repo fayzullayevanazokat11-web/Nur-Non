@@ -5,7 +5,7 @@ import { useRef } from "react";
 import { Animated, Pressable, Easing } from "react-native";
 import { ANIM } from "../theme";
 
-export function Bosma({ style, tashqi, children, kichrayish = 0.97, disabled, ...rest }) {
+export function Bosma({ style, tashqi, children, kichrayish = 0.97, disabled, sezgiTuri = "otish", ...rest }) {
   const v = useRef(new Animated.Value(0)).current;
   const anim = (to) =>
     Animated.timing(v, { toValue: to, duration: ANIM.pressDuration, easing: Easing.inOut(Easing.ease), useNativeDriver: true }).start();
@@ -19,9 +19,10 @@ export function Bosma({ style, tashqi, children, kichrayish = 0.97, disabled, ..
       onPressIn={() => !disabled && anim(1)}
       onPressOut={() => anim(0)}
       style={tashqi}
+      sezgiTuri={sezgiTuri}
       {...rest}
     >
-      <Animated.View style={[style, korinish]}>{children}</Animated.View>
+      <Animated.View needsOffscreenAlphaCompositing style={[style, korinish]}>{children}</Animated.View>
     </Pressable>
   );
 }

@@ -13,6 +13,7 @@ import { Qidiruv, qidiruvMos } from "../src/components/Qidiruv";
 import { SahifaSarlavha } from "../src/components/SahifaSarlavha";
 import { C, T, S, R, temaStil } from "../src/theme";
 import { formatSom } from "../src/logic/hisob";
+import { sezgi } from "../src/logic/sezgi";
 
 const D = 86400000;
 const ikki = (n) => String(n).padStart(2, "0");
@@ -68,6 +69,7 @@ export default function Ochirilganlar() {
     silliq();
     const n = qaytar(y.id);
     if (n === true) {
+      sezgi("tayyor");
       setXabar(`Qaytarildi: ${TURLAR[y.tur].nom}`);
       clearTimeout(xabarT.current);
       xabarT.current = setTimeout(() => setXabar(""), 2200);

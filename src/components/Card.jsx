@@ -29,7 +29,9 @@ function AnimatedCard({ variant, style, children }) {
     opacity: v,
     transform: [{ translateY: v.interpolate({ inputRange: [0, 1], outputRange: [10, 0] }) }],
   };
-  return <Animated.View style={[styles.base, variant, entrance, style]}>{children}</Animated.View>;
+  // Shaffoflik o'zgarayotganda karta bitta qatlam bo'lib chiziladi — chegara va fon
+  // ustma-ust tushib, chetlari qorayib ko'rinmaydi (Android)
+  return <Animated.View needsOffscreenAlphaCompositing style={[styles.base, variant, entrance, style]}>{children}</Animated.View>;
 }
 
 const styles = temaStil(() => StyleSheet.create({

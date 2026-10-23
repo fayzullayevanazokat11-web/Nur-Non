@@ -13,11 +13,12 @@ import { useApp } from "../store/AppData";
 import { ruxsatSora, ESLATMA_SOAT } from "../logic/bildirishnoma";
 import { tanishuvniOch } from "./Tanishuv";
 import { Bosma } from "./Bosma";
+import { useSezgiSozlama, setSezgiSozlama, sezgi } from "../logic/sezgi";
 import { useTil, setTil } from "../i18n/til";
 import { C, T, S, R, ANIM, temaStil, TEMALAR, useTema, temaAlmashtir } from "../theme";
 
 export function MarkazMenyu({ onYop }) {
-  const { ochirilganlar, akkauntNomi, eslatmaYoqilgan, setEslatmaYoqilgan, eslatmaYangila } = useApp();
+  const { ochirilganlar, akkauntNomi, eslatmaYoqilgan, setEslatmaYoqilgan, eslatmaYangila, salomYoqilgan, setSalomYoqilgan } = useApp();
   const eslatmaAlmash = async (v) => {
     if (!v) { setEslatmaYoqilgan(false); return; }
     setEslatmaYoqilgan(true);
@@ -28,6 +29,7 @@ export function MarkazMenyu({ onYop }) {
   };
   const til = useTil();
   const tema = useTema();
+  const hiss = useSezgiSozlama();
   const soni = (ochirilganlar || []).length;
 
   // Ochilish animatsiyasi: shaffoflik + yuqoridan sirpanish
@@ -114,6 +116,50 @@ export function MarkazMenyu({ onYop }) {
 
       <View style={styles.divider} />
 
+      <View style={styles.row}>
+        <View style={styles.icon}><Ionicons name="sunny-outline" size={20} color={C.accent} /></View>
+        <View style={styles.flex1}>
+          <Text style={styles.label}>Salom va kun xulosasi</Text>
+          <Text style={styles.sub}>Tunda 03:00 da xulosa, ertalab salom</Text>
+        </View>
+        <Switch
+          accessibilityLabel="Salom va kun xulosasi"
+          value={salomYoqilgan !== false}
+          onValueChange={(v) => setSalomYoqilgan(v)}
+          trackColor={{ false: C.border, true: C.accent }}
+          thumbColor={C.surface}
+          activeThumbColor={C.surface}
+          ios_backgroundColor={C.border}
+        />
+      </View>
+
+      <View style={styles.divider} />
+
+      <View style={styles.row}>
+        <View style={styles.icon}><Ionicons name="musical-note-outline" size={20} color={C.accent} /></View>
+        <View style={styles.flex1}>
+          <Text style={styles.label}>Bosish hissi</Text>
+          <Text style={styles.sub}>Tugmalarda tebranish va yumshoq ovoz</Text>
+        </View>
+        <View style={styles.hissQator}>
+          {[["tebranish", "Tebranish"], ["ovoz", "Ovoz"]].map(([k, nom]) => (
+            <Pressable
+              key={k}
+              accessibilityRole="switch"
+              accessibilityLabel={nom}
+              accessibilityState={{ checked: !!hiss[k] }}
+              sezgiTuri={false}
+              onPress={() => { setSezgiSozlama(k, !hiss[k]); if (!hiss[k]) setTimeout(() => sezgi("bos"), 0); }}
+              style={[styles.hissBtn, hiss[k] && styles.segBtnActive]}
+            >
+              <Text style={[styles.segTxt, hiss[k] && styles.segTxtActive]}>{nom}</Text>
+            </Pressable>
+          ))}
+        </View>
+      </View>
+
+      <View style={styles.divider} />
+
       <Bosma
         accessibilityRole="button"
         onPress={() => { onYop?.(); tanishuvniOch(); }}
@@ -183,6 +229,8 @@ const styles = temaStil(() => StyleSheet.create({
   divider:   { height: StyleSheet.hairlineWidth, backgroundColor: C.borderSoft, marginHorizontal: S[4] },
   seg:       { flexDirection: "row", backgroundColor: C.panel, borderRadius: R.pill, padding: 3 },
   segBtn:    { paddingVertical: 7, paddingHorizontal: 12, borderRadius: R.pill },
+  hissQator: { flexDirection: "column", gap: 4 },
+  hissBtn:   { paddingVertical: 5, paddingHorizontal: 10, borderRadius: R.pill, backgroundColor: C.panel, alignItems: "center" },
   segBtnActive: { backgroundColor: C.accent },
   segTxt:    { fontSize: T.xs, fontWeight: "700", color: C.sub },
   segTxtActive: { color: C.onAccent },

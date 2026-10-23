@@ -35,6 +35,15 @@ export async function ruxsatSora() {
   } catch { return false; }
 }
 
+// Joriy ruxsat holati (so'ramasdan): "bor" | "yoq" | "web"
+export async function ruxsatHolati() {
+  if (Platform.OS === "web") return "web";
+  try {
+    const joriy = await Notifications.getPermissionsAsync();
+    return joriy.granted ? "bor" : "yoq";
+  } catch { return "yoq"; }
+}
+
 // Eslatmalarni qayta tuzish. yakunlanganSana — bugun yakunlangan bo'lsa shu sana.
 export async function kunYakunEslatmalari({ yoqilgan, yakunlanganSana, sarlavha, matn }) {
   if (Platform.OS === "web") return;

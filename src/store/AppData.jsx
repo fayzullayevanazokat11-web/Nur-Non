@@ -104,6 +104,10 @@ export function AppDataProvider({ children }) {
   const [davomat, setDavomat]                           = usePersistedState("nurnon:davomat", {});
   // Xomashyo narxlari o'zgarish tarixi: [{ id, nom, eski, yangi, vaqt }] — 180 kun
   const [narxTarixi, setNarxTarixi]                     = usePersistedState("nurnon:narxTarixi", []);
+  // Kun xulosasi (03:00) va ertalabki salom ekranlari yoqilganmi (qurilma sozlamasi)
+  const [salomYoqilgan, setSalomYoqilgan]               = usePersistedState("nurnon:salomYoqilgan", true);
+  // Ertalabgi tekshiruv (har ish kuni, 03:00 dan): { kun, davomat, ombor, tugallandi: ms }
+  const [ertalabTekshiruv, setErtalabTekshiruv]         = usePersistedState("nurnon:ertalabTekshiruv", null);
   // Foydalanuvchi o'zgartirgan xomashyo ikonkalari: { xomashyoId: ikonKaliti }
   const [xomashyoIkonlari, setXomashyoIkonlari]         = usePersistedState("nurnon:xomashyoIkonlari", {});
   // Barcha saqlangan ma'lumot yuklandi. Tashqi signal sinxron render qiladi, yuklangan
@@ -473,6 +477,19 @@ export function AppDataProvider({ children }) {
 
   const butunlayOchir = (yozuvId) => setOchirilganlar((p) => (p || []).filter((x) => x.id !== yozuvId));
 
+  // ── Ertalabgi tekshiruv: davomat va ombor ko'rilgach "tugallandi" ──
+  // Faqat joriy ish kuniga tegishli; yangi kun (03:00) boshlanganda o'zi bo'shaydi.
+  const ertalabOl = () => {
+    const e = ertalabTekshiruv;
+    return e && e.kun === bugunSana() ? e : { kun: bugunSana(), davomat: false, ombor: false, tugallandi: 0 };
+  };
+  const ertalab = ertalabOl();
+  const ertalabBelgila = (qadam, qiymat = true) => setErtalabTekshiruv(() => ({ ...ertalabOl(), [qadam]: !!qiymat }));
+  const ertalabTugalla = () => setErtalabTekshiruv(() => ({ ...ertalabOl(), tugallandi: Date.now() }));
+  // Markazdagi havoladan kelinganini bildiradi — sahifada "Tayyor" belgisi chiqadi
+  const [ertalabYonalish, setErtalabYonalish] = useState(null); // "davomat" | "ombor" | null
+  const [ertalabPanel, setErtalabPanel] = useState(false);
+
   // ── Ikonkalar: xomashyo (asosiylari ham) va non ikonkasini almashtirish ──
   const xomashyoIkonQoy = (id, kalit) => {
     setXomashyoIkonlari((p) => ({ ...(p || {}), [id]: kalit }));
@@ -514,6 +531,7 @@ export function AppDataProvider({ children }) {
     davomat: [davomat, setDavomat, "object"],
     narxTarixi: [narxTarixi, setNarxTarixi, "array"],
     xomashyoIkonlari: [xomashyoIkonlari, setXomashyoIkonlari, "object"],
+    ertalabTekshiruv: [ertalabTekshiruv, setErtalabTekshiruv, "objectOrNull"],
   };
 
   // Joriy bazaning to'liq nusxasi
@@ -621,6 +639,8 @@ export function AppDataProvider({ children }) {
     davomat, setDavomat, kelmaganlar, kelmadiAlmash, ishchilarHaq,
     narxTarixi, setNarxTarixi,
     xomashyoIkonlari, xomashyoIkonQoy, nonIkonQoy,
+    salomYoqilgan, setSalomYoqilgan,
+    ertalab, ertalabBelgila, ertalabTugalla, ertalabYonalish, setErtalabYonalish, ertalabPanel, setErtalabPanel,
     oxirgiNusxa, nusxaOl,
     bekor, bekorTaklif, bekorQil, bekorYop,
     tayyor,

@@ -15,6 +15,7 @@ import { ScrollBox } from "../../src/components/ScrollBox";
 import { Bosma } from "../../src/components/Bosma";
 import { useAnimSon } from "../../src/components/useAnimSon";
 import { EslatmalarPanel } from "../../src/components/EslatmalarPanel";
+import { ErtalabTekshiruv } from "../../src/components/ErtalabTekshiruv";
 import { ixcham } from "../../src/components/Statistika";
 import { C, T, S, R, temaStil } from "../../src/theme";
 import { hisoblaKunlik, formatSom, qarzJami, optomJami, kartaJami, ishchiHaqlari, bugunSana } from "../../src/logic/hisob";
@@ -144,6 +145,9 @@ export default function Markaz() {
         {menu && <MarkazMenyu onYop={() => setMenu(false)} />}
 
         <EslatmalarPanel />
+
+        {/* KUNNI BOSHLASH — ertalabgi tekshiruv (davomat, ombor) */}
+        <ErtalabTekshiruv kunYopiq={!!locked} />
 
         <View style={styles.statsRow}>
           <StatTile label="Sof foyda" unit="so'm" son={stats.sofFoyda} format={formatSom} color={stats.sofFoyda >= 0 ? C.green : C.red} icon="trending-up-outline" />

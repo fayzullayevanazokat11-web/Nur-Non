@@ -8,6 +8,7 @@ import { useApp } from "../../src/store/AppData";
 import { Card } from "../../src/components/Card";
 import { Btn } from "../../src/components/Btn";
 import { ScreenHeader } from "../../src/components/ScreenHeader";
+import { ErtalabQadamBelgisi } from "../../src/components/ErtalabTekshiruv";
 import { ExpandableCard, yopKartalar } from "../../src/components/ExpandableCard";
 import { ScrollBox } from "../../src/components/ScrollBox";
 import { C, T, S, R, temaStil } from "../../src/theme";
@@ -156,6 +157,7 @@ export default function Ombor() {
     <SafeAreaView style={styles.safe} edges={["top"]}>
       <ScrollBox contentContainerStyle={styles.scroll}>
         <ScreenHeader eyebrow="Zaxira" title="Ombor hisoboti" subtitle={`${setSoni} ta set kiritilgan`} image={require("../../assets/tabicons/ombor.png")} />
+        <ErtalabQadamBelgisi qadam="ombor" matn="Zaxira va so'rovnomalarni tekshiring, so'ng «Tayyor»" />
 
         <Card accent>
           <View style={styles.cardTitleRow}>

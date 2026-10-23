@@ -15,6 +15,7 @@ export function Btn({
   secondary = false,
   full = true,
   style,
+  sezgiTuri = "bos",
 }) {
   const bg = disabled ? C.border : secondary ? "transparent" : color;
   const fg = disabled ? C.muted : secondary ? C.sub : textColor;
@@ -51,11 +52,13 @@ export function Btn({
     <Pressable
       onPress={disabled ? undefined : onPress}
       disabled={disabled}
+      sezgiTuri={sezgiTuri}
       onPressIn={() => !disabled && animate(1)}
       onPressOut={() => !disabled && animate(0)}
       style={full ? styles.full : undefined}
     >
       <Animated.View
+        needsOffscreenAlphaCompositing
         style={[
           styles.base,
           {

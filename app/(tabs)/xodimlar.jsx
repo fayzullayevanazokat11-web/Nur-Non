@@ -10,6 +10,7 @@ import { useApp } from "../../src/store/AppData";
 import { Card } from "../../src/components/Card";
 import { Btn } from "../../src/components/Btn";
 import { ScreenHeader } from "../../src/components/ScreenHeader";
+import { ErtalabQadamBelgisi } from "../../src/components/ErtalabTekshiruv";
 import { NavQator } from "../../src/components/NavQator";
 import { Qidiruv, qidiruvMos } from "../../src/components/Qidiruv";
 import { oylikIshHaqi, joriyOy, oyNomi } from "../../src/logic/davr";
@@ -25,7 +26,7 @@ const BOSH = { ism: "", lavozimId: LAVOZIMLAR[0].id, lavozimCustom: "", haqTuri:
 const HOLATLAR = ["Aktiv", "Ta'tilda"];
 
 export default function Xodimlar() {
-  const { ishchilar, setIshchilar, nonlar, ochirArxivga, amalArxivga, hisobotlarTarixi, oylikArxiv, ishHaqiYozuvlari, kelmaganlar, kelmadiAlmash } = useApp();
+  const { ishchilar, setIshchilar, nonlar, ochirArxivga, amalArxivga, hisobotlarTarixi, oylikArxiv, ishHaqiYozuvlari, kelmaganlar, kelmadiAlmash, ertalabYonalish } = useApp();
   const [qidiruv, setQidiruv] = useState("");
   const oylik = useMemo(
     () => oylikIshHaqi({ oy: joriyOy(), hisobotlar: hisobotlarTarixi, arxiv: oylikArxiv, ishchilar, yozuvlar: ishHaqiYozuvlari }),
@@ -142,6 +143,7 @@ export default function Xodimlar() {
     <SafeAreaView style={styles.safe} edges={["top"]}>
       <ScrollBox ref={scrollRef} contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
         <ScreenHeader eyebrow="Jamoa" title="Xodimlar" image={require("../../assets/tabicons/xodimlar.png")} />
+        <ErtalabQadamBelgisi qadam="davomat" matn="Bugungi davomatni belgilang, so'ng «Tayyor»" />
 
         <View style={styles.statsRow}>
           <Card style={styles.statTile}>
@@ -176,6 +178,7 @@ export default function Xodimlar() {
         {hammaAktiv.length > 0 && (
           <ExpandableCard
             style={styles.formCard}
+            ochKaliti={ertalabYonalish === "davomat" ? "ertalab" : null}
             header={
               <View style={styles.formHead}>
                 <Ionicons name="checkbox-outline" size={18} color={C.sub} />

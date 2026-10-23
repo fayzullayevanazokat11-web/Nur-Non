@@ -30,6 +30,7 @@ export function SahifaSarlavha({ eyebrow, title, subtitle, icon, image, ton = "a
           accessibilityRole="button"
           accessibilityLabel="Orqaga"
           onPress={orqagaQayt}
+          sezgiTuri="otish"
           onPressIn={() => bosish(1)}
           onPressOut={() => bosish(0)}
           hitSlop={8}

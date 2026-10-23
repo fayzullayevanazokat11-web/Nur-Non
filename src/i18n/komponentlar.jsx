@@ -3,9 +3,10 @@
 // importini shu yerga yo'naltiradi, shuning uchun kelajakdagi har qanday yangi matn ham
 // avtomatik o'giriladi.
 import { forwardRef } from "react";
-import { Text as RNText, TextInput as RNTextInput, Alert as RNAlert, Platform } from "react-native";
+import { Text as RNText, TextInput as RNTextInput, Alert as RNAlert, Pressable as RNPressable, Platform } from "react-native";
 import { useTil, getTil } from "./til";
 import { ogir } from "./translit";
+import { sezgi } from "../logic/sezgi";
 
 const ogirBola = (c, til) =>
   typeof c === "string" ? ogir(c, til) : Array.isArray(c) ? c.map((x) => ogirBola(x, til)) : c;
@@ -19,6 +20,15 @@ export const Text = forwardRef(function Text(props, ref) {
 export const TextInput = forwardRef(function TextInput(props, ref) {
   const til = useTil();
   return <RNTextInput ref={ref} {...props} placeholder={ogir(props.placeholder, til)} />;
+});
+
+// Pressable — bosilganda yengil tebranish va yumshoq ovoz (sozlamaga qarab).
+// sezgiTuri: "bos" (sukut), "otish" (sahifa/bo'lim almashishi), "tayyor" yoki false (jim).
+export const Pressable = forwardRef(function Pressable({ onPress, sezgiTuri = "bos", ...props }, ref) {
+  const bosildi = onPress
+    ? (e) => { if (sezgiTuri) sezgi(sezgiTuri); onPress(e); }
+    : undefined;
+  return <RNPressable ref={ref} onPress={bosildi} {...props} />;
 });
 
 // Web'da RN Alert hech narsa qilmaydi — brauzerning confirm/alert oynasi bilan almashtiramiz

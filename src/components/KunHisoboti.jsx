@@ -1,10 +1,9 @@
 // Yakunlangan kun hisoboti (faqat o'qish uchun) — Kunlik qop hisobi sahifasida kun
 // yopilgandan keyin ko'rinadi: asosiy ko'rsatkichlar, non turlari, sonlar, moliya,
-// ishchilar haqi. "PDF" — hisobotni fayl qilib ulashish; "Akkauntni ko'chirish" —
-// butun akkaunt ma'lumoti nusxasi (boshqa telefonga ko'chirish uchun).
+// ishchilar haqi. "PDF" — hisobotni fayl qilib ulashish; "Markazga qaytish" — bosh sahifaga.
 import { View, Text, StyleSheet, Alert } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import * as Clipboard from "expo-clipboard";
+import { router } from "expo-router";
 
 import { useApp } from "../store/AppData";
 import { Card } from "./Card";
@@ -13,7 +12,6 @@ import { NonIkon } from "./XomashyoIkon";
 import { formatSom } from "../logic/hisob";
 import { sanaChiroyli } from "../logic/davr";
 import { kunlikHtml, pdfUlash } from "../logic/ulashish";
-import { matngaAylantir, hajm } from "../logic/uzatish";
 import { C, T, S, R, temaStil } from "../theme";
 
 const ikki = (n) => String(n).padStart(2, "0");
@@ -21,18 +19,12 @@ const soat = (ms) => { const d = new Date(ms || Date.now()); return `${ikki(d.ge
 const son = (x) => parseFloat(x) || 0;
 
 export function KunHisoboti({ h }) {
-  const { nonlar, akkauntNomi, eksportMalumot } = useApp();
+  const { nonlar, akkauntNomi } = useApp();
   const daromad = son(h.daromad), haq = son(h.ishchiHaq), a = h.arxiv || {};
 
   const pdf = () => pdfUlash(kunlikHtml(h, { akkaunt: akkauntNomi, nonlar }), `nur-non-${h.sana}`)
     .catch(() => Alert.alert("Xatolik", "PDF tayyorlab bo'lmadi."));
-  const kochir = async () => {
-    try {
-      const m = matngaAylantir(eksportMalumot());
-      await Clipboard.setStringAsync(m);
-      Alert.alert("Nusxa olindi", `Butun akkaunt ma'lumoti (${hajm(m)}) nusxalandi. Boshqa telefonda: logotip → Akkaunt va ma'lumotlar → «Qo'yish» → «Ma'lumotlarni yuklash».`);
-    } catch { Alert.alert("Xatolik", "Nusxa olib bo'lmadi."); }
-  };
+  const markazga = () => router.navigate("/");
 
   const nonQatorlar = (h.nonlarSnapshot || nonlar || []).map((n) => {
     const oz = n.ozIshlab !== false;
@@ -97,7 +89,7 @@ export function KunHisoboti({ h }) {
 
       <Btn icon="document-outline" onPress={pdf}>PDF hisobot</Btn>
       <View style={styles.oraliq} />
-      <Btn secondary icon="swap-horizontal-outline" onPress={kochir}>Akkauntni ko'chirish (nusxa)</Btn>
+      <Btn secondary icon="home-outline" onPress={markazga} sezgiTuri="otish">Markazga qaytish</Btn>
     </View>
   );
 }

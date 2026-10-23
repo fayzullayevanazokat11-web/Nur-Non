@@ -15,6 +15,7 @@ import { xomashyoRoyxati } from "../src/logic/konstantalar";
 import { DateField } from "../src/components/DateField";
 import { KunHisoboti } from "../src/components/KunHisoboti";
 import { NonIkon } from "../src/components/XomashyoIkon";
+import { sezgi } from "../src/logic/sezgi";
 import { ScrollBox } from "../src/components/ScrollBox";
 import { SahifaSarlavha } from "../src/components/SahifaSarlavha";
 import { C, T, S, R, temaStil } from "../src/theme";
@@ -192,6 +193,7 @@ export default function Qop() {
           snap, lock, sorov,
           forma: { ozIshlabQoplar: fQop, tashqariSonlar: fTash, sotilmaganNon: fSot, qoldaYaroqsiz: fYaroqsiz },
         });
+        sezgi("tayyor");
         setKunlikSana(""); setSanaTanlandi(false);
       }},
     ]);
@@ -273,7 +275,7 @@ export default function Qop() {
           {saqlandi ? (
             <Btn onPress={saqla} icon="checkmark-circle" color={C.accent + "1F"} textColor={C.accent}>Saqlandi</Btn>
           ) : (
-            <Btn onPress={saqla} icon="save-outline">Saqlash</Btn>
+            <Btn onPress={saqla} icon="save-outline" sezgiTuri="tayyor">Saqlash</Btn>
           )}
         </Card>
 

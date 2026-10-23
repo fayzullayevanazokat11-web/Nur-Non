@@ -5,7 +5,7 @@ const config = getDefaultConfig(__dirname);
 
 // ── Lotin/Kirill: barcha UI matni avtomatik o'giriladi ──
 // app/ va src/ ichidagi `react-native` importi src/i18n/rn.js ga yo'naltiriladi
-// (Text, TextInput, Alert tilga moslashgan o'ramlar bilan almashtiriladi).
+// (Text, TextInput, Alert tilga moslashgan, Pressable — tebranish/ovozli o'ramlar bilan almashtiriladi).
 // Web'da Babel importlarni "react-native-web/dist/exports/<Nom>" ga aylantiradi —
 // ular ham ushlanadi. src/i18n/ o'zi asl react-native'ni ishlatadi.
 const ILOVA = [path.join(__dirname, "app") + path.sep, path.join(__dirname, "src") + path.sep];
@@ -15,8 +15,9 @@ const WEB = {
   Text: path.join(__dirname, "src", "i18n", "web", "Text.js"),
   TextInput: path.join(__dirname, "src", "i18n", "web", "TextInput.js"),
   Alert: path.join(__dirname, "src", "i18n", "web", "Alert.js"),
+  Pressable: path.join(__dirname, "src", "i18n", "web", "Pressable.js"),
 };
-const WEB_RE = /^react-native-web\/dist\/(?:cjs\/)?exports\/(Text|TextInput|Alert)(?:\/index(?:\.js)?)?$/;
+const WEB_RE = /^react-native-web\/dist\/(?:cjs\/)?exports\/(Text|TextInput|Alert|Pressable)(?:\/index(?:\.js)?)?$/;
 
 config.resolver.resolveRequest = (context, moduleName, platform) => {
   const origin = context.originModulePath || "";

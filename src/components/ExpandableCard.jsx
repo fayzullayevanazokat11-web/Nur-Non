@@ -93,7 +93,7 @@ export function ExpandableCard({ header, children, defaultOpen = false, ochKalit
   return (
     <Card animate={false} style={[styles.card, style]}>
       <Pressable onPress={toggle} onPressIn={() => animatePress(1)} onPressOut={() => animatePress(0)}>
-        <Animated.View style={[styles.head, open ? styles.headOpen : styles.headClosed, { opacity: headOpacity }]}>
+        <Animated.View needsOffscreenAlphaCompositing style={[styles.head, open ? styles.headOpen : styles.headClosed, { opacity: headOpacity }]}>
           <View style={styles.headLeft}>{header}</View>
           <Animated.View style={{ transform: [{ rotate: spin }] }}>
             <Ionicons name="chevron-down" size={18} color={C.muted} />

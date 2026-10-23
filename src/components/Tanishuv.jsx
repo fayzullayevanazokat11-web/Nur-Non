@@ -8,7 +8,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useApp } from "../store/AppData";
 import usePersistedState from "../store/usePersistedState";
-import { ruxsatSora, ESLATMA_SOAT } from "../logic/bildirishnoma";
+import { ruxsatSora, ruxsatHolati, ESLATMA_SOAT } from "../logic/bildirishnoma";
 import { C, T, S, R, temaStil } from "../theme";
 
 const LOGO = require("../../assets/logo-tight.png");
@@ -51,6 +51,13 @@ export function Tanishuv() {
   const korsat = majburiy || (tayyor && yuklandi && korildi == null && !malumotBor);
 
   useEffect(() => { if (korsat) setNom(akkauntNomi || ""); }, [korsat]);
+  // Ruxsat allaqachon berilgan bo'lsa (yo'riqnoma qayta ochilganda) — "yoqilgan" deb ko'rsatiladi
+  useEffect(() => {
+    if (!korsat) return undefined;
+    let tirik = true;
+    ruxsatHolati().then((h) => { if (tirik && h === "bor") setRuxsat("bor"); });
+    return () => { tirik = false; };
+  }, [korsat]);
 
   // Ochilish (fon) va har qadam (kontent) animatsiyasi
   useEffect(() => {
@@ -198,13 +205,17 @@ export function Tanishuv() {
             {q === "eslatma" && (
               <>
                 <Ikon nom={ruxsat === "bor" ? "notifications" : "notifications-outline"} pop={ikonPop} />
-                <Text style={styles.sarlavha}>Bildirishnomalar</Text>
-                <Text style={styles.matn}>Kechqurun soat {ESLATMA_SOAT}:00 da kun yakunlanmagan bo'lsa, eslatib qo'yamiz. Buning uchun bildirishnomalarga ruxsat bering.</Text>
+                <Text style={styles.sarlavha}>{ruxsat === "bor" ? "Bildirishnomalar yoqilgan" : "Bildirishnomalar"}</Text>
+                <Text style={styles.matn}>
+                  {ruxsat === "bor"
+                    ? `Kechqurun soat ${ESLATMA_SOAT}:00 da kun yakunlanmagan bo'lsa, eslatib qo'yamiz. Hech narsa qilish shart emas.`
+                    : `Kechqurun soat ${ESLATMA_SOAT}:00 da kun yakunlanmagan bo'lsa, eslatib qo'yamiz. Buning uchun bildirishnomalarga ruxsat bering.`}
+                </Text>
                 {ruxsat && (
                   <View style={[styles.holat, ruxsat === "bor" && styles.holatBor]}>
                     <Ionicons name={ruxsat === "bor" ? "checkmark-circle" : "information-circle-outline"} size={18} color={ruxsat === "bor" ? C.accent : C.sub} />
                     <Text style={styles.holatTxt}>
-                      {ruxsat === "bor" ? "Ruxsat berildi — eslatmalar yoqildi"
+                      {ruxsat === "bor" ? "Ruxsat berilgan — eslatmalar yoqiq"
                         : ruxsat === "web" ? "Bu qurilmada bildirishnoma ishlamaydi"
                         : "Ruxsat berilmadi. Keyinroq menyudagi «Kechki eslatma»dan yoqish mumkin."}
                     </Text>

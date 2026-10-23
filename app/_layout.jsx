@@ -17,6 +17,8 @@ import { Splash } from "../src/components/Splash";
 import { ErrorBoundary } from "../src/components/ErrorBoundary";
 import { BekorPanel } from "../src/components/BekorPanel";
 import { Tanishuv } from "../src/components/Tanishuv";
+import { KunOtishi } from "../src/components/KunOtishi";
+import { sezgiTayyorla } from "../src/logic/sezgi";
 import { C, TEMALAR, useTema, setTema, temaQorongi, temaAlmashtiruvchi } from "../src/theme";
 
 // Mavzu almashish pardasi: eski fon rangida yopiladi → mavzu almashadi →
@@ -53,6 +55,8 @@ export default function RootLayout() {
   useFonts(Ionicons.font); // best-effort; render'ni bloklamaydi
   const tema = useTema();
   const parda = useTemaParda();
+  // Bosish ovozlari oldindan yuklanadi (birinchi bosishda kechikmasin)
+  useEffect(() => { const t = setTimeout(sezgiTayyorla, 2500); return () => clearTimeout(t); }, []);
 
   // Navigatsiya foni ham mavzuga mos (o'tishlarda oq chaqnash bo'lmasin)
   const navTema = useMemo(() => {
@@ -87,6 +91,7 @@ export default function RootLayout() {
             </ThemeProvider>
             <BekorPanel />
             <Tanishuv />
+            <KunOtishi />
             {parda}
           </View>
           {splash && <Splash onDone={() => setSplash(false)} />}

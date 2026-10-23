@@ -2,7 +2,7 @@
 // (swipe) orqali ham o'tiladi: ekranlar sahifalovchi (pager) ichida turadi,
 // pastki panel esa o'zimizniki — barmoq harakatiga ergashuvchi silliq indikator bilan.
 // Ikonkalar — maxsus rasmlar (tintColor bilan bo'yaladi).
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { withLayoutContext } from "expo-router";
 import { createMaterialTopTabNavigator } from "@react-navigation/material-top-tabs";
 import { View, Text, Image, Pressable, Animated, StyleSheet, Keyboard } from "react-native";
@@ -11,6 +11,7 @@ import { C, temaStil } from "../../src/theme";
 import { useTil } from "../../src/i18n/til";
 import { ogir } from "../../src/i18n/translit";
 import { tabBosildi } from "../../src/components/ScrollBox";
+import { sezgi } from "../../src/logic/sezgi";
 
 const { Navigator } = createMaterialTopTabNavigator();
 const SwipeTabs = withLayoutContext(Navigator);
@@ -34,6 +35,14 @@ function PastkiPanel({ state, descriptors, navigation, position }) {
     const b = Keyboard.addListener("keyboardDidHide", () => setKlaviatura(false));
     return () => { a.remove(); b.remove(); };
   }, []);
+  // Surib o'tilganda ham (bosilmasdan) yengil tebranish va o'tish ovozi
+  const oxirgiBosish = useRef(0);
+  const oldingi = useRef(state.index);
+  useEffect(() => {
+    if (oldingi.current === state.index) return;
+    oldingi.current = state.index;
+    if (Date.now() - oxirgiBosish.current > 500) sezgi("otish");
+  }, [state.index]);
   const soni = state.routes.length;
   const tabW = kenglik / soni;
   const kirishlar = state.routes.map((_, i) => i);
@@ -63,6 +72,7 @@ function PastkiPanel({ state, descriptors, navigation, position }) {
         const onPress = () => {
           const ev = navigation.emit({ type: "tabPress", target: route.key, canPreventDefault: true });
           if (!tanlangan && !ev.defaultPrevented) {
+            oxirgiBosish.current = Date.now();
             tabBosildi(); // ochilayotgan bo'lim kontenti silliq paydo bo'ladi
             navigation.navigate(route.name, route.params);
           }
@@ -72,6 +82,7 @@ function PastkiPanel({ state, descriptors, navigation, position }) {
           <Pressable
             key={route.key}
             accessibilityRole="tab"
+            sezgiTuri={tanlangan ? false : "otish"}
             accessibilityState={{ selected: tanlangan }}
             accessibilityLabel={options.tabBarAccessibilityLabel}
             onPress={onPress}
