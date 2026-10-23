@@ -15,13 +15,14 @@ import { DateField } from "../src/components/DateField";
 import { VaqtField, hozirgiSoat } from "../src/components/VaqtField";
 import { ScrollBox } from "../src/components/ScrollBox";
 import { SahifaSarlavha } from "../src/components/SahifaSarlavha";
+import { yakunlanganSanaTekshir } from "../src/logic/sanaOgoh";
 import { YakunIzoh } from "../src/components/YakunIzoh";
 import { C, T, S, R, temaStil } from "../src/theme";
 import { formatSom, bugunSana, sonOl } from "../src/logic/hisob";
 
 
 export default function Xarajat() {
-  const { kunlikXarajatlar, setKunlikXarajatlar, ochirArxivga, yozuvSanasi } = useApp();
+  const { kunlikXarajatlar, setKunlikXarajatlar, ochirArxivga, yozuvSanasi, hisobotlarTarixi } = useApp();
   // Bugun yakunlangan bo'lsa — yangi yozuv ertangi ish kuniga tushadi
   const localSana = yozuvSanasi;
   const bugun = bugunSana();
@@ -61,14 +62,22 @@ export default function Xarajat() {
     if (!summa) { Alert.alert("Summa kiritilmagan", "Iltimos, xarajat summasini kiriting."); return; }
     if (!forma.izoh.trim()) { Alert.alert("Izoh kiritilmagan", "Xarajat nimaga ketganini yozing."); return; }
     // Qo'lda tanlanmagan bo'lsa har save'da joriy kun (uzoq vaqt ochiq qolsa ham to'g'ri)
-    const sana = forma.sanaTanlandi && forma.sana ? forma.sana : localSana();
+    const tanlangan = forma.sanaTanlandi && forma.sana ? forma.sana : localSana();
     const soat = forma.soat || hozirgiSoat(); // qo'lda tanlanmasa — hozirgi vaqt
-    if (tahrirId) {
-      setKunlikXarajatlar((prev) => prev.map((x) => x.id === tahrirId ? { ...x, summa, izoh: forma.izoh.trim(), sana, soat } : x));
-    } else {
-      setKunlikXarajatlar((prev) => [{ id: Date.now(), sana, soat, vaqt: Date.now(), summa, izoh: forma.izoh.trim() }, ...(prev || [])]);
-    }
-    tozala();
+    const eski = tahrirId ? (kunlikXarajatlar || []).find((x) => x.id === tahrirId) : null;
+    const yoz = (sana) => {
+      if (tahrirId) {
+        // Sana o'zgarsa — yangi kun hisobiga kirishi uchun yozuv vaqti ham yangilanadi
+        setKunlikXarajatlar((prev) => prev.map((x) => x.id === tahrirId
+          ? { ...x, summa, izoh: forma.izoh.trim(), sana, soat, ...(x.sana !== sana ? { vaqt: Date.now() } : {}) } : x));
+      } else {
+        setKunlikXarajatlar((prev) => [{ id: Date.now(), sana, soat, vaqt: Date.now(), summa, izoh: forma.izoh.trim() }, ...(prev || [])]);
+      }
+      tozala();
+    };
+    // Tahrirda sana o'zgarmagan bo'lsa so'ralmaydi
+    if (eski && eski.sana === tanlangan) { yoz(tanlangan); return; }
+    yakunlanganSanaTekshir({ sana: tanlangan, bugun: localSana(), hisobotlar: hisobotlarTarixi, saqla: yoz });
   };
 
   const ochir = (id) => Alert.alert("O'chirish", "Bu xarajatni o'chirasizmi?", [

@@ -11,7 +11,7 @@ import { Btn } from "./Btn";
 import { NonIkon } from "./XomashyoIkon";
 import { formatSom } from "../logic/hisob";
 import { sanaChiroyli } from "../logic/davr";
-import { kunlikHtml, pdfUlash } from "../logic/ulashish";
+import { kunlikHtml, pdfUlash, moliyaTashqari } from "../logic/ulashish";
 import { C, T, S, R, temaStil } from "../theme";
 
 const ikki = (n) => String(n).padStart(2, "0");
@@ -30,9 +30,15 @@ export function KunHisoboti({ h }) {
     const q = oz ? (parseInt((h.ozIshlabQoplar || {})[n.id]) || 0) : (parseInt((h.tashqariSonlar || {})[n.id]) || 0);
     return q > 0 ? { id: n.id, nom: n.nom, non: (nonlar || []).find((x) => x.id === n.id) || n, matn: `${q} ${oz ? "qop" : "dona"}` } : null;
   }).filter(Boolean);
-  const qoshimcha = [
-    ["Karta to'lovlari", a.kartaSum], ["Optom savdo", a.optomSum], ["Brak", a.brakSum], ["Qo'shimcha xarajat", h.xarajatJami],
-  ].filter(([, v]) => son(v) > 0);
+  // Sof foyda tenglamasi: daromad − tashqaridan olingan non − ishchi haqi − qo'shimcha xarajat
+  const ayirma = [
+    ["Tashqaridan olingan non", moliyaTashqari(h)], ["Ishchi haqi", haq], ["Qo'shimcha xarajat", son(h.xarajatJami)],
+  ].filter(([, v]) => v > 0);
+  const tarkib = son(h.optomDaromad) || son(h.qarzDaromad) ? [
+    ["· chakana", son(h.chakanaDaromad)], ["· optom", son(h.optomDaromad)], ["· qarzga", son(h.qarzDaromad)],
+  ].filter(([, v]) => v > 0) : [];
+  // Faqat ma'lumot uchun
+  const malumot = [["Karta orqali to'langan", a.kartaSum], ["Brak (ishchi haqidan ayrilgan)", a.brakSum]].filter(([, v]) => son(v) > 0);
 
   return (
     <View>
@@ -72,9 +78,9 @@ export function KunHisoboti({ h }) {
       <Card style={styles.card}>
         <Sarlavha icon="cash-outline" matn="Moliya" />
         <Qator nom="Daromad" qiymat={`${formatSom(daromad)} so'm`} />
-        <Qator nom="Ishchi haqi" qiymat={`${formatSom(haq)} so'm`} />
-        <Qator nom="Kun oxiri (daromad − ishchi haqi)" qiymat={`${formatSom(daromad - haq)} so'm`} />
-        {qoshimcha.map(([nom, v]) => <Qator key={nom} nom={nom} qiymat={`${formatSom(v)} so'm`} />)}
+        {tarkib.map(([nom, v]) => <Qator key={nom} nom={`   ${nom}`} qiymat={`${formatSom(v)} so'm`} />)}
+        {ayirma.map(([nom, v]) => <Qator key={nom} nom={nom} qiymat={`− ${formatSom(v)} so'm`} />)}
+        {malumot.map(([nom, v]) => <Qator key={nom} nom={nom} qiymat={`${formatSom(v)} so'm`} />)}
         <View style={styles.chiziq} />
         <Qator nom="Sof foyda" qiymat={`${formatSom(h.sofFoyda)} so'm`} qalin katta />
       </Card>

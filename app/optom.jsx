@@ -15,13 +15,14 @@ import { NonIkon } from "../src/components/XomashyoIkon";
 import { VaqtField, hozirgiSoat } from "../src/components/VaqtField";
 import { ScrollBox } from "../src/components/ScrollBox";
 import { SahifaSarlavha } from "../src/components/SahifaSarlavha";
+import { yakunlanganSanaTekshir } from "../src/logic/sanaOgoh";
 import { YakunIzoh } from "../src/components/YakunIzoh";
 import { C, T, S, R, temaStil } from "../src/theme";
 import { formatSom, optomJami, bugunSana, sonOl } from "../src/logic/hisob";
 
 
 export default function Optom() {
-  const { nonlar, optomlar, setOptomlar, ochirArxivga, yozuvSanasi } = useApp();
+  const { nonlar, optomlar, setOptomlar, ochirArxivga, yozuvSanasi, hisobotlarTarixi } = useApp();
   // Bugun yakunlangan bo'lsa — yangi yozuv ertangi ish kuniga tushadi
   const localSana = yozuvSanasi;
   const BOSH = { ism: "", izoh: "", sana: "", sanaTanlandi: false, soat: "", savat: {}, donaChegirma: "", chegirma: "" };
@@ -61,14 +62,16 @@ export default function Optom() {
   const saqla = () => {
     if (!forma.ism.trim()) { Alert.alert("Ism kiritilmagan", "Iltimos, xaridor ismini kiriting."); return; }
     if (savatHisob.items.length === 0) { Alert.alert("Non tanlanmagan", "Kamida bitta non turidan soni kiriting."); return; }
-    const sana = forma.sanaTanlandi && forma.sana ? forma.sana : localSana();
+    const tanlangan = forma.sanaTanlandi && forma.sana ? forma.sana : localSana();
     const soat = forma.soat || hozirgiSoat(); // qo'lda tanlanmasa — hozirgi vaqt
-    setOptomlar((prev) => [...prev, {
-      id: Date.now(), ism: forma.ism.trim(), sana, soat, vaqt: Date.now(),
-      savat: savatHisob.items, summa: savatHisob.yakSumma, chegirma: savatHisob.jamiChegirma,
-      izoh: forma.izoh.trim(),
-    }]);
-    tozala();
+    yakunlanganSanaTekshir({ sana: tanlangan, bugun: localSana(), hisobotlar: hisobotlarTarixi, saqla: (sana) => {
+      setOptomlar((prev) => [...prev, {
+        id: Date.now(), ism: forma.ism.trim(), sana, soat, vaqt: Date.now(),
+        savat: savatHisob.items, summa: savatHisob.yakSumma, chegirma: savatHisob.jamiChegirma,
+        izoh: forma.izoh.trim(),
+      }]);
+      tozala();
+    } });
   };
 
   const ochirOptom = (id) => Alert.alert("O'chirish", "Bu savdoni o'chirasizmi?", [

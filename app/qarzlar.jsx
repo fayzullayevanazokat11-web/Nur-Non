@@ -17,6 +17,7 @@ import { NonIkon } from "../src/components/XomashyoIkon";
 import { VaqtField, hozirgiSoat } from "../src/components/VaqtField";
 import { ScrollBox } from "../src/components/ScrollBox";
 import { SahifaSarlavha } from "../src/components/SahifaSarlavha";
+import { yakunlanganSanaTekshir } from "../src/logic/sanaOgoh";
 import { YakunIzoh } from "../src/components/YakunIzoh";
 import { C, T, S, R, temaStil } from "../src/theme";
 import { formatSom, qarzJami, donaFoyda, bugunSana, sonOl } from "../src/logic/hisob";
@@ -28,7 +29,7 @@ const vaqtMatni = (ms) => { const d = new Date(ms); return `${ikki(d.getDate())}
 
 
 export default function Qarzlar() {
-  const { nonlar, qarzlar, setQarzlar, mahsulotNarxlari, ochirArxivga, amalArxivga, yozuvSanasi } = useApp();
+  const { nonlar, qarzlar, setQarzlar, mahsulotNarxlari, ochirArxivga, amalArxivga, yozuvSanasi, hisobotlarTarixi } = useApp();
   // Bugun yakunlangan bo'lsa — yangi yozuv ertangi ish kuniga tushadi
   const localSana = yozuvSanasi;
   // sana: bo'sh bo'lsa => "avtomatik bugun". Qo'lda tanlansa => shu qiymat.
@@ -89,14 +90,16 @@ export default function Qarzlar() {
     if (!forma.ism.trim()) { Alert.alert("Ism kiritilmagan", "Iltimos, qarz oluvchi ismini kiriting."); return; }
     if (savatHisob.items.length === 0) { Alert.alert("Non tanlanmagan", "Kamida bitta non turidan soni kiriting."); return; }
     // Qo'lda tanlanmagan bo'lsa har safar joriy kun
-    const sana = forma.sanaTanlandi && forma.sana ? forma.sana : localSana();
+    const tanlangan = forma.sanaTanlandi && forma.sana ? forma.sana : localSana();
     const soat = forma.soat || hozirgiSoat(); // qo'lda tanlanmasa — hozirgi vaqt
-    setQarzlar((prev) => [...prev, {
-      id: Date.now(), ism: forma.ism.trim(), sana, soat, vaqt: Date.now(),
-      savat: savatHisob.items, summa: savatHisob.yakSumma, chegirma: savatHisob.chegirma,
-      izoh: forma.izoh.trim(), tolangan: false, tolanganVaqt: null, tolovlar: [],
-    }]);
-    tozala();
+    yakunlanganSanaTekshir({ sana: tanlangan, bugun: localSana(), hisobotlar: hisobotlarTarixi, saqla: (sana) => {
+      setQarzlar((prev) => [...prev, {
+        id: Date.now(), ism: forma.ism.trim(), sana, soat, vaqt: Date.now(),
+        savat: savatHisob.items, summa: savatHisob.yakSumma, chegirma: savatHisob.chegirma,
+        izoh: forma.izoh.trim(), tolangan: false, tolanganVaqt: null, tolovlar: [],
+      }]);
+      tozala();
+    } });
   };
 
   // Qisman yoki to'liq to'lov — eng eski ochiq qarzdan boshlab yopiladi
