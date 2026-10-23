@@ -63,12 +63,6 @@ const soat = (ms) => { if (!ms) return ""; const d = new Date(ms); return `${ikk
 const vaqtOl = (e) => e?.soat || soat(e?.vaqt);
 const savatMatn = (savat) => (savat || []).map((x) => `${t(x.nonNomi)} × ${x.soni}`).join(", ");
 
-// Tashqaridan olingan non tannarxi: yangi hisobotda saqlangan, eskisida tenglamadan tiklanadi
-export function moliyaTashqari(h) {
-  if (h.tashqariTannarx !== undefined) return son(h.tashqariTannarx);
-  return Math.max(0, son(h.daromad) - son(h.ishchiHaq) - son(h.xarajatJami) - son(h.sofFoyda));
-}
-
 export function kunlikHtml(h, { akkaunt, nonlar } = {}) {
   const daromad = son(h.daromad), haq = son(h.ishchiHaq);
   const a = h.arxiv || {};
@@ -85,14 +79,9 @@ export function kunlikHtml(h, { akkaunt, nonlar } = {}) {
     return [t(n.nom), oz ? `${ishlab} ${t("qop")}` : "—", formatSom(dona), formatSom(tonggi), formatSom(yaroqsiz), formatSom(qoldiq)];
   }).filter(Boolean);
 
-  // Sof foyda tenglamasi: daromad − tashqaridan olingan non − ishchi haqi − qo'shimcha xarajat
-  const tashqari = moliyaTashqari(h);
-  const ayirma = [
-    ["Tashqaridan olingan non", tashqari], ["Ishchi haqi", haq], ["Qo'shimcha xarajat", son(h.xarajatJami)],
-  ].filter(([, v]) => v > 0).map(([l, v]) => [t(l), `− ${som(v)}`]);
-  // Faqat ma'lumot uchun (sof foydaga alohida ta'sir qilmaydi)
-  const malumot = [["Karta orqali to'langan", a.kartaSum], ["Brak (ishchi haqidan ayrilgan)", a.brakSum]]
-    .filter(([, v]) => son(v) > 0).map(([l, v]) => [t(l), som(v)]);
+  const qoshimcha = [
+    ["Karta to'lovlari", a.kartaSum], ["Optom savdo", a.optomSum], ["Brak", a.brakSum], ["Qo'shimcha xarajat", h.xarajatJami],
+  ].filter(([, v]) => son(v) > 0).map(([l, v]) => [t(l), som(v)]);
 
   const bolim = (nom, ich) => `<div class="bolim">${tx(nom)}</div>${ich}`;
   const vaqtli = (arr) => [...(arr || [])].sort((x, y) => (x.vaqt || 0) - (y.vaqt || 0));
@@ -122,14 +111,8 @@ export function kunlikHtml(h, { akkaunt, nonlar } = {}) {
   ]));
 
   ichi += bolim("Moliya", jadval(["Ko'rsatkich", "Summa"], [
-    [t("Daromad"), som(daromad)],
-    ...(son(h.optomDaromad) || son(h.qarzDaromad) ? [
-      [t("  · chakana"), som(son(h.chakanaDaromad))],
-      ...(son(h.optomDaromad) ? [[t("  · optom"), som(son(h.optomDaromad))]] : []),
-      ...(son(h.qarzDaromad) ? [[t("  · qarzga"), som(son(h.qarzDaromad))]] : []),
-    ] : []),
-    ...ayirma, ...malumot,
-    ...(son(h.xomashyo) ? [[t("Xomashyo (ombordan, ma'lumot uchun)"), som(h.xomashyo)]] : []),
+    [t("Daromad"), som(daromad)], ...(son(h.xomashyo) ? [[t("Xomashyo"), som(h.xomashyo)]] : []), [t("Ishchi haqi"), som(haq)],
+    [t("Kun oxiri (daromad − ishchi haqi)"), som(daromad - haq)], ...qoshimcha,
   ], [t("Sof foyda"), som(h.sofFoyda)]));
 
   // Kun davomidagi yozuvlar — vaqti bilan
