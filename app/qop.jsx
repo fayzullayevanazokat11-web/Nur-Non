@@ -190,7 +190,8 @@ export default function Qop() {
           nonlarSnapshot: JSON.parse(JSON.stringify(nonlar)),
           ishchilarSnapshot: JSON.parse(JSON.stringify(ishchilar)),
           mahsulotNarxlariSnapshot: JSON.parse(JSON.stringify(mahsulotNarxlari)),
-          daromad: stats.daromad, xomashyo: stats.xomashyo, ishchiHaq: stats.ishchiHaq,
+          daromad: stats.daromad, chakanaDaromad: stats.chakanaDaromad, optomDaromad: stats.optomDaromad, qarzDaromad: stats.qarzDaromad,
+          xomashyo: stats.xomashyo, tashqariTannarx: stats.tashqariTannarx, ishchiHaq: stats.ishchiHaq,
           sofFoyda: stats.sofFoyda, sotilganNon: stats.sotilganNon, jamiQop: stats.jamiQop, jamiNon: stats.jamiNon,
           jamiBoshlang: stats.jamiBoshlang, jamiQoldiq: stats.jamiQoldiq, jamiYaroqsiz: stats.jamiYaroqsiz,
           xarajatJami: stats.xarajatJami, ishchiHaqlari: haq.list,
@@ -338,6 +339,13 @@ export default function Qop() {
           </View>
           <View style={styles.gap10} />
           <Row label="Daromad" value={`${formatSom(stats.daromad)} so'm`} />
+          {(stats.optomDaromad > 0 || stats.qarzDaromad > 0) && (
+            <>
+              <Row label="  · chakana" value={`${formatSom(stats.chakanaDaromad)} so'm`} color={C.sub} />
+              {stats.optomDaromad > 0 && <Row label="  · optom" value={`${formatSom(stats.optomDaromad)} so'm`} color={C.sub} />}
+              {stats.qarzDaromad > 0 && <Row label="  · qarzga" value={`${formatSom(stats.qarzDaromad)} so'm`} color={C.sub} />}
+            </>
+          )}
           {stats.tashqariTannarx > 0 && (
             <Row label="Tashqaridan olingan non" value={`− ${formatSom(stats.tashqariTannarx)} so'm`} color={C.red} />
           )}

@@ -69,6 +69,14 @@ function divertedByNon(optomlar, qarzlar, oxirgiYakunlashVaqti = 0, sana = bugun
   return map;
 }
 
+// Shu kuni optom va qarzga sotilgan summa (chegirmadan keyin) — kunlik daromadga kiradi.
+// Qarz sotilgan kuni daromad bo'ladi; keyingi to'lovlar qayta hisoblanmaydi.
+function optomQarzSummasi(optomlar, qarzlar, oxirgiYakunlashVaqti = 0, sana = bugunSana()) {
+  const yangi = (e) => (e.vaqt || 0) > (oxirgiYakunlashVaqti || 0);
+  const yig = (arr) => (arr || []).filter((e) => e.sana === sana && yangi(e)).reduce((s, e) => s + sonOl(e.summa), 0);
+  return { optom: yig(optomlar), qarz: yig(qarzlar) };
+}
+
 // Kunlik ko'rsatkichlar (sof foyda, sotilgan, qop).
 // Partiyaviy inventarizatsiya: boshlangichQoldiq (kechagi) + bugungi ishlab chiqarish
 // − sotilganlar − qoldaYaroqsiz = ertangi qoldiq (sotilmaganNon).
@@ -107,10 +115,8 @@ export function hisoblaKunlik({
       const retailSold = Math.max(0, boshlang + ishlab - yaroqsiz - qoldiq - divertedShu);
       daromad += retailSold * narx;
       const qopTannarx = getQopTannarx(non, mahsulotNarxlari);
-      const perBreadCost = norma > 0 ? qopTannarx / norma : 0;
       // Bugungi xomashyo: faqat bugun pishirilgan qop (kechagi qoldiq tannarxi kecha hisoblangan).
-      // Diverted (optom/qarz) tannarxi alohida hisoblanadi — kunlikdan ayirib qo'yiladi.
-      xomashyo += qopSoni * qopTannarx - Math.min(divertedShu, ishlab) * perBreadCost;
+      xomashyo += qopSoni * qopTannarx;
     } else {
       const olingan = parseInt(tashqariSonlar[non.id]) || 0;
       jamiNon += olingan;
@@ -120,9 +126,15 @@ export function hisoblaKunlik({
       // Foyda kiritilmagan (eski yozuv) bo'lsa 2000, aniq 0 kiritilgan bo'lsa 0 (Tannarx bo'limi bilan bir xil)
       const foydaKiritilgan = non.tashqariFoyda !== undefined && non.tashqariFoyda !== null && String(non.tashqariFoyda).trim() !== "";
       const tannarx = Math.max(0, narx - (foydaKiritilgan ? (parseFloat(non.tashqariFoyda) || 0) : 2000));
-      tashqariTannarx += (olingan - Math.min(divertedShu, olingan)) * tannarx;
+      // Optom/qarzga ketgani ham sotib olingan — uning daromadi ham kunlikka kiradi
+      tashqariTannarx += olingan * tannarx;
     }
   });
+
+  // Optom va qarzga sotilgan summa — daromadga qo'shiladi (chakana narxi emas, kelishilgan summa)
+  const oq = optomQarzSummasi(optomlar, qarzlar, oxirgiYakunlashVaqti, sana);
+  const chakanaDaromad = daromad;
+  daromad += oq.optom + oq.qarz;
 
   // Faqat oxirgi yakunlashdan keyingi va shu kunga tegishli brak'lar gross'dan ayrilsin.
   const bugungiBrak = (braklar || []).filter((b) => (b.vaqt || 0) > (oxirgiYakunlashVaqti || 0) && (!b.sana || b.sana === sana));
@@ -141,7 +153,7 @@ export function hisoblaKunlik({
   // Kun "boshlandi" deb hisoblanishi uchun BUGUNGI ishlab chiqarish yoki bugungi
   // xarajat bo'lishi kerak. Faqat kechagi qoldiq (boshlang) bo'lsa — sofFoyda 0
   // (aks holda kunlik ishchi haqi darrov ayrilib, kun boshidan minusga kirib ketadi).
-  const kunBoshlandi = jamiQop > 0 || jamiNon > 0 || xarajatJami > 0;
+  const kunBoshlandi = jamiQop > 0 || jamiNon > 0 || xarajatJami > 0 || oq.optom + oq.qarz > 0;
   // O'z xomashyomiz sof foydadan AYRILMAYDI — u ombor (keltirilgan set) orqali alohida
   // hisoblanadi. Tashqaridan olingan non narxi esa omborda yo'q, shuning uchun ayriladi.
   const sofFoyda = kunBoshlandi ? Math.round(daromad - tashqariTannarx - ishchiHaq - xarajatJami) : 0;
@@ -151,7 +163,8 @@ export function hisoblaKunlik({
   return {
     sofFoyda, jamiNon, jamiQop, sotilganNon,
     jamiBoshlang, jamiQoldiq, jamiYaroqsiz,
-    daromad: Math.round(daromad), xomashyo: Math.round(xomashyo), tashqariTannarx: Math.round(tashqariTannarx),
+    daromad: Math.round(daromad), chakanaDaromad: Math.round(chakanaDaromad),
+    optomDaromad: Math.round(oq.optom), qarzDaromad: Math.round(oq.qarz), xomashyo: Math.round(xomashyo), tashqariTannarx: Math.round(tashqariTannarx),
     ishchiHaq: Math.round(ishchiHaq), brakAyirma: Math.round(brakAyirma),
     xarajatJami: Math.round(xarajatJami),
   };
