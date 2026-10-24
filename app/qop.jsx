@@ -229,7 +229,7 @@ export default function Qop() {
           tafsilot: {
             qarzlar: (qarzlar || []).filter((q) => q.sana === sana).map((q) => ({ ism: q.ism, soat: q.soat || "", vaqt: q.vaqt, summa: q.summa, savat: q.savat })),
             tolovlar: (qarzlar || []).flatMap((q) => (q.tolovlar || []).filter((t) => t.sana === sana).map((t) => ({ ism: q.ism, vaqt: t.vaqt, summa: t.summa }))),
-            ertalab: ertalab.kun === sana ? { davomat: !!ertalab.davomat, ombor: !!ertalab.ombor, tugallandi: ertalab.tugallandi || 0 } : null,
+            ertalab: ertalab.kun === sana ? { davomat: !!ertalab.davomat, ombor: !!ertalab.ombor, sut: !!ertalab.sut, tugallandi: ertalab.tugallandi || 0 } : null,
             kelmaganlar: (ishchilar || []).filter((w) => w.kelmadi).map((w) => w.ism),
             davomat: (ishchilar || []).filter((w) => w.holat === "Aktiv").map((w) => ({
               ism: w.ism, keldi: !w.kelmadi, soat: w.kelmadi ? "" : (kelishVaqti || {})[w.id] || "",

@@ -196,7 +196,7 @@ export default function Ombor() {
             <Ionicons name="cube-outline" size={18} color={C.sub} />
             <Text style={styles.cardTitle}>Mavjud zaxira</Text>
           </View>
-          <Text style={styles.muted}>Set kirimlari − tasdiqlangan xarajat</Text>
+          <Text style={styles.muted}>Set kirimlari − tasdiqlangan xarajat ± qoldiq yangilashlari</Text>
           <View style={styles.gap10} />
           <View style={styles.grid}>
             {balans.map((b) => {

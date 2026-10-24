@@ -102,6 +102,7 @@ export function kunlikHtml(h, { akkaunt, nonlar, rasmlar = [] } = {}) {
     const holat = (b) => t(b ? "bajarildi" : "bajarilmadi");
     tartib.push([t("Kunlik vazifa"), tf.ertalab.tugallandi ? `${t("bajarildi")} ${soat(tf.ertalab.tugallandi)}` : t("bajarilmagan")]);
     tartib.push([t("Ishchilar davomati"), holat(tf.ertalab.davomat)], [t("Ombor tekshiruvi"), holat(tf.ertalab.ombor)]);
+    if (tf.ertalab.sut !== undefined) tartib.push([t("Sut kirimi yozildi"), holat(tf.ertalab.sut)]);
   }
   if (tf.sut && (son(tf.sut.m1) || son(tf.sut.m2))) {
     tartib.push([t("Sut kirimi"), `${t("1-mahal")} ${String(son(tf.sut.m1)).replace(".", ",")} l · ${t("2-mahal")} ${String(son(tf.sut.m2)).replace(".", ",")} l`]);

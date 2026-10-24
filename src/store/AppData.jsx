@@ -13,6 +13,8 @@ import { getTil } from "../i18n/til";
 import { ogir } from "../i18n/translit";
 import { SEED_NONLAR, SEED_ISHCHILAR, SEED_MAHSULOT_NARXLARI } from "../logic/data";
 
+const BRAKSIZ = [];
+
 export const AppDataContext = createContext(null);
 
 export function useApp() {
@@ -400,7 +402,11 @@ export function AppDataProvider({ children }) {
       if (litr > 0) kun[mahal] = litr; else delete kun[mahal];
       return { ...(p || {}), [sana]: kun };
     });
-    if (sana === bugunSana() && litr > 0) ertalabBelgila("sut", true);
+    // Kunlik vazifaning 3-qadami: kamida bir mahal sut yozilsa bajarildi, ikkalasi ham o'chirilsa — bekor
+    if (sana === bugunSana()) {
+      const boshqa = parseFloat(((sutKirimi || {})[sana] || {})[mahal === "m1" ? "m2" : "m1"]) || 0;
+      ertalabBelgila("sut", litr > 0 || boshqa > 0);
+    }
   };
   const kunlikRolQoy = (id, patch) => setKunlikRollar((p) => {
     const kun = { ...((p || {})[bugun] || {}) };
@@ -795,7 +801,8 @@ export function AppDataProvider({ children }) {
     hisobotlarTarixi, setHisobotlarTarixi,
     tasdiqlanganKunlar, setTasdiqlanganKunlar,
     kunlikQoplar, setKunlikQoplar,
-    braklar, setBraklar,
+    // Brak bo'limi olib tashlangan — eski brak yozuvlari ishchi haqidan ayrilmasin (ma'lumot nusxada qoladi)
+    braklar: BRAKSIZ, setBraklar,
     gazNarx, setGazNarx,
     elektroNarx, setElektroNarx,
     ozIshlabQoplar, setOzIshlabQoplar,

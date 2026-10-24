@@ -15,6 +15,7 @@ const LOGO = require("../../assets/logo-tight.png");
 const TAB_IKON = {
   markaz: require("../../assets/tabicons/markaz.png"),
   ishlab: require("../../assets/tabicons/ishlab.png"),
+  kalkulyator: require("../../assets/tabicons/kalkulyator.png"),
   xodimlar: require("../../assets/tabicons/xodimlar.png"),
   ombor: require("../../assets/tabicons/ombor.png"),
 };
@@ -175,9 +176,10 @@ export function Tanishuv() {
                 <Ikon nom="sunny-outline" pop={ikonPop} />
                 <Text style={styles.sarlavha}>Har kungi tartib</Text>
                 <View style={styles.royxat}>
-                  <Band raqam="1" sarlavha="Qoplarni kiriting" matn="«Kunlik qop hisobi»da har non uchun qop/dona sonini yozib, «Saqlash»ni bosing." />
-                  <Band raqam="2" sarlavha="Savdoni yozib boring" matn="Qarz, optom, karta va xarajatlar — sana va vaqti o'zi qo'yiladi." />
-                  <Band raqam="3" sarlavha="Kunni yakunlang" matn="Kechqurun «Kunni yakunlash» — hisobot, PDF va statistika tayyor." />
+                  <Band raqam="1" sarlavha="Kunlik vazifa" matn="Markazda: davomat («Keldi»), omborni tekshirish va kelgan sut litri (2 mahal)." />
+                  <Band raqam="2" sarlavha="Qoplarni kiriting" matn="«Kunlik qop hisobi»da har non uchun qop/dona sonini yozib, «Saqlash»ni bosing." />
+                  <Band raqam="3" sarlavha="Savdoni yozib boring" matn="Qarz, optom, karta va xarajatlar — sana va vaqti o'zi qo'yiladi." />
+                  <Band raqam="4" sarlavha="Kunni yakunlang" matn="Qop rasmini oling va «Kunni yakunlash» — hisobot, PDF va statistika tayyor." />
                 </View>
                 <Text style={styles.izoh}>Ish kuni tunda soat 03:00 da tugaydi.</Text>
               </>
@@ -190,6 +192,7 @@ export function Tanishuv() {
                 <View style={styles.bolimlar}>
                   <Bolim rasm={TAB_IKON.markaz} nom="Markaz" matn="Kunlik ko'rsatkichlar" />
                   <Bolim rasm={TAB_IKON.ishlab} nom="Ishlab" matn="Non, xomashyo, tannarx" />
+                  <Bolim rasm={TAB_IKON.kalkulyator} nom="Kalkulyator" matn="Mijozga tez hisob" />
                   <Bolim rasm={TAB_IKON.xodimlar} nom="Xodimlar" matn="Jamoa, davomat" />
                   <Bolim rasm={TAB_IKON.ombor} nom="Ombor" matn="Zaxira, prognoz" />
                 </View>
