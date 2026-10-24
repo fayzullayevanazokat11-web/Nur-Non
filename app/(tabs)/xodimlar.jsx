@@ -199,7 +199,7 @@ export default function Xodimlar() {
                     accessibilityRole="switch"
                     accessibilityState={{ checked: !kelmadi }}
                     accessibilityLabel={`${w.ism}: davomat`}
-                    onPress={() => { if (!kelmadi) { kunlikRolQoy(w.id, null); if (ochiqRol === w.id) setOchiqRol(null); } keldiAlmash(w.id); }}
+                    onPress={() => { if (!kelmadi && ochiqRol === w.id) setOchiqRol(null); keldiAlmash(w.id); }}
                     hitSlop={6}
                     style={({ pressed }) => [styles.davomatBelgi, kelmadi ? styles.belgiYoq : styles.belgiHa, pressed && { opacity: 0.7 }]}
                   >

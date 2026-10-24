@@ -41,7 +41,7 @@ export default function Qop() {
     kunlikXarajatlar,
     oxirgiYakunlashVaqti, customMahsulotlar,
     hisobotlarTarixi, kunYakunlanganmi, kunYakunla, lockedDayStats, yakunBekor,
-    ertalab, qopRasmlari, davomat, kelishVaqtlari, kunlikRollar,
+    ertalab, qopRasmlari, davomat, kelishVaqtlari, kunlikRollar, keldiAlmash,
   } = useApp();
   // Bugun yakunlangan bo'lsa — faqat hisobot ko'rinishi
   const yakunlangan = kunYakunlanganmi();
@@ -134,7 +134,7 @@ export default function Qop() {
     // Davomat belgilanmagan bo'lsa — hech kimga haq yozilmaydi; avval so'raymiz
     const aktivlar = (ishchilar || []).filter((w) => w.holat === "Aktiv");
     if (!davomatTasdiq && aktivlar.length && !aktivlar.some((w) => !w.kelmadi)) {
-      Alert.alert("Davomat belgilanmagan", "Hech bir xodim «Keldi» deb belgilanmagan — bu kun uchun hech kimga ish haqi hisoblanmaydi. Davomatni Xodimlar bo'limida belgilang. Baribir davom etasizmi?", [
+      Alert.alert("Davomat belgilanmagan", `Hech bir xodim «Keldi» deb belgilanmagan — bu kun uchun hech kimga ish haqi hisoblanmaydi. Davomatni ${tanSana < localSana() ? "sahifa tepasidagi sana ostida" : "Xodimlar bo'limida"} belgilang. Baribir davom etasizmi?`, [
         { text: "Yo'q", style: "cancel" },
         { text: "Davom etish", onPress: () => kunniYakunla(true) },
       ]);
@@ -278,6 +278,27 @@ export default function Qop() {
           <Text style={styles.fieldLabel}>Hisobot sanasi</Text>
           <DateField value={kunlikSana || localSana()} onChange={(v) => { setKunlikSana(v); setSanaTanlandi(true); }} />
           {!sanaTanlandi && <Text style={styles.sanaHint}>Bugungi kun avtomatik. Boshqa sana uchun kalendarni oching.</Text>}
+          {/* O'tgan kun tanlansa — o'sha kun davomati shu yerda belgilanadi (Xodimlar faqat bugunni ko'rsatadi) */}
+          {tanSana < localSana() && (
+            <View style={styles.otganDavomat}>
+              <Text style={styles.fieldLabel}>{tanSana} davomati — kelganlarni belgilang</Text>
+              <View style={styles.davChiplar}>
+                {(ishchilar || []).filter((w) => w.holat === "Aktiv").map((w) => (
+                  <Pressable
+                    key={w.id}
+                    accessibilityRole="switch"
+                    accessibilityState={{ checked: !w.kelmadi }}
+                    accessibilityLabel={`${w.ism}: ${tanSana} davomati`}
+                    onPress={() => keldiAlmash(w.id, tanSana)}
+                    style={[styles.davChip, !w.kelmadi && styles.davChipHa]}
+                  >
+                    <Ionicons name={w.kelmadi ? "close" : "checkmark"} size={12} color={w.kelmadi ? C.sub : C.onAccent} />
+                    <Text style={[styles.davChipTxt, !w.kelmadi && { color: C.onAccent }]}>{w.ism}</Text>
+                  </Pressable>
+                ))}
+              </View>
+            </View>
+          )}
         </Card>
 
         {/* Per-non kiritish */}
@@ -453,6 +474,11 @@ const styles = temaStil(() => StyleSheet.create({
   input: { borderWidth: 1, borderColor: C.border, borderRadius: R.sm, paddingVertical: 9, paddingHorizontal: 10, fontSize: T.sm, color: C.text, backgroundColor: C.surface, textAlign: "center" },
   flow: { fontSize: 11, color: C.muted, marginTop: 6, lineHeight: 15 },
   ogoh: { fontSize: 11, color: C.red, fontWeight: "700", marginTop: 6, lineHeight: 15 },
+  otganDavomat: { marginTop: S[3] },
+  davChiplar: { flexDirection: "row", flexWrap: "wrap", gap: 6 },
+  davChip: { flexDirection: "row", alignItems: "center", gap: 4, paddingVertical: 6, paddingHorizontal: 10, borderRadius: R.pill, backgroundColor: C.panel },
+  davChipHa: { backgroundColor: C.accent },
+  davChipTxt: { fontSize: 12, fontWeight: "700", color: C.sub },
 
   row: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 6 },
   rowLabel: { flex: 1, fontSize: T.sm, color: C.sub },

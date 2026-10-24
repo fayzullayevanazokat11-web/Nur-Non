@@ -239,6 +239,15 @@ export default function Markaz() {
           <Ionicons name="chevron-forward" size={18} color={C.muted} />
         </Bosma>
 
+        {/* Davomat hali belgilanmagan — ishchilar haqi hisoblanmayapti */}
+        {!locked && (ishchilar || []).some((w) => w.holat === "Aktiv") && !(ishchilar || []).some((w) => w.holat === "Aktiv" && !w.kelmadi) && (
+          <Bosma accessibilityRole="button" accessibilityLabel="Davomatni belgilash" onPress={() => router.navigate("/xodimlar")} style={styles.davomatEslatma}>
+            <Ionicons name="people-outline" size={18} color={C.accent} />
+            <Text style={styles.davomatEslatmaTxt}>Bugungi davomat belgilanmagan — ishchilar haqi hisoblanmayapti. Belgilash uchun bosing.</Text>
+            <Ionicons name="chevron-forward" size={16} color={C.muted} />
+          </Bosma>
+        )}
+
         {/* BUGUNGI ISHCHILAR HAQI (jonli) */}
         {bugungiHaq.list.length > 0 && (
           <Card style={styles.block}>
@@ -305,6 +314,8 @@ const ikkiR = (n) => String(n).padStart(2, "0");
 const soatMatni = (ms) => { const d = new Date(ms || Date.now()); return `${ikkiR(d.getHours())}:${ikkiR(d.getMinutes())}`; };
 
 const styles = temaStil(() => StyleSheet.create({
+  davomatEslatma: { flexDirection: "row", alignItems: "center", gap: S[2], backgroundColor: C.accent + "12", borderWidth: 1, borderColor: C.accent + "2E", borderRadius: R.md, paddingVertical: S[3], paddingHorizontal: S[3], marginBottom: S[4] },
+  davomatEslatmaTxt: { flex: 1, fontSize: T.sm, fontWeight: "700", color: C.text, lineHeight: 19 },
   safe:      { flex: 1, backgroundColor: C.bg },
   scroll:    { padding: S[5], paddingBottom: S[8] },
   statsRow:  { flexDirection: "row", gap: S[2], marginBottom: S[3] },

@@ -86,6 +86,19 @@ export function KunHisoboti({ h }) {
         </Card>
       )}
 
+      {(h.tafsilot?.davomat || []).length > 0 && (
+        <Card style={styles.card}>
+          <Sarlavha icon="checkbox-outline" matn={`Davomat · ${h.tafsilot.davomat.filter((d) => d.keldi).length}/${h.tafsilot.davomat.length} keldi`} />
+          {h.tafsilot.davomat.map((d) => (
+            <Qator
+              key={d.ism}
+              nom={`${d.ism}${d.lavozim ? ` · ${d.lavozim}` : ""}${d.orniga ? ` · ${d.orniga} o'rniga` : ""}`}
+              qiymat={d.keldi ? (d.soat || "Vaqtida") : "Kelmadi"}
+            />
+          ))}
+        </Card>
+      )}
+
       <Btn icon="document-outline" onPress={pdf}>PDF hisobot</Btn>
       <View style={styles.oraliq} />
       <Btn secondary icon="home-outline" onPress={markazga} sezgiTuri="otish">Markazga qaytish</Btn>

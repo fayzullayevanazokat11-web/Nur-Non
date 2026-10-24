@@ -359,11 +359,27 @@ export function AppDataProvider({ children }) {
   const bugun = bugunSana();
   const keldilar = useMemo(() => (davomat || {})[bugun] || [], [davomat, bugun]);
   const kelmaganlar = useMemo(() => (ishchilar || []).map((w) => w.id).filter((id) => !keldilar.includes(id)), [ishchilar, keldilar]);
-  const keldiAlmash = (id) => setDavomat((p) => {
-    const joriy = (p || {})[bugun] || [];
-    const yangi = joriy.includes(id) ? joriy.filter((x) => x !== id) : [...joriy, id];
-    return { ...(p || {}), [bugun]: yangi };
-  });
+  // sana — sukut bugun; o'tgan (yakunlanmagan) kunni yakunlashda o'sha kun davomati belgilanadi
+  const keldiAlmash = (id, sana = bugun) => {
+    const kelyapti = !((davomat || {})[sana] || []).includes(id);
+    setDavomat((p) => {
+      const joriy = (p || {})[sana] || [];
+      const yangi = joriy.includes(id) ? joriy.filter((x) => x !== id) : [...joriy, id];
+      return { ...(p || {}), [sana]: yangi };
+    });
+    setKunlikRollar((p) => {
+      const kun = { ...((p || {})[sana] || {}) };
+      let ozgardi = false;
+      if (!kelyapti && kun[id]) { delete kun[id]; ozgardi = true; } // kelmadi — uning bugungi ishi ham o'chadi
+      if (kelyapti) {
+        // O'zi keldi — boshqalarning "uning o'rniga" belgisi endi noto'g'ri
+        Object.keys(kun).forEach((k) => {
+          if (kun[k]?.orniga === id) { const { orniga, ...qol } = kun[k]; if (Object.keys(qol).length) kun[k] = qol; else delete kun[k]; ozgardi = true; }
+        });
+      }
+      return ozgardi ? { ...(p || {}), [sana]: kun } : p;
+    });
+  };
   // Bugun kelgan vaqtlar va ularni o'rnatish ("" — o'chirish)
   const kelishVaqti = useMemo(() => (kelishVaqtlari || {})[bugun] || {}, [kelishVaqtlari, bugun]);
   const kelishVaqtiQoy = (id, soat) => setKelishVaqtlari((p) => {
