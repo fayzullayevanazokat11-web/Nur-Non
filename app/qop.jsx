@@ -12,6 +12,7 @@ import { useApp } from "../src/store/AppData";
 import { Card } from "../src/components/Card";
 import { Btn } from "../src/components/Btn";
 import { xomashyoRoyxati } from "../src/logic/konstantalar";
+import { QopRasmBolimi } from "../src/components/QopRasmBolimi";
 import { DateField } from "../src/components/DateField";
 import { KunHisoboti } from "../src/components/KunHisoboti";
 import { NonIkon } from "../src/components/XomashyoIkon";
@@ -121,6 +122,10 @@ export default function Qop() {
       Alert.alert("Ma'lumot yo'q", "Avval kunlik qop hisobiga ma'lumot kiriting.");
       return;
     }
+    if (!sanaRasmlari.length) {
+      Alert.alert("Rasm yo'q", "Kunni yakunlash uchun kamida bitta qop rasmini oling — sahifa pastidagi «Rasmga olish» bo'limida.");
+      return;
+    }
     if (kunYakunlanganmi()) {
       Alert.alert("Kun yakunlangan", "Bugun kun allaqachon yakunlangan. Bir kunda faqat bir marta yakunlanadi.");
       return;
@@ -212,7 +217,7 @@ export default function Qop() {
           tafsilot: {
             qarzlar: (qarzlar || []).filter((q) => q.sana === sana).map((q) => ({ ism: q.ism, soat: q.soat || "", vaqt: q.vaqt, summa: q.summa, savat: q.savat })),
             tolovlar: (qarzlar || []).flatMap((q) => (q.tolovlar || []).filter((t) => t.sana === sana).map((t) => ({ ism: q.ism, vaqt: t.vaqt, summa: t.summa }))),
-            ertalab: ertalab.kun === sana ? { davomat: !!ertalab.davomat, ombor: !!ertalab.ombor, rasm: !!ertalab.rasm, tugallandi: ertalab.tugallandi || 0 } : null,
+            ertalab: ertalab.kun === sana ? { davomat: !!ertalab.davomat, ombor: !!ertalab.ombor, tugallandi: ertalab.tugallandi || 0 } : null,
             kelmaganlar: (ishchilar || []).filter((w) => w.kelmadi).map((w) => w.ism),
             davomat: (ishchilar || []).filter((w) => w.holat === "Aktiv").map((w) => ({ ism: w.ism, keldi: !w.kelmadi, soat: w.kelmadi ? "" : (kelishVaqti || {})[w.id] || "" })),
             rasmSoni: sanaRasmlari.length,
@@ -374,6 +379,7 @@ export default function Qop() {
           </Card>
         )}
 
+        <QopRasmBolimi kun={tanSana} />
         <Btn secondary onPress={kunniYakunla} icon="checkmark-done-outline">Kunni yakunlash</Btn>
         <View style={styles.gap14} />
       </ScrollBox>

@@ -23,7 +23,7 @@ import { XomashyoIkon } from "../../src/components/XomashyoIkon";
 const boshForma = (royxat) => Object.fromEntries(royxat.map((m) => [m.id, ""]));
 
 export default function Ombor() {
-  const { omborlar, setOmborlar, omborSorovlar, setOmborSorovlar, omborTasdiqlar, setOmborTasdiqlar, customMahsulotlar, ochirArxivga, amalArxivga, bugungiRasmlar, hisobotlarTarixi, nonlar, ozIshlabQoplar, eksportMalumot, bekorTaklif } = useApp();
+  const { omborlar, setOmborlar, omborSorovlar, setOmborSorovlar, omborTasdiqlar, setOmborTasdiqlar, customMahsulotlar, ochirArxivga, amalArxivga, hisobotlarTarixi, nonlar, ozIshlabQoplar, eksportMalumot, bekorTaklif } = useApp();
   // Ishlab chiqarish > Xomashyo'da qo'shilgan mahsulotlar ham omborda avtomatik ko'rinadi
   const royxat = useMemo(() => xomashyoRoyxati(customMahsulotlar), [customMahsulotlar]);
 
@@ -160,14 +160,6 @@ export default function Ombor() {
       <ScrollBox contentContainerStyle={styles.scroll}>
         <ScreenHeader eyebrow="Zaxira" title="Ombor hisoboti" subtitle={`${setSoni} ta set kiritilgan`} image={require("../../assets/tabicons/ombor.png")} />
         <ErtalabQadamBelgisi qadam="ombor" matn="Zaxira va so'rovnomalarni tekshiring, so'ng «Tayyor»" />
-        <Bosma accessibilityRole="button" accessibilityLabel="Bugungi qop rasmlari" onPress={() => router.push("/rasmlar")} style={styles.rasmBtn}>
-          <View style={styles.rasmIkon}><Ionicons name="camera-outline" size={20} color={C.accent} /></View>
-          <View style={styles.flex1}>
-            <Text style={styles.rasmNom}>Bugungi qop rasmlari</Text>
-            <Text style={styles.rasmIzoh}>{bugungiRasmlar.length ? `${bugungiRasmlar.length} ta rasm` : "Hali rasm yo'q — rasmga olish"}</Text>
-          </View>
-          <Ionicons name="chevron-forward" size={18} color={C.muted} />
-        </Bosma>
 
         <Card accent>
           <View style={styles.cardTitleRow}>
@@ -407,8 +399,4 @@ const styles = temaStil(() => StyleSheet.create({
   },
   hint:       { fontSize: 11, color: C.muted, marginTop: 3 },
   flex1:      { flex: 1 },
-  rasmBtn:   { flexDirection: "row", alignItems: "center", gap: S[3], backgroundColor: C.card, borderRadius: R.lg, padding: S[4], borderWidth: StyleSheet.hairlineWidth, borderColor: C.borderSoft, marginBottom: S[4] },
-  rasmIkon:  { width: 40, height: 40, borderRadius: R.md, alignItems: "center", justifyContent: "center", backgroundColor: C.accent + "14" },
-  rasmNom:   { fontSize: T.md, fontWeight: "800", color: C.text },
-  rasmIzoh:  { fontSize: 11, color: C.muted, fontWeight: "600", marginTop: 2 },
 }));

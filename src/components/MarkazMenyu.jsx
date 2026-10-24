@@ -1,6 +1,7 @@
 // Markaz menyusi — Nur-Non logotipi bosilganda sarlavha ostida silliq ochiladi (Modal yo'q).
 //   • Akkaunt va ma'lumotlar — akkaunt nomi, ma'lumotlarni yuborish/qabul qilish
 //   • Tarixdagilar — o'chirilgan narsalar (7 kun), qaytarish mumkin
+//   • Rasmlar arxivi — qop rasmlari (7 kun), faqat ko'rish
 //   • Yozuv — Lotin / Кирилл (butun ilova matni darhol o'zgaradi)
 //   • Dizayn — mavzu tanlovi (Non — yorug', Tun — qorong'i)
 // Menyu FAQAT logotip bosilganda ochiladi; boshqa bo'limga o'tilganda, dasturdan
@@ -67,6 +68,22 @@ export function MarkazMenyu({ onYop }) {
           <Text style={styles.sub}>O'chirish, nollash, haydash · 7 kun · qaytarish mumkin</Text>
         </View>
         {soni > 0 && <View style={styles.badge}><Text style={styles.badgeTxt}>{soni}</Text></View>}
+        <Ionicons name="chevron-forward" size={18} color={C.muted} />
+      </Bosma>
+
+      <View style={styles.divider} />
+
+      <Bosma
+        accessibilityRole="button"
+        onPress={() => { onYop?.(); router.push("/rasmlar"); }}
+        kichrayish={0.98}
+        style={styles.row}
+      >
+        <View style={styles.icon}><Ionicons name="images-outline" size={20} color={C.accent} /></View>
+        <View style={styles.flex1}>
+          <Text style={styles.label}>Rasmlar arxivi</Text>
+          <Text style={styles.sub}>Qop rasmlari · oxirgi 7 kun</Text>
+        </View>
         <Ionicons name="chevron-forward" size={18} color={C.muted} />
       </Bosma>
 

@@ -545,10 +545,9 @@ export function AppDataProvider({ children }) {
   // Kalkulyatordan Qarz/Optom formasiga o'tkaziladigan savat: { tur: "qarz" | "optom", savat }
   const [tayyorSavat, setTayyorSavat] = useState(null);
 
-  // ── Ertalabgi qop rasmlari ──
+  // ── Qop rasmlari (Kunlik qop hisobi tagida olinadi; kun — qaysi ish kuniga tegishli) ──
   const bugungiRasmlar = (qopRasmlari || []).filter((r) => r.kun === bugunSana());
-  const qopRasmQosh = async (urilar) => {
-    const kun = bugunSana();
+  const qopRasmQosh = async (urilar, kun = bugunSana()) => {
     const yangilar = [];
     for (const [i, uri] of (urilar || []).entries()) {
       const id = `${Date.now()}-${i}`;
@@ -556,7 +555,6 @@ export function AppDataProvider({ children }) {
     }
     if (!yangilar.length) return 0;
     setQopRasmlari((p) => [...(p || []), ...yangilar]);
-    ertalabBelgila("rasm", true); // ertalabgi tekshiruvning 3-qadami bajarildi
     return yangilar.length;
   };
   const qopRasmOchir = (id) => setQopRasmlari((p) => (p || []).filter((r) => {
