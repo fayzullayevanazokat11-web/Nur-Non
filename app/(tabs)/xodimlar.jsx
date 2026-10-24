@@ -18,14 +18,15 @@ import { ScrollBox } from "../../src/components/ScrollBox";
 import { DateField } from "../../src/components/DateField";
 import { Avatar } from "../../src/components/Avatar";
 import { C, T, S, R, temaStil } from "../../src/theme";
-import { formatSom, sonOl } from "../../src/logic/hisob";
+import { formatSom, sonOl, kunRoliBilan } from "../../src/logic/hisob";
 import { LAVOZIMLAR, getLavozimLabel } from "../../src/logic/konstantalar";
 
 const BOSH = { ism: "", lavozimId: LAVOZIMLAR[0].id, lavozimCustom: "", haqTuri: "kunlik", miqdor: "", nonNarx: {}, holat: "Aktiv", tatilSana: "" };
 const HOLATLAR = ["Aktiv", "Ta'tilda"];
 
 export default function Xodimlar() {
-  const { ishchilar, setIshchilar, nonlar, ochirArxivga, amalArxivga, kelmaganlar, keldiAlmash, ertalabYonalish, kelishVaqti, kelishVaqtiQoy } = useApp();
+  const { ishchilar, setIshchilar, nonlar, ochirArxivga, amalArxivga, kelmaganlar, keldiAlmash, ertalabYonalish, kelishVaqti, kelishVaqtiQoy, kunlikRol, kunlikRolQoy } = useApp();
+  const [ochiqRol, setOchiqRol] = useState(null); // davomatda "Bugungi ishi" ochiq xodim
   const [qidiruv, setQidiruv] = useState("");
   const ozNonlar = (nonlar || []).filter((n) => n.ozIshlab !== false);
 
@@ -181,25 +182,38 @@ export default function Xodimlar() {
           >
             {hammaAktiv.map((w) => {
               const kelmadi = kelmaganlar.includes(w.id);
+              const rol = kunlikRol[w.id];
               return (
                 <View key={w.id} style={styles.davomatQator}>
-                  <Text style={[styles.davomatIsm, kelmadi && styles.davomatKelmadi]} numberOfLines={1}>{w.ism}</Text>
+                 <View style={styles.davomatUst}>
+                  <View style={styles.flex1}>
+                    <Text style={[styles.davomatIsm, kelmadi && styles.davomatKelmadi]} numberOfLines={1}>{w.ism}</Text>
+                    {!kelmadi && (
+                      <Pressable accessibilityRole="button" accessibilityLabel={`${w.ism}: bugungi ishi`} onPress={() => setOchiqRol(ochiqRol === w.id ? null : w.id)} hitSlop={6}>
+                        <Text style={[styles.rolQator, rol && styles.rolOzgargan]} numberOfLines={2}>{rolMatni(w, rol, ishchilar)} ▾</Text>
+                      </Pressable>
+                    )}
+                  </View>
                   {!kelmadi && <KelishVaqti ism={w.ism} qiymat={kelishVaqti[w.id] || ""} onSaqla={(v) => kelishVaqtiQoy(w.id, v)} />}
                   <Pressable
                     accessibilityRole="switch"
                     accessibilityState={{ checked: !kelmadi }}
                     accessibilityLabel={`${w.ism}: davomat`}
-                    onPress={() => keldiAlmash(w.id)}
+                    onPress={() => { if (!kelmadi) { kunlikRolQoy(w.id, null); if (ochiqRol === w.id) setOchiqRol(null); } keldiAlmash(w.id); }}
                     hitSlop={6}
                     style={({ pressed }) => [styles.davomatBelgi, kelmadi ? styles.belgiYoq : styles.belgiHa, pressed && { opacity: 0.7 }]}
                   >
                     <Ionicons name={kelmadi ? "close" : "checkmark"} size={13} color={kelmadi ? C.sub : C.onAccent} />
                     <Text style={[styles.belgiTxt, !kelmadi && { color: C.onAccent }]}>{kelmadi ? "Kelmadi" : "Keldi"}</Text>
                   </Pressable>
+                 </View>
+                  {!kelmadi && ochiqRol === w.id && (
+                    <BugungiIsh w={w} rol={rol} boshqalar={hammaAktiv.filter((x) => x.id !== w.id && kelmaganlar.includes(x.id))} onQoy={(patch) => kunlikRolQoy(w.id, patch)} />
+                  )}
                 </View>
               );
             })}
-            <Text style={styles.davomatIzoh}>Kelgan xodimni «Keldi» deb belgilang. Vaqt yozilmasa — vaqtida kelgan hisoblanadi (kechiksa, masalan 0730 → 07:30). Belgilanmagan xodimga bugungi haq hisoblanmaydi.</Text>
+            <Text style={styles.davomatIzoh}>Kelgan xodimni «Keldi» deb belgilang. Vaqt yozilmasa — vaqtida kelgan hisoblanadi (kechiksa, masalan 0730 → 07:30). Belgilanmagan xodimga bugungi haq hisoblanmaydi. Bugun boshqa ishda yoki kimningdir o'rniga ishlasa — ismi tagidagi qatorni bosing.</Text>
           </ExpandableCard>
         )}
 
@@ -369,6 +383,69 @@ const soatTozala = (v) => {
   return r.length > 2 ? `${r.slice(0, 2)}:${r.slice(2)}` : r;
 };
 const soatTogri = (v) => /^([01]\d|2[0-3]):[0-5]\d$/.test(v);
+// Davomatdagi qisqa satr: bugungi lavozim · haq · kimning o'rniga
+const haqMatni = (w) => (w.haqTuri === "qop" ? "qop bo'yicha" : `${formatSom(w.miqdor)} so'm`);
+function rolMatni(w, rol, ishchilar) {
+  const e = kunRoliBilan(w, rol);
+  const orniga = rol?.orniga ? (ishchilar || []).find((x) => x.id === rol.orniga)?.ism : "";
+  return [getLavozimLabel(e), haqMatni(e), orniga ? `${orniga} o'rniga` : ""].filter(Boolean).join(" · ");
+}
+
+// Xodimning bugungi ishi: boshqa lavozim (o'sha kungi haq bilan) va/yoki kimningdir o'rniga.
+// Haq yozilmasa — o'zining odatdagi haqi (kimningdir o'rniga ishlasa ham — o'ziniki).
+function BugungiIsh({ w, rol, boshqalar, onQoy }) {
+  const [haq, setHaq] = useState(rol?.haq != null ? String(rol.haq) : "");
+  const lavozim = rol?.lavozimId || w.lavozimId;
+  const tanlov = LAVOZIMLAR.filter((l) => l.id !== "boshqasi" || w.lavozimId === "boshqasi");
+  return (
+    <View style={styles.rolPanel}>
+      <Text style={styles.rolSarlavha}>Bugungi lavozimi</Text>
+      <View style={styles.rolChiplar}>
+        {tanlov.map((l) => {
+          const faol = lavozim === l.id;
+          return (
+            <Pressable key={l.id} accessibilityLabel={`${w.ism}: bugun ${l.label}`} onPress={() => onQoy({ lavozimId: l.id === w.lavozimId ? null : l.id })} style={[styles.rolChip, faol && styles.rolChipFaol]}>
+              <Text style={[styles.rolChipTxt, faol && styles.rolChipTxtFaol]}>{l.id === "boshqasi" ? getLavozimLabel(w) : l.label}{l.id === w.lavozimId ? " (asosiy)" : ""}</Text>
+            </Pressable>
+          );
+        })}
+      </View>
+      <Text style={styles.rolSarlavha}>Bugungi haqi (so'm)</Text>
+      <TextInput
+        accessibilityLabel={`${w.ism}: bugungi haq`}
+        value={haq}
+        onChangeText={(v) => { const t = v.replace(/[^\d]/g, ""); setHaq(t); onQoy({ haq: t ? Number(t) : null }); }}
+        placeholder={w.haqTuri === "qop" ? "Bo'sh — qop bo'yicha" : `Bo'sh — o'zining: ${formatSom(w.miqdor)}`}
+        placeholderTextColor={C.muted}
+        keyboardType="number-pad"
+        style={styles.rolInput}
+      />
+      {boshqalar.length > 0 && (
+        <>
+          <Text style={styles.rolSarlavha}>Kimning o'rniga</Text>
+          <View style={styles.rolChiplar}>
+            {[{ id: null, ism: "Hech kim" }, ...boshqalar].map((x) => {
+              const faol = (rol?.orniga || null) === x.id;
+              return (
+                <Pressable key={String(x.id)} accessibilityLabel={`${w.ism}: o'rniga ${x.ism}`} onPress={() => onQoy({ orniga: x.id })} style={[styles.rolChip, faol && styles.rolChipFaol]}>
+                  <Text style={[styles.rolChipTxt, faol && styles.rolChipTxtFaol]}>{x.ism}</Text>
+                </Pressable>
+              );
+            })}
+          </View>
+          <Text style={styles.rolIzoh}>Kimningdir o'rniga ishlasa ham — o'zining haqini oladi (yuqorida boshqacha yozilmasa).</Text>
+        </>
+      )}
+      {rol && (
+        <Pressable accessibilityRole="button" onPress={() => { setHaq(""); onQoy(null); }} hitSlop={6} style={styles.rolQaytar}>
+          <Ionicons name="refresh-outline" size={13} color={C.sub} />
+          <Text style={styles.rolQaytarTxt}>Odatdagi holatga qaytarish</Text>
+        </Pressable>
+      )}
+    </View>
+  );
+}
+
 function KelishVaqti({ ism, qiymat, onSaqla }) {
   const [matn, setMatn] = useState(qiymat);
   useEffect(() => { setMatn(qiymat); }, [qiymat]);
@@ -493,8 +570,22 @@ const styles = temaStil(() => StyleSheet.create({
   gap14:     { height: S[4] },
   navQator:  { marginBottom: S[4] },
   davomatSoni:{ fontSize: T.xs, fontWeight: "800", color: C.accent },
-  davomatQator:{ flexDirection: "row", alignItems: "center", paddingVertical: S[2], borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: C.borderSoft },
-  davomatIsm:{ flex: 1, fontSize: T.sm, fontWeight: "700", color: C.text },
+  davomatQator:{ paddingVertical: S[2], borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: C.borderSoft },
+  davomatUst:{ flexDirection: "row", alignItems: "center" },
+  rolQator: { fontSize: 11, color: C.muted, fontWeight: "600", marginTop: 2, marginRight: S[2] },
+  rolOzgargan:{ color: C.accent, fontWeight: "800" },
+  rolPanel: { marginTop: S[2], backgroundColor: C.panel, borderRadius: R.md, padding: S[3] },
+  rolSarlavha:{ fontSize: 11, fontWeight: "800", color: C.sub, letterSpacing: 0.3, marginBottom: 6, marginTop: 4 },
+  rolChiplar:{ flexDirection: "row", flexWrap: "wrap", gap: 6, marginBottom: S[2] },
+  rolChip:  { paddingVertical: 6, paddingHorizontal: 10, borderRadius: R.pill, backgroundColor: C.surface, borderWidth: 1, borderColor: C.borderSoft },
+  rolChipFaol:{ backgroundColor: C.accent, borderColor: C.accent },
+  rolChipTxt:{ fontSize: 12, fontWeight: "700", color: C.sub },
+  rolChipTxtFaol:{ color: C.onAccent },
+  rolInput: { borderWidth: 1, borderColor: C.border, borderRadius: R.md, paddingVertical: 9, paddingHorizontal: 12, fontSize: T.sm, color: C.text, backgroundColor: C.surface, marginBottom: S[2] },
+  rolIzoh:  { fontSize: 11, color: C.muted, lineHeight: 15 },
+  rolQaytar:{ flexDirection: "row", alignItems: "center", gap: 4, marginTop: S[2], alignSelf: "flex-start" },
+  rolQaytarTxt:{ fontSize: 12, fontWeight: "700", color: C.sub },
+  davomatIsm:{ fontSize: T.sm, fontWeight: "700", color: C.text },
   davomatKelmadi:{ color: C.muted, textDecorationLine: "line-through" },
   davomatBelgi:{ flexDirection: "row", alignItems: "center", gap: 4, paddingVertical: 5, paddingHorizontal: 10, borderRadius: R.pill },
   belgiHa:   { backgroundColor: C.accent },

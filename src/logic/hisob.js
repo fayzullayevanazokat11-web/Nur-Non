@@ -32,6 +32,19 @@ export function kunTugashVaqti(ms = Date.now()) {
   return new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1, KUN_TUGASH_SOAT, 0, 0, 0).getTime() - 1;
 }
 
+// Xodimning shu kungi ishi: boshqa lavozimda ishlashi (o'sha kungi haq bilan) yoki kimningdir
+// o'rniga ishlashi mumkin. rol: { lavozimId?, haq?, orniga? }. Haq kiritilmasa — o'zining odatdagi haqi
+// (kimningdir o'rniga ishlasa ham — o'sha odamniki emas, o'ziniki).
+export function kunRoliBilan(w, rol) {
+  if (!w || !rol) return w;
+  const n = { ...w, kunRol: rol };
+  if (rol.lavozimId) n.lavozimId = rol.lavozimId;
+  if (rol.haq !== undefined && rol.haq !== null && String(rol.haq).trim() !== "") {
+    n.haqTuri = "kunlik"; n.miqdor = sonOl(rol.haq); n.nonTurlari = []; n.nonNarxlari = {};
+  }
+  return n;
+}
+
 // ── Ingredient va tannarx ──
 export function getIngNarx(m, narxlar) {
   const p = narxlar?.[m.id];

@@ -6,7 +6,7 @@ import usePersistedState, { useHidratsiya } from "./usePersistedState";
 import { arxivla } from "../logic/davr";
 import { kunYakunEslatmalari } from "../logic/bildirishnoma";
 import { nusxaSaqla, nusxaBormi } from "../logic/avtoZaxira";
-import { bugunSana, keyingiSana } from "../logic/hisob";
+import { bugunSana, keyingiSana, kunRoliBilan } from "../logic/hisob";
 import { rasmSaqla, rasmFaylOchir, pdfRasmlari } from "../logic/qopRasm";
 import { kunlikHtml, pdfUlash, pdfFaylYarat, pdfFaylUlash, pdfFaylOchir } from "../logic/ulashish";
 import { getTil } from "../i18n/til";
@@ -108,6 +108,8 @@ export function AppDataProvider({ children }) {
   const [davomat, setDavomat]                           = usePersistedState("nurnon:keldilar", {});
   // Xodimlar kelgan vaqti (qo'lda kiritiladi): { "2026-10-17": { ishchiId: "07:30" } } — 60 kun
   const [kelishVaqtlari, setKelishVaqtlari]             = usePersistedState("nurnon:kelishVaqtlari", {});
+  // Xodimning shu kungi ishi: { "YYYY-MM-DD": { [id]: { lavozimId?, haq?, orniga? } } }
+  const [kunlikRollar, setKunlikRollar]                 = usePersistedState("nurnon:kunlikRollar", {});
   // Xomashyo narxlari o'zgarish tarixi: [{ id, nom, eski, yangi, vaqt }] — 180 kun
   const [narxTarixi, setNarxTarixi]                     = usePersistedState("nurnon:narxTarixi", []);
   // Kun xulosasi (03:00) va ertalabki salom ekranlari yoqilganmi (qurilma sozlamasi)
@@ -185,6 +187,7 @@ export function AppDataProvider({ children }) {
       }));
       setDavomat((p) => Object.fromEntries(Object.entries(p || {}).filter(([s]) => (now - (Date.parse(s) || now)) < 60 * D)));
       setKelishVaqtlari((p) => Object.fromEntries(Object.entries(p || {}).filter(([s]) => (now - (Date.parse(s) || now)) < 60 * D)));
+      setKunlikRollar((p) => Object.fromEntries(Object.entries(p || {}).filter(([s]) => (now - (Date.parse(s) || now)) < 60 * D)));
     };
     yuritish();
     const t = setInterval(yuritish, 6 * 60 * 60 * 1000);
@@ -368,10 +371,19 @@ export function AppDataProvider({ children }) {
     if (soat) kun[id] = soat; else delete kun[id];
     return { ...(p || {}), [bugun]: kun };
   });
-  // Haq hisoblash uchun xodimlar ro'yxati (kelmaganlar belgilangan)
+  // Bugungi ish (boshqa lavozim / boshqa haq / kimningdir o'rniga). patch — qisman; null qiymat o'chiradi
+  const kunlikRol = useMemo(() => (kunlikRollar || {})[bugun] || {}, [kunlikRollar, bugun]);
+  const kunlikRolQoy = (id, patch) => setKunlikRollar((p) => {
+    const kun = { ...((p || {})[bugun] || {}) };
+    const yangi = { ...(kun[id] || {}), ...(patch || {}) };
+    Object.keys(yangi).forEach((k) => { if (yangi[k] === null || yangi[k] === undefined || yangi[k] === "") delete yangi[k]; });
+    if (patch === null || !Object.keys(yangi).length) delete kun[id]; else kun[id] = yangi;
+    return { ...(p || {}), [bugun]: kun };
+  });
+  // Haq hisoblash uchun xodimlar ro'yxati (kelmaganlar belgilangan, bugungi ish qo'llangan)
   const ishchilarHaq = useMemo(
-    () => (ishchilar || []).map((w) => (kelmaganlar.includes(w.id) ? { ...w, kelmadi: true } : w)),
-    [ishchilar, kelmaganlar]
+    () => (ishchilar || []).map((w) => (kelmaganlar.includes(w.id) ? { ...w, kelmadi: true } : kunRoliBilan(w, kunlikRol[w.id]))),
+    [ishchilar, kelmaganlar, kunlikRol]
   );
   // Bildirishnoma ruxsati berilgach eslatmalarni qayta rejalashtirish uchun
   const [eslatmaKalit, setEslatmaKalit] = useState(0);
@@ -658,6 +670,7 @@ export function AppDataProvider({ children }) {
     oylikArxiv: [oylikArxiv, setOylikArxiv, "object"],
     keldilar: [davomat, setDavomat, "object"],
     kelishVaqtlari: [kelishVaqtlari, setKelishVaqtlari, "object"],
+    kunlikRollar: [kunlikRollar, setKunlikRollar, "object"],
     narxTarixi: [narxTarixi, setNarxTarixi, "array"],
     xomashyoIkonlari: [xomashyoIkonlari, setXomashyoIkonlari, "object"],
     ertalabTekshiruv: [ertalabTekshiruv, setErtalabTekshiruv, "objectOrNull"],
@@ -767,6 +780,7 @@ export function AppDataProvider({ children }) {
     eslatmaYoqilgan, setEslatmaYoqilgan, eslatmaYangila,
     davomat, setDavomat, keldilar, kelmaganlar, keldiAlmash, ishchilarHaq,
     kelishVaqtlari, kelishVaqti, kelishVaqtiQoy,
+    kunlikRollar, kunlikRol, kunlikRolQoy,
     narxTarixi, setNarxTarixi,
     xomashyoIkonlari, xomashyoIkonQoy,
     salomYoqilgan, setSalomYoqilgan,

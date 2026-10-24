@@ -11,7 +11,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useApp } from "../src/store/AppData";
 import { Card } from "../src/components/Card";
 import { Btn } from "../src/components/Btn";
-import { xomashyoRoyxati } from "../src/logic/konstantalar";
+import { xomashyoRoyxati, getLavozimLabel } from "../src/logic/konstantalar";
 import { QopRasmBolimi } from "../src/components/QopRasmBolimi";
 import { DateField } from "../src/components/DateField";
 import { KunHisoboti } from "../src/components/KunHisoboti";
@@ -21,7 +21,7 @@ import { kunXulosasiniKorsat } from "../src/components/KunOtishi";
 import { ScrollBox } from "../src/components/ScrollBox";
 import { SahifaSarlavha } from "../src/components/SahifaSarlavha";
 import { C, T, S, R, temaStil } from "../src/theme";
-import { hisoblaKunlik, qoldiqlarHisobi, ishchiHaqlari, kunlikXomashyoSarfi, formatSom, bugunSana, kunTugashVaqti } from "../src/logic/hisob";
+import { hisoblaKunlik, qoldiqlarHisobi, ishchiHaqlari, kunlikXomashyoSarfi, formatSom, bugunSana, kunTugashVaqti, kunRoliBilan } from "../src/logic/hisob";
 
 const toStr = (obj) => Object.fromEntries(Object.entries(obj || {}).map(([k, v]) => [k, String(v)]));
 // Taqqoslash uchun: bo'sh maydonlar tashlanadi, kalitlar tartiblanadi
@@ -41,7 +41,7 @@ export default function Qop() {
     kunlikXarajatlar,
     oxirgiYakunlashVaqti, customMahsulotlar,
     hisobotlarTarixi, kunYakunlanganmi, kunYakunla, lockedDayStats, yakunBekor,
-    ertalab, qopRasmlari, davomat, kelishVaqtlari,
+    ertalab, qopRasmlari, davomat, kelishVaqtlari, kunlikRollar,
   } = useApp();
   // Bugun yakunlangan bo'lsa — faqat hisobot ko'rinishi
   const yakunlangan = kunYakunlanganmi();
@@ -63,9 +63,10 @@ export default function Qop() {
   const tanSana = sanaTanlandi && kunlikSana ? kunlikSana : localSana();
   const keldilarSana = (davomat || {})[tanSana] || []; // kelgani tasdiqlanganlar
   const kelishVaqti = (kelishVaqtlari || {})[tanSana] || {};
+  const rollarSana = (kunlikRollar || {})[tanSana] || {}; // shu kungi ish (lavozim / haq / kimning o'rniga)
   const ishchilar = useMemo(
-    () => (xomIshchilar || []).map((w) => (keldilarSana.includes(w.id) ? w : { ...w, kelmadi: true })),
-    [xomIshchilar, davomat, tanSana]
+    () => (xomIshchilar || []).map((w) => (keldilarSana.includes(w.id) ? kunRoliBilan(w, rollarSana[w.id]) : { ...w, kelmadi: true })),
+    [xomIshchilar, davomat, kunlikRollar, tanSana]
   );
   const sanaRasmlari = (qopRasmlari || []).filter((r) => r.kun === tanSana);
 
@@ -228,7 +229,12 @@ export default function Qop() {
             tolovlar: (qarzlar || []).flatMap((q) => (q.tolovlar || []).filter((t) => t.sana === sana).map((t) => ({ ism: q.ism, vaqt: t.vaqt, summa: t.summa }))),
             ertalab: ertalab.kun === sana ? { davomat: !!ertalab.davomat, ombor: !!ertalab.ombor, tugallandi: ertalab.tugallandi || 0 } : null,
             kelmaganlar: (ishchilar || []).filter((w) => w.kelmadi).map((w) => w.ism),
-            davomat: (ishchilar || []).filter((w) => w.holat === "Aktiv").map((w) => ({ ism: w.ism, keldi: !w.kelmadi, soat: w.kelmadi ? "" : (kelishVaqti || {})[w.id] || "" })),
+            davomat: (ishchilar || []).filter((w) => w.holat === "Aktiv").map((w) => ({
+              ism: w.ism, keldi: !w.kelmadi, soat: w.kelmadi ? "" : (kelishVaqti || {})[w.id] || "",
+              // Shu kungi ish: boshqa lavozim va kimning o'rniga
+              lavozim: !w.kelmadi && w.kunRol?.lavozimId ? getLavozimLabel(w) : "",
+              orniga: !w.kelmadi && w.kunRol?.orniga ? ((xomIshchilar || []).find((x) => x.id === w.kunRol.orniga)?.ism || "") : "",
+            })),
             rasmSoni: sanaRasmlari.length,
             xomashyo: sarf.map((x) => ({ nom: x.nom, birlik: x.birlik, qiymat: x.qiymat })),
           },
