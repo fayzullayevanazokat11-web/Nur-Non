@@ -18,7 +18,7 @@ import { ScrollBox } from "../../src/components/ScrollBox";
 import { DateField } from "../../src/components/DateField";
 import { Avatar } from "../../src/components/Avatar";
 import { C, T, S, R, temaStil } from "../../src/theme";
-import { formatSom, sonOl, kunRoliBilan } from "../../src/logic/hisob";
+import { formatSom, sonOl, kunRoliBilan, ishchiHaqlari } from "../../src/logic/hisob";
 import { LAVOZIMLAR, getLavozimLabel } from "../../src/logic/konstantalar";
 
 const BOSH = { ism: "", lavozimId: LAVOZIMLAR[0].id, lavozimCustom: "", haqTuri: "kunlik", miqdor: "", nonNarx: {}, holat: "Aktiv", tatilSana: "" };
@@ -208,7 +208,7 @@ export default function Xodimlar() {
                   </Pressable>
                  </View>
                   {!kelmadi && ochiqRol === w.id && (
-                    <BugungiIsh w={w} rol={rol} boshqalar={hammaAktiv.filter((x) => x.id !== w.id && kelmaganlar.includes(x.id))} onQoy={(patch) => kunlikRolQoy(w.id, patch)} />
+                    <BugungiIsh w={w} rol={rol} ishchilar={ishchilar} nonlar={nonlar} boshqalar={hammaAktiv.filter((x) => x.id !== w.id && kelmaganlar.includes(x.id))} onQoy={(patch) => kunlikRolQoy(w.id, patch)} />
                   )}
                 </View>
               );
@@ -384,7 +384,11 @@ const soatTozala = (v) => {
 };
 const soatTogri = (v) => /^([01]\d|2[0-3]):[0-5]\d$/.test(v);
 // Davomatdagi qisqa satr: bugungi lavozim · haq · kimning o'rniga
-const haqMatni = (w) => (w.haqTuri === "qop" ? "qop bo'yicha" : `${formatSom(w.miqdor)} so'm`);
+const haqMatni = (w) => {
+  if (w.haqTuri !== "qop") return `${formatSom(w.miqdor)} so'm`;
+  const r = w.kunRol?.haqTuri === "qop" ? sonOl(w.kunRol.haq) : 0;
+  return r ? `${formatSom(r)} so'm/qop` : "qop bo'yicha";
+};
 function rolMatni(w, rol, ishchilar) {
   const e = kunRoliBilan(w, rol);
   const orniga = rol?.orniga ? (ishchilar || []).find((x) => x.id === rol.orniga)?.ism : "";
@@ -393,9 +397,28 @@ function rolMatni(w, rol, ishchilar) {
 
 // Xodimning bugungi ishi: boshqa lavozim (o'sha kungi haq bilan) va/yoki kimningdir o'rniga.
 // Haq yozilmasa — o'zining odatdagi haqi (kimningdir o'rniga ishlasa ham — o'ziniki).
-function BugungiIsh({ w, rol, boshqalar, onQoy }) {
+function BugungiIsh({ w, rol, ishchilar, nonlar, boshqalar, onQoy }) {
+  const { ozIshlabQoplar } = useApp();
   const [haq, setHaq] = useState(rol?.haq != null ? String(rol.haq) : "");
   const lavozim = rol?.lavozimId || w.lavozimId;
+  // Haq turi: sukut — o'zining turi. "Qop bo'yicha" tanlansa: kimning o'rniga bo'lsa o'sha odamning
+  // nonlari, bo'lmasa o'zining (yoki barcha o'zimiz pishiradigan) nonlari qoplariga ko'payadi.
+  const haqTuri = rol?.haqTuri || (w.haqTuri === "qop" ? "qop" : "kunlik");
+  const turlarOl = (ornigaId) => {
+    const o = (ishchilar || []).find((x) => x.id === ornigaId);
+    if (o?.haqTuri === "qop" && (o.nonTurlari || []).length) return o.nonTurlari;
+    if (w.haqTuri === "qop" && (w.nonTurlari || []).length) return w.nonTurlari;
+    return (nonlar || []).filter((n) => n.ozIshlab !== false).map((n) => n.nom);
+  };
+  // Bugungi qoplar bo'yicha jonli hisob
+  const samarali = kunRoliBilan(w, rol);
+  const bugungi = ishchiHaqlari(nonlar, [samarali], ozIshlabQoplar).list[0];
+  const qopSoni = samarali.haqTuri === "qop"
+    ? (nonlar || []).filter((n) => n.ozIshlab !== false && (samarali.nonTurlari || []).includes(n.nom)).reduce((s, n) => s + (parseInt((ozIshlabQoplar || {})[n.id]) || 0), 0)
+    : 0;
+  const preview = samarali.haqTuri === "qop"
+    ? `Bugun: ${qopSoni} qop${sonOl(rol?.haq) && rol?.haqTuri === "qop" ? ` × ${formatSom(sonOl(rol.haq))}` : ""} = ${formatSom(bugungi?.gross || 0)} so'm (qop soniga qarab o'zgaradi)`
+    : `Bugun: ${formatSom(bugungi?.gross || 0)} so'm (qop soniga bog'liq emas)`;
   const tanlov = LAVOZIMLAR.filter((l) => l.id !== "boshqasi" || w.lavozimId === "boshqasi");
   return (
     <View style={styles.rolPanel}>
@@ -410,16 +433,27 @@ function BugungiIsh({ w, rol, boshqalar, onQoy }) {
           );
         })}
       </View>
-      <Text style={styles.rolSarlavha}>Bugungi haqi (so'm)</Text>
+      <Text style={styles.rolSarlavha}>Bugungi haqi</Text>
+      <View style={styles.rolChiplar}>
+        {[["kunlik", "Kunlik summa"], ["qop", "Qop bo'yicha"]].map(([k, l]) => {
+          const faol = haqTuri === k;
+          return (
+            <Pressable key={k} accessibilityLabel={`${w.ism}: haq ${l}`} onPress={() => onQoy(k === "qop" ? { haqTuri: "qop", nonTurlari: turlarOl(rol?.orniga) } : { haqTuri: "kunlik", nonTurlari: null })} style={[styles.rolChip, faol && styles.rolChipFaol]}>
+              <Text style={[styles.rolChipTxt, faol && styles.rolChipTxtFaol]}>{l}</Text>
+            </Pressable>
+          );
+        })}
+      </View>
       <TextInput
         accessibilityLabel={`${w.ism}: bugungi haq`}
         value={haq}
         onChangeText={(v) => { const t = v.replace(/[^\d]/g, ""); setHaq(t); onQoy({ haq: t ? Number(t) : null }); }}
-        placeholder={w.haqTuri === "qop" ? "Bo'sh — qop bo'yicha" : `Bo'sh — o'zining: ${formatSom(w.miqdor)}`}
+        placeholder={haqTuri === "qop" ? "1 qop uchun so'm (bo'sh — o'zining)" : (w.haqTuri === "qop" ? "Kunlik summa (so'm)" : `Bo'sh — o'zining: ${formatSom(w.miqdor)}`)}
         placeholderTextColor={C.muted}
         keyboardType="number-pad"
         style={styles.rolInput}
       />
+      <Text style={styles.rolPreview}>{preview}</Text>
       {boshqalar.length > 0 && (
         <>
           <Text style={styles.rolSarlavha}>Kimning o'rniga</Text>
@@ -427,13 +461,18 @@ function BugungiIsh({ w, rol, boshqalar, onQoy }) {
             {[{ id: null, ism: "Hech kim" }, ...boshqalar].map((x) => {
               const faol = (rol?.orniga || null) === x.id;
               return (
-                <Pressable key={String(x.id)} accessibilityLabel={`${w.ism}: o'rniga ${x.ism}`} onPress={() => onQoy({ orniga: x.id })} style={[styles.rolChip, faol && styles.rolChipFaol]}>
+                <Pressable key={String(x.id)} accessibilityLabel={`${w.ism}: o'rniga ${x.ism}`} onPress={() => onQoy({
+                  orniga: x.id,
+                  // O'rniga ishlasa — o'sha odamning ishini qiladi (lavozim qo'lda tanlanmagan bo'lsa)
+                  ...(x.id && !rol?.lavozimId && x.lavozimId !== w.lavozimId ? { lavozimId: x.lavozimId } : {}),
+                  ...(haqTuri === "qop" && rol?.haqTuri === "qop" ? { nonTurlari: turlarOl(x.id) } : {}),
+                })} style={[styles.rolChip, faol && styles.rolChipFaol]}>
                   <Text style={[styles.rolChipTxt, faol && styles.rolChipTxtFaol]}>{x.ism}</Text>
                 </Pressable>
               );
             })}
           </View>
-          <Text style={styles.rolIzoh}>Kimningdir o'rniga ishlasa ham — o'zining haqini oladi (yuqorida boshqacha yozilmasa).</Text>
+          <Text style={styles.rolIzoh}>Kimningdir o'rniga ishlasa ham — o'zining haqini oladi (yuqorida boshqacha yozilmasa). Qop bo'yicha tanlansa — o'sha odam yopadigan nonlar qoplariga ko'payadi.</Text>
         </>
       )}
       {rol && (
@@ -583,6 +622,7 @@ const styles = temaStil(() => StyleSheet.create({
   rolChipTxtFaol:{ color: C.onAccent },
   rolInput: { borderWidth: 1, borderColor: C.border, borderRadius: R.md, paddingVertical: 9, paddingHorizontal: 12, fontSize: T.sm, color: C.text, backgroundColor: C.surface, marginBottom: S[2] },
   rolIzoh:  { fontSize: 11, color: C.muted, lineHeight: 15 },
+  rolPreview:{ fontSize: 12, fontWeight: "800", color: C.accent, marginBottom: S[2] },
   rolQaytar:{ flexDirection: "row", alignItems: "center", gap: 4, marginTop: S[2], alignSelf: "flex-start" },
   rolQaytarTxt:{ fontSize: 12, fontWeight: "700", color: C.sub },
   davomatIsm:{ fontSize: T.sm, fontWeight: "700", color: C.text },

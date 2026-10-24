@@ -33,14 +33,20 @@ export function kunTugashVaqti(ms = Date.now()) {
 }
 
 // Xodimning shu kungi ishi: boshqa lavozimda ishlashi (o'sha kungi haq bilan) yoki kimningdir
-// o'rniga ishlashi mumkin. rol: { lavozimId?, haq?, orniga? }. Haq kiritilmasa — o'zining odatdagi haqi
-// (kimningdir o'rniga ishlasa ham — o'sha odamniki emas, o'ziniki).
+// o'rniga ishlashi mumkin. rol: { lavozimId?, haqTuri?, haq?, nonTurlari?, orniga? }.
+//   haqTuri "kunlik" (sukut) — haq: o'sha kun uchun qat'iy summa (qop soniga bog'liq emas);
+//   haqTuri "qop"            — haq: 1 qop uchun; nonTurlari'dagi nonlarning bugungi qoplariga ko'payadi.
+// Haq kiritilmasa — o'zining odatdagi haqi (kimningdir o'rniga ishlasa ham — o'ziniki).
 export function kunRoliBilan(w, rol) {
   if (!w || !rol) return w;
   const n = { ...w, kunRol: rol };
   if (rol.lavozimId) n.lavozimId = rol.lavozimId;
-  if (rol.haq !== undefined && rol.haq !== null && String(rol.haq).trim() !== "") {
-    n.haqTuri = "kunlik"; n.miqdor = sonOl(rol.haq); n.nonTurlari = []; n.nonNarxlari = {};
+  const haq = rol.haq !== undefined && rol.haq !== null && String(rol.haq).trim() !== "" ? sonOl(rol.haq) : null;
+  if (haq !== null && rol.haqTuri === "qop") {
+    const turlar = rol.nonTurlari || w.nonTurlari || [];
+    n.haqTuri = "qop"; n.miqdor = 0; n.nonTurlari = turlar; n.nonNarxlari = Object.fromEntries(turlar.map((t) => [t, haq]));
+  } else if (haq !== null) {
+    n.haqTuri = "kunlik"; n.miqdor = haq; n.nonTurlari = []; n.nonNarxlari = {};
   }
   return n;
 }

@@ -25,19 +25,8 @@ const son = (x) => Math.max(0, parseInt(String(x ?? "").replace(/\s/g, ""), 10) 
 export default function Kalkulyator() {
   const { nonlar, setTayyorSavat } = useApp();
   const [soni, setSoni] = useState({}); // nonId → "12"
-  // Soni kiritilgan nonlar ro'yxat tepasiga chiqadi (oxirgisi eng tepada) va
-  // "Tozalash" bosilmaguncha o'sha yerda turadi
-  const [tepada, setTepada] = useState([]);
-  const tepagaChiqar = (id) => setTepada((p) => {
-    if (p.includes(id)) return p;
-    silliq();
-    return [id, ...p];
-  });
-  const tartibli = useMemo(() => {
-    const royxat = nonlar || [];
-    const ust = tepada.map((id) => royxat.find((n) => n.id === id)).filter(Boolean);
-    return [...ust, ...royxat.filter((n) => !tepada.includes(n.id))];
-  }, [nonlar, tepada]);
+  // Nonlar doim o'z tartibida turadi (bosilgan non joyidan siljimaydi)
+  const tartibli = nonlar || [];
 
   const hisob = useMemo(() => {
     let summa = 0, dona = 0;
@@ -56,11 +45,10 @@ export default function Kalkulyator() {
   const raqam = (id, r) => {
     const joriy = String(son(soni[id]) || "");
     const yangi = (joriy + r).replace(/^0+(?=\d)/, "").slice(0, 4); // 4 xonagacha
-    if (son(yangi) > 0) tepagaChiqar(id);
     setSoni((p) => ({ ...p, [id]: yangi }));
   };
   const nolla = (id) => setSoni((p) => ({ ...p, [id]: "" }));
-  const tozala = () => { silliq(); setSoni({}); setTepada([]); setOchiq(null); };
+  const tozala = () => { silliq(); setSoni({}); setOchiq(null); };
   // Hisobni qarz / optom formasiga o'tkazish
   const otkaz = (tur) => {
     const savat = {};
@@ -79,7 +67,7 @@ export default function Kalkulyator() {
             <Text style={styles.jamiQiymat} numberOfLines={1} adjustsFontSizeToFit>{formatSom(Math.round(korinish))} so'm</Text>
             <Text style={styles.jamiDona}>{hisob.dona} dona non</Text>
           </View>
-          {(hisob.dona > 0 || tepada.length > 0) && (
+          {hisob.dona > 0 && (
             <Pressable accessibilityRole="button" accessibilityLabel="Hisobni tozalash" onPress={tozala} hitSlop={8} style={({ pressed }) => [styles.tozala, pressed && styles.bosildi]}>
               <Ionicons name="refresh" size={16} color={C.onAccent} />
               <Text style={styles.tozalaTxt}>Tozalash</Text>
@@ -100,7 +88,8 @@ export default function Kalkulyator() {
               const faol = ochiq === n.id;
               return (
                 <View key={n.id} style={i > 0 && styles.chiziq}>
-                <View style={styles.qator}>
+                {/* Butun qator bosilsa — shu nonning raqamlari ochiladi (boshqasi yopiladi) */}
+                <Pressable accessibilityLabel={`${n.nom}: qator`} onPress={() => ochYop(n.id)} style={styles.qator}>
                   <View style={styles.ikon}><NonIkon non={n} size={20} color={C.accent} /></View>
                   <View style={styles.flex1}>
                     <Text style={styles.nom} numberOfLines={1}>{n.nom}</Text>
@@ -112,7 +101,7 @@ export default function Kalkulyator() {
                   <Pressable accessibilityLabel={`${n.nom}: nollash`} onPress={() => nolla(n.id)} disabled={!k} hitSlop={6} style={({ pressed }) => [styles.qadam, !k && styles.qadamOchiq, pressed && styles.bosildi]}>
                     <Ionicons name="close" size={16} color={k ? C.accent : C.muted} />
                   </Pressable>
-                </View>
+                </Pressable>
                 {faol && (
                   <View style={styles.raqamlar}>
                     {[["1", "2", "3", "4", "5"], ["6", "7", "8", "9", "0"]].map((qator) => (

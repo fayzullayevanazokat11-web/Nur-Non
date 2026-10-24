@@ -5,7 +5,7 @@
 import { useEffect, useRef, useState } from "react";
 import { withLayoutContext } from "expo-router";
 import { createMaterialTopTabNavigator } from "@react-navigation/material-top-tabs";
-import { View, Text, Image, Pressable, Animated, Easing, StyleSheet, Keyboard } from "react-native";
+import { View, Text, Image, Pressable, Animated, Easing, StyleSheet, Keyboard, PanResponder } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { C, temaStil, temaQorongi } from "../../src/theme";
 import { useTil } from "../../src/i18n/til";
@@ -58,9 +58,57 @@ function PastkiPanel({ state, descriptors, navigation }) {
   // bosib o'tilganda (animatsiyasiz sakrash) u eski joyda qolib, boshqa bo'limni
   // ko'rsatib qo'yardi. Endi faqat haqiqiy tanlangan bo'lim (state.index) asos.
   const idx = useRef(new Animated.Value(state.index)).current;
+  const sudralmoqda = useRef(false); // panel ustida barmoq surilayotgan payt — indikator barmoqqa ergashadi
   useEffect(() => {
+    if (sudralmoqda.current) return;
     Animated.timing(idx, { toValue: state.index, duration: 240, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start();
   }, [state.index]);
+
+  // ── Panelni ushlab surish (Telegram kabi): indikator barmoq ortidan yuradi, barmoq ostidagi
+  //    bo'lim sahifasi darhol ochiladi; qo'yib yuborilganda indikator o'sha bo'limga joylashadi.
+  const barRef = useRef(null);
+  const barX = useRef(0);
+  const holat = useRef({});
+  holat.current = { joylar, soni, kenglik, state, navigation };
+  const olchash = () => barRef.current?.measureInWindow?.((x) => { if (typeof x === "number") barX.current = x; });
+  const kasrIndeks = (pageX) => {
+    const { joylar: j, soni: n, kenglik: k } = holat.current;
+    const x = pageX - barX.current;
+    const markazlar = Array.from({ length: n }, (_, i) => (j[i] ? j[i].x + j[i].w / 2 : ((2 * i + 1) * k) / (2 * n)));
+    if (x <= markazlar[0]) return 0;
+    if (x >= markazlar[n - 1]) return n - 1;
+    for (let i = 0; i < n - 1; i++) {
+      if (x < markazlar[i + 1]) return i + (x - markazlar[i]) / (markazlar[i + 1] - markazlar[i]);
+    }
+    return n - 1;
+  };
+  const otish = (i) => {
+    const { state: st, navigation: nav } = holat.current;
+    if (i === st.index) return;
+    const route = st.routes[i];
+    oxirgiBosish.current = Date.now();
+    sezgi("otish");
+    nav.navigate(route.name, route.params);
+  };
+  const surish = useRef(PanResponder.create({
+    onMoveShouldSetPanResponderCapture: (_, g) => Math.abs(g.dx) > 8 && Math.abs(g.dx) > Math.abs(g.dy) * 1.5,
+    onPanResponderGrant: (e) => { sudralmoqda.current = true; olchash(); idx.stopAnimation(); },
+    onPanResponderMove: (e) => {
+      const f = kasrIndeks(e.nativeEvent.pageX);
+      idx.setValue(f);
+      otish(Math.round(f));
+    },
+    onPanResponderRelease: (e) => {
+      const i = Math.round(kasrIndeks(e.nativeEvent.pageX));
+      otish(i);
+      sudralmoqda.current = false;
+      Animated.timing(idx, { toValue: i, duration: 200, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start();
+    },
+    onPanResponderTerminate: () => {
+      sudralmoqda.current = false;
+      Animated.timing(idx, { toValue: holat.current.state.index, duration: 200, useNativeDriver: true }).start();
+    },
+  })).current;
   const pillKeng = (i) => (joylar[i] ? joylar[i].w : (kenglik - 2 * ICHKI) / soni);
   const pillX = kenglik && soni > 1
     ? idx.interpolate({ inputRange: kirishlar, outputRange: kirishlar.map((i) => markaz(i) - pillKeng(i) / 2), extrapolate: "clamp" })
@@ -79,7 +127,7 @@ function PastkiPanel({ state, descriptors, navigation }) {
 
   return (
     <View pointerEvents="box-none" style={[styles.tashqi, { paddingBottom: 8 + insets.bottom }]}>
-    <View style={styles.bar} onLayout={(e) => setKenglik(e.nativeEvent.layout.width)}>
+    <View ref={barRef} style={styles.bar} onLayout={(e) => { setKenglik(e.nativeEvent.layout.width); olchash(); }} {...surish.panHandlers}>
       {kenglik > 0 && (
         <Animated.View pointerEvents="none" style={[styles.pillQuti, { transform: [{ translateX: pillX }] }]}>
           <Animated.View testID="tab-indikator" style={[styles.pill, { width: pillW }]} />

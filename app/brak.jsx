@@ -23,7 +23,7 @@ const soatMatni = (ms) => { const d = new Date(ms); return `${String(d.getHours(
 const BOSH = { ishchiId: null, dona: {} };
 
 export default function Brak() {
-  const { nonlar, ishchilar, braklar, setBraklar, ochirArxivga, yozuvSanasi, kelmaganlar, kunYakunlangan } = useApp();
+  const { nonlar, ishchilar, ishchilarHaq, braklar, setBraklar, ochirArxivga, yozuvSanasi, kelmaganlar, kunYakunlangan } = useApp();
   // Bugun yakunlangan bo'lsa — yangi yozuv ertangi ish kuniga tushadi
   const localSana = yozuvSanasi;
   const [tahrirId, setTahrirId] = useState(null);
@@ -32,8 +32,10 @@ export default function Brak() {
 
   // Bugun kelmagan xodimga brak yozilsa — haqi yo'q, ayirma hech qayerga tushmaydi. Shuning uchun
   // faqat kelgani tasdiqlanganlar (kun yakunlangan bo'lsa — ertangi davomat noma'lum, hammasi).
-  const qopIshchilar = (ishchilar || []).filter((w) => w.haqTuri === "qop" && w.holat === "Aktiv"
-    && (kunYakunlangan || !(kelmaganlar || []).includes(w.id) || w.id === forma.ishchiId));
+  // Bugungi ish turi hisobga olinadi: kunlik xodim bugun qop bo'yicha ishlasa — ro'yxatda bor,
+  // qop xodimi bugun qat'iy summa olsa — yo'q (unga brak ayirmasi tushmaydi).
+  const qopIshchilar = (kunYakunlangan ? (ishchilar || []) : (ishchilarHaq || [])).filter((w) => w.holat === "Aktiv"
+    && ((w.haqTuri === "qop" && (kunYakunlangan || !w.kelmadi)) || w.id === forma.ishchiId));
   const ishchi = qopIshchilar.find((w) => w.id === forma.ishchiId);
   const donaNarxi = (nom) => parseFloat((nonlar || []).find((n) => n.nom === nom)?.narx) || 0;
   const summa = useMemo(() =>
