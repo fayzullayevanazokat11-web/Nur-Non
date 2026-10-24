@@ -15,8 +15,13 @@ const som = (x) => `${formatSom(x)} ${t("so'm")}`;
 const son = (x) => parseFloat(x) || 0;
 
 const USLUB = `
+  @page { size: A4; margin: 10mm; }
   * { box-sizing: border-box; }
-  body { font-family: -apple-system, Roboto, "Segoe UI", Arial, sans-serif; color: #3A2412; margin: 0; padding: 28px; background: #fff; }
+  body { font-family: -apple-system, Roboto, "Segoe UI", Arial, sans-serif; color: #3A2412; margin: 0; padding: 8px; background: #fff; }
+  /* Qop rasmlari — har biri alohida sahifada, sahifani to'ldiradi (A4: 277mm balandlik, 190mm en) */
+  .rasmSahifa { page-break-before: always; break-before: page; height: 272mm; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; }
+  .rasmSahifa img { width: 100%; height: 262mm; object-fit: contain; }
+  .rasmSahifa .rt { font-size: 11px; color: #86643F; font-weight: 700; margin-top: 6px; text-align: center; }
   .bosh { display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 2px solid #A05F27; padding-bottom: 12px; margin-bottom: 18px; }
   .brend { font-size: 22px; font-weight: 800; color: #A05F27; }
   .akk { font-size: 13px; color: #86643F; margin-top: 2px; }
@@ -35,7 +40,7 @@ const USLUB = `
   .izoh { font-size: 11px; color: #B0916A; margin-top: 18px; }
 `;
 
-function sahifa({ sarlavha, davr, akkaunt, ichi }) {
+function sahifa({ sarlavha, davr, akkaunt, ichi, oxiri = "" }) {
   return `<!doctype html><html><head><meta charset="utf-8"><style>${USLUB}</style></head><body>
     <div class="bosh">
       <div><div class="brend">Nur-Non</div>${akkaunt ? `<div class="akk">${tx(akkaunt)}</div>` : ""}</div>
@@ -43,6 +48,7 @@ function sahifa({ sarlavha, davr, akkaunt, ichi }) {
     </div>
     ${ichi}
     <div class="izoh">${tx("Nur-Non boshqaruv tizimida tayyorlandi")}</div>
+    ${oxiri}
   </body></html>`;
 }
 
@@ -63,7 +69,8 @@ const soat = (ms) => { if (!ms) return ""; const d = new Date(ms); return `${ikk
 const vaqtOl = (e) => e?.soat || soat(e?.vaqt);
 const savatMatn = (savat) => (savat || []).map((x) => `${t(x.nonNomi)} × ${x.soni}`).join(", ");
 
-export function kunlikHtml(h, { akkaunt, nonlar } = {}) {
+// rasmlar — [{ src, vaqt }] (src: data URI yoki web'da uri): har biri alohida sahifada
+export function kunlikHtml(h, { akkaunt, nonlar, rasmlar = [] } = {}) {
   const daromad = son(h.daromad), haq = son(h.ishchiHaq);
   const a = h.arxiv || {};
   const tf = h.tafsilot || {};
@@ -134,7 +141,8 @@ export function kunlikHtml(h, { akkaunt, nonlar } = {}) {
   const xom = (tf.xomashyo || []).filter((x) => son(x.qiymat) > 0);
   if (xom.length) ichi += bolim("Xomashyo sarfi", jadval(["Xomashyo", "Miqdor"], xom.map((x) => [t(x.nom), `${String(Math.round(son(x.qiymat) * 100) / 100).replace(".", ",")} ${t(x.birlik)}`])));
 
-  return sahifa({ sarlavha: "Kunlik hisobot", davr: `${h.sana} · ${soat(h.vaqt)}`, akkaunt, ichi });
+  const oxiri = (rasmlar || []).map((r, i) => `<div class="rasmSahifa"><img src="${r.src}" /><div class="rt">${tx("Qop rasmi")} ${i + 1}/${rasmlar.length} · ${h.sana}${r.vaqt ? ` · ${soat(r.vaqt)}` : ""}</div></div>`).join("");
+  return sahifa({ sarlavha: "Kunlik hisobot", davr: `${h.sana} · ${soat(h.vaqt)}`, akkaunt, ichi, oxiri });
 }
 
 // ── Davr (7/30 kun) hisoboti ──

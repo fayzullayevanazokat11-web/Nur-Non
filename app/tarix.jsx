@@ -19,11 +19,14 @@ import { sanaChiroyli, kunTahlili } from "../src/logic/davr";
 import { Qidiruv, qidiruvMos } from "../src/components/Qidiruv";
 import { useState } from "react";
 import { kunlikHtml, pdfUlash } from "../src/logic/ulashish";
+import { pdfRasmlari } from "../src/logic/qopRasm";
 
 export default function Tarix() {
-  const { nonlar, hisobotlarTarixi, ochirArxivga, akkauntNomi, oylikArxiv } = useApp();
+  const { nonlar, hisobotlarTarixi, ochirArxivga, akkauntNomi, oylikArxiv, qopRasmlari } = useApp();
   const [qidiruv, setQidiruv] = useState("");
-  const pdf = (h) => pdfUlash(kunlikHtml(h, { akkaunt: akkauntNomi, nonlar }), `nur-non-${h.sana}`).catch(() => Alert.alert("Xatolik", "PDF tayyorlab bo'lmadi."));
+  const pdf = (h) => pdfRasmlari(qopRasmlari, h.sana)
+    .then((rasmlar) => pdfUlash(kunlikHtml(h, { akkaunt: akkauntNomi, nonlar, rasmlar }), `nur-non-${h.sana}`))
+    .catch(() => Alert.alert("Xatolik", "PDF tayyorlab bo'lmadi."));
 
   const ochirHisobot = (id) =>
     Alert.alert("O'chirish", "Shu sanadagi hisobotni o'chirasizmi?", [

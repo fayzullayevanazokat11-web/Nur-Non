@@ -41,6 +41,21 @@ export async function rasmSaqla(uri, id) {
   }
 }
 
+// PDF uchun: shu kunning rasmlari (vaqt tartibida). Telefonda fayl base64 qilib o'qiladi —
+// PDF yaratuvchi ilova papkasidagi fayllarni to'g'ridan-to'g'ri ko'rmasligi mumkin.
+export async function pdfRasmlari(qopRasmlari, kun) {
+  const list = (qopRasmlari || []).filter((r) => r.kun === kun).sort((a, b) => (a.vaqt || 0) - (b.vaqt || 0));
+  const natija = [];
+  for (const r of list) {
+    if (WEB || !r.uri || r.uri.startsWith("data:")) { natija.push({ src: r.uri, vaqt: r.vaqt }); continue; }
+    try {
+      const b64 = await FileSystem.readAsStringAsync(r.uri, { encoding: FileSystem.EncodingType.Base64 });
+      natija.push({ src: `data:image/jpeg;base64,${b64}`, vaqt: r.vaqt });
+    } catch { /* fayl o'chgan bo'lsa — o'tkazib yuboriladi */ }
+  }
+  return natija;
+}
+
 export function rasmFaylOchir(uri) {
   if (WEB || !uri || !uri.startsWith(PAPKA)) return;
   FileSystem.deleteAsync(uri, { idempotent: true }).catch(() => {});
