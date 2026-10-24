@@ -2,7 +2,7 @@
 // kiritiladi, umumiy narx tepada doim ko'rinib turadi. Hisobni bir bosishda Qarz yoki
 // Optom formasiga o'tkazish mumkin (savat tayyor holda ochiladi).
 // Son telefon klaviaturasisiz kiritiladi: son katagi bosilsa, o'sha non qatori tagida
-// 0–9 raqamlar qatori ochiladi (boshqa non bosilsa — avvalgisi yopiladi). Yonidagi tugma nollaydi.
+// 0–9 raqamlar (ikki qatorda) ochiladi (boshqa non bosilsa — avvalgisi yopiladi). Yonidagi tugma nollaydi.
 import { useMemo, useState } from "react";
 import { View, Text, Pressable, StyleSheet, LayoutAnimation } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -115,10 +115,14 @@ export default function Kalkulyator() {
                 </View>
                 {faol && (
                   <View style={styles.raqamlar}>
-                    {["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"].map((r) => (
-                      <Pressable key={r} accessibilityLabel={`${n.nom}: ${r}`} onPress={() => raqam(n.id, r)} style={({ pressed }) => [styles.raqam, pressed && styles.raqamBosildi]}>
-                        <Text style={styles.raqamTxt}>{r}</Text>
-                      </Pressable>
+                    {[["1", "2", "3", "4", "5"], ["6", "7", "8", "9", "0"]].map((qator) => (
+                      <View key={qator[0]} style={styles.raqamQator}>
+                        {qator.map((r) => (
+                          <Pressable key={r} accessibilityLabel={`${n.nom}: ${r}`} onPress={() => raqam(n.id, r)} style={({ pressed }) => [styles.raqam, pressed && styles.raqamBosildi]}>
+                            <Text style={styles.raqamTxt}>{r}</Text>
+                          </Pressable>
+                        ))}
+                      </View>
                     ))}
                   </View>
                 )}
@@ -168,11 +172,12 @@ const styles = temaStil(() => StyleSheet.create({
   inputTxt: { fontSize: T.md, fontWeight: "800", color: C.text },
   inputTxtFaol:{ color: C.accent },
   inputTxtBosh:{ color: C.muted },
-  // 0–9 raqamlar qatori (non qatori tagida)
-  raqamlar: { flexDirection: "row", gap: 4, paddingBottom: S[3] },
-  raqam:    { flex: 1, height: 40, borderRadius: R.sm, alignItems: "center", justifyContent: "center", backgroundColor: C.panel },
+  // 0–9 ikki qatorda (1–5, 6–0) — barmoq bilan bosishga qulay katta tugmalar
+  raqamlar: { gap: 8, paddingBottom: S[3] },
+  raqamQator:{ flexDirection: "row", gap: 8 },
+  raqam:    { flex: 1, height: 54, borderRadius: R.md, alignItems: "center", justifyContent: "center", backgroundColor: C.panel },
   raqamBosildi:{ backgroundColor: C.accent + "33", transform: [{ scale: 0.94 }] },
-  raqamTxt: { fontSize: T.md, fontWeight: "800", color: C.text },
+  raqamTxt: { fontSize: 22, fontWeight: "800", color: C.text },
   bosildi:  { opacity: 0.75, transform: [{ scale: 0.94 }] },
   amallar:  { marginTop: S[4] },
   amalNom:  { fontSize: T.xs, fontWeight: "800", color: C.sub, letterSpacing: 0.5, marginBottom: S[2] },
