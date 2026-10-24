@@ -13,6 +13,7 @@ import { useApp } from "../../src/store/AppData";
 import { Card } from "../../src/components/Card";
 import { Btn } from "../../src/components/Btn";
 import { ScreenHeader } from "../../src/components/ScreenHeader";
+import { SahifaBari } from "../../src/components/BrandHeader";
 import { ScrollBox } from "../../src/components/ScrollBox";
 import { useTiklash } from "../../src/components/useTiklash";
 import { NonIkon } from "../../src/components/XomashyoIkon";
@@ -63,6 +64,7 @@ export default function Kalkulyator() {
     <SafeAreaView style={styles.safe} edges={["top"]}>
       {/* Umumiy narx — tepada doim ko'rinadi */}
       <View style={styles.tepa}>
+        <SahifaBari sahifa="Kalkulyator" />
         <View style={styles.jami}>
           <View style={styles.flex1}>
             <Text style={styles.jamiNom}>UMUMIY NARX</Text>

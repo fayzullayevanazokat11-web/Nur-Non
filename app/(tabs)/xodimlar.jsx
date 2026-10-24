@@ -10,6 +10,7 @@ import { useApp } from "../../src/store/AppData";
 import { Card } from "../../src/components/Card";
 import { Btn } from "../../src/components/Btn";
 import { ScreenHeader } from "../../src/components/ScreenHeader";
+import { SahifaBari } from "../../src/components/BrandHeader";
 import { ErtalabQadamBelgisi } from "../../src/components/ErtalabTekshiruv";
 import { NavQator } from "../../src/components/NavQator";
 import { Qidiruv, qidiruvMos } from "../../src/components/Qidiruv";
@@ -145,6 +146,7 @@ export default function Xodimlar() {
   return (
     <SafeAreaView style={styles.safe} edges={["top"]}>
       <ScrollBox ref={scrollRef} contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+        <SahifaBari sahifa="Xodimlar" />
         <ScreenHeader eyebrow="Jamoa" title="Xodimlar" image={require("../../assets/tabicons/xodimlar.png")} />
         <ErtalabQadamBelgisi qadam="davomat" matn="Bugungi davomatni belgilang, so'ng «Tayyor»" />
 

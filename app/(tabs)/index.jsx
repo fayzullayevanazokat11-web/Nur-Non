@@ -9,8 +9,7 @@ import { router, useFocusEffect } from "expo-router";
 
 import { useApp } from "../../src/store/AppData";
 import { Card } from "../../src/components/Card";
-import { BrandHeader } from "../../src/components/BrandHeader";
-import { MarkazMenyu } from "../../src/components/MarkazMenyu";
+import { SahifaBari } from "../../src/components/BrandHeader";
 import { ScrollBox } from "../../src/components/ScrollBox";
 import { Bosma } from "../../src/components/Bosma";
 import { useAnimSon } from "../../src/components/useAnimSon";
@@ -43,20 +42,8 @@ export default function Markaz() {
 
   // Har 30 soniyada tick — ish kuni tugaganda (tunda 03:00) lock va sana ko'rsatkichlari
   // o'z-o'zidan yangilanishi uchun. Foydalanuvchi tegmasa ham Markaz tetik turadi.
-  // Logotip menyusi (Tarixdagilar, yozuv tanlovi) — boshqa bo'limga o'tganda yoki
-  // dasturdan chiqilganda o'zi yopiladi
-  const [menu, setMenu] = useState(false); // faqat logotip bosilganda ochiladi
-  const menuAlmash = () => {
-    LayoutAnimation.configureNext(LayoutAnimation.create(220, LayoutAnimation.Types.easeInEaseOut, LayoutAnimation.Properties.opacity));
-    setMenu((m) => !m);
-  };
-  useFocusEffect(useCallback(() => () => setMenu(false), []));
   // Markazga qaytilgach ertalabgi qadam bannerlari ("Tayyor") boshqa sahifalarda qolib ketmasin
   useFocusEffect(useCallback(() => { setErtalabYonalish(null); }, []));
-  useEffect(() => {
-    const sub = AppState.addEventListener("change", (h) => { if (h !== "active") setMenu(false); });
-    return () => sub.remove();
-  }, []);
 
   const [tick, setTick] = useState(0);
   useEffect(() => {
@@ -138,8 +125,7 @@ export default function Markaz() {
   return (
     <SafeAreaView style={styles.safe} edges={["top"]}>
       <ScrollBox contentContainerStyle={styles.scroll}>
-        <BrandHeader onLogo={menuAlmash} menuOchiq={menu} />
-        {menu && <MarkazMenyu onYop={() => setMenu(false)} />}
+        <SahifaBari sahifa="Markaz" />
 
         <EslatmalarPanel />
 

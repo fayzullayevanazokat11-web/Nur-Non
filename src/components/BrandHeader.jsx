@@ -1,8 +1,11 @@
-// Markaz brendi sarlavhasi — jigarrang banner + oq kvadrat ichida "Non" logotipi
-// + "Nur-Non" / asosiy akkaunt nomi (yo'q bo'lsa "Boshqaruv tizimi"). O'ng chetda joriy sana va vaqt (har 30s yangilanadi).
-// Banner (logotip, nom, soat — butun bar) bosilganda `onLogo` chaqiriladi (Markaz menyusi: Tarixdagilar, yozuv tanlovi).
+// Brend sarlavhasi — har bir asosiy bo'lim tepasida: jigarrang banner + "Non" logotipi,
+// nonvoyxona (profil) nomi (kiritilmagan bo'lsa "Nur-Non") va ostida joriy bo'lim nomi.
+// O'ng chetda joriy sana va vaqt (har 30s yangilanadi).
+// Butun banner bosilganda menyu (Akkaunt, Tarixdagilar, PDFlar, yozuv, dizayn...) ochiladi/yopiladi.
 import { useEffect, useState } from "react";
-import { View, Text, Image, Pressable, StyleSheet } from "react-native";
+import { View, Text, Image, Pressable, StyleSheet, LayoutAnimation, AppState } from "react-native";
+import { MarkazMenyu } from "./MarkazMenyu";
+import { useTiklash } from "./useTiklash";
 import { Ionicons } from "@expo/vector-icons";
 import { useApp } from "../store/AppData";
 import { ishKuni } from "../logic/hisob";
@@ -22,8 +25,32 @@ function hozir() {
   };
 }
 
-export function BrandHeader({ onLogo, menuOchiq = false }) {
+// Bo'lim tepasidagi bar + uning menyusi (boshqa bo'limga o'tganda yoki dasturdan chiqilganda yopiladi)
+export function SahifaBari({ sahifa }) {
+  const [menu, setMenu] = useState(false);
+  const almash = () => {
+    LayoutAnimation.configureNext(LayoutAnimation.create(220, LayoutAnimation.Types.easeInEaseOut, LayoutAnimation.Properties.opacity));
+    setMenu((m) => !m);
+  };
+  useTiklash(() => setMenu(false));
+  useEffect(() => {
+    const sub = AppState.addEventListener("change", (h) => { if (h !== "active") setMenu(false); });
+    return () => sub.remove();
+  }, []);
+  return (
+    <>
+      <BrandHeader onLogo={almash} menuOchiq={menu} sahifa={sahifa} />
+      {menu && <MarkazMenyu onYop={() => setMenu(false)} />}
+    </>
+  );
+}
+
+// Uzun nonvoyxona nomi to'liq sig'ishi uchun shrift kichrayadi
+const nomShrift = (nom) => (nom.length <= 10 ? null : nom.length <= 14 ? { fontSize: 22 } : nom.length <= 18 ? { fontSize: 19 } : { fontSize: 16 });
+
+export function BrandHeader({ onLogo, menuOchiq = false, sahifa }) {
   const { akkauntNomi } = useApp();
+  const nom = (akkauntNomi || "").trim() || "Nur-Non";
   const [t, setT] = useState(hozir());
   useEffect(() => {
     const id = setInterval(() => setT(hozir()), 30000); // 30s
@@ -49,15 +76,9 @@ export function BrandHeader({ onLogo, menuOchiq = false }) {
         ) : null}
       </View>
       <View style={styles.flex1}>
-        <Text style={styles.title}>Nur-Non</Text>
-        {akkauntNomi ? (
-          <View style={styles.akkRow}>
-            <Ionicons name="person-circle-outline" size={13} color={C.onAccentSub} />
-            <Text style={[styles.sub, styles.akk]} numberOfLines={1}>{akkauntNomi}</Text>
-          </View>
-        ) : (
-          <Text style={styles.sub}>Boshqaruv tizimi</Text>
-        )}
+        {/* Nonvoyxona (profil) nomi — faqat shu yerda; ostida joriy bo'lim nomi */}
+        <Text style={[styles.title, nomShrift(nom)]} numberOfLines={1} adjustsFontSizeToFit>{nom}</Text>
+        <Text style={styles.sub} numberOfLines={1}>{sahifa || "Boshqaruv tizimi"}</Text>
       </View>
       <View style={styles.clock}>
         <View style={styles.clockRow}>

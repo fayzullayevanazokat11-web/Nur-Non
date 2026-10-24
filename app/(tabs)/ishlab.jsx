@@ -10,6 +10,7 @@ import { useApp } from "../../src/store/AppData";
 import { Card } from "../../src/components/Card";
 import { Btn } from "../../src/components/Btn";
 import { ScreenHeader } from "../../src/components/ScreenHeader";
+import { SahifaBari } from "../../src/components/BrandHeader";
 import { ExpandableCard, yopKartalar } from "../../src/components/ExpandableCard";
 import { MahsulotNarxi } from "../../src/components/MahsulotNarxi";
 import { TannarxKalk } from "../../src/components/TannarxKalk";
@@ -212,6 +213,7 @@ export default function IshlabChiqarish() {
   return (
     <SafeAreaView style={styles.safe} edges={["top"]}>
       <ScrollBox ref={scrollRef} contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+        <SahifaBari sahifa="Ishlab chiqarish" />
         <ScreenHeader eyebrow="Assortiment" title="Ishlab chiqarish" subtitle={`${nonlar.length} xil non · ${aktivIshchi} aktiv xodim`} image={require("../../assets/tabicons/ishlab.png")} />
 
         <View style={styles.segment}>

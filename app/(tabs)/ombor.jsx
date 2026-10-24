@@ -8,6 +8,7 @@ import { useApp } from "../../src/store/AppData";
 import { Card } from "../../src/components/Card";
 import { Btn } from "../../src/components/Btn";
 import { ScreenHeader } from "../../src/components/ScreenHeader";
+import { SahifaBari } from "../../src/components/BrandHeader";
 import { ErtalabQadamBelgisi } from "../../src/components/ErtalabTekshiruv";
 import { Bosma } from "../../src/components/Bosma";
 import { router } from "expo-router";
@@ -186,6 +187,7 @@ export default function Ombor() {
   return (
     <SafeAreaView style={styles.safe} edges={["top"]}>
       <ScrollBox contentContainerStyle={styles.scroll}>
+        <SahifaBari sahifa="Ombor" />
         <ScreenHeader eyebrow="Zaxira" title="Ombor hisoboti" subtitle={`${setSoni} ta set kiritilgan`} image={require("../../assets/tabicons/ombor.png")} />
         <ErtalabQadamBelgisi qadam="ombor" matn="Zaxira va so'rovnomalarni tekshiring, so'ng «Tayyor»" />
 
