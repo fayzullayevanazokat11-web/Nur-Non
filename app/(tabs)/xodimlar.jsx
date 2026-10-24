@@ -13,7 +13,6 @@ import { ScreenHeader } from "../../src/components/ScreenHeader";
 import { ErtalabQadamBelgisi } from "../../src/components/ErtalabTekshiruv";
 import { NavQator } from "../../src/components/NavQator";
 import { Qidiruv, qidiruvMos } from "../../src/components/Qidiruv";
-import { oylikIshHaqi, joriyOy, oyNomi } from "../../src/logic/davr";
 import { ExpandableCard, yopKartalar } from "../../src/components/ExpandableCard";
 import { ScrollBox } from "../../src/components/ScrollBox";
 import { DateField } from "../../src/components/DateField";
@@ -26,12 +25,8 @@ const BOSH = { ism: "", lavozimId: LAVOZIMLAR[0].id, lavozimCustom: "", haqTuri:
 const HOLATLAR = ["Aktiv", "Ta'tilda"];
 
 export default function Xodimlar() {
-  const { ishchilar, setIshchilar, nonlar, ochirArxivga, amalArxivga, hisobotlarTarixi, oylikArxiv, ishHaqiYozuvlari, kelmaganlar, kelmadiAlmash, ertalabYonalish, kelishVaqti, kelishVaqtiQoy } = useApp();
+  const { ishchilar, setIshchilar, nonlar, ochirArxivga, amalArxivga, kelmaganlar, keldiAlmash, ertalabYonalish, kelishVaqti, kelishVaqtiQoy } = useApp();
   const [qidiruv, setQidiruv] = useState("");
-  const oylik = useMemo(
-    () => oylikIshHaqi({ oy: joriyOy(), hisobotlar: hisobotlarTarixi, arxiv: oylikArxiv, ishchilar, yozuvlar: ishHaqiYozuvlari }),
-    [hisobotlarTarixi, oylikArxiv, ishchilar, ishHaqiYozuvlari]
-  );
   const ozNonlar = (nonlar || []).filter((n) => n.ozIshlab !== false);
 
   const [tahrirId, setTahrirId] = useState(null);
@@ -171,14 +166,6 @@ export default function Xodimlar() {
           </Card>
         </View>
 
-        <NavQator
-          icon="wallet-outline"
-          nom="Oylik ish haqi"
-          izoh={`${oyNomi(joriyOy())} · qolgan ${formatSom(oylik.qoldiq)} so'm`}
-          onPress={() => router.push("/ishhaqi")}
-          style={styles.navQator}
-        />
-
         {/* BUGUNGI DAVOMAT — kelmagan xodimga bugungi kunlik haq yozilmaydi */}
         {hammaAktiv.length > 0 && (
           <ExpandableCard
@@ -202,7 +189,7 @@ export default function Xodimlar() {
                     accessibilityRole="switch"
                     accessibilityState={{ checked: !kelmadi }}
                     accessibilityLabel={`${w.ism}: davomat`}
-                    onPress={() => kelmadiAlmash(w.id)}
+                    onPress={() => keldiAlmash(w.id)}
                     hitSlop={6}
                     style={({ pressed }) => [styles.davomatBelgi, kelmadi ? styles.belgiYoq : styles.belgiHa, pressed && { opacity: 0.7 }]}
                   >
@@ -212,7 +199,7 @@ export default function Xodimlar() {
                 </View>
               );
             })}
-            <Text style={styles.davomatIzoh}>Kelgan vaqtni qo'lda yozing (masalan, 0730 → 07:30). Kelmagan xodimga bugungi haq hisoblanmaydi (oylik hisobda ham).</Text>
+            <Text style={styles.davomatIzoh}>Kelgan xodimni «Keldi» deb belgilang. Vaqt yozilmasa — vaqtida kelgan hisoblanadi (kechiksa, masalan 0730 → 07:30). Belgilanmagan xodimga bugungi haq hisoblanmaydi.</Text>
           </ExpandableCard>
         )}
 
@@ -397,7 +384,7 @@ function KelishVaqti({ ism, qiymat, onSaqla }) {
       accessibilityLabel={`${ism}: kelgan vaqti`}
       value={matn}
       onChangeText={ozgar}
-      placeholder="--:--"
+      placeholder="Vaqtida"
       placeholderTextColor={C.muted}
       keyboardType="number-pad"
       maxLength={5}
@@ -569,7 +556,7 @@ const styles = temaStil(() => StyleSheet.create({
   bodyActions:{ flexDirection: "row", flexWrap: "wrap", justifyContent: "flex-end", gap: S[3], rowGap: S[2], marginTop: S[3], borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: C.borderSoft, paddingTop: S[3] },
   actBtn:    { flexDirection: "row", alignItems: "center" },
   actTxt:    { fontSize: T.sm, fontWeight: "700" },
-  kelishInput:{ width: 64, marginRight: S[2], borderWidth: 1, borderColor: C.border, borderRadius: R.sm, paddingVertical: 6, paddingHorizontal: 6, fontSize: T.sm, fontWeight: "800", color: C.text, backgroundColor: C.surface, textAlign: "center" },
+  kelishInput:{ width: 74, marginRight: S[2], borderWidth: 1, borderColor: C.border, borderRadius: R.sm, paddingVertical: 6, paddingHorizontal: 6, fontSize: T.sm, fontWeight: "800", color: C.text, backgroundColor: C.surface, textAlign: "center" },
   kelishTayyor:{ borderColor: C.accent, color: C.accent },
   kelishXato:{ borderColor: C.red },
 }));

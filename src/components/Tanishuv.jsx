@@ -190,7 +190,7 @@ export function Tanishuv() {
                 <View style={styles.bolimlar}>
                   <Bolim rasm={TAB_IKON.markaz} nom="Markaz" matn="Kunlik ko'rsatkichlar" />
                   <Bolim rasm={TAB_IKON.ishlab} nom="Ishlab" matn="Non, xomashyo, tannarx" />
-                  <Bolim rasm={TAB_IKON.xodimlar} nom="Xodimlar" matn="Ish haqi, davomat" />
+                  <Bolim rasm={TAB_IKON.xodimlar} nom="Xodimlar" matn="Jamoa, davomat" />
                   <Bolim rasm={TAB_IKON.ombor} nom="Ombor" matn="Zaxira, prognoz" />
                 </View>
                 <Text style={styles.matn}>Bo'limlar orasida chapga-o'ngga surib o'ting. Markazdagi logotipni bossangiz — menyu ochiladi.</Text>

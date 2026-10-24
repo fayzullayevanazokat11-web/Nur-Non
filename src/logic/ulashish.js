@@ -109,7 +109,7 @@ export function kunlikHtml(h, { akkaunt, nonlar, rasmlar = [] } = {}) {
 
   // Davomat — har bir xodim, kelgan vaqti bilan (erta kelganlar avval)
   const davomat = [...(tf.davomat || [])].sort((x, y) => (y.keldi - x.keldi) || String(x.soat || "99").localeCompare(String(y.soat || "99")));
-  if (davomat.length) ichi += bolim("Davomat", jadval(["Xodim", "Holat", "Kelgan vaqti"], davomat.map((d) => [t(d.ism), t(d.keldi ? "Keldi" : "Kelmadi"), d.keldi ? (d.soat || "—") : "—"])));
+  if (davomat.length) ichi += bolim("Davomat", jadval(["Xodim", "Holat", "Kelgan vaqti"], davomat.map((d) => [t(d.ism), t(d.keldi ? "Keldi" : "Kelmadi"), d.keldi ? (d.soat || t("Vaqtida")) : "—"])));
 
   if (nonQatorlar.length) ichi += bolim("Ishlab chiqarish", jadval(["Non turi", "Qop", "Ishlab (dona)", "Tonggi qoldiq", "Yaroqsiz", "Kun oxiri qoldiq"], nonQatorlar));
   ichi += bolim("Umumiy son", jadval(["Ko'rsatkich", "Dona"], [

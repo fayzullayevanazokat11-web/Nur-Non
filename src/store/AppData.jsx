@@ -104,7 +104,8 @@ export function AppDataProvider({ children }) {
   // Kechqurungi "Kunni yakunlash" eslatmasi (bildirishnoma) yoqilganmi
   const [eslatmaYoqilgan, setEslatmaYoqilgan]           = usePersistedState("nurnon:eslatmaYoqilgan", true);
   // Davomat: { "2026-10-17": [kelmagan ishchi id'lari] } — 60 kun saqlanadi
-  const [davomat, setDavomat]                           = usePersistedState("nurnon:davomat", {});
+  // Davomat: { "YYYY-MM-DD": [kelgani TASDIQLANGAN xodim id'lari] } — sukut: hali hech kim kelmagan
+  const [davomat, setDavomat]                           = usePersistedState("nurnon:keldilar", {});
   // Xodimlar kelgan vaqti (qo'lda kiritiladi): { "2026-10-17": { ishchiId: "07:30" } } — 60 kun
   const [kelishVaqtlari, setKelishVaqtlari]             = usePersistedState("nurnon:kelishVaqtlari", {});
   // Xomashyo narxlari o'zgarish tarixi: [{ id, nom, eski, yangi, vaqt }] — 180 kun
@@ -350,10 +351,12 @@ export function AppDataProvider({ children }) {
     return () => { clearInterval(t); sub.remove(); };
   }, []);
 
-  // ── Davomat: bugun kelmagan xodimlarga kunlik haq yozilmaydi ──
+  // ── Davomat: kun boshida hech kim kelmagan; xodim "Keldi" deb tasdiqlanadi.
+  //    Tasdiqlanmagan (kelmagan) xodimga bugungi haq yozilmaydi. Vaqt kiritilmasa — vaqtida kelgan.
   const bugun = bugunSana();
-  const kelmaganlar = useMemo(() => (davomat || {})[bugun] || [], [davomat, bugun]);
-  const kelmadiAlmash = (id) => setDavomat((p) => {
+  const keldilar = useMemo(() => (davomat || {})[bugun] || [], [davomat, bugun]);
+  const kelmaganlar = useMemo(() => (ishchilar || []).map((w) => w.id).filter((id) => !keldilar.includes(id)), [ishchilar, keldilar]);
+  const keldiAlmash = (id) => setDavomat((p) => {
     const joriy = (p || {})[bugun] || [];
     const yangi = joriy.includes(id) ? joriy.filter((x) => x !== id) : [...joriy, id];
     return { ...(p || {}), [bugun]: yangi };
@@ -653,7 +656,7 @@ export function AppDataProvider({ children }) {
     ochirilganlar: [ochirilganlar, setOchirilganlar, "array"],
     ishHaqiYozuvlari: [ishHaqiYozuvlari, setIshHaqiYozuvlari, "array"],
     oylikArxiv: [oylikArxiv, setOylikArxiv, "object"],
-    davomat: [davomat, setDavomat, "object"],
+    keldilar: [davomat, setDavomat, "object"],
     kelishVaqtlari: [kelishVaqtlari, setKelishVaqtlari, "object"],
     narxTarixi: [narxTarixi, setNarxTarixi, "array"],
     xomashyoIkonlari: [xomashyoIkonlari, setXomashyoIkonlari, "object"],
@@ -762,7 +765,7 @@ export function AppDataProvider({ children }) {
     ishHaqiYozuvlari, setIshHaqiYozuvlari,
     oylikArxiv, setOylikArxiv,
     eslatmaYoqilgan, setEslatmaYoqilgan, eslatmaYangila,
-    davomat, setDavomat, kelmaganlar, kelmadiAlmash, ishchilarHaq,
+    davomat, setDavomat, keldilar, kelmaganlar, keldiAlmash, ishchilarHaq,
     kelishVaqtlari, kelishVaqti, kelishVaqtiQoy,
     narxTarixi, setNarxTarixi,
     xomashyoIkonlari, xomashyoIkonQoy,

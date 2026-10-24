@@ -105,7 +105,6 @@ export default function RootLayout() {
                 <Stack.Screen name="tarix" />
                 <Stack.Screen name="ochirilganlar" />
                 <Stack.Screen name="akkaunt" />
-                <Stack.Screen name="ishhaqi" />
                 <Stack.Screen name="pdflar" />
               </Stack>
             </ThemeProvider>

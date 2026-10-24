@@ -61,10 +61,10 @@ export default function Qop() {
   // Hisob qaysi ish kuni uchun yuritiladi: sukut bugun; unutilgan kunni yakunlashda — tanlangan sana.
   // Davomat, kelgan vaqt, brak, xarajat va rasmlar ham SHU sana bo'yicha olinadi.
   const tanSana = sanaTanlandi && kunlikSana ? kunlikSana : localSana();
-  const kelmaganlarSana = (davomat || {})[tanSana] || [];
+  const keldilarSana = (davomat || {})[tanSana] || []; // kelgani tasdiqlanganlar
   const kelishVaqti = (kelishVaqtlari || {})[tanSana] || {};
   const ishchilar = useMemo(
-    () => (xomIshchilar || []).map((w) => (kelmaganlarSana.includes(w.id) ? { ...w, kelmadi: true } : w)),
+    () => (xomIshchilar || []).map((w) => (keldilarSana.includes(w.id) ? w : { ...w, kelmadi: true })),
     [xomIshchilar, davomat, tanSana]
   );
   const sanaRasmlari = (qopRasmlari || []).filter((r) => r.kun === tanSana);
@@ -115,7 +115,7 @@ export default function Qop() {
     setTegildi(false);
   };
 
-  const kunniYakunla = () => {
+  const kunniYakunla = (davomatTasdiq = false) => {
     // Boshlangich qoldiq, bugungi ishlab chiqarish yoki bugungi xarajat — yakunlash uchun yetarli
     const hechNarsa = stats.jamiNon <= 0 && stats.jamiQop <= 0 && stats.jamiBoshlang <= 0 && (stats.xarajatJami || 0) <= 0;
     if (hechNarsa) {
@@ -128,6 +128,15 @@ export default function Qop() {
     }
     if (kunYakunlanganmi()) {
       Alert.alert("Kun yakunlangan", "Bugun kun allaqachon yakunlangan. Bir kunda faqat bir marta yakunlanadi.");
+      return;
+    }
+    // Davomat belgilanmagan bo'lsa — hech kimga haq yozilmaydi; avval so'raymiz
+    const aktivlar = (ishchilar || []).filter((w) => w.holat === "Aktiv");
+    if (!davomatTasdiq && aktivlar.length && !aktivlar.some((w) => !w.kelmadi)) {
+      Alert.alert("Davomat belgilanmagan", "Hech bir xodim «Keldi» deb belgilanmagan — bu kun uchun hech kimga ish haqi hisoblanmaydi. Davomatni Xodimlar bo'limida belgilang. Baribir davom etasizmi?", [
+        { text: "Yo'q", style: "cancel" },
+        { text: "Davom etish", onPress: () => kunniYakunla(true) },
+      ]);
       return;
     }
     const sanaTekshir = tanSana;
@@ -380,7 +389,7 @@ export default function Qop() {
         )}
 
         <QopRasmBolimi kun={tanSana} />
-        <Btn secondary onPress={kunniYakunla} icon="checkmark-done-outline">Kunni yakunlash</Btn>
+        <Btn secondary onPress={() => kunniYakunla()} icon="checkmark-done-outline">Kunni yakunlash</Btn>
         <View style={styles.gap14} />
       </ScrollBox>
     </SafeAreaView>

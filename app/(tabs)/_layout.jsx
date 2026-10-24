@@ -1,4 +1,4 @@
-// Pastki tab navigatsiya — 4 ta ekran. Bo'limlar orasida chapga/o'ngga SURISH
+// Pastki tab navigatsiya — 5 ta ekran. Bo'limlar orasida chapga/o'ngga SURISH
 // (swipe) orqali ham o'tiladi: ekranlar sahifalovchi (pager) ichida turadi,
 // pastki panel esa o'zimizniki — tanlangan bo'limga silliq suriladigan indikator bilan.
 // Ikonkalar — maxsus rasmlar (tintColor bilan bo'yaladi).
@@ -45,8 +45,11 @@ function PastkiPanel({ state, descriptors, navigation }) {
     if (Date.now() - oxirgiBosish.current > 500) sezgi("otish");
   }, [state.index]);
   const soni = state.routes.length;
-  const tabW = kenglik / soni;
   const kirishlar = state.routes.map((_, i) => i);
+  // Har bir bo'lim kengligi yozuviga qarab; ortiqcha joy teng bo'linadi — shuning uchun
+  // yozuvlar orasidagi ko'rinadigan masofa bir xil. Indikator o'lchangan markazga suriladi.
+  const [joylar, setJoylar] = useState({});
+  const markaz = (i) => (joylar[i] ? joylar[i].x + joylar[i].w / 2 : ((2 * i + 1) * kenglik) / (2 * soni));
 
   // Indikator tanlangan bo'limga silliq suriladi. Pager pozitsiyasiga bog'lanmaydi —
   // bosib o'tilganda (animatsiyasiz sakrash) u eski joyda qolib, boshqa bo'limni
@@ -56,7 +59,7 @@ function PastkiPanel({ state, descriptors, navigation }) {
     Animated.timing(idx, { toValue: state.index, duration: 240, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start();
   }, [state.index]);
   const pillX = kenglik && soni > 1
-    ? idx.interpolate({ inputRange: kirishlar, outputRange: kirishlar.map((i) => i * tabW + (tabW - PILL_W) / 2), extrapolate: "clamp" })
+    ? idx.interpolate({ inputRange: kirishlar, outputRange: kirishlar.map((i) => markaz(i) - PILL_W / 2), extrapolate: "clamp" })
     : 0;
 
   if (klaviatura) return null;
@@ -94,6 +97,7 @@ function PastkiPanel({ state, descriptors, navigation }) {
             accessibilityLabel={options.tabBarAccessibilityLabel}
             onPress={onPress}
             onLongPress={() => navigation.emit({ type: "tabLongPress", target: route.key })}
+            onLayout={(e) => { const { x, width } = e.nativeEvent.layout; setJoylar((p) => (p[i]?.x === x && p[i]?.w === width ? p : { ...p, [i]: { x, w: width } })); }}
             style={styles.item}
           >
             <View style={styles.iconBox}>
@@ -134,7 +138,7 @@ export default function TabsLayout() {
 const styles = temaStil(() => StyleSheet.create({
   bar:     { flexDirection: "row", backgroundColor: C.bar, borderTopColor: C.borderSoft, borderTopWidth: StyleSheet.hairlineWidth, paddingTop: 6 },
   pill:    { position: "absolute", top: 6, left: 0, width: PILL_W, height: 30, borderRadius: 15, backgroundColor: C.accent + "16" },
-  item:    { flex: 1, alignItems: "center", paddingBottom: 4 },
+  item:    { flexGrow: 1, flexShrink: 1, flexBasis: "auto", alignItems: "center", paddingBottom: 4 },
   iconBox: { width: 24, height: 24, marginTop: 3 },
   icon:    { width: 24, height: 24 },
   iconUst: { position: "absolute", top: 0, left: 0 },
