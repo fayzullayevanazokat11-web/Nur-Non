@@ -1,6 +1,6 @@
 // Markaz brendi sarlavhasi — jigarrang banner + oq kvadrat ichida "Non" logotipi
 // + "Nur-Non" / asosiy akkaunt nomi (yo'q bo'lsa "Boshqaruv tizimi"). O'ng chetda joriy sana va vaqt (har 30s yangilanadi).
-// Logotip bosilganda `onLogo` chaqiriladi (Markaz menyusi: Tarixdagilar, yozuv tanlovi).
+// Banner (logotip, nom, soat — butun bar) bosilganda `onLogo` chaqiriladi (Markaz menyusi: Tarixdagilar, yozuv tanlovi).
 import { useEffect, useState } from "react";
 import { View, Text, Image, Pressable, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
@@ -31,22 +31,23 @@ export function BrandHeader({ onLogo, menuOchiq = false }) {
   }, []);
 
   return (
-    <View style={styles.banner}>
-      <Pressable
-        accessibilityLabel="Menyu"
-        accessibilityRole="button"
-        onPress={onLogo}
-        disabled={!onLogo}
-        hitSlop={6}
-        style={({ pressed }) => [styles.tile, pressed && styles.tilePressed]}
-      >
+    // Butun banner bosiladi (faqat logotip emas) — Nur-Non menyusi ochiladi/yopiladi
+    <Pressable
+      accessibilityLabel="Menyu"
+      accessibilityRole="button"
+      accessibilityState={{ expanded: menuOchiq }}
+      onPress={onLogo}
+      disabled={!onLogo}
+      style={({ pressed }) => [styles.banner, pressed && styles.bannerPressed]}
+    >
+      <View style={styles.tile}>
         <Image source={LOGO} style={styles.logo} resizeMode="contain" />
         {onLogo ? (
           <View style={styles.tileBadge}>
             <Ionicons name={menuOchiq ? "chevron-up" : "chevron-down"} size={11} color={C.onAccent} />
           </View>
         ) : null}
-      </Pressable>
+      </View>
       <View style={styles.flex1}>
         <Text style={styles.title}>Nur-Non</Text>
         {akkauntNomi ? (
@@ -65,11 +66,12 @@ export function BrandHeader({ onLogo, menuOchiq = false }) {
         </View>
         <Text style={styles.clockDate}>{t.sana}</Text>
       </View>
-    </View>
+    </Pressable>
   );
 }
 
 const styles = temaStil(() => StyleSheet.create({
+  bannerPressed: { opacity: 0.92, transform: [{ scale: 0.985 }] },
   banner: {
     flexDirection: "row",
     alignItems: "center",
@@ -89,7 +91,6 @@ const styles = temaStil(() => StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  tilePressed: { opacity: 0.85, transform: [{ scale: 0.95 }] },
   tileBadge: {
     position: "absolute", right: -4, bottom: -4, width: 20, height: 20, borderRadius: 10,
     backgroundColor: C.accent, borderWidth: 2, borderColor: "#FFFFFF", alignItems: "center", justifyContent: "center",
