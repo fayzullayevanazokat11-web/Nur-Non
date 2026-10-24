@@ -1,8 +1,10 @@
 // "Kalkulyator" — mijozga non sotishda tez hisob: har bir nondan nechta olinishi
 // kiritiladi, umumiy narx tepada doim ko'rinib turadi. Hisobni bir bosishda Qarz yoki
 // Optom formasiga o'tkazish mumkin (savat tayyor holda ochiladi).
+// Son telefon klaviaturasisiz kiritiladi: son katagi bosilsa, o'sha non qatori tagida
+// 0–9 raqamlar qatori ochiladi (boshqa non bosilsa — avvalgisi yopiladi). Yonidagi tugma nollaydi.
 import { useMemo, useState } from "react";
-import { View, Text, TextInput, Pressable, StyleSheet, LayoutAnimation } from "react-native";
+import { View, Text, Pressable, StyleSheet, LayoutAnimation } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
@@ -48,12 +50,17 @@ export default function Kalkulyator() {
   }, [soni, nonlar]);
   const korinish = useAnimSon(hisob.summa);
 
-  const qoy = (id, v) => { if (son(v) > 0) tepagaChiqar(id); setSoni((p) => ({ ...p, [id]: v })); };
-  const qosh = (id, d) => {
-    if (son(soni[id]) + d > 0) tepagaChiqar(id);
-    setSoni((p) => ({ ...p, [id]: String(Math.max(0, son(p[id]) + d)) }));
+  // Raqamlar qatori qaysi non uchun ochiq (bir vaqtda bittasi)
+  const [ochiq, setOchiq] = useState(null);
+  const ochYop = (id) => { silliq(); setOchiq((o) => (o === id ? null : id)); };
+  const raqam = (id, r) => {
+    const joriy = String(son(soni[id]) || "");
+    const yangi = (joriy + r).replace(/^0+(?=\d)/, "").slice(0, 4); // 4 xonagacha
+    if (son(yangi) > 0) tepagaChiqar(id);
+    setSoni((p) => ({ ...p, [id]: yangi }));
   };
-  const tozala = () => { silliq(); setSoni({}); setTepada([]); };
+  const nolla = (id) => setSoni((p) => ({ ...p, [id]: "" }));
+  const tozala = () => { silliq(); setSoni({}); setTepada([]); setOchiq(null); };
   // Hisobni qarz / optom formasiga o'tkazish
   const otkaz = (tur) => {
     const savat = {};
@@ -81,7 +88,7 @@ export default function Kalkulyator() {
         </View>
       </View>
 
-      <ScrollBox contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+      <ScrollBox contentContainerStyle={styles.scroll}>
         <ScreenHeader eyebrow="Tez hisob" title="Non kalkulyatori" image={require("../../assets/tabicons/kalkulyator.png")} />
 
         {(nonlar || []).length === 0 ? (
@@ -90,28 +97,31 @@ export default function Kalkulyator() {
           <Card style={styles.royxat}>
             {tartibli.map((n, i) => {
               const k = son(soni[n.id]);
+              const faol = ochiq === n.id;
               return (
-                <View key={n.id} style={[styles.qator, i > 0 && styles.chiziq]}>
+                <View key={n.id} style={i > 0 && styles.chiziq}>
+                <View style={styles.qator}>
                   <View style={styles.ikon}><NonIkon non={n} size={20} color={C.accent} /></View>
                   <View style={styles.flex1}>
                     <Text style={styles.nom} numberOfLines={1}>{n.nom}</Text>
                     <Text style={styles.narx}>{formatSom(n.narx)} so'm{k > 0 ? `  ·  ${formatSom(k * (parseFloat(n.narx) || 0))}` : ""}</Text>
                   </View>
-                  <Pressable accessibilityLabel={`${n.nom}: kamaytirish`} onPress={() => qosh(n.id, -1)} hitSlop={6} style={({ pressed }) => [styles.qadam, pressed && styles.bosildi]}>
-                    <Ionicons name="remove" size={18} color={C.accent} />
+                  <Pressable accessibilityRole="button" accessibilityLabel={`${n.nom}: soni`} accessibilityState={{ expanded: faol }} onPress={() => ochYop(n.id)} style={[styles.input, k > 0 && styles.inputFaol, faol && styles.inputOchiq]}>
+                    <Text style={[styles.inputTxt, k > 0 && styles.inputTxtFaol, !k && !faol && styles.inputTxtBosh]}>{k || 0}</Text>
                   </Pressable>
-                  <TextInput
-                    accessibilityLabel={`${n.nom}: soni`}
-                    value={soni[n.id] ?? ""}
-                    onChangeText={(v) => qoy(n.id, v.replace(/[^\d]/g, ""))}
-                    placeholder="0"
-                    placeholderTextColor={C.muted}
-                    keyboardType="numeric"
-                    style={[styles.input, k > 0 && styles.inputFaol]}
-                  />
-                  <Pressable accessibilityLabel={`${n.nom}: oshirish`} onPress={() => qosh(n.id, 1)} hitSlop={6} style={({ pressed }) => [styles.qadam, styles.qadamQosh, pressed && styles.bosildi]}>
-                    <Ionicons name="add" size={18} color={C.onAccent} />
+                  <Pressable accessibilityLabel={`${n.nom}: nollash`} onPress={() => nolla(n.id)} disabled={!k} hitSlop={6} style={({ pressed }) => [styles.qadam, !k && styles.qadamOchiq, pressed && styles.bosildi]}>
+                    <Ionicons name="close" size={16} color={k ? C.accent : C.muted} />
                   </Pressable>
+                </View>
+                {faol && (
+                  <View style={styles.raqamlar}>
+                    {["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"].map((r) => (
+                      <Pressable key={r} accessibilityLabel={`${n.nom}: ${r}`} onPress={() => raqam(n.id, r)} style={({ pressed }) => [styles.raqam, pressed && styles.raqamBosildi]}>
+                        <Text style={styles.raqamTxt}>{r}</Text>
+                      </Pressable>
+                    ))}
+                  </View>
+                )}
                 </View>
               );
             })}
@@ -151,9 +161,18 @@ const styles = temaStil(() => StyleSheet.create({
   nom:      { fontSize: T.sm, fontWeight: "800", color: C.text },
   narx:     { fontSize: 11, color: C.muted, marginTop: 2, fontWeight: "600" },
   qadam:    { width: 32, height: 32, borderRadius: 16, alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: C.border, backgroundColor: C.surface },
-  qadamQosh:{ backgroundColor: C.accent, borderColor: C.accent },
-  input:    { width: 52, borderWidth: 1, borderColor: C.border, borderRadius: R.sm, paddingVertical: 7, paddingHorizontal: 6, fontSize: T.md, fontWeight: "800", color: C.text, backgroundColor: C.surface, textAlign: "center" },
-  inputFaol:{ borderColor: C.accent, color: C.accent },
+  qadamOchiq:{ opacity: 0.4 },
+  input:    { minWidth: 58, borderWidth: 1, borderColor: C.border, borderRadius: R.sm, paddingVertical: 7, paddingHorizontal: 8, backgroundColor: C.surface, alignItems: "center" },
+  inputFaol:{ borderColor: C.accent },
+  inputOchiq:{ borderColor: C.accent, borderWidth: 2, backgroundColor: C.accent + "10" },
+  inputTxt: { fontSize: T.md, fontWeight: "800", color: C.text },
+  inputTxtFaol:{ color: C.accent },
+  inputTxtBosh:{ color: C.muted },
+  // 0–9 raqamlar qatori (non qatori tagida)
+  raqamlar: { flexDirection: "row", gap: 4, paddingBottom: S[3] },
+  raqam:    { flex: 1, height: 40, borderRadius: R.sm, alignItems: "center", justifyContent: "center", backgroundColor: C.panel },
+  raqamBosildi:{ backgroundColor: C.accent + "33", transform: [{ scale: 0.94 }] },
+  raqamTxt: { fontSize: T.md, fontWeight: "800", color: C.text },
   bosildi:  { opacity: 0.75, transform: [{ scale: 0.94 }] },
   amallar:  { marginTop: S[4] },
   amalNom:  { fontSize: T.xs, fontWeight: "800", color: C.sub, letterSpacing: 0.5, marginBottom: S[2] },
