@@ -45,6 +45,21 @@ export function kunRoliBilan(w, rol) {
   return n;
 }
 
+// ── Bir qop xamiridan nechta non: barcha xomashyo (g, ml ≈ g) yig'indisi ÷ bitta non xamiri vazni ──
+export function xamirVazni(mahsulotlar) {
+  return (mahsulotlar || []).reduce((s, m) => s + (parseFloat(m.miqdor) || 0), 0); // gramm
+}
+export function xamirdanNonSoni(mahsulotlar, nonVazni) {
+  const v = parseFloat(nonVazni) || 0;
+  return v > 0 ? Math.floor(xamirVazni(mahsulotlar) / v) : 0;
+}
+// Eski yozuvlarda vazn yo'q — saqlangan non sonidan tiklanadi (son o'zgarmasin)
+export function nonVazniOl(non) {
+  if (parseFloat(non?.nonVazni) > 0) return parseFloat(non.nonVazni);
+  const son = parseFloat(non?.nonSoni) || 0;
+  return son > 0 ? Math.floor(xamirVazni(non.mahsulotlar) / son) : 0; // pastga — qayta hisoblaganda son kamaymasin
+}
+
 // ── Ingredient va tannarx ──
 export function getIngNarx(m, narxlar) {
   const p = narxlar?.[m.id];

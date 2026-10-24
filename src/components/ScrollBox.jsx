@@ -3,13 +3,17 @@
 // (shaffoflik + biroz ko'tarilish) — sahifalar sakrab emas, yumshoq almashadi.
 // Animatsiya paytida kontent bitta qatlam bo'lib chiziladi (Android'da tugma chetlari
 // qorayib ko'rinmasligi uchun), tugagach oddiy holatga qaytadi.
-import { forwardRef, useContext, useEffect, useImperativeHandle, useRef, useState } from "react";
-import { ScrollView, Animated, Easing, StyleSheet } from "react-native";
+import { createContext, forwardRef, useContext, useEffect, useImperativeHandle, useRef, useState } from "react";
+import { View, ScrollView, Animated, Easing, StyleSheet } from "react-native";
 import { NavigationContext } from "@react-navigation/native";
 
 // Pastki paneldagi bo'lim bosilgan vaqt (surib o'tishda kontent allaqachon ko'rinib turadi)
 let oxirgiTabBosish = 0;
 export const tabBosildi = () => { oxirgiTabBosish = Date.now(); };
+
+// Pastki panel kontent ustida "suzib" turadi — bo'lim sahifalari oxirida shuncha bo'sh joy
+// qoldiriladi (oxirgi kartalar panel tagida qolib ketmasin). Boshqa sahifalarda 0.
+export const PastkiJoy = createContext(0);
 
 export const ScrollBox = forwardRef(function ScrollBox(
   { children, contentContainerStyle, keyboardShouldPersistTaps, style },
@@ -32,6 +36,7 @@ export const ScrollBox = forwardRef(function ScrollBox(
   };
   useEffect(() => { korsat(); }, []);
   const navigation = useContext(NavigationContext);
+  const pastkiJoy = useContext(PastkiJoy);
   useEffect(() => {
     if (!navigation?.addListener) return undefined;
     return navigation.addListener("focus", () => { if (Date.now() - oxirgiTabBosish < 600) korsat(); });
@@ -52,6 +57,7 @@ export const ScrollBox = forwardRef(function ScrollBox(
         showsHorizontalScrollIndicator={false}
       >
         {children}
+        {pastkiJoy > 0 && <View style={{ height: pastkiJoy }} />}
       </ScrollView>
     </Animated.View>
   );

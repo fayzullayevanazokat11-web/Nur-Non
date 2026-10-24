@@ -156,7 +156,7 @@ export function TannarxKalk() {
                   <Text style={[styles.jV, styles.qalin]}>{formatSom(r.dona)}</Text>
                 </View>
                 <Text style={styles.hint}>1 qopdan foyda: {formatSom(r.qopFoyda)} so'm</Text>
-                {!r.nonSoni && <Text style={styles.ogoh}>1 qopdan chiqadigan non soni kiritilmagan — Assortimentda kiriting.</Text>}
+                {!r.nonSoni && <Text style={styles.ogoh}>1 qopdan chiqadigan non soni hisoblanmagan — Assortimentda xomashyo va bitta non xamiri vaznini kiriting.</Text>}
               </>
             ) : (
               <Text style={styles.hint}>Tashqaridan olinadigan non: tannarx = narx − belgilangan foyda ({formatSom(r.foyda)} so'm).</Text>

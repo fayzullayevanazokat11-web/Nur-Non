@@ -7,10 +7,11 @@ import { withLayoutContext } from "expo-router";
 import { createMaterialTopTabNavigator } from "@react-navigation/material-top-tabs";
 import { View, Text, Image, Pressable, Animated, Easing, StyleSheet, Keyboard } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { C, temaStil } from "../../src/theme";
+import { C, temaStil, temaQorongi } from "../../src/theme";
 import { useTil } from "../../src/i18n/til";
 import { ogir } from "../../src/i18n/translit";
-import { tabBosildi } from "../../src/components/ScrollBox";
+import { tabBosildi, PastkiJoy } from "../../src/components/ScrollBox";
+import { useSafeAreaInsets as useInsets } from "react-native-safe-area-context";
 import { sezgi } from "../../src/logic/sezgi";
 
 const { Navigator } = createMaterialTopTabNavigator();
@@ -24,7 +25,9 @@ const ICONS = {
   ombor: require("../../assets/tabicons/ombor.png"),
 };
 
-const PILL_W = 56;
+// Telegram uslubi: panel ekran chetlaridan ajralgan yumaloq "orol", tanlangan bo'lim
+// ikonka+yozuvni o'rab turgan yumaloq fon bilan belgilanadi (fon bo'lim kengligiga moslashadi).
+const ICHKI = 5; // panel ichki chegarasi
 
 function PastkiPanel({ state, descriptors, navigation }) {
   const insets = useSafeAreaInsets();
@@ -58,19 +61,29 @@ function PastkiPanel({ state, descriptors, navigation }) {
   useEffect(() => {
     Animated.timing(idx, { toValue: state.index, duration: 240, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start();
   }, [state.index]);
+  const pillKeng = (i) => (joylar[i] ? joylar[i].w : (kenglik - 2 * ICHKI) / soni);
   const pillX = kenglik && soni > 1
-    ? idx.interpolate({ inputRange: kirishlar, outputRange: kirishlar.map((i) => markaz(i) - PILL_W / 2), extrapolate: "clamp" })
+    ? idx.interpolate({ inputRange: kirishlar, outputRange: kirishlar.map((i) => markaz(i) - pillKeng(i) / 2), extrapolate: "clamp" })
     : 0;
+  // Fon kengligi tanlangan bo'limga silliq moslashadi (kenglik native driver'da animatsiya qilinmaydi)
+  const pillW = useRef(new Animated.Value(0)).current;
+  const birinchi = useRef(true);
+  useEffect(() => {
+    const w = pillKeng(state.index);
+    if (!w) return;
+    if (birinchi.current) { pillW.setValue(w); birinchi.current = false; return; }
+    Animated.timing(pillW, { toValue: w, duration: 240, easing: Easing.out(Easing.cubic), useNativeDriver: false }).start();
+  }, [state.index, joylar, kenglik]);
 
   if (klaviatura) return null;
 
   return (
-    <View
-      style={[styles.bar, { paddingBottom: 6 + insets.bottom }]}
-      onLayout={(e) => setKenglik(e.nativeEvent.layout.width)}
-    >
+    <View pointerEvents="box-none" style={[styles.tashqi, { paddingBottom: 8 + insets.bottom }]}>
+    <View style={styles.bar} onLayout={(e) => setKenglik(e.nativeEvent.layout.width)}>
       {kenglik > 0 && (
-        <Animated.View pointerEvents="none" style={[styles.pill, { transform: [{ translateX: pillX }] }]} />
+        <Animated.View pointerEvents="none" style={[styles.pillQuti, { transform: [{ translateX: pillX }] }]}>
+          <Animated.View testID="tab-indikator" style={[styles.pill, { width: pillW }]} />
+        </Animated.View>
       )}
       {state.routes.map((route, i) => {
         const { options } = descriptors[route.key];
@@ -113,6 +126,7 @@ function PastkiPanel({ state, descriptors, navigation }) {
         );
       })}
     </View>
+    </View>
   );
 }
 
@@ -120,7 +134,9 @@ export default function TabsLayout() {
   // Sarlavhalar kutubxona ichida ham ishlatiladi — shuning uchun yozuvga shu yerda o'giramiz
   const til = useTil();
   const t = (s) => ogir(s, til);
+  const insets = useInsets();
   return (
+    <PastkiJoy.Provider value={84 + insets.bottom}>
     <SwipeTabs
       tabBarPosition="bottom"
       tabBar={(props) => <PastkiPanel {...props} />}
@@ -132,15 +148,22 @@ export default function TabsLayout() {
       <SwipeTabs.Screen name="xodimlar" options={{ title: t("Xodimlar") }} />
       <SwipeTabs.Screen name="ombor" options={{ title: t("Ombor") }} />
     </SwipeTabs>
+    </PastkiJoy.Provider>
   );
 }
 
 const styles = temaStil(() => StyleSheet.create({
-  bar:     { flexDirection: "row", backgroundColor: C.bar, borderTopColor: C.borderSoft, borderTopWidth: StyleSheet.hairlineWidth, paddingTop: 6 },
-  pill:    { position: "absolute", top: 6, left: 0, width: PILL_W, height: 30, borderRadius: 15, backgroundColor: C.accent + "16" },
-  item:    { flexGrow: 1, flexShrink: 1, flexBasis: "auto", alignItems: "center", paddingBottom: 4 },
-  iconBox: { width: 24, height: 24, marginTop: 3 },
-  icon:    { width: 24, height: 24 },
+  // Panel kontent ustida suzadi: orqasida fon yo'q, kartalar uning ostidan ko'rinib turadi
+  tashqi:  { position: "absolute", left: 0, right: 0, bottom: 0, paddingHorizontal: 12 },
+  bar:     {
+    flexDirection: "row", backgroundColor: C.card + "FA", borderRadius: 36, borderWidth: StyleSheet.hairlineWidth, borderColor: C.border, padding: ICHKI,
+    shadowColor: "#000", shadowOpacity: temaQorongi() ? 0.5 : 0.16, shadowRadius: 18, shadowOffset: { width: 0, height: 6 }, elevation: 14,
+  },
+  pillQuti:{ position: "absolute", top: ICHKI, bottom: ICHKI, left: 0 },
+  pill:    { flex: 1, borderRadius: 30, backgroundColor: C.accent + "1C" },
+  item:    { flexGrow: 1, flexShrink: 1, flexBasis: "auto", alignItems: "center", paddingTop: 7, paddingBottom: 6, paddingHorizontal: 4 },
+  iconBox: { width: 26, height: 26 },
+  icon:    { width: 26, height: 26 },
   iconUst: { position: "absolute", top: 0, left: 0 },
-  label:   { fontSize: 11, fontWeight: "600", letterSpacing: 0.3, marginTop: 5 },
+  label:   { fontSize: 12, fontWeight: "700", letterSpacing: 0.2, marginTop: 4 },
 }));

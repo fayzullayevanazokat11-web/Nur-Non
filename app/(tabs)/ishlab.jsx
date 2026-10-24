@@ -17,10 +17,12 @@ import { XomashyoIkon, NonIkon, BosiladiganIkon, IkonTanlov, IKON_TANLOV, xomash
 import { ScrollBox } from "../../src/components/ScrollBox";
 import { xomashyoRoyxati } from "../../src/logic/konstantalar";
 import { C, T, S, R, temaStil } from "../../src/theme";
-import { formatSom, getQopTannarx, getIngNarx, sonOl } from "../../src/logic/hisob";
+import { formatSom, getQopTannarx, getIngNarx, sonOl, xamirdanNonSoni, nonVazniOl } from "../../src/logic/hisob";
 
 const baseUnit = (birlik) => (birlik === "litr" ? "ml" : "g");
-const BOSH = { nom: "", narx: "", oz: true, nonSoni: "", donaFoyda: "", ing: {} };
+const SUV = { id: "suv", nom: "Suv", birlik: "litr" };
+const BOSH = { nom: "", narx: "", oz: true, nonVazni: "", donaFoyda: "", ing: {} };
+const kgMatn = (g) => `${String(Math.round(g / 100) / 10).replace(".", ",")} kg`;
 
 const silliq = () => LayoutAnimation.configureNext(LayoutAnimation.create(200, LayoutAnimation.Types.easeInEaseOut, LayoutAnimation.Properties.opacity));
 
@@ -39,7 +41,17 @@ export default function IshlabChiqarish() {
     mahsulotNarxlari, customMahsulotlar, ochirArxivga,
     xomashyoIkonlari, xomashyoIkonQoy,
   } = useApp();
-  const royxat = xomashyoRoyxati(customMahsulotlar);
+  const [tahrirId, setTahrirId] = useState(null);
+  // Retsept xomashyolari: ombordagilar + suv (omborda yo'q, lekin xamir vazniga kiradi)
+  // Tahrirlanayotgan nonning ro'yxatda yo'q xomashyolari ham (masalan, alohida tuz) — aks holda
+  // saqlashda tushib qolardi va xamir vazni kam hisoblanardi
+  const asosiyRoyxat = [...xomashyoRoyxati(customMahsulotlar), SUV];
+  const tahrirNon = tahrirId ? (nonlar || []).find((n) => n.id === tahrirId) : null;
+  const royxat = [
+    ...asosiyRoyxat,
+    ...((tahrirNon?.mahsulotlar || []).filter((m) => !asosiyRoyxat.some((x) => x.id === m.id))
+      .map((m) => ({ id: m.id, nom: m.nom, birlik: m.birlik === "ml" ? "litr" : "kg", ...(m.ikon ? { ikon: m.ikon } : {}) }))),
+  ];
 
   // Ikonkani bosib o'zgartirish: qaysi ikonkaning tanlovi ochiq ("non:<id>", "x:<joy>:<xId>")
   const [ikonOchiq, setIkonOchiq] = useState(null);
@@ -63,7 +75,6 @@ export default function IshlabChiqarish() {
 
   const [tab, setTab] = useState("assortiment");
   const tabTanla = (t) => { if (t === tab) return; silliq(); setIkonOchiq(null); setTab(t); };
-  const [tahrirId, setTahrirId] = useState(null);
   const [forma, setForma] = useState(BOSH);
   const scrollRef = useRef(null);
 
@@ -76,7 +87,7 @@ export default function IshlabChiqarish() {
     const oz = non.ozIshlab !== false;
     setForma({
       nom: non.nom, narx: String(non.narx || ""), oz,
-      nonSoni: String(non.nonSoni || ""),
+      nonVazni: oz && nonVazniOl(non) ? String(nonVazniOl(non)) : "",
       donaFoyda: oz ? "" : String(non.tashqariFoyda || ""),
       ing: oz ? Object.fromEntries((non.mahsulotlar || []).map((m) => [m.id, String(m.miqdor ?? "")])) : {},
     });
@@ -91,7 +102,10 @@ export default function IshlabChiqarish() {
     const miq = sonOl(forma.ing[m.id]);
     return miq > 0 ? s + getIngNarx({ id: m.id, miqdor: miq }, mahsulotNarxlari) : s;
   }, 0);
-  const formaSon = sonOl(forma.nonSoni);
+  // Non soni avtomatik: 1 qop xamiri (barcha xomashyo, g) ÷ bitta non xamiri vazni
+  const formaMahsulotlar = royxat.map((m) => ({ miqdor: sonOl(forma.ing[m.id]) })).filter((m) => m.miqdor > 0);
+  const formaXamir = formaMahsulotlar.reduce((s, m) => s + m.miqdor, 0);
+  const formaSon = xamirdanNonSoni(formaMahsulotlar, sonOl(forma.nonVazni));
   const formaDonaFoyda = forma.oz
     ? Math.round((sonOl(forma.narx)) - (formaSon > 0 ? formaQopNarx / formaSon : 0))
     : (sonOl(forma.donaFoyda));
@@ -109,12 +123,16 @@ export default function IshlabChiqarish() {
       return;
     }
     const narx = sonOl(forma.narx);
+    if (forma.oz && formaSon <= 0) {
+      Alert.alert("Non soni hisoblanmadi", "1 qopga ketadigan xomashyo miqdorlarini va bitta non xamiri vaznini (gramm) kiriting.");
+      return;
+    }
     let yangi;
     if (forma.oz) {
       const mahsulotlar = royxat
         .map((m) => ({ id: m.id, nom: m.nom, ...(m.ikon ? { ikon: m.ikon } : {}), birlik: baseUnit(m.birlik), miqdor: sonOl(forma.ing[m.id]) }))
         .filter((m) => m.miqdor > 0);
-      yangi = { nom: forma.nom.trim(), narx, ozIshlab: true, nonSoni: sonOl(forma.nonSoni), tashqariFoyda: 0, mahsulotlar };
+      yangi = { nom: forma.nom.trim(), narx, ozIshlab: true, nonVazni: sonOl(forma.nonVazni), nonSoni: formaSon, tashqariFoyda: 0, mahsulotlar };
     } else {
       yangi = { nom: forma.nom.trim(), narx, ozIshlab: false, nonSoni: 0, tashqariFoyda: sonOl(forma.donaFoyda), mahsulotlar: [] };
     }
@@ -244,9 +262,6 @@ export default function IshlabChiqarish() {
 
               {forma.oz ? (
                 <>
-                  <Text style={styles.inputLabel}>1 qopdan o'rtacha nechta non</Text>
-                  <TextInput value={forma.nonSoni} onChangeText={(v) => yangila("nonSoni", v)} placeholder="0" placeholderTextColor={C.muted} keyboardType="numeric" style={styles.input} />
-
                   <Text style={styles.inputLabel}>1 qopga ketadigan xomashyo</Text>
                   {royxat.map((m) => {
                     const unit = baseUnit(m.birlik);
@@ -264,6 +279,13 @@ export default function IshlabChiqarish() {
                       </View>
                     );
                   })}
+
+                  <Text style={styles.inputLabel}>Bitta non xamiri vazni (gramm) *</Text>
+                  <TextInput accessibilityLabel="Bitta non xamiri vazni" value={forma.nonVazni} onChangeText={(v) => yangila("nonVazni", v)} placeholder="Masalan: 750" placeholderTextColor={C.muted} keyboardType="numeric" style={styles.input} />
+                  <View style={styles.xamirBox}>
+                    <Text style={styles.xamirTxt}>1 qop xamiri: <Text style={styles.xamirQalin}>{kgMatn(formaXamir)}</Text>{sonOl(forma.nonVazni) > 0 ? ` ÷ ${formatSom(sonOl(forma.nonVazni))} g` : ""}</Text>
+                    <Text style={styles.xamirNatija}>= {formaSon} ta non</Text>
+                  </View>
                 </>
               ) : (
                 <>
@@ -325,7 +347,8 @@ export default function IshlabChiqarish() {
                     }
                   >
                     <Row label="Sotuv narxi" value={`${formatSom(non.narx)} so'm`} bold />
-                    {oz && <Row label="1 qopdan" value={`${non.nonSoni} dona`} />}
+                    {oz && <Row label="1 qopdan (avtomatik)" value={`${non.nonSoni} dona`} />}
+                    {oz && nonVazniOl(non) > 0 && <Row label="Bitta non xamiri" value={`${formatSom(nonVazniOl(non))} g`} />}
                     <Row label="Dona foydasi" value={`${formatSom(foyda)} so'm`} valueColor={C.accent} bold last={!oz} />
                     {oz && (non.mahsulotlar || []).length > 0 && (
                       <View style={styles.ingWrap}>
@@ -405,6 +428,10 @@ const styles = temaStil(() => StyleSheet.create({
   ingEditNom:{ flex: 1, fontSize: T.sm, color: C.text },
   ingInput:  { width: 90, borderWidth: 1, borderColor: C.border, borderRadius: R.sm, paddingVertical: 8, paddingHorizontal: 10, fontSize: T.sm, color: C.text, backgroundColor: C.surface, textAlign: "right" },
   ingUnit:   { width: 28, fontSize: T.xs, color: C.muted },
+  xamirBox:  { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: S[2], backgroundColor: C.panel, borderRadius: R.md, paddingVertical: S[2] + 2, paddingHorizontal: S[3], marginTop: S[2] },
+  xamirTxt:  { flex: 1, fontSize: T.xs, color: C.sub, fontWeight: "600" },
+  xamirQalin:{ fontWeight: "800", color: C.text },
+  xamirNatija:{ fontSize: T.md, fontWeight: "800", color: C.accent },
   foydaBox:  { backgroundColor: C.accent + "0D", borderWidth: 1, borderColor: C.accent + "2E", borderRadius: R.md, paddingVertical: S[3], paddingHorizontal: S[3], marginTop: S[3] },
   foydaLine: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
   foydaLbl:  { fontSize: T.sm, color: C.sub },
