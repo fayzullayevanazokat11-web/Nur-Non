@@ -88,6 +88,7 @@ export function kunlikHtml(h, { akkaunt, nonlar, rasmlar = [] } = {}) {
 
   const qoshimcha = [
     ["Karta to'lovlari", a.kartaSum], ["Optom savdo", a.optomSum], ["Brak", a.brakSum], ["Qo'shimcha xarajat", h.xarajatJami],
+    [`${t("Sut")} (${String(son(h.sutLitr)).replace(".", ",")} l)`, h.sutXarajat],
   ].filter(([, v]) => son(v) > 0).map(([l, v]) => [t(l), som(v)]);
 
   const bolim = (nom, ich) => `<div class="bolim">${tx(nom)}</div>${ich}`;
@@ -95,12 +96,15 @@ export function kunlikHtml(h, { akkaunt, nonlar, rasmlar = [] } = {}) {
 
   let ichi = plitkalar([["Sof foyda", som(h.sofFoyda)], ["Daromad", som(daromad)], ["Sotilgan non", `${formatSom(h.sotilganNon)} ${t("dona")}`]]);
 
-  // Kun tartibi: ertalabgi tekshiruv va yakunlash vaqti
+  // Kun tartibi: kunlik vazifa va yakunlash vaqti
   const tartib = [];
   if (tf.ertalab) {
     const holat = (b) => t(b ? "bajarildi" : "bajarilmadi");
-    tartib.push([t("Ertalabgi tekshiruv"), tf.ertalab.tugallandi ? `${t("tugallandi")} ${soat(tf.ertalab.tugallandi)}` : t("tugallanmagan")]);
+    tartib.push([t("Kunlik vazifa"), tf.ertalab.tugallandi ? `${t("bajarildi")} ${soat(tf.ertalab.tugallandi)}` : t("bajarilmagan")]);
     tartib.push([t("Ishchilar davomati"), holat(tf.ertalab.davomat)], [t("Ombor tekshiruvi"), holat(tf.ertalab.ombor)]);
+  }
+  if (tf.sut && (son(tf.sut.m1) || son(tf.sut.m2))) {
+    tartib.push([t("Sut kirimi"), `${t("1-mahal")} ${String(son(tf.sut.m1)).replace(".", ",")} l · ${t("2-mahal")} ${String(son(tf.sut.m2)).replace(".", ",")} l`]);
   }
   if (tf.rasmSoni != null) tartib.push([t("Qop rasmlari"), `${tf.rasmSoni} ${t("ta")}`]);
   if ((tf.kelmaganlar || []).length && !(tf.davomat || []).length) tartib.push([t("Kelmagan xodimlar"), tf.kelmaganlar.map(t).join(", ")]);

@@ -9,7 +9,7 @@ import { router } from "expo-router";
 import { useApp } from "../store/AppData";
 import usePersistedState from "../store/usePersistedState";
 import { eslatmalar } from "../logic/eslatma";
-import { xomashyoRoyxati } from "../logic/konstantalar";
+import { omborRoyxati } from "../logic/konstantalar";
 import { bugunSana } from "../logic/hisob";
 import { C, T, S, R, temaStil } from "../theme";
 
@@ -22,7 +22,7 @@ export function EslatmalarPanel() {
   const [daqiqa, setDaqiqa] = useState(0);
   useEffect(() => { const t = setInterval(() => setDaqiqa((x) => x + 1), 60000); return () => clearInterval(t); }, []);
 
-  const royxat = useMemo(() => xomashyoRoyxati(customMahsulotlar), [customMahsulotlar]);
+  const royxat = useMemo(() => omborRoyxati(customMahsulotlar), [customMahsulotlar]);
   const hammasi = useMemo(() => (tayyor ? eslatmalar({
     hozir: new Date(), nonlar, hisobotlar: hisobotlarTarixi, ozIshlabQoplar, tashqariSonlar,
     omborlar, omborSorovlar, qarzlar, royxat, lockedDayStats,

@@ -388,8 +388,9 @@ const soatTogri = (v) => /^([01]\d|2[0-3]):[0-5]\d$/.test(v);
 // Davomatdagi qisqa satr: bugungi lavozim · haq · kimning o'rniga
 const haqMatni = (w) => {
   if (w.haqTuri !== "qop") return `${formatSom(w.miqdor)} so'm`;
-  const r = w.kunRol?.haqTuri === "qop" ? sonOl(w.kunRol.haq) : 0;
-  return r ? `${formatSom(r)} so'm/qop` : "qop bo'yicha";
+  if (w.kunRol?.haqTuri !== "qop") return "qop bo'yicha";
+  const narxlar = [...new Set(Object.values(w.nonNarxlari || {}).filter((v) => v > 0))];
+  return narxlar.length === 1 ? `${formatSom(narxlar[0])} so'm/qop` : narxlar.length ? "qop bo'yicha (non turiga qarab)" : "qop bo'yicha";
 };
 function rolMatni(w, rol, ishchilar) {
   const e = kunRoliBilan(w, rol);
@@ -418,8 +419,11 @@ function BugungiIsh({ w, rol, ishchilar, nonlar, boshqalar, onQoy }) {
   const qopSoni = samarali.haqTuri === "qop"
     ? (nonlar || []).filter((n) => n.ozIshlab !== false && (samarali.nonTurlari || []).includes(n.nom)).reduce((s, n) => s + (parseInt((ozIshlabQoplar || {})[n.id]) || 0), 0)
     : 0;
+  const turBoyicha = (bugungi?.detal || []).length > 1
+    ? bugungi.detal.map((d) => `${d.nom}: ${d.qop} qop`).join(", ")
+    : null;
   const preview = samarali.haqTuri === "qop"
-    ? `Bugun: ${qopSoni} qop${sonOl(rol?.haq) && rol?.haqTuri === "qop" ? ` × ${formatSom(sonOl(rol.haq))}` : ""} = ${formatSom(bugungi?.gross || 0)} so'm (qop soniga qarab o'zgaradi)`
+    ? `Bugun: ${turBoyicha || `${qopSoni} qop${sonOl(rol?.haq) && rol?.haqTuri === "qop" ? ` × ${formatSom(sonOl(rol.haq))}` : ""}`} = ${formatSom(bugungi?.gross || 0)} so'm (qop soniga qarab o'zgaradi)`
     : `Bugun: ${formatSom(bugungi?.gross || 0)} so'm (qop soniga bog'liq emas)`;
   const tanlov = LAVOZIMLAR.filter((l) => l.id !== "boshqasi" || w.lavozimId === "boshqasi");
   return (
@@ -446,6 +450,27 @@ function BugungiIsh({ w, rol, ishchilar, nonlar, boshqalar, onQoy }) {
           );
         })}
       </View>
+      {haqTuri === "qop" && (rol?.nonTurlari || []).length > 1 ? (
+        // Bir nechta non turi — har biriga alohida 1 qop narxi
+        (rol.nonTurlari || []).map((nom) => {
+          const o = (ishchilar || []).find((x) => x.id === rol?.orniga);
+          const asl = sonOl((o?.nonNarxlari || w.nonNarxlari || {})[nom]);
+          return (
+            <View key={nom} style={styles.turNarxQator}>
+              <Text style={styles.turNarxNom} numberOfLines={1}>{nom}</Text>
+              <TextInput
+                accessibilityLabel={`${w.ism}: ${nom} qop narxi`}
+                defaultValue={rol?.nonNarxlari?.[nom] ? String(rol.nonNarxlari[nom]) : ""}
+                onChangeText={(v) => { const t = v.replace(/[^\d]/g, ""); onQoy({ nonNarxlari: { ...(rol?.nonNarxlari || {}), [nom]: t ? Number(t) : 0 } }); }}
+                placeholder={asl ? `${o ? o.ism.split(" ")[0] + "da" : "odatda"}: ${formatSom(asl)}` : "1 qop uchun so'm"}
+                placeholderTextColor={C.muted}
+                keyboardType="number-pad"
+                style={[styles.rolInput, styles.turNarxInput]}
+              />
+            </View>
+          );
+        })
+      ) : (
       <TextInput
         accessibilityLabel={`${w.ism}: bugungi haq`}
         value={haq}
@@ -455,6 +480,7 @@ function BugungiIsh({ w, rol, ishchilar, nonlar, boshqalar, onQoy }) {
         keyboardType="number-pad"
         style={styles.rolInput}
       />
+      )}
       <Text style={styles.rolPreview}>{preview}</Text>
       {boshqalar.length > 0 && (
         <>
@@ -624,6 +650,9 @@ const styles = temaStil(() => StyleSheet.create({
   rolChipTxtFaol:{ color: C.onAccent },
   rolInput: { borderWidth: 1, borderColor: C.border, borderRadius: R.md, paddingVertical: 9, paddingHorizontal: 12, fontSize: T.sm, color: C.text, backgroundColor: C.surface, marginBottom: S[2] },
   rolIzoh:  { fontSize: 11, color: C.muted, lineHeight: 15 },
+  turNarxQator:{ flexDirection: "row", alignItems: "center", gap: S[2] },
+  turNarxNom:{ width: 110, fontSize: 12, fontWeight: "700", color: C.text },
+  turNarxInput:{ flex: 1 },
   rolPreview:{ fontSize: 12, fontWeight: "800", color: C.accent, marginBottom: S[2] },
   rolQaytar:{ flexDirection: "row", alignItems: "center", gap: 4, marginTop: S[2], alignSelf: "flex-start" },
   rolQaytarTxt:{ fontSize: 12, fontWeight: "700", color: C.sub },

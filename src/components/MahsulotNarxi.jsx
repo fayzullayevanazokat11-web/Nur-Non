@@ -10,13 +10,13 @@ import { useTiklash } from "./useTiklash";
 import { Card } from "./Card";
 import { Btn } from "./Btn";
 import { ExpandableCard, yopKartalar } from "./ExpandableCard";
-import { OMBOR_MAYDONLAR, xomashyoRoyxati } from "../logic/konstantalar";
+import { OMBOR_MAYDONLAR, SUT, xomashyoRoyxati } from "../logic/konstantalar";
 import { formatSom } from "../logic/hisob";
 import { C, T, S, R, temaStil } from "../theme";
 import { XomashyoIkon, IKON_TANLOV, IkonTanlov, BosiladiganIkon, xomashyoIkonKaliti } from "./XomashyoIkon";
 
 const baseUnit = (birlik) => (birlik === "litr" ? "ml" : "g");
-const ASOSIY_IDLAR = new Set(OMBOR_MAYDONLAR.map((m) => m.id));
+const ASOSIY_IDLAR = new Set([...OMBOR_MAYDONLAR, SUT].map((m) => m.id));
 
 export function Xomashyo() {
   const { mahsulotNarxlari, setMahsulotNarxlari, customMahsulotlar, setCustomMahsulotlar, ochirArxivga, xomashyoIkonlari, xomashyoIkonQoy } = useApp();

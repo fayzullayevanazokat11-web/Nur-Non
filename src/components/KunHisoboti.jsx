@@ -32,6 +32,7 @@ export function KunHisoboti({ h }) {
   }).filter(Boolean);
   const qoshimcha = [
     ["Karta to'lovlari", a.kartaSum], ["Optom savdo", a.optomSum], ["Brak", a.brakSum], ["Qo'shimcha xarajat", h.xarajatJami],
+    [`Sut (${String(son(h.sutLitr)).replace(".", ",")} l)`, h.sutXarajat],
   ].filter(([, v]) => son(v) > 0);
 
   return (

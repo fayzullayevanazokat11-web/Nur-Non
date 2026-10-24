@@ -1,6 +1,6 @@
 // "Markaz" ekrani — kunlik ko'rsatkichlar, ularning tagida Statistika, kunlik qop
 // hisobi (yakunlangan bo'lsa — kun oxirigacha "bekor qilish"), bir qatorda 4 ta
-// kichik tugma (Qarz/Optom/Karta/Brak), qo'shimcha xarajatlar va ishchilar haqi.
+// kichik tugma (Qarz/Optom/Karta), qo'shimcha xarajatlar va ishchilar haqi.
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { View, Text, Pressable, Image, StyleSheet, LayoutAnimation, AppState, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -18,7 +18,7 @@ import { EslatmalarPanel } from "../../src/components/EslatmalarPanel";
 import { ErtalabTekshiruv } from "../../src/components/ErtalabTekshiruv";
 import { ixcham } from "../../src/components/Statistika";
 import { C, T, S, R, temaStil } from "../../src/theme";
-import { hisoblaKunlik, formatSom, qarzJami, optomJami, kartaJami, ishchiHaqlari, bugunSana } from "../../src/logic/hisob";
+import { hisoblaKunlik, formatSom, qarzJami, optomJami, kartaJami, ishchiHaqlari, bugunSana, sutLitri } from "../../src/logic/hisob";
 // Maxsus rasm ikonkalari (Ionicons o'rniga — premium ko'rinish)
 const ICONS = {
   qop:     require("../../assets/icons/qop.png"),
@@ -36,7 +36,7 @@ export default function Markaz() {
   const {
     nonlar, ishchilarHaq: ishchilar, qarzlar, optomlar, kartalar,
     ozIshlabQoplar, tashqariSonlar, sotilmaganNon, mahsulotNarxlari,
-    hisobotlarTarixi, braklar,
+    hisobotlarTarixi, braklar, sutKirimi,
     boshlangichQoldiq, qoldaYaroqsiz, kunlikXarajatlar, oxirgiYakunlashVaqti,
     lockedDayStats, yakunBekor, yakunBekorMumkinmi, kunYakuniniBekor, setErtalabYonalish,
   } = useApp();
@@ -87,8 +87,8 @@ export default function Markaz() {
   const bugungiOptom = useMemo(() => (optomlar || []).filter((e) => bugSanasi(e) && yangiYozuv(e)), [optomlar, oxirgiYakunlashVaqti, bugunSanasi]);
 
   const liveStats = useMemo(
-    () => hisoblaKunlik({ nonlar, ishchilar, ozIshlabQoplar, tashqariSonlar, sotilmaganNon, optomlar, qarzlar, mahsulotNarxlari, braklar, boshlangichQoldiq, qoldaYaroqsiz, kunlikXarajatlar, oxirgiYakunlashVaqti }),
-    [nonlar, ishchilar, ozIshlabQoplar, tashqariSonlar, sotilmaganNon, optomlar, qarzlar, mahsulotNarxlari, braklar, boshlangichQoldiq, qoldaYaroqsiz, kunlikXarajatlar, oxirgiYakunlashVaqti]
+    () => hisoblaKunlik({ nonlar, ishchilar, ozIshlabQoplar, tashqariSonlar, sotilmaganNon, optomlar, qarzlar, mahsulotNarxlari, braklar, boshlangichQoldiq, qoldaYaroqsiz, kunlikXarajatlar, oxirgiYakunlashVaqti, sutLitr: sutLitri((sutKirimi || {})[bugunSana()]) }),
+    [nonlar, ishchilar, ozIshlabQoplar, tashqariSonlar, sotilmaganNon, optomlar, qarzlar, mahsulotNarxlari, braklar, boshlangichQoldiq, qoldaYaroqsiz, kunlikXarajatlar, oxirgiYakunlashVaqti, sutKirimi]
   );
   // Lock bo'lsa — snapshot, aks holda jonli hisob:
   const stats = locked ? { ...liveStats, ...locked } : liveStats;
@@ -115,11 +115,6 @@ export default function Markaz() {
     if (locked) return { summa: locked.kartaSum, soni: locked.kartaSoni };
     return kartaJami(bugungiKarta);
   }, [locked, bugungiKarta]);
-  const brakSumma = useMemo(() => {
-    if (locked) return locked.brakSum;
-    return bugungiBrak.reduce((s, b) => s + (parseFloat(b.summa) || 0), 0);
-  }, [locked, bugungiBrak]);
-  const brakSoni = useMemo(() => locked ? locked.brakSoni : bugungiBrak.length, [locked, bugungiBrak]);
   const xarajatBugun = useMemo(() => {
     if (locked) return locked.xarajatSum;
     return (kunlikXarajatlar || []).filter((x) => x.sana === bugunSanasi && yangiYozuv(x)).reduce((s, x) => s + (parseFloat(x.summa) || 0), 0);
@@ -219,7 +214,6 @@ export default function Markaz() {
           <MiniTile image={ICONS.qarz} label="Qarzlar" qiymat={qarz.summa} soni={qarz.kishi} onPress={() => router.push("/qarzlar")} />
           <MiniTile image={ICONS.optom} label="Optom" qiymat={optom.summa} soni={optom.soni} onPress={() => router.push("/optom")} />
           <MiniTile image={ICONS.karta} label="Karta" qiymat={karta.summa} soni={karta.soni} onPress={() => router.push("/karta")} />
-          <MiniTile image={ICONS.brak} label="Brak" qiymat={brakSumma} soni={brakSoni} onPress={() => router.push("/brak")} />
         </View>
 
         {/* Kunlik qo'shimcha xarajatlar — vertikal nav tugma */}

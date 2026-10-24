@@ -99,7 +99,6 @@ export default function RootLayout() {
                 <Stack.Screen name="qarzlar" />
                 <Stack.Screen name="optom" />
                 <Stack.Screen name="karta" />
-                <Stack.Screen name="brak" />
                 <Stack.Screen name="xarajat" />
                 <Stack.Screen name="qop" />
                 <Stack.Screen name="tarix" />

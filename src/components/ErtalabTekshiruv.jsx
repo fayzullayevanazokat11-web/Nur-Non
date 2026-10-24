@@ -1,12 +1,15 @@
-// Markazdagi "Kunni boshlash" — ertalabgi tekshiruv (ish kuni 03:00 da boshlanadi):
+// Markazdagi "Kunlik vazifa" (ish kuni 03:00 da boshlanadi):
 //   1) Ishchilar davomati  → Xodimlar bo'limi (kim keldi / kelmadi)
 //   2) Omborni tekshirish  → Ombor bo'limi (zaxira, so'rovnomalar)
-// Ikkalasi bajarilgach "Ertalabgi tekshiruv tugallandi" bosiladi — Markazda kun oxirigacha
-// "Ertalabgi tekshiruv tugallangan" belgisi turadi. Kun yakunlangan bo'lsa ko'rinmaydi.
+//   3) Sut kirimi          → shu yerning o'zida, 2 mahal litr (omborda turmaydi, kunlik daromaddan ayriladi)
+// Bajarilgach "Kunlik vazifa bajarildi" bosiladi — Markazda kun oxirigacha belgi turadi
+// (2-mahal sut hali yozilmagan bo'lsa — belgi tagida sut maydonlari qoladi). Kun yakunlangan bo'lsa ko'rinmaydi.
 import { View, Text, Pressable, StyleSheet, Alert, LayoutAnimation } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useApp } from "../store/AppData";
+import { SutKirimi } from "./SutKirimi";
+import { bugunSana } from "../logic/hisob";
 import { Bosma } from "./Bosma";
 import { Btn } from "./Btn";
 import { sezgi } from "../logic/sezgi";
@@ -20,19 +23,29 @@ const soat = (ms) => { const d = new Date(ms); return `${ikki(d.getHours())}:${i
 const QADAMLAR = [
   { k: "davomat", nom: "Ishchilar davomati", izoh: "Kim keldi, kim kelmadi", icon: "people-outline", yol: "/xodimlar" },
   { k: "ombor", nom: "Omborni tekshirish", izoh: "Zaxira va so'rovnomalar", icon: "cube-outline", yol: "/ombor" },
+  { k: "sut", nom: "Sut kirimi", izoh: "Bugun kelgan sut, litr (2 mahal)", icon: "water-outline" },
 ];
 
 export function ErtalabTekshiruv({ kunYopiq }) {
-  const { ertalab, ertalabBelgila, ertalabTugalla, setErtalabYonalish, ertalabPanel, setErtalabPanel, ishchilarHaq, kelmaganlar } = useApp();
+  const { ertalab, ertalabBelgila, ertalabTugalla, setErtalabYonalish, ertalabPanel, setErtalabPanel, ishchilarHaq, kelmaganlar, sutKirimi } = useApp();
   if (kunYopiq && !ertalab.tugallandi) return null;
+  const bugungiSut = (sutKirimi || {})[bugunSana()] || {};
 
-  // Tugallangan — ixcham belgi
+  // Bajarilgan — ixcham belgi; 2-mahal sut hali yozilmagan bo'lsa, maydonlar shu yerda qoladi
   if (ertalab.tugallandi) {
     return (
-      <View style={styles.tayyor}>
-        <View style={styles.tayyorBelgi}><Ionicons name="checkmark" size={14} color={C.onAccent} /></View>
-        <Text style={styles.tayyorTxt}>Ertalabgi tekshiruv tugallangan</Text>
-        <Text style={styles.tayyorSoat}>{soat(ertalab.tugallandi)}</Text>
+      <View style={styles.tayyorWrap}>
+        <View style={styles.tayyor}>
+          <View style={styles.tayyorBelgi}><Ionicons name="checkmark" size={14} color={C.onAccent} /></View>
+          <Text style={styles.tayyorTxt}>Kunlik vazifa bajarilgan</Text>
+          <Text style={styles.tayyorSoat}>{soat(ertalab.tugallandi)}</Text>
+        </View>
+        {!kunYopiq && !(bugungiSut.m2 > 0) && (
+          <View style={styles.sutQoldi}>
+            <Text style={styles.qadamNom}>Sut kirimi</Text>
+            <SutKirimi />
+          </View>
+        )}
       </View>
     );
   }
@@ -45,7 +58,7 @@ export function ErtalabTekshiruv({ kunYopiq }) {
   const tugalla = () => {
     const bajar = () => { silliq(); ertalabTugalla(); setErtalabPanel(false); sezgi("tayyor"); };
     if (bajarildi === QADAMLAR.length) { bajar(); return; }
-    Alert.alert("Tekshiruv to'liq emas", "Hamma qadam belgilanmagan. Baribir tugallaysizmi?", [
+    Alert.alert("Vazifa to'liq emas", "Hamma qadam belgilanmagan. Baribir tugallaysizmi?", [
       { text: "Yo'q", style: "cancel" },
       { text: "Tugallash", onPress: bajar },
     ]);
@@ -53,11 +66,11 @@ export function ErtalabTekshiruv({ kunYopiq }) {
 
   return (
     <View style={styles.wrap}>
-      <Bosma accessibilityRole="button" accessibilityLabel="Kunni boshlash" onPress={almash} sezgiTuri="bos" style={styles.bosh}>
+      <Bosma accessibilityRole="button" accessibilityLabel="Kunlik vazifa" onPress={almash} sezgiTuri="bos" style={styles.bosh}>
         <View style={styles.boshIkon}><Ionicons name="sunny-outline" size={22} color={C.onAccent} /></View>
         <View style={styles.flex1}>
-          <Text style={styles.boshNom}>Kunni boshlash</Text>
-          <Text style={styles.boshIzoh}>Ertalabgi tekshiruv · {bajarildi}/{QADAMLAR.length}</Text>
+          <Text style={styles.boshNom}>Kunlik vazifa</Text>
+          <Text style={styles.boshIzoh}>Bajarildi · {bajarildi}/{QADAMLAR.length}</Text>
         </View>
         <Ionicons name={ertalabPanel ? "chevron-up" : "chevron-down"} size={18} color={C.onAccentSub} />
       </Bosma>
@@ -67,7 +80,7 @@ export function ErtalabTekshiruv({ kunYopiq }) {
           {QADAMLAR.map((q, i) => {
             const ok = !!ertalab[q.k];
             return (
-              <View key={q.k} style={[styles.qadam, i > 0 && styles.qadamChiziq]}>
+              <View key={q.k} style={[styles.qadam, i > 0 && styles.qadamChiziq, !q.yol && styles.qadamUst]}>
                 <Pressable
                   accessibilityRole="checkbox"
                   accessibilityLabel={`${q.nom}: belgi`}
@@ -78,6 +91,7 @@ export function ErtalabTekshiruv({ kunYopiq }) {
                 >
                   {ok ? <Ionicons name="checkmark" size={14} color={C.onAccent} /> : <Text style={styles.raqam}>{i + 1}</Text>}
                 </Pressable>
+                {q.yol ? (
                 <Bosma accessibilityRole="link" accessibilityLabel={q.nom} onPress={() => bor(q)} tashqi={styles.flex1} style={styles.havola}>
                   <Ionicons name={q.icon} size={18} color={C.accent} />
                   <View style={styles.flex1}>
@@ -86,12 +100,25 @@ export function ErtalabTekshiruv({ kunYopiq }) {
                   </View>
                   <Ionicons name="chevron-forward" size={16} color={C.muted} />
                 </Bosma>
+                ) : (
+                  // Sut — sahifaga o'tmasdan shu yerning o'zida kiritiladi
+                  <View style={[styles.flex1, styles.havola, styles.havolaUst]}>
+                    <View style={styles.sutBosh}>
+                      <Ionicons name={q.icon} size={18} color={C.accent} />
+                      <View style={styles.flex1}>
+                        <Text style={[styles.qadamNom, ok && styles.qadamOk]}>{q.nom}</Text>
+                        <Text style={styles.qadamIzoh}>{q.izoh}</Text>
+                      </View>
+                    </View>
+                    <SutKirimi />
+                  </View>
+                )}
               </View>
             );
           })}
           <View style={styles.tugma}>
             <Btn icon="checkmark-done-outline" onPress={tugalla} disabled={false} sezgiTuri={false}>
-              Ertalabgi tekshiruv tugallandi
+              Kunlik vazifa bajarildi
             </Btn>
           </View>
         </View>
@@ -135,7 +162,12 @@ const styles = temaStil(() => StyleSheet.create({
   qadamOk:   { color: C.sub },
   qadamIzoh: { fontSize: 11, color: C.muted, marginTop: 1 },
   tugma:     { marginTop: S[3] },
-  tayyor:    { flexDirection: "row", alignItems: "center", gap: S[2], backgroundColor: C.accent + "12", borderRadius: R.md, borderWidth: 1, borderColor: C.accent + "2E", paddingVertical: S[2] + 2, paddingHorizontal: S[3], marginBottom: S[4] },
+  tayyorWrap:{ marginBottom: S[4] },
+  sutQoldi:  { marginTop: S[2], backgroundColor: C.card, borderRadius: R.md, borderWidth: StyleSheet.hairlineWidth, borderColor: C.borderSoft, padding: S[3] },
+  havolaUst: { flexDirection: "column", alignItems: "stretch", minWidth: 0 },
+  qadamUst:  { alignItems: "flex-start", paddingTop: S[3] },
+  sutBosh:   { flexDirection: "row", alignItems: "center", gap: S[3], marginBottom: S[2] },
+  tayyor:    { flexDirection: "row", alignItems: "center", gap: S[2], backgroundColor: C.accent + "12", borderRadius: R.md, borderWidth: 1, borderColor: C.accent + "2E", paddingVertical: S[2] + 2, paddingHorizontal: S[3] },
   tayyorBelgi:{ width: 22, height: 22, borderRadius: 11, alignItems: "center", justifyContent: "center", backgroundColor: C.accent },
   tayyorTxt: { flex: 1, fontSize: T.sm, fontWeight: "800", color: C.text },
   tayyorSoat:{ fontSize: T.xs, fontWeight: "700", color: C.sub },

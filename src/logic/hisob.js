@@ -42,13 +42,24 @@ export function kunRoliBilan(w, rol) {
   const n = { ...w, kunRol: rol };
   if (rol.lavozimId) n.lavozimId = rol.lavozimId;
   const haq = rol.haq !== undefined && rol.haq !== null && String(rol.haq).trim() !== "" ? sonOl(rol.haq) : null;
-  if (haq !== null && rol.haqTuri === "qop") {
+  // Bir nechta non turi (masalan, Patir va Qora non) — har biriga alohida 1 qop narxi (rol.nonNarxlari)
+  const turNarx = rol.nonNarxlari && Object.values(rol.nonNarxlari).some((v) => sonOl(v) > 0) ? rol.nonNarxlari : null;
+  if (rol.haqTuri === "qop" && (haq !== null || turNarx)) {
     const turlar = rol.nonTurlari || w.nonTurlari || [];
-    n.haqTuri = "qop"; n.miqdor = 0; n.nonTurlari = turlar; n.nonNarxlari = Object.fromEntries(turlar.map((t) => [t, haq]));
+    n.haqTuri = "qop"; n.miqdor = 0; n.nonTurlari = turlar;
+    n.nonNarxlari = Object.fromEntries(turlar.map((t) => [t, turNarx ? sonOl(turNarx[t]) : haq]));
   } else if (haq !== null) {
     n.haqTuri = "kunlik"; n.miqdor = haq; n.nonTurlari = []; n.nonNarxlari = {};
   }
   return n;
+}
+
+// ── Sut: 1 litr narxi (Xomashyo narxlaridan) va kunlik kirim (2 mahal) ──
+export function sutLitrNarxi(narxlar) {
+  return getIngNarx({ id: "sut", miqdor: 1000, narx: 0 }, narxlar); // 1000 ml = 1 l
+}
+export function sutLitri(kun) {
+  return Object.values(kun || {}).reduce((s, v) => s + (parseFloat(v) || 0), 0);
 }
 
 // ── Bir qop xamiridan nechta non: barcha xomashyo (g, ml ≈ g) yig'indisi ÷ bitta non xamiri vazni ──
@@ -119,7 +130,7 @@ export function hisoblaKunlik({
   nonlar = [], ishchilar = [], ozIshlabQoplar = {}, tashqariSonlar = {},
   sotilmaganNon = {}, optomlar = [], qarzlar = [], mahsulotNarxlari = {}, braklar = [],
   boshlangichQoldiq = {}, qoldaYaroqsiz = {}, kunlikXarajatlar = [], oxirgiYakunlashVaqti = 0,
-  sana = bugunSana(),
+  sana = bugunSana(), sutLitr = 0,
 }) {
   const diverted = divertedByNon(optomlar, qarzlar, oxirgiYakunlashVaqti, sana);
   let jamiNon = 0, jamiQop = 0, jamiBoshlang = 0, jamiQoldiq = 0, jamiYaroqsiz = 0;
@@ -187,10 +198,12 @@ export function hisoblaKunlik({
   // Kun "boshlandi" deb hisoblanishi uchun BUGUNGI ishlab chiqarish yoki bugungi
   // xarajat bo'lishi kerak. Faqat kechagi qoldiq (boshlang) bo'lsa — sofFoyda 0
   // (aks holda kunlik ishchi haqi darrov ayrilib, kun boshidan minusga kirib ketadi).
-  const kunBoshlandi = jamiQop > 0 || jamiNon > 0 || xarajatJami > 0 || oq.optom + oq.qarz > 0;
+  // Sut omborda turmaydi — shu kuni kelgan litr × 1 litr narxi daromaddan to'g'ridan-to'g'ri ayriladi
+  const sutXarajat = Math.round((parseFloat(sutLitr) || 0) * sutLitrNarxi(mahsulotNarxlari));
+  const kunBoshlandi = jamiQop > 0 || jamiNon > 0 || xarajatJami > 0 || sutXarajat > 0 || oq.optom + oq.qarz > 0;
   // O'z xomashyomiz sof foydadan AYRILMAYDI — u ombor (keltirilgan set) orqali alohida
   // hisoblanadi. Tashqaridan olingan non narxi esa omborda yo'q, shuning uchun ayriladi.
-  const sofFoyda = kunBoshlandi ? Math.round(daromad - tashqariTannarx - ishchiHaq - xarajatJami) : 0;
+  const sofFoyda = kunBoshlandi ? Math.round(daromad - tashqariTannarx - ishchiHaq - xarajatJami - sutXarajat) : 0;
   // Bugun sotilgan jami (retail + diverted) — nonlar bo'yicha yig'indi
   const sotilganNon = sotilgan;
 
@@ -200,7 +213,7 @@ export function hisoblaKunlik({
     daromad: Math.round(daromad), chakanaDaromad: Math.round(chakanaDaromad),
     optomDaromad: Math.round(oq.optom), qarzDaromad: Math.round(oq.qarz), xomashyo: Math.round(xomashyo), tashqariTannarx: Math.round(tashqariTannarx),
     ishchiHaq: Math.round(ishchiHaq), brakAyirma: Math.round(brakAyirma),
-    xarajatJami: Math.round(xarajatJami),
+    xarajatJami: Math.round(xarajatJami), sutLitr: parseFloat(sutLitr) || 0, sutXarajat,
   };
 }
 

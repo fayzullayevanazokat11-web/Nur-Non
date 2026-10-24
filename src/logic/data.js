@@ -67,4 +67,5 @@ export const SEED_MAHSULOT_NARXLARI = {
   achitqi:  { miqdor: "500",   narx: "44000"  },
   quruqSut: { miqdor: "1000",  narx: "30000"  },
   shakar:   { miqdor: "1000",  narx: "15700"  },
+  tuz:      { miqdor: "1000",  narx: "4000"   },
 };

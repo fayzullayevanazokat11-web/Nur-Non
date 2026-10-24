@@ -38,6 +38,7 @@ const TURLAR = {
   ishHaqi:     { nom: "Ish haqi yozuvi",   icon: "wallet-outline",        tavsif: (e) => `${{ avans: "Avans", jarima: "Jarima", bonus: "Bonus", tolov: "To'lov" }[e.tur] || ""} · ${som(e.summa)} · ${e.sana}` },
   // Salbiy amallar (o'chirish emas) — qaytarilsa amal ortga qaytadi
   haydash:     { nom: "Ishdan haydaldi",   icon: "person-remove-outline", tavsif: (e) => e.ism },
+  zaxiraYangilash: { nom: "Zaxira yangilandi", icon: "create-outline", tavsif: (e) => `Ombor · ${(e.maydonlar || []).map((m) => m.nom).join(", ")} · ${e.sana}` },
   nollash:     { nom: "Zaxira nollandi",   icon: "refresh-outline",       tavsif: (e) => `Ombor · ${(e.maydonlar || []).length} xil xomashyo · ${e.sana}` },
   tolovBekor:  { nom: "Bekor qilingan to'lov", icon: "cash-outline",      tavsif: (e) => `${e.ism} · ${som(e.summa)}` },
   kunYakuni:   { nom: "Bekor qilingan kun yakuni", icon: "lock-open-outline", tavsif: (e) => `${e.sana} · sof foyda ${som(e.snap?.sofFoyda)}`, sorab: "Kun yakuni qayta tiklanadi: hisobot tarixga qaytadi va kun yana yopiladi. Davom etasizmi?" },

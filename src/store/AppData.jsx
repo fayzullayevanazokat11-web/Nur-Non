@@ -110,6 +110,9 @@ export function AppDataProvider({ children }) {
   const [kelishVaqtlari, setKelishVaqtlari]             = usePersistedState("nurnon:kelishVaqtlari", {});
   // Xodimning shu kungi ishi: { "YYYY-MM-DD": { [id]: { lavozimId?, haq?, orniga? } } }
   const [kunlikRollar, setKunlikRollar]                 = usePersistedState("nurnon:kunlikRollar", {});
+  // Sut kirimi (kuniga 2 mahal, litr): { "YYYY-MM-DD": { m1: 40, m2: 35 } } — omborda turmaydi,
+  // shu kunning daromadidan to'g'ridan-to'g'ri ayriladi
+  const [sutKirimi, setSutKirimi]                       = usePersistedState("nurnon:sutKirimi", {});
   // Xomashyo narxlari o'zgarish tarixi: [{ id, nom, eski, yangi, vaqt }] — 180 kun
   const [narxTarixi, setNarxTarixi]                     = usePersistedState("nurnon:narxTarixi", []);
   // Kun xulosasi (03:00) va ertalabki salom ekranlari yoqilganmi (qurilma sozlamasi)
@@ -188,6 +191,7 @@ export function AppDataProvider({ children }) {
       setDavomat((p) => Object.fromEntries(Object.entries(p || {}).filter(([s]) => (now - (Date.parse(s) || now)) < 60 * D)));
       setKelishVaqtlari((p) => Object.fromEntries(Object.entries(p || {}).filter(([s]) => (now - (Date.parse(s) || now)) < 60 * D)));
       setKunlikRollar((p) => Object.fromEntries(Object.entries(p || {}).filter(([s]) => (now - (Date.parse(s) || now)) < 60 * D)));
+      setSutKirimi((p) => Object.fromEntries(Object.entries(p || {}).filter(([s]) => (now - (Date.parse(s) || now)) < 60 * D)));
     };
     yuritish();
     const t = setInterval(yuritish, 6 * 60 * 60 * 1000);
@@ -389,6 +393,15 @@ export function AppDataProvider({ children }) {
   });
   // Bugungi ish (boshqa lavozim / boshqa haq / kimningdir o'rniga). patch — qisman; null qiymat o'chiradi
   const kunlikRol = useMemo(() => (kunlikRollar || {})[bugun] || {}, [kunlikRollar, bugun]);
+  // Sut: mahal — "m1" | "m2"; litr bo'sh bo'lsa o'chiriladi. Kiritilsa — kunlik vazifaning 3-qadami bajarildi
+  const sutQoy = (sana, mahal, litr) => {
+    setSutKirimi((p) => {
+      const kun = { ...((p || {})[sana] || {}) };
+      if (litr > 0) kun[mahal] = litr; else delete kun[mahal];
+      return { ...(p || {}), [sana]: kun };
+    });
+    if (sana === bugunSana() && litr > 0) ertalabBelgila("sut", true);
+  };
   const kunlikRolQoy = (id, patch) => setKunlikRollar((p) => {
     const kun = { ...((p || {})[bugun] || {}) };
     const yangi = { ...(kun[id] || {}), ...(patch || {}) };
@@ -466,6 +479,11 @@ export function AppDataProvider({ children }) {
     },
     nollash: (e) => {
       if (!(omborlar || []).some((h) => h.id === e.id)) return "Bu nollash allaqachon bekor qilingan.";
+      setOmborlar((p) => (p || []).filter((h) => h.id !== e.id));
+      return true;
+    },
+    zaxiraYangilash: (e) => {
+      if (!(omborlar || []).some((h) => h.id === e.id)) return "Bu yangilash allaqachon bekor qilingan.";
       setOmborlar((p) => (p || []).filter((h) => h.id !== e.id));
       return true;
     },
@@ -569,7 +587,7 @@ export function AppDataProvider({ children }) {
   };
   const ertalab = ertalabOl();
   // Funksional yangilash: ketma-ket chaqiruvlar (rasm qo'shish, belgilash) bir-birining ustiga yozmasin
-  const ertalabBosh = () => ({ kun: bugunSana(), davomat: false, ombor: false, rasm: false, tugallandi: 0 });
+  const ertalabBosh = () => ({ kun: bugunSana(), davomat: false, ombor: false, sut: false, tugallandi: 0 });
   const ertalabBelgila = (qadam, qiymat = true) =>
     setErtalabTekshiruv((p) => ({ ...(p && p.kun === bugunSana() ? p : ertalabBosh()), [qadam]: !!qiymat }));
   const ertalabTugalla = () =>
@@ -687,6 +705,7 @@ export function AppDataProvider({ children }) {
     keldilar: [davomat, setDavomat, "object"],
     kelishVaqtlari: [kelishVaqtlari, setKelishVaqtlari, "object"],
     kunlikRollar: [kunlikRollar, setKunlikRollar, "object"],
+    sutKirimi: [sutKirimi, setSutKirimi, "object"],
     narxTarixi: [narxTarixi, setNarxTarixi, "array"],
     xomashyoIkonlari: [xomashyoIkonlari, setXomashyoIkonlari, "object"],
     ertalabTekshiruv: [ertalabTekshiruv, setErtalabTekshiruv, "objectOrNull"],
@@ -797,6 +816,7 @@ export function AppDataProvider({ children }) {
     davomat, setDavomat, keldilar, kelmaganlar, keldiAlmash, ishchilarHaq,
     kelishVaqtlari, kelishVaqti, kelishVaqtiQoy,
     kunlikRollar, kunlikRol, kunlikRolQoy,
+    sutKirimi, sutQoy,
     narxTarixi, setNarxTarixi,
     xomashyoIkonlari, xomashyoIkonQoy,
     salomYoqilgan, setSalomYoqilgan,

@@ -46,7 +46,8 @@ export default function IshlabChiqarish() {
   // Retsept xomashyolari: ombordagilar + suv (omborda yo'q, lekin xamir vazniga kiradi)
   // Tahrirlanayotgan nonning ro'yxatda yo'q xomashyolari ham (masalan, alohida tuz) — aks holda
   // saqlashda tushib qolardi va xamir vazni kam hisoblanardi
-  const asosiyRoyxat = [...xomashyoRoyxati(customMahsulotlar), SUV];
+  const xRoyxat = xomashyoRoyxati(customMahsulotlar);
+  const asosiyRoyxat = xRoyxat.some((m) => m.id === "suv" || String(m.nom).trim().toLowerCase() === "suv") ? xRoyxat : [...xRoyxat, SUV];
   const tahrirNon = tahrirId ? (nonlar || []).find((n) => n.id === tahrirId) : null;
   const royxat = [
     ...asosiyRoyxat,

@@ -147,7 +147,7 @@ const QOSHIMCHA = {
   brak: [
     "Brak odatdagidan ko'p bo'ldi ({brak}) — xamir va tandirni bir tekshirib qo'ying.",
     "Kechagi brak {brak}. Uni kamaytirish — eng oson foyda.",
-    "Diqqat: brak {brak}. Qaysi nonda ko'p bo'lganini Brak bo'limida ko'ring.",
+    "Diqqat: brak {brak}. Xamir va tandirni bir tekshirib qo'ying.",
   ],
   xarajat: [
     "Qo'shimcha xarajat katta bo'ldi: {xarajat}.",

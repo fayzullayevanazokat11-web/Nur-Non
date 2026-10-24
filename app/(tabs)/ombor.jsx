@@ -15,9 +15,10 @@ import { ExpandableCard, yopKartalar } from "../../src/components/ExpandableCard
 import { ScrollBox } from "../../src/components/ScrollBox";
 import { C, T, S, R, temaStil } from "../../src/theme";
 import { omborBalans, zaxiraMatni, omborKattaBirlik, bugunSana, sonOl } from "../../src/logic/hisob";
-import { xomashyoRoyxati } from "../../src/logic/konstantalar";
+import { omborRoyxati } from "../../src/logic/konstantalar";
 import { ortachaSarf } from "../../src/logic/eslatma";
 import { XomashyoIkon } from "../../src/components/XomashyoIkon";
+import { useTiklash } from "../../src/components/useTiklash";
 
 // Har bir mahsulot id'si uchun bo'sh maydon (asosiy + Xomashyoda qo'shilganlar)
 const boshForma = (royxat) => Object.fromEntries(royxat.map((m) => [m.id, ""]));
@@ -25,9 +26,14 @@ const boshForma = (royxat) => Object.fromEntries(royxat.map((m) => [m.id, ""]));
 export default function Ombor() {
   const { omborlar, setOmborlar, omborSorovlar, setOmborSorovlar, omborTasdiqlar, setOmborTasdiqlar, customMahsulotlar, ochirArxivga, amalArxivga, hisobotlarTarixi, nonlar, ozIshlabQoplar, eksportMalumot, bekorTaklif } = useApp();
   // Ishlab chiqarish > Xomashyo'da qo'shilgan mahsulotlar ham omborda avtomatik ko'rinadi
-  const royxat = useMemo(() => xomashyoRoyxati(customMahsulotlar), [customMahsulotlar]);
+  // (sut va suv omborda turmaydi)
+  const royxat = useMemo(() => omborRoyxati(customMahsulotlar), [customMahsulotlar]);
 
   const [forma, setForma] = useState(() => boshForma(royxat));
+  // "qosh" — keltirilgan miqdor bor zaxira ustiga qo'shiladi; "yangila" — mahsulotning aniq
+  // hozirgi qoldig'i yoziladi (zaxira shu qiymatga tenglashtiriladi)
+  const [rejim, setRejim] = useState("qosh");
+  useTiklash(() => setRejim("qosh"));
 
   const balans = useMemo(() => omborBalans(omborlar, royxat), [omborlar, royxat]);
   const setSoni = (omborlar || []).filter((h) => h.turi === "yangiset").length;
@@ -135,6 +141,7 @@ export default function Ombor() {
   // Saqlash — kiritilgan qiymatlar baza birlikka (qop×50, quti×5) o'tkaziladi.
   // Yangi set avvalgi qoldiqqa QO'SHILADI (balans barcha yozuvlarni yig'adi).
   const saqla = () => {
+    if (rejim === "yangila") return yangilaQoldiq();
     const maydonlar = royxat.map((m) => {
       const faktor = omborKattaBirlik(m.id)?.faktor || 1;
       const kiritilgan = sonOl(forma[m.id]);
@@ -152,6 +159,27 @@ export default function Ombor() {
       maydonlar,
     };
     setOmborlar((prev) => [entry, ...prev]);
+    tozala();
+  };
+
+  // Aniq qoldiqni yangilash: faqat to'ldirilgan maydonlar; farq (yangi − joriy) yozuv sifatida qo'shiladi
+  const yangilaQoldiq = () => {
+    const maydonlar = royxat
+      .filter((m) => String(forma[m.id] ?? "").trim() !== "")
+      .map((m) => {
+        const faktor = omborKattaBirlik(m.id)?.faktor || 1;
+        const yangi = sonOl(forma[m.id]) * faktor;
+        const joriy = balans.find((b) => b.id === m.id)?.qiymat || 0;
+        return { id: m.id, nom: m.nom, birlik: m.birlik, emoji: m.emoji, qiymat: +(yangi - joriy).toFixed(3), yangi };
+      })
+      .filter((m) => Math.abs(m.qiymat) > 0.0001);
+    if (!maydonlar.length) {
+      Alert.alert("O'zgarish yo'q", "Yangilanadigan mahsulotning hozirgi aniq qoldig'ini kiriting.");
+      return;
+    }
+    const entry = { id: Date.now(), sana: bugunSana(), vaqt: Date.now(), turi: "yangilash", maydonlar };
+    setOmborlar((prev) => [entry, ...prev]);
+    amalArxivga("zaxiraYangilash", entry); // Tarixdagilar'dan qaytarilsa — avvalgi qoldiq tiklanadi
     tozala();
   };
 
@@ -236,10 +264,18 @@ export default function Ombor() {
           header={
             <View style={styles.qoshHead}>
               <Ionicons name="add-circle-outline" size={18} color={C.sub} />
-              <Text style={styles.qoshTitle}>Yangi keltirilgan set</Text>
+              <Text style={styles.qoshTitle}>Yangi keltirilgan set / qoldiqni yangilash</Text>
             </View>
           }
         >
+          <View style={styles.rejimQator}>
+            {[["qosh", "Qo'shish"], ["yangila", "Aniq qoldiqni yangilash"]].map(([k, l]) => (
+              <Pressable key={k} accessibilityRole="button" accessibilityState={{ selected: rejim === k }} onPress={() => setRejim(k)} style={[styles.rejimBtn, rejim === k && styles.rejimFaol]}>
+                <Text style={[styles.rejimTxt, rejim === k && styles.rejimTxtFaol]}>{l}</Text>
+              </Pressable>
+            ))}
+          </View>
+          <Text style={styles.hint}>{rejim === "qosh" ? "Keltirilgan miqdor bor zaxira ustiga qo'shiladi." : "Mahsulotning hozir omborda turgan aniq miqdorini yozing — zaxira shu qiymatga tenglashadi. Bo'sh qoldirilgan mahsulot o'zgarmaydi."}</Text>
           {royxat.map((m) => {
             const katta = omborKattaBirlik(m.id);
             const birlik = katta ? katta.birlik : m.birlik;
@@ -250,7 +286,9 @@ export default function Ombor() {
                 <TextInput
                   value={forma[m.id] ?? ""}
                   onChangeText={(v) => yangila(m.id, v)}
-                  placeholder={katta ? `Nechta ${birlik}` : "0"}
+                  placeholder={rejim === "yangila"
+                    ? `Hozir: ${zaxiraMatni(m.id, balans.find((b) => b.id === m.id)?.qiymat || 0, m.birlik)}`
+                    : (katta ? `Nechta ${birlik}` : "0")}
                   placeholderTextColor={C.muted}
                   keyboardType="numeric"
                   style={styles.input}
@@ -262,7 +300,7 @@ export default function Ombor() {
             );
           })}
           <View style={styles.qoshActions}>
-            <Btn color={C.blue} onPress={saqla}>Saqlash</Btn>
+            <Btn color={C.blue} onPress={saqla}>{rejim === "yangila" ? "Qoldiqni yangilash" : "Saqlash"}</Btn>
           </View>
         </ExpandableCard>
 
@@ -344,6 +382,11 @@ export default function Ombor() {
 }
 
 const styles = temaStil(() => StyleSheet.create({
+  rejimQator:{ flexDirection: "row", gap: 6, marginBottom: S[2] },
+  rejimBtn: { flex: 1, paddingVertical: 9, borderRadius: R.pill, alignItems: "center", backgroundColor: C.panel },
+  rejimFaol:{ backgroundColor: C.accent },
+  rejimTxt: { fontSize: 12, fontWeight: "800", color: C.sub },
+  rejimTxtFaol:{ color: C.onAccent },
   safe:      { flex: 1, backgroundColor: C.bg },
   scroll:    { padding: S[5], paddingBottom: S[8] },
   gap10:     { height: S[3] },

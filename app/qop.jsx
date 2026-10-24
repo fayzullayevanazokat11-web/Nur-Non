@@ -11,8 +11,9 @@ import { Ionicons } from "@expo/vector-icons";
 import { useApp } from "../src/store/AppData";
 import { Card } from "../src/components/Card";
 import { Btn } from "../src/components/Btn";
-import { xomashyoRoyxati, getLavozimLabel } from "../src/logic/konstantalar";
+import { omborRoyxati, getLavozimLabel } from "../src/logic/konstantalar";
 import { QopRasmBolimi } from "../src/components/QopRasmBolimi";
+import { SutKirimi } from "../src/components/SutKirimi";
 import { DateField } from "../src/components/DateField";
 import { KunHisoboti } from "../src/components/KunHisoboti";
 import { NonIkon } from "../src/components/XomashyoIkon";
@@ -21,7 +22,7 @@ import { kunXulosasiniKorsat } from "../src/components/KunOtishi";
 import { ScrollBox } from "../src/components/ScrollBox";
 import { SahifaSarlavha } from "../src/components/SahifaSarlavha";
 import { C, T, S, R, temaStil } from "../src/theme";
-import { hisoblaKunlik, qoldiqlarHisobi, ishchiHaqlari, kunlikXomashyoSarfi, formatSom, bugunSana, kunTugashVaqti, kunRoliBilan } from "../src/logic/hisob";
+import { hisoblaKunlik, qoldiqlarHisobi, ishchiHaqlari, kunlikXomashyoSarfi, formatSom, bugunSana, kunTugashVaqti, kunRoliBilan, sutLitri } from "../src/logic/hisob";
 
 const toStr = (obj) => Object.fromEntries(Object.entries(obj || {}).map(([k, v]) => [k, String(v)]));
 // Taqqoslash uchun: bo'sh maydonlar tashlanadi, kalitlar tartiblanadi
@@ -41,7 +42,7 @@ export default function Qop() {
     kunlikXarajatlar,
     oxirgiYakunlashVaqti, customMahsulotlar,
     hisobotlarTarixi, kunYakunlanganmi, kunYakunla, lockedDayStats, yakunBekor,
-    ertalab, qopRasmlari, davomat, kelishVaqtlari, kunlikRollar, keldiAlmash,
+    ertalab, qopRasmlari, davomat, kelishVaqtlari, kunlikRollar, keldiAlmash, sutKirimi,
   } = useApp();
   // Bugun yakunlangan bo'lsa — faqat hisobot ko'rinishi
   const yakunlangan = kunYakunlanganmi();
@@ -96,8 +97,9 @@ export default function Qop() {
     nonlar, ishchilar, optomlar, qarzlar, mahsulotNarxlari, braklar,
     ozIshlabQoplar: fQop, tashqariSonlar: fTash, sotilmaganNon: fSot,
     boshlangichQoldiq, qoldaYaroqsiz: fYaroqsiz, kunlikXarajatlar, oxirgiYakunlashVaqti, sana: tanSana,
+    sutLitr: sutLitri((sutKirimi || {})[tanSana]),
   };
-  const stats = useMemo(() => hisoblaKunlik(args), [fQop, fTash, fSot, fYaroqsiz, nonlar, ishchilar, optomlar, qarzlar, mahsulotNarxlari, braklar, boshlangichQoldiq, kunlikXarajatlar, oxirgiYakunlashVaqti, tanSana]);
+  const stats = useMemo(() => hisoblaKunlik(args), [fQop, fTash, fSot, fYaroqsiz, nonlar, ishchilar, optomlar, qarzlar, mahsulotNarxlari, braklar, boshlangichQoldiq, kunlikXarajatlar, oxirgiYakunlashVaqti, tanSana, sutKirimi]);
   const qoldiqlar = useMemo(() => qoldiqlarHisobi(nonlar, args), [fQop, fTash, fSot, fYaroqsiz, nonlar, boshlangichQoldiq, optomlar, qarzlar, oxirgiYakunlashVaqti, tanSana]);
   const haq = useMemo(() => ishchiHaqlari(nonlar, ishchilar, fQop, bugungiBrak), [nonlar, ishchilar, fQop, bugungiBrak]);
 
@@ -189,7 +191,7 @@ export default function Qop() {
             daromad:     stats.daromad,
             xomashyo:    stats.xomashyo,
             ishchiHaq:   stats.ishchiHaq,
-            xarajatJami: stats.xarajatJami,
+            xarajatJami: stats.xarajatJami, sutXarajat: stats.sutXarajat,
             kartaSum, kartaSoni: bugKarta.length, kartaFoyda,
             brakSum,  brakSoni: bugBrak.length,
             optomSum, optomSoni: bugOptom.length,
@@ -209,7 +211,7 @@ export default function Qop() {
           xomashyo: stats.xomashyo, tashqariTannarx: stats.tashqariTannarx, ishchiHaq: stats.ishchiHaq,
           sofFoyda: stats.sofFoyda, sotilganNon: stats.sotilganNon, jamiQop: stats.jamiQop, jamiNon: stats.jamiNon,
           jamiBoshlang: stats.jamiBoshlang, jamiQoldiq: stats.jamiQoldiq, jamiYaroqsiz: stats.jamiYaroqsiz,
-          xarajatJami: stats.xarajatJami, ishchiHaqlari: haq.list,
+          xarajatJami: stats.xarajatJami, sutLitr: stats.sutLitr, sutXarajat: stats.sutXarajat, ishchiHaqlari: haq.list,
           // History qismi — bugungi yozuvlarning to'liq dumpi (Qarz YO'Q):
           arxiv: {
             kartalar:        bugKarta,
@@ -220,7 +222,7 @@ export default function Qop() {
           },
         };
         // ── 4) Xomashyo sarfi — ombor so'rovnomasi
-        const sarf = kunlikXomashyoSarfi(nonlar, fQop, xomashyoRoyxati(customMahsulotlar));
+        const sarf = kunlikXomashyoSarfi(nonlar, fQop, omborRoyxati(customMahsulotlar)); // ombor so'rovnomasi (sut/suv yo'q)
         // PDF uchun kunning to'liq tafsiloti: qarzlar va to'lovlar (vaqti bilan),
         // ertalabgi tekshiruv, kelmagan xodimlar, qop rasmlari, xomashyo sarfi
         Object.assign(snap, {
@@ -236,6 +238,7 @@ export default function Qop() {
               orniga: !w.kelmadi && w.kunRol?.orniga ? ((xomIshchilar || []).find((x) => x.id === w.kunRol.orniga)?.ism || "") : "",
             })),
             rasmSoni: sanaRasmlari.length,
+            sut: (sutKirimi || {})[sana] || null,
             xomashyo: sarf.map((x) => ({ nom: x.nom, birlik: x.birlik, qiymat: x.qiymat })),
           },
         });
@@ -394,6 +397,9 @@ export default function Qop() {
           {stats.xarajatJami > 0 && (
             <Row label="Qo'shimcha xarajat (bugun)" value={`− ${formatSom(stats.xarajatJami)} so'm`} color={C.red} />
           )}
+          {stats.sutXarajat > 0 && (
+            <Row label={`Sut (${String(stats.sutLitr).replace(".", ",")} l)`} value={`− ${formatSom(stats.sutXarajat)} so'm`} color={C.red} />
+          )}
           <View style={styles.divider} />
           <Row label="Sof foyda" value={`${formatSom(stats.sofFoyda)} so'm`} color={stats.sofFoyda >= 0 ? C.green : C.red} bold big />
         </Card>
@@ -415,6 +421,14 @@ export default function Qop() {
           </Card>
         )}
 
+        {/* Sut kirimi — 2 mahal (Kunlik vazifadan ham kiritiladi); kunlik daromaddan ayriladi */}
+        <Card style={styles.card}>
+          <View style={styles.cardTitleRow}>
+            <Ionicons name="water-outline" size={18} color={C.sub} />
+            <Text style={styles.cardTitle}>Sut kirimi</Text>
+          </View>
+          <SutKirimi sana={tanSana} />
+        </Card>
         <QopRasmBolimi kun={tanSana} />
         <Btn secondary onPress={() => kunniYakunla()} icon="checkmark-done-outline">Kunni yakunlash</Btn>
         <View style={styles.gap14} />
