@@ -15,6 +15,7 @@ import { NavQator } from "../../src/components/NavQator";
 import { Qidiruv, qidiruvMos } from "../../src/components/Qidiruv";
 import { ExpandableCard, yopKartalar } from "../../src/components/ExpandableCard";
 import { ScrollBox } from "../../src/components/ScrollBox";
+import { useTiklash } from "../../src/components/useTiklash";
 import { DateField } from "../../src/components/DateField";
 import { Avatar } from "../../src/components/Avatar";
 import { C, T, S, R, temaStil } from "../../src/theme";
@@ -27,6 +28,7 @@ const HOLATLAR = ["Aktiv", "Ta'tilda"];
 export default function Xodimlar() {
   const { ishchilar, setIshchilar, nonlar, ochirArxivga, amalArxivga, kelmaganlar, keldiAlmash, ertalabYonalish, kelishVaqti, kelishVaqtiQoy, kunlikRol, kunlikRolQoy } = useApp();
   const [ochiqRol, setOchiqRol] = useState(null); // davomatda "Bugungi ishi" ochiq xodim
+  useTiklash(() => setOchiqRol(null));
   const [qidiruv, setQidiruv] = useState("");
   const ozNonlar = (nonlar || []).filter((n) => n.ozIshlab !== false);
 

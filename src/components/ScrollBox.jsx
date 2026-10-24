@@ -37,6 +37,11 @@ export const ScrollBox = forwardRef(function ScrollBox(
   useEffect(() => { korsat(); }, []);
   const navigation = useContext(NavigationContext);
   const pastkiJoy = useContext(PastkiJoy);
+  // Sahifadan chiqilganda scroll boshiga qaytadi (qaytib kelinganda sahifa sukut holatida)
+  useEffect(() => {
+    if (!navigation?.addListener) return undefined;
+    return navigation.addListener("blur", () => ref.current?.scrollTo({ y: 0, animated: false }));
+  }, [navigation]);
   useEffect(() => {
     if (!navigation?.addListener) return undefined;
     return navigation.addListener("focus", () => { if (Date.now() - oxirgiTabBosish < 600) korsat(); });

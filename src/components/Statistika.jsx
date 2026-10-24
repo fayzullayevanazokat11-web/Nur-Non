@@ -7,6 +7,7 @@
 //   • Non turlari bo'yicha ishlab chiqarilgan qoplar
 // Har bir mavzu ranglari validator bilan tekshirilgan (dataviz: lightness, chroma, CVD, kontrast — PASS).
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useTiklash } from "./useTiklash";
 import { View, Text, Pressable, Animated, Easing, StyleSheet, LayoutAnimation, Alert } from "react-native";
 import { C, T, S, R, temaStil } from "../theme";
 import { Ionicons } from "@expo/vector-icons";
@@ -48,6 +49,7 @@ export function Statistika({ hisobotlar, nonlar, arxiv, akkaunt }) {
   const [davr, setDavr] = useState(30);
   const [korK, setKorK] = useState("sofFoyda");
   const [tanlangan, setTanlangan] = useState(null);
+  useTiklash(() => setTanlangan(null));
   const [kenglik, setKenglik] = useState(0);
   const kor = KORSATKICHLAR.find((x) => x.k === korK);
 

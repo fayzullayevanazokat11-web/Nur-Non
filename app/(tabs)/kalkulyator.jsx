@@ -14,6 +14,7 @@ import { Card } from "../../src/components/Card";
 import { Btn } from "../../src/components/Btn";
 import { ScreenHeader } from "../../src/components/ScreenHeader";
 import { ScrollBox } from "../../src/components/ScrollBox";
+import { useTiklash } from "../../src/components/useTiklash";
 import { NonIkon } from "../../src/components/XomashyoIkon";
 import { useAnimSon } from "../../src/components/useAnimSon";
 import { C, T, S, R, temaStil } from "../../src/theme";
@@ -41,6 +42,7 @@ export default function Kalkulyator() {
 
   // Raqamlar qatori qaysi non uchun ochiq (bir vaqtda bittasi)
   const [ochiq, setOchiq] = useState(null);
+  useTiklash(() => setOchiq(null));
   const ochYop = (id) => { silliq(); setOchiq((o) => (o === id ? null : id)); };
   const raqam = (id, r) => {
     const joriy = String(son(soni[id]) || "");

@@ -1,6 +1,7 @@
 // Sana tanlash maydoni — bosilganda kichik kalendar shu yerda DARROV ochiladi
 // (Modal/Bottom Sheet ishlatilmaydi). Qiymat "YYYY-MM-DD" ko'rinishida.
 import { useState } from "react";
+import { useTiklash } from "./useTiklash";
 import { View, Text, Pressable, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { C, T, S, R, temaStil } from "../theme";
@@ -14,6 +15,7 @@ const sanaStr = (y, m, d) => `${y}-${ikki(m + 1)}-${ikki(d)}`;
 
 export function DateField({ value, onChange }) {
   const [ochiq, setOchiq] = useState(false);
+  useTiklash(() => setOchiq(false));
   const bugun = ishKuni(); // ish kuni: tunda 03:00 gacha — hali kechagi kun
   const boshlang = value && /^\d{4}-\d{2}-\d{2}$/.test(value)
     ? { y: +value.slice(0, 4), m: +value.slice(5, 7) - 1 }

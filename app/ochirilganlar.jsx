@@ -9,6 +9,7 @@ import { router } from "expo-router";
 import { useApp } from "../src/store/AppData";
 import { Card } from "../src/components/Card";
 import { ScrollBox } from "../src/components/ScrollBox";
+import { useTiklash } from "../src/components/useTiklash";
 import { Qidiruv, qidiruvMos } from "../src/components/Qidiruv";
 import { SahifaSarlavha } from "../src/components/SahifaSarlavha";
 import { C, T, S, R, temaStil } from "../src/theme";
@@ -48,6 +49,7 @@ const silliq = () => LayoutAnimation.configureNext(LayoutAnimation.create(220, L
 export default function Ochirilganlar() {
   const { ochirilganlar, qaytar, butunlayOchir } = useApp();
   const [filtr, setFiltr] = useState("hammasi");
+  useTiklash(() => setFiltr("hammasi"));
   const [xabar, setXabar] = useState("");
   const xabarT = useRef(null);
   useEffect(() => () => clearTimeout(xabarT.current), []);

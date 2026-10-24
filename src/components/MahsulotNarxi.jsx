@@ -6,6 +6,7 @@ import { useState } from "react";
 import { View, Text, TextInput, Pressable, StyleSheet, Alert, LayoutAnimation } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useApp } from "../store/AppData";
+import { useTiklash } from "./useTiklash";
 import { Card } from "./Card";
 import { Btn } from "./Btn";
 import { ExpandableCard, yopKartalar } from "./ExpandableCard";
@@ -22,6 +23,7 @@ export function Xomashyo() {
   const royxat = xomashyoRoyxati(customMahsulotlar);
   // Ikonka bosilsa — shu kartaning o'zida tanlov ochiladi
   const [ikonOchiq, setIkonOchiq] = useState(null);
+  useTiklash(() => setIkonOchiq(null));
   const ikonAlmash = (id) => {
     LayoutAnimation.configureNext(LayoutAnimation.create(200, LayoutAnimation.Types.easeInEaseOut, LayoutAnimation.Properties.opacity));
     setIkonOchiq((o) => (o === id ? null : id));

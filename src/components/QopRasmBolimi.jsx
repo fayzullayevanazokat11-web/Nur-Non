@@ -6,6 +6,7 @@ import { View, Text, Image, Pressable, StyleSheet, Alert, LayoutAnimation, useWi
 import { Ionicons } from "@expo/vector-icons";
 
 import { useApp } from "../store/AppData";
+import { useTiklash } from "./useTiklash";
 import { Card } from "./Card";
 import { Btn } from "./Btn";
 import { rasmTanla } from "../logic/qopRasm";
@@ -20,6 +21,7 @@ export function QopRasmBolimi({ kun }) {
   const { qopRasmlari, qopRasmQosh, qopRasmOchir } = useApp();
   const rasmlar = useMemo(() => (qopRasmlari || []).filter((r) => r.kun === kun).sort((a, b) => (a.vaqt || 0) - (b.vaqt || 0)), [qopRasmlari, kun]);
   const [katta, setKatta] = useState(null);
+  useTiklash(() => setKatta(null));
   const [band, setBand] = useState(false);
   const { width } = useWindowDimensions();
   const katak = Math.floor((Math.min(width, 520) - S[5] * 2 - S[4] * 2 - S[2] * 3) / 4);

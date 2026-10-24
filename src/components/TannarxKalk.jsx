@@ -7,6 +7,7 @@ import { View, Text, TextInput, StyleSheet, LayoutAnimation } from "react-native
 import { Ionicons } from "@expo/vector-icons";
 
 import { useApp } from "../store/AppData";
+import { useTiklash } from "./useTiklash";
 import { Card } from "./Card";
 import { ExpandableCard } from "./ExpandableCard";
 import { formatSom, getIngNarx } from "../logic/hisob";
@@ -26,6 +27,7 @@ export function TannarxKalk() {
   const xOl = (m) => royxat.find((x) => x.id === m.id) || m;
   // Ikonkani bosib o'zgartirish (non va xomashyo) — tanlov shu joyda ochiladi
   const [ikonOchiq, setIkonOchiq] = useState(null);
+  useTiklash(() => setIkonOchiq(null));
   const ikonAlmash = (k) => {
     LayoutAnimation.configureNext(LayoutAnimation.create(200, LayoutAnimation.Types.easeInEaseOut, LayoutAnimation.Properties.opacity));
     setIkonOchiq((o) => (o === k ? null : k));

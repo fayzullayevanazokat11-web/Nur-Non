@@ -15,6 +15,7 @@ import { MahsulotNarxi } from "../../src/components/MahsulotNarxi";
 import { TannarxKalk } from "../../src/components/TannarxKalk";
 import { XomashyoIkon, NonIkon, BosiladiganIkon, IkonTanlov, IKON_TANLOV, xomashyoIkonKaliti } from "../../src/components/XomashyoIkon";
 import { ScrollBox } from "../../src/components/ScrollBox";
+import { useTiklash } from "../../src/components/useTiklash";
 import { xomashyoRoyxati } from "../../src/logic/konstantalar";
 import { C, T, S, R, temaStil } from "../../src/theme";
 import { formatSom, getQopTannarx, getIngNarx, sonOl, xamirdanNonSoni, nonVazniOl } from "../../src/logic/hisob";
@@ -74,6 +75,8 @@ export default function IshlabChiqarish() {
   );
 
   const [tab, setTab] = useState("assortiment");
+  // Sahifadan chiqilganda — ikonka tanlovi yopiladi va birinchi ichki bo'lim (Assortiment) tanlanadi
+  useTiklash(() => { setIkonOchiq(null); setTab("assortiment"); });
   const tabTanla = (t) => { if (t === tab) return; silliq(); setIkonOchiq(null); setTab(t); };
   const [forma, setForma] = useState(BOSH);
   const scrollRef = useRef(null);

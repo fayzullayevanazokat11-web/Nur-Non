@@ -2,6 +2,7 @@
 // Bosilganda shu yerda kichik panel ochiladi: soat va daqiqani −/+ bilan o'zgartirish,
 // "Hozir" — yana avtomatik holatga qaytarish. Qiymat "HH:MM" ko'rinishida.
 import { useEffect, useState } from "react";
+import { useTiklash } from "./useTiklash";
 import { View, Text, Pressable, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { C, T, S, R, temaStil } from "../theme";
@@ -12,6 +13,7 @@ const ajrat = (v) => { const m = /^(\d{1,2}):(\d{2})$/.exec(v || ""); return m ?
 
 export function VaqtField({ value, onChange }) {
   const [ochiq, setOchiq] = useState(false);
+  useTiklash(() => setOchiq(false));
   const [hozir, setHozir] = useState(hozirgiSoat());
   // Avtomatik holatda ko'rinadigan vaqt yangilanib turadi
   useEffect(() => {
