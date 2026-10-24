@@ -12,7 +12,6 @@ import { NonIkon } from "./XomashyoIkon";
 import { formatSom } from "../logic/hisob";
 import { sanaChiroyli } from "../logic/davr";
 import { kunlikHtml, pdfUlash } from "../logic/ulashish";
-import { pdfRasmlari } from "../logic/qopRasm";
 import { C, T, S, R, temaStil } from "../theme";
 
 const ikki = (n) => String(n).padStart(2, "0");
@@ -20,11 +19,10 @@ const soat = (ms) => { const d = new Date(ms || Date.now()); return `${ikki(d.ge
 const son = (x) => parseFloat(x) || 0;
 
 export function KunHisoboti({ h }) {
-  const { nonlar, akkauntNomi, qopRasmlari } = useApp();
+  const { nonlar, akkauntNomi, hisobotPdfUlash } = useApp();
   const daromad = son(h.daromad), haq = son(h.ishchiHaq), a = h.arxiv || {};
 
-  const pdf = () => pdfRasmlari(qopRasmlari, h.sana)
-    .then((rasmlar) => pdfUlash(kunlikHtml(h, { akkaunt: akkauntNomi, nonlar, rasmlar }), `nur-non-${h.sana}`))
+  const pdf = () => hisobotPdfUlash(h)
     .catch(() => Alert.alert("Xatolik", "PDF tayyorlab bo'lmadi."));
 
   const nonQatorlar = (h.nonlarSnapshot || nonlar || []).map((n) => {

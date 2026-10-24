@@ -106,7 +106,7 @@ export default function RootLayout() {
                 <Stack.Screen name="ochirilganlar" />
                 <Stack.Screen name="akkaunt" />
                 <Stack.Screen name="ishhaqi" />
-                <Stack.Screen name="rasmlar" />
+                <Stack.Screen name="pdflar" />
               </Stack>
             </ThemeProvider>
             <BekorPanel />

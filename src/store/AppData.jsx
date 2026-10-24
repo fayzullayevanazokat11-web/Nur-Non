@@ -1,12 +1,14 @@
 // Butun ilova holati — har bir kolleksiya "nurnon:" prefiksi bilan AsyncStorage'da.
 import { createContext, useContext, useState, useEffect, useMemo, useRef } from "react";
-import { LayoutAnimation, AppState } from "react-native";
+import { LayoutAnimation, AppState, Platform } from "react-native";
+import * as FileSystem from "expo-file-system";
 import usePersistedState, { useHidratsiya } from "./usePersistedState";
 import { arxivla } from "../logic/davr";
 import { kunYakunEslatmalari } from "../logic/bildirishnoma";
 import { nusxaSaqla, nusxaBormi } from "../logic/avtoZaxira";
 import { bugunSana, keyingiSana } from "../logic/hisob";
-import { rasmSaqla, rasmFaylOchir } from "../logic/qopRasm";
+import { rasmSaqla, rasmFaylOchir, pdfRasmlari } from "../logic/qopRasm";
+import { kunlikHtml, pdfUlash, pdfFaylYarat, pdfFaylUlash, pdfFaylOchir } from "../logic/ulashish";
 import { getTil } from "../i18n/til";
 import { ogir } from "../i18n/translit";
 import { SEED_NONLAR, SEED_ISHCHILAR, SEED_MAHSULOT_NARXLARI } from "../logic/data";
@@ -111,6 +113,8 @@ export function AppDataProvider({ children }) {
   const [salomYoqilgan, setSalomYoqilgan]               = usePersistedState("nurnon:salomYoqilgan", true);
   // Ertalabgi qop rasmlari (7 kun, faqat shu telefonda): [{ id, kun, uri, vaqt }]
   const [qopRasmlari, setQopRasmlari]                   = usePersistedState("nurnon:qopRasmlari", []);
+  // PDFlar arxivi (30 kun, faqat shu telefonda): [{ hisobotId, sana, uri, hajm, rasmSoni, vaqt }]
+  const [pdfArxiv, setPdfArxiv]                         = usePersistedState("nurnon:pdfArxiv", []);
   // Ertalabgi tekshiruv (har ish kuni, 03:00 dan): { kun, davomat, ombor, rasm, tugallandi: ms }
   const [ertalabTekshiruv, setErtalabTekshiruv]         = usePersistedState("nurnon:ertalabTekshiruv", null);
   // Foydalanuvchi o'zgartirgan xomashyo ikonkalari: { xomashyoId: ikonKaliti }
@@ -563,6 +567,55 @@ export function AppDataProvider({ children }) {
     return false;
   }));
 
+  // ── PDFlar arxivi: har bir kunlik hisobot (oxirgi 30 kun) uchun PDF fayl rasmlari bilan
+  //    saqlanadi. Kun yakunlanganda darrov yaratiladi (rasmlar 7 kundan keyin o'chsa ham PDF qoladi);
+  //    yakun bekor qilinsa yoki hisobot 30 kundan eskirsa — fayli o'chiriladi.
+  const pdfArxivRef = useRef(pdfArxiv); pdfArxivRef.current = pdfArxiv;
+  const pdfMalumot = useRef({}); pdfMalumot.current = { hisobotlarTarixi, qopRasmlari, akkauntNomi, nonlar };
+  const pdfBand = useRef(false);
+  const [pdfTik, setPdfTik] = useState(0);
+  const pdfKutish = useRef(false);
+  useEffect(() => {
+    if (!tayyor || Platform.OS === "web") return;
+    if (pdfBand.current) { pdfKutish.current = true; return; }
+    pdfBand.current = true;
+    (async () => {
+      try {
+        const { hisobotlarTarixi: hs, qopRasmlari: rs, akkauntNomi: akk, nonlar: nl } = pdfMalumot.current;
+        const chegara = Date.now() - 30 * 86400000;
+        const hisobotlar = (hs || []).filter((h) => (h.vaqt || 0) >= chegara);
+        const idlar = new Set(hisobotlar.map((h) => h.id));
+        const ortiqcha = (pdfArxivRef.current || []).filter((e) => !idlar.has(e.hisobotId));
+        if (ortiqcha.length) {
+          ortiqcha.forEach((e) => pdfFaylOchir(e.uri));
+          setPdfArxiv((p) => (p || []).filter((e) => idlar.has(e.hisobotId)));
+        }
+        const bor = new Set((pdfArxivRef.current || []).map((e) => e.hisobotId));
+        for (const h of hisobotlar) {
+          if (bor.has(h.id)) continue;
+          const rasmlar = await pdfRasmlari(rs, h.sana);
+          const f = await pdfFaylYarat(kunlikHtml(h, { akkaunt: akk, nonlar: nl, rasmlar }), `nur-non-${h.sana}-${h.id}`).catch(() => null);
+          if (!f) continue;
+          setPdfArxiv((p) => [...(p || []).filter((e) => e.hisobotId !== h.id), { hisobotId: h.id, sana: h.sana, uri: f.uri, hajm: f.hajm, rasmSoni: rasmlar.length, vaqt: Date.now() }]);
+        }
+      } finally {
+        pdfBand.current = false;
+        if (pdfKutish.current) { pdfKutish.current = false; setPdfTik((x) => x + 1); }
+      }
+    })();
+  }, [tayyor, hisobotlarTarixi, pdfTik]);
+
+  // Hisobot PDF'ini ulashish: arxivda tayyor fayl bo'lsa — o'sha, bo'lmasa yangidan yaratiladi
+  const hisobotPdfUlash = async (h) => {
+    const e = (pdfArxiv || []).find((x) => x.hisobotId === h.id);
+    if (e?.uri && Platform.OS !== "web") {
+      const fayl = await FileSystem.getInfoAsync(e.uri).catch(() => null);
+      if (fayl?.exists) return pdfFaylUlash(e.uri, `nur-non-${h.sana}`);
+    }
+    const rasmlar = await pdfRasmlari(qopRasmlari, h.sana);
+    return pdfUlash(kunlikHtml(h, { akkaunt: akkauntNomi, nonlar, rasmlar }), `nur-non-${h.sana}`);
+  };
+
   // ── Ikonkalar: xomashyo (asosiylari ham) va non ikonkasini almashtirish ──
   const xomashyoIkonQoy = (id, kalit) => {
     setXomashyoIkonlari((p) => ({ ...(p || {}), [id]: kalit }));
@@ -716,6 +769,7 @@ export function AppDataProvider({ children }) {
     salomYoqilgan, setSalomYoqilgan,
     tayyorSavat, setTayyorSavat,
     qopRasmlari, bugungiRasmlar, qopRasmQosh, qopRasmOchir,
+    pdfArxiv, hisobotPdfUlash,
     ertalab, ertalabBelgila, ertalabTugalla, ertalabYonalish, setErtalabYonalish, ertalabPanel, setErtalabPanel,
     oxirgiNusxa, nusxaOl,
     bekor, bekorTaklif, bekorQil, bekorYop,

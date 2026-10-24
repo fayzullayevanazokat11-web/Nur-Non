@@ -172,3 +172,37 @@ export async function pdfUlash(html, nom) {
   await Sharing.shareAsync(fayl, { mimeType: "application/pdf", UTI: "com.adobe.pdf", dialogTitle: t("Hisobotni ulashish") });
   return true;
 }
+
+// ── PDFlar arxivi: kunlik hisobot PDF'i yakunlanganda telefon xotirasiga saqlanadi (30 kun) ──
+const PDF_PAPKA = (FileSystem.documentDirectory || "") + "pdf-arxiv/";
+
+// Fayl yaratadi va arxiv papkasiga qo'yadi. Natija: { uri, hajm } (web'da null — fayl yo'q)
+export async function pdfFaylYarat(html, nom) {
+  if (Platform.OS === "web" || !FileSystem.documentDirectory) return null;
+  const { uri } = await Print.printToFileAsync({ html });
+  await FileSystem.makeDirectoryAsync(PDF_PAPKA, { intermediates: true }).catch(() => {});
+  const yangi = `${PDF_PAPKA}${nom}.pdf`;
+  await FileSystem.deleteAsync(yangi, { idempotent: true });
+  await FileSystem.moveAsync({ from: uri, to: yangi });
+  const info = await FileSystem.getInfoAsync(yangi).catch(() => ({}));
+  return { uri: yangi, hajm: info?.size || 0 };
+}
+
+// Arxivdagi faylni ulashish/ochish — chiroyli nom bilan (nur-non-2026-10-22.pdf)
+export async function pdfFaylUlash(uri, nom) {
+  let fayl = uri;
+  try {
+    const nusxa = `${FileSystem.cacheDirectory}${nom}.pdf`;
+    await FileSystem.deleteAsync(nusxa, { idempotent: true });
+    await FileSystem.copyAsync({ from: uri, to: nusxa });
+    fayl = nusxa;
+  } catch { /* nusxa bo'lmasa — asl fayl */ }
+  if (!(await Sharing.isAvailableAsync())) return false;
+  await Sharing.shareAsync(fayl, { mimeType: "application/pdf", UTI: "com.adobe.pdf", dialogTitle: t("Hisobotni ulashish") });
+  return true;
+}
+
+export function pdfFaylOchir(uri) {
+  if (Platform.OS === "web" || !uri || !uri.startsWith(PDF_PAPKA)) return;
+  FileSystem.deleteAsync(uri, { idempotent: true }).catch(() => {});
+}

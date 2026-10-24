@@ -1,7 +1,7 @@
 // Markaz menyusi — Nur-Non logotipi bosilganda sarlavha ostida silliq ochiladi (Modal yo'q).
 //   • Akkaunt va ma'lumotlar — akkaunt nomi, ma'lumotlarni yuborish/qabul qilish
 //   • Tarixdagilar — o'chirilgan narsalar (7 kun), qaytarish mumkin
-//   • Rasmlar arxivi — qop rasmlari (7 kun), faqat ko'rish
+//   • PDFlar arxivi — kunlik hisobot PDF'lari (30 kun)
 //   • Yozuv — Lotin / Кирилл (butun ilova matni darhol o'zgaradi)
 //   • Dizayn — mavzu tanlovi (Non — yorug', Tun — qorong'i)
 // Menyu FAQAT logotip bosilganda ochiladi; boshqa bo'limga o'tilganda, dasturdan
@@ -75,14 +75,14 @@ export function MarkazMenyu({ onYop }) {
 
       <Bosma
         accessibilityRole="button"
-        onPress={() => { onYop?.(); router.push("/rasmlar"); }}
+        onPress={() => { onYop?.(); router.push("/pdflar"); }}
         kichrayish={0.98}
         style={styles.row}
       >
-        <View style={styles.icon}><Ionicons name="images-outline" size={20} color={C.accent} /></View>
+        <View style={styles.icon}><Ionicons name="document-text-outline" size={20} color={C.accent} /></View>
         <View style={styles.flex1}>
-          <Text style={styles.label}>Rasmlar arxivi</Text>
-          <Text style={styles.sub}>Qop rasmlari · oxirgi 7 kun</Text>
+          <Text style={styles.label}>PDFlar arxivi</Text>
+          <Text style={styles.sub}>Kunlik hisobotlar rasmlari bilan · 30 kun</Text>
         </View>
         <Ionicons name="chevron-forward" size={18} color={C.muted} />
       </Bosma>
