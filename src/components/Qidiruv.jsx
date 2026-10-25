@@ -7,7 +7,13 @@ import { C, T, S, R, temaStil } from "../theme";
 export const qidiruvMos = (matn, soz) => {
   const n = (x) => String(x || "").toLowerCase().replace(/[ʻʼ‘’`´]/g, "'").replace(/\s+/g, " ").trim();
   const q = n(soz);
-  return !q || n(matn).includes(q);
+  if (!q) return true;
+  // So'z boshidan mos kelishi kerak: "shanba" — "Shanba"ni topadi, lekin "Yakshanba"/"Dushanba"ni emas
+  const t = n(matn);
+  for (let i = t.indexOf(q); i >= 0; i = t.indexOf(q, i + 1)) {
+    if (i === 0 || !/[\p{L}\p{N}']/u.test(t[i - 1])) return true;
+  }
+  return false;
 };
 
 export function Qidiruv({ value, onChange, placeholder = "Qidirish", style }) {

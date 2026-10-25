@@ -14,9 +14,11 @@ export const tabBosildi = () => { oxirgiTabBosish = Date.now(); };
 // Pastki panel kontent ustida "suzib" turadi — bo'lim sahifalari oxirida shuncha bo'sh joy
 // qoldiriladi (oxirgi kartalar panel tagida qolib ketmasin). Boshqa sahifalarda 0.
 export const PastkiJoy = createContext(0);
+// Yuqori bar ham kontent ustida suzadi — bo'lim sahifalari boshida shuncha joy qoldiriladi
+export const TepaJoy = createContext(0);
 
 export const ScrollBox = forwardRef(function ScrollBox(
-  { children, contentContainerStyle, keyboardShouldPersistTaps, style },
+  { children, contentContainerStyle, keyboardShouldPersistTaps, style, onScroll },
   outerRef
 ) {
   const ref = useRef(null);
@@ -37,6 +39,7 @@ export const ScrollBox = forwardRef(function ScrollBox(
   useEffect(() => { korsat(); }, []);
   const navigation = useContext(NavigationContext);
   const pastkiJoy = useContext(PastkiJoy);
+  const tepaJoy = useContext(TepaJoy);
   // Sahifadan chiqilganda scroll boshiga qaytadi (qaytib kelinganda sahifa sukut holatida)
   useEffect(() => {
     if (!navigation?.addListener) return undefined;
@@ -58,9 +61,12 @@ export const ScrollBox = forwardRef(function ScrollBox(
         ref={ref}
         contentContainerStyle={contentContainerStyle}
         keyboardShouldPersistTaps={keyboardShouldPersistTaps}
+        onScroll={onScroll}
+        scrollEventThrottle={onScroll ? 16 : undefined}
         showsVerticalScrollIndicator={false}
         showsHorizontalScrollIndicator={false}
       >
+        {tepaJoy > 0 && <View style={{ height: tepaJoy }} />}
         {children}
         {pastkiJoy > 0 && <View style={{ height: pastkiJoy }} />}
       </ScrollView>

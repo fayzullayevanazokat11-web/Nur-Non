@@ -9,7 +9,7 @@ import { useTiklash } from "./useTiklash";
 import { Ionicons } from "@expo/vector-icons";
 import { useApp } from "../store/AppData";
 import { ishKuni } from "../logic/hisob";
-import { C, T, S, R, shadow, temaStil } from "../theme";
+import { C, T, S, R, shadow, temaStil, temaQorongi } from "../theme";
 
 const LOGO = require("../../assets/logo-tight.png");
 const OYLAR = ["Yan", "Fev", "Mar", "Apr", "May", "Iyun", "Iyul", "Avg", "Sen", "Okt", "Noy", "Dek"];
@@ -48,7 +48,7 @@ export function SahifaBari({ sahifa }) {
 // Uzun nonvoyxona nomi to'liq sig'ishi uchun shrift kichrayadi
 const nomShrift = (nom) => (nom.length <= 10 ? null : nom.length <= 14 ? { fontSize: 22 } : nom.length <= 18 ? { fontSize: 19 } : { fontSize: 16 });
 
-export function BrandHeader({ onLogo, menuOchiq = false, sahifa }) {
+export function BrandHeader({ onLogo, menuOchiq = false, sahifa, suzuvchi = false }) {
   const { akkauntNomi } = useApp();
   const nom = (akkauntNomi || "").trim() || "Nur-Non";
   const [t, setT] = useState(hozir());
@@ -65,7 +65,7 @@ export function BrandHeader({ onLogo, menuOchiq = false, sahifa }) {
       accessibilityState={{ expanded: menuOchiq }}
       onPress={onLogo}
       disabled={!onLogo}
-      style={({ pressed }) => [styles.banner, pressed && styles.bannerPressed]}
+      style={({ pressed }) => [styles.banner, suzuvchi && styles.suzuvchi, pressed && styles.bannerPressed]}
     >
       <View style={styles.tile}>
         <Image source={LOGO} style={styles.logo} resizeMode="contain" />
@@ -92,6 +92,8 @@ export function BrandHeader({ onLogo, menuOchiq = false, sahifa }) {
 }
 
 const styles = temaStil(() => StyleSheet.create({
+  // Suzuvchi (kontent ustida turadigan) bar — pastki panel kabi soya bilan
+  suzuvchi: { marginBottom: 0, shadowColor: "#000", shadowOpacity: temaQorongi() ? 0.5 : 0.18, shadowRadius: 16, shadowOffset: { width: 0, height: 6 }, elevation: 12 },
   bannerPressed: { opacity: 0.92, transform: [{ scale: 0.985 }] },
   banner: {
     flexDirection: "row",

@@ -2,15 +2,17 @@
 // (swipe) orqali ham o'tiladi: ekranlar sahifalovchi (pager) ichida turadi,
 // pastki panel esa o'zimizniki — tanlangan bo'limga silliq suriladigan indikator bilan.
 // Ikonkalar — maxsus rasmlar (tintColor bilan bo'yaladi).
-import { useEffect, useRef, useState } from "react";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { withLayoutContext } from "expo-router";
 import { createMaterialTopTabNavigator } from "@react-navigation/material-top-tabs";
-import { View, Text, Image, Pressable, Animated, Easing, StyleSheet, Keyboard, PanResponder } from "react-native";
+import { View, Text, Image, Pressable, Animated, Easing, StyleSheet, Keyboard, PanResponder, LayoutAnimation, AppState, ScrollView, useWindowDimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { C, temaStil, temaQorongi } from "../../src/theme";
 import { useTil } from "../../src/i18n/til";
 import { ogir } from "../../src/i18n/translit";
-import { tabBosildi, PastkiJoy } from "../../src/components/ScrollBox";
+import { tabBosildi, PastkiJoy, TepaJoy } from "../../src/components/ScrollBox";
+import { BrandHeader } from "../../src/components/BrandHeader";
+import { MarkazMenyu } from "../../src/components/MarkazMenyu";
 import { useSafeAreaInsets as useInsets } from "react-native-safe-area-context";
 import { sezgi } from "../../src/logic/sezgi";
 
@@ -28,6 +30,47 @@ const ICONS = {
 // Telegram uslubi: panel ekran chetlaridan ajralgan yumaloq "orol", tanlangan bo'lim
 // ikonka+yozuvni o'rab turgan yumaloq fon bilan belgilanadi (fon bo'lim kengligiga moslashadi).
 const ICHKI = 5; // panel ichki chegarasi
+
+// Yuqori suzuvchi bar balandligini sahifalarga yetkazish uchun
+const TepaOlchovQoy = createContext(() => {});
+
+// Yuqori bar — pastki panel kabi kontent ustida suzadi (soya bilan): nonvoyxona nomi, joriy bo'lim
+// nomi va vaqt. Bosilsa menyu ochiladi; bo'lim almashganda yoki dasturdan chiqilganda yopiladi.
+function TepaPanel({ state, descriptors }) {
+  const insets = useSafeAreaInsets();
+  const olchovQoy = useContext(TepaOlchovQoy);
+  const { height: ekranH } = useWindowDimensions();
+  const [barH, setBarH] = useState(96);
+  const [menu, setMenu] = useState(false);
+  useEffect(() => { setMenu(false); }, [state.index]);
+  useEffect(() => {
+    const sub = AppState.addEventListener("change", (h) => { if (h !== "active") setMenu(false); });
+    return () => sub.remove();
+  }, []);
+  const almash = () => {
+    LayoutAnimation.configureNext(LayoutAnimation.create(220, LayoutAnimation.Types.easeInEaseOut, LayoutAnimation.Properties.opacity));
+    setMenu((m) => !m);
+  };
+  const route = state.routes[state.index];
+  const sahifa = descriptors[route.key]?.options?.title;
+  return (
+    <View pointerEvents="box-none" style={[styles.tepaTashqi, { top: insets.top + 8 }]}>
+      <View onLayout={(e) => { olchovQoy(e.nativeEvent.layout.height); setBarH(e.nativeEvent.layout.height); }}>
+        <BrandHeader onLogo={almash} menuOchiq={menu} sahifa={sahifa} suzuvchi />
+      </View>
+      {menu && (
+        // Menyu ham suzadi; ekranga sig'masa — ichida scroll (pastki panelgacha)
+        <ScrollView
+          style={[styles.tepaMenyu, { maxHeight: Math.max(220, ekranH - insets.top - insets.bottom - barH - 130) }]}
+          contentContainerStyle={styles.tepaMenyuIch}
+          showsVerticalScrollIndicator={false}
+        >
+          <MarkazMenyu onYop={() => setMenu(false)} />
+        </ScrollView>
+      )}
+    </View>
+  );
+}
 
 function PastkiPanel({ state, descriptors, navigation }) {
   const insets = useSafeAreaInsets();
@@ -123,9 +166,10 @@ function PastkiPanel({ state, descriptors, navigation }) {
     Animated.timing(pillW, { toValue: w, duration: 240, easing: Easing.out(Easing.cubic), useNativeDriver: false }).start();
   }, [state.index, joylar, kenglik]);
 
-  if (klaviatura) return null;
-
   return (
+    <>
+    <TepaPanel state={state} descriptors={descriptors} />
+    {!klaviatura && (
     <View pointerEvents="box-none" style={[styles.tashqi, { paddingBottom: 8 + insets.bottom }]}>
     <View ref={barRef} style={styles.bar} onLayout={(e) => { setKenglik(e.nativeEvent.layout.width); olchash(); }} {...surish.panHandlers}>
       {kenglik > 0 && (
@@ -175,6 +219,8 @@ function PastkiPanel({ state, descriptors, navigation }) {
       })}
     </View>
     </View>
+    )}
+    </>
   );
 }
 
@@ -183,7 +229,10 @@ export default function TabsLayout() {
   const til = useTil();
   const t = (s) => ogir(s, til);
   const insets = useInsets();
+  const [tepaH, setTepaH] = useState(0);
   return (
+    <TepaOlchovQoy.Provider value={(h) => setTepaH((p) => (Math.abs(p - h) > 0.5 ? h : p))}>
+    <TepaJoy.Provider value={tepaH ? tepaH + 8 : 0}>
     <PastkiJoy.Provider value={84 + insets.bottom}>
     <SwipeTabs
       tabBarPosition="bottom"
@@ -197,11 +246,16 @@ export default function TabsLayout() {
       <SwipeTabs.Screen name="ombor" options={{ title: t("Ombor") }} />
     </SwipeTabs>
     </PastkiJoy.Provider>
+    </TepaJoy.Provider>
+    </TepaOlchovQoy.Provider>
   );
 }
 
 const styles = temaStil(() => StyleSheet.create({
   // Panel kontent ustida suzadi: orqasida fon yo'q, kartalar uning ostidan ko'rinib turadi
+  tepaTashqi:{ position: "absolute", left: 20, right: 20 },
+  tepaMenyu:{ marginTop: 10, borderRadius: 22, shadowColor: "#000", shadowOpacity: temaQorongi() ? 0.5 : 0.16, shadowRadius: 16, shadowOffset: { width: 0, height: 6 }, elevation: 10 },
+  tepaMenyuIch:{ paddingTop: 12 },
   tashqi:  { position: "absolute", left: 0, right: 0, bottom: 0, paddingHorizontal: 12 },
   bar:     {
     flexDirection: "row", backgroundColor: C.card + "FA", borderRadius: 36, borderWidth: StyleSheet.hairlineWidth, borderColor: C.border, padding: ICHKI,

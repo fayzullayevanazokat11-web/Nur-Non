@@ -3,9 +3,9 @@
 // Optom formasiga o'tkazish mumkin (savat tayyor holda ochiladi).
 // Son telefon klaviaturasisiz kiritiladi: son katagi bosilsa, o'sha non qatori tagida
 // 0–9 raqamlar (ikki qatorda) ochiladi (boshqa non bosilsa — avvalgisi yopiladi). Yonidagi tugma nollaydi.
-import { useMemo, useState } from "react";
+import { useContext, useMemo, useState } from "react";
 import { View, Text, Pressable, StyleSheet, LayoutAnimation } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 
@@ -13,8 +13,7 @@ import { useApp } from "../../src/store/AppData";
 import { Card } from "../../src/components/Card";
 import { Btn } from "../../src/components/Btn";
 import { ScreenHeader } from "../../src/components/ScreenHeader";
-import { SahifaBari } from "../../src/components/BrandHeader";
-import { ScrollBox } from "../../src/components/ScrollBox";
+import { ScrollBox, TepaJoy } from "../../src/components/ScrollBox";
 import { useTiklash } from "../../src/components/useTiklash";
 import { NonIkon } from "../../src/components/XomashyoIkon";
 import { useAnimSon } from "../../src/components/useAnimSon";
@@ -43,6 +42,10 @@ export default function Kalkulyator() {
 
   // Raqamlar qatori qaysi non uchun ochiq (bir vaqtda bittasi)
   const [ochiq, setOchiq] = useState(null);
+  const [jamiY, setJamiY] = useState(0);
+  const [yopishgan, setYopishgan] = useState(false);
+  const insets = useSafeAreaInsets();
+  const tepaJoy = useContext(TepaJoy); // suzuvchi yuqori bar balandligi — jami uning ostida qotadi
   useTiklash(() => setOchiq(null));
   const ochYop = (id) => { silliq(); setOchiq((o) => (o === id ? null : id)); };
   const raqam = (id, r) => {
@@ -60,28 +63,31 @@ export default function Kalkulyator() {
     router.push(tur === "qarz" ? "/qarzlar" : "/optom");
   };
 
+  // Umumiy narx paneli — sahifada sarlavha ostida; scroll qilib o'tilganda tepada qotib turadi
+  const jamiPanel = (
+    <View style={styles.jami}>
+      <View style={styles.flex1}>
+        <Text style={styles.jamiNom}>UMUMIY NARX</Text>
+        <Text style={styles.jamiQiymat} numberOfLines={1} adjustsFontSizeToFit>{formatSom(Math.round(korinish))} so'm</Text>
+        <Text style={styles.jamiDona}>{hisob.dona} dona non</Text>
+      </View>
+      {hisob.dona > 0 && (
+        <Pressable accessibilityRole="button" accessibilityLabel="Hisobni tozalash" onPress={tozala} hitSlop={8} style={({ pressed }) => [styles.tozala, pressed && styles.bosildi]}>
+          <Ionicons name="refresh" size={16} color={C.onAccent} />
+          <Text style={styles.tozalaTxt}>Tozalash</Text>
+        </Pressable>
+      )}
+    </View>
+  );
+
   return (
     <SafeAreaView style={styles.safe} edges={["top"]}>
-      {/* Umumiy narx — tepada doim ko'rinadi */}
-      <View style={styles.tepa}>
-        <SahifaBari sahifa="Kalkulyator" />
-        <View style={styles.jami}>
-          <View style={styles.flex1}>
-            <Text style={styles.jamiNom}>UMUMIY NARX</Text>
-            <Text style={styles.jamiQiymat} numberOfLines={1} adjustsFontSizeToFit>{formatSom(Math.round(korinish))} so'm</Text>
-            <Text style={styles.jamiDona}>{hisob.dona} dona non</Text>
-          </View>
-          {hisob.dona > 0 && (
-            <Pressable accessibilityRole="button" accessibilityLabel="Hisobni tozalash" onPress={tozala} hitSlop={8} style={({ pressed }) => [styles.tozala, pressed && styles.bosildi]}>
-              <Ionicons name="refresh" size={16} color={C.onAccent} />
-              <Text style={styles.tozalaTxt}>Tozalash</Text>
-            </Pressable>
-          )}
-        </View>
-      </View>
-
-      <ScrollBox contentContainerStyle={styles.scroll}>
+      <ScrollBox contentContainerStyle={styles.scroll} onScroll={(e) => setYopishgan(e.nativeEvent.contentOffset.y > jamiY - tepaJoy)}>
         <ScreenHeader eyebrow="Tez hisob" title="Non kalkulyatori" image={require("../../assets/tabicons/kalkulyator.png")} />
+        {/* Umumiy narx — scroll qilinganda tepada yopishib turadi */}
+        <View style={styles.tepa} onLayout={(e) => setJamiY(e.nativeEvent.layout.y)}>
+          {jamiPanel}
+        </View>
 
         {(nonlar || []).length === 0 ? (
           <Card><Text style={styles.bosh}>Hali non turi qo'shilmagan. Ishlab chiqarish bo'limida qo'shing.</Text></Card>
@@ -135,6 +141,7 @@ export default function Kalkulyator() {
           </View>
         )}
       </ScrollBox>
+      {yopishgan && <View pointerEvents="box-none" style={[styles.yopishgan, { top: insets.top + tepaJoy }]}>{jamiPanel}</View>}
     </SafeAreaView>
   );
 }
@@ -142,7 +149,8 @@ export default function Kalkulyator() {
 const styles = temaStil(() => StyleSheet.create({
   safe:     { flex: 1, backgroundColor: C.bg },
   flex1:    { flex: 1 },
-  tepa:     { paddingHorizontal: S[5], paddingTop: S[3], paddingBottom: S[2], backgroundColor: C.bg },
+  tepa:     { paddingTop: S[2], paddingBottom: S[3], backgroundColor: C.bg },
+  yopishgan:{ position: "absolute", left: 0, right: 0, paddingHorizontal: S[5], paddingTop: S[2], paddingBottom: S[2], backgroundColor: C.bg },
   jami:     { flexDirection: "row", alignItems: "center", gap: S[3], backgroundColor: C.accent, borderRadius: R.lg, paddingVertical: S[4], paddingHorizontal: S[5] },
   jamiNom:  { fontSize: 10, fontWeight: "800", letterSpacing: 1, color: C.onAccentSub },
   jamiQiymat:{ fontSize: 30, fontWeight: "800", color: C.onAccent, letterSpacing: -0.5, marginTop: 2 },

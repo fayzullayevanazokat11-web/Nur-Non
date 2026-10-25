@@ -9,7 +9,7 @@ import { router, useFocusEffect } from "expo-router";
 
 import { useApp } from "../../src/store/AppData";
 import { Card } from "../../src/components/Card";
-import { SahifaBari } from "../../src/components/BrandHeader";
+import { ScreenHeader } from "../../src/components/ScreenHeader";
 import { ScrollBox } from "../../src/components/ScrollBox";
 import { Bosma } from "../../src/components/Bosma";
 import { useAnimSon } from "../../src/components/useAnimSon";
@@ -125,7 +125,7 @@ export default function Markaz() {
   return (
     <SafeAreaView style={styles.safe} edges={["top"]}>
       <ScrollBox contentContainerStyle={styles.scroll}>
-        <SahifaBari sahifa="Markaz" />
+        <ScreenHeader eyebrow="Bosh sahifa" title="Markaz" image={require("../../assets/tabicons/markaz.png")} />
 
         <EslatmalarPanel />
 
