@@ -1,4 +1,4 @@
-// Pastki tab navigatsiya — 5 ta ekran. Bo'limlar orasida chapga/o'ngga SURISH
+// Pastki tab navigatsiya — 4 ta ekran (Kalkulyator — Nur-Non menyusida). Bo'limlar orasida chapga/o'ngga SURISH
 // (swipe) orqali ham o'tiladi: ekranlar sahifalovchi (pager) ichida turadi,
 // pastki panel esa o'zimizniki — tanlangan bo'limga silliq suriladigan indikator bilan.
 // Ikonkalar — maxsus rasmlar (tintColor bilan bo'yaladi).
@@ -22,7 +22,6 @@ const SwipeTabs = withLayoutContext(Navigator);
 const ICONS = {
   index: require("../../assets/tabicons/markaz.png"),
   ishlab: require("../../assets/tabicons/ishlab.png"),
-  kalkulyator: require("../../assets/tabicons/kalkulyator.png"),
   xodimlar: require("../../assets/tabicons/xodimlar.png"),
   ombor: require("../../assets/tabicons/ombor.png"),
 };
@@ -241,8 +240,6 @@ export default function TabsLayout() {
     >
       <SwipeTabs.Screen name="index" options={{ title: t("Markaz") }} />
       <SwipeTabs.Screen name="ishlab" options={{ title: t("Ishlab chiqarish"), tabBarLabel: t("Ishlab") }} />
-      {/* Kalkulyatorda ekranni surib boshqa bo'limga o'tib bo'lmaydi — tez hisob paytida tasodifan chiqib ketmasin */}
-      <SwipeTabs.Screen name="kalkulyator" options={{ title: t("Kalkulyator"), swipeEnabled: false }} />
       <SwipeTabs.Screen name="xodimlar" options={{ title: t("Xodimlar") }} />
       <SwipeTabs.Screen name="ombor" options={{ title: t("Ombor") }} />
     </SwipeTabs>

@@ -15,7 +15,6 @@ const LOGO = require("../../assets/logo-tight.png");
 const TAB_IKON = {
   markaz: require("../../assets/tabicons/markaz.png"),
   ishlab: require("../../assets/tabicons/ishlab.png"),
-  kalkulyator: require("../../assets/tabicons/kalkulyator.png"),
   xodimlar: require("../../assets/tabicons/xodimlar.png"),
   ombor: require("../../assets/tabicons/ombor.png"),
 };
@@ -192,7 +191,6 @@ export function Tanishuv() {
                 <View style={styles.bolimlar}>
                   <Bolim rasm={TAB_IKON.markaz} nom="Markaz" matn="Kunlik ko'rsatkichlar" />
                   <Bolim rasm={TAB_IKON.ishlab} nom="Ishlab" matn="Non, xomashyo, tannarx" />
-                  <Bolim rasm={TAB_IKON.kalkulyator} nom="Kalkulyator" matn="Mijozga tez hisob" />
                   <Bolim rasm={TAB_IKON.xodimlar} nom="Xodimlar" matn="Jamoa, davomat" />
                   <Bolim rasm={TAB_IKON.ombor} nom="Ombor" matn="Zaxira, prognoz" />
                 </View>

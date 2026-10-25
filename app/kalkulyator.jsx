@@ -1,4 +1,4 @@
-// "Kalkulyator" — mijozga non sotishda tez hisob: har bir nondan nechta olinishi
+// "Kalkulyator" (Nur-Non menyusidan ochiladi) — mijozga non sotishda tez hisob: har bir nondan nechta olinishi
 // kiritiladi, umumiy narx tepada doim ko'rinib turadi. Hisobni bir bosishda Qarz yoki
 // Optom formasiga o'tkazish mumkin (savat tayyor holda ochiladi).
 // Son telefon klaviaturasisiz kiritiladi: son katagi bosilsa, o'sha non qatori tagida
@@ -9,16 +9,16 @@ import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context"
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 
-import { useApp } from "../../src/store/AppData";
-import { Card } from "../../src/components/Card";
-import { Btn } from "../../src/components/Btn";
-import { ScreenHeader } from "../../src/components/ScreenHeader";
-import { ScrollBox, TepaJoy } from "../../src/components/ScrollBox";
-import { useTiklash } from "../../src/components/useTiklash";
-import { NonIkon } from "../../src/components/XomashyoIkon";
-import { useAnimSon } from "../../src/components/useAnimSon";
-import { C, T, S, R, temaStil } from "../../src/theme";
-import { formatSom } from "../../src/logic/hisob";
+import { useApp } from "../src/store/AppData";
+import { Card } from "../src/components/Card";
+import { Btn } from "../src/components/Btn";
+import { SahifaSarlavha } from "../src/components/SahifaSarlavha";
+import { ScrollBox, TepaJoy } from "../src/components/ScrollBox";
+import { useTiklash } from "../src/components/useTiklash";
+import { NonIkon } from "../src/components/XomashyoIkon";
+import { useAnimSon } from "../src/components/useAnimSon";
+import { C, T, S, R, temaStil } from "../src/theme";
+import { formatSom } from "../src/logic/hisob";
 
 const silliq = () => LayoutAnimation.configureNext(LayoutAnimation.create(180, LayoutAnimation.Types.easeInEaseOut, LayoutAnimation.Properties.opacity));
 const son = (x) => Math.max(0, parseInt(String(x ?? "").replace(/\s/g, ""), 10) || 0);
@@ -83,7 +83,7 @@ export default function Kalkulyator() {
   return (
     <SafeAreaView style={styles.safe} edges={["top"]}>
       <ScrollBox contentContainerStyle={styles.scroll} onScroll={(e) => setYopishgan(e.nativeEvent.contentOffset.y > jamiY - tepaJoy)}>
-        <ScreenHeader eyebrow="Tez hisob" title="Non kalkulyatori" image={require("../../assets/tabicons/kalkulyator.png")} />
+        <SahifaSarlavha eyebrow="TEZ HISOB" title="Non kalkulyatori" image={require("../assets/tabicons/kalkulyator.png")} />
         {/* Umumiy narx — scroll qilinganda tepada yopishib turadi */}
         <View style={styles.tepa} onLayout={(e) => setJamiY(e.nativeEvent.layout.y)}>
           {jamiPanel}

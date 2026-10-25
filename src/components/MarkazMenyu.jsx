@@ -1,5 +1,6 @@
 // Markaz menyusi — Nur-Non logotipi bosilganda sarlavha ostida silliq ochiladi (Modal yo'q).
 //   • Akkaunt va ma'lumotlar — akkaunt nomi, ma'lumotlarni yuborish/qabul qilish
+//   • Non kalkulyatori — mijozga tez hisob
 //   • Tarixdagilar — o'chirilgan narsalar (7 kun), qaytarish mumkin
 //   • PDFlar arxivi — kunlik hisobot PDF'lari (30 kun)
 //   • Yozuv — Lotin / Кирилл (butun ilova matni darhol o'zgaradi)
@@ -50,6 +51,22 @@ export function MarkazMenyu({ onYop }) {
         <View style={styles.flex1}>
           <Text style={styles.label}>Akkaunt va ma'lumotlar</Text>
           <Text style={styles.sub} numberOfLines={1}>{akkauntNomi ? `${akkauntNomi} · ` : ""}Ma'lumotlarni yuborish va qabul qilish</Text>
+        </View>
+        <Ionicons name="chevron-forward" size={18} color={C.muted} />
+      </Bosma>
+
+      <View style={styles.divider} />
+
+      <Bosma
+        accessibilityRole="button"
+        onPress={() => { onYop?.(); router.push("/kalkulyator"); }}
+        kichrayish={0.98}
+        style={styles.row}
+      >
+        <View style={styles.icon}><Ionicons name="calculator-outline" size={20} color={C.accent} /></View>
+        <View style={styles.flex1}>
+          <Text style={styles.label}>Non kalkulyatori</Text>
+          <Text style={styles.sub}>Mijozga tez hisob · qarz yoki optomga o'tkazish</Text>
         </View>
         <Ionicons name="chevron-forward" size={18} color={C.muted} />
       </Bosma>
