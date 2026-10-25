@@ -7,6 +7,7 @@
 //   • Dizayn — mavzu tanlovi (Non — yorug', Tun — qorong'i, Avto — telefon sozlamasiga qarab)
 // Menyu FAQAT logotip bosilganda ochiladi; boshqa bo'limga o'tilganda, dasturdan
 // chiqilganda yoki dizayn almashganda yopiladi.
+import { PRUJINA, PRUJINA_YUMSHOQ } from "../logic/fizika";
 import { useEffect, useRef } from "react";
 import { View, Text, Pressable, Animated, Easing, StyleSheet, Switch, Alert, Platform } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
@@ -36,7 +37,7 @@ export function MarkazMenyu({ onYop }) {
   // Ochilish animatsiyasi: shaffoflik + yuqoridan sirpanish
   const a = useRef(new Animated.Value(0)).current;
   useEffect(() => {
-    Animated.timing(a, { toValue: 1, duration: ANIM.duration, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start();
+    Animated.spring(a, { toValue: 1, ...PRUJINA_YUMSHOQ, useNativeDriver: true }).start();
   }, [a]);
   const translateY = a.interpolate({ inputRange: [0, 1], outputRange: [-8, 0] });
 

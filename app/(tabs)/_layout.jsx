@@ -14,6 +14,7 @@ import { tabBosildi, PastkiJoy, TepaJoy } from "../../src/components/ScrollBox";
 import { BrandHeader } from "../../src/components/BrandHeader";
 import { MarkazMenyu } from "../../src/components/MarkazMenyu";
 import { useSafeAreaInsets as useInsets } from "react-native-safe-area-context";
+import { rezina, PRUJINA, PRUJINA_YUMSHOQ } from "../../src/logic/fizika";
 import { sezgi } from "../../src/logic/sezgi";
 
 const { Navigator } = createMaterialTopTabNavigator();
@@ -103,7 +104,7 @@ function PastkiPanel({ state, descriptors, navigation }) {
   const sudralmoqda = useRef(false); // panel ustida barmoq surilayotgan payt — indikator barmoqqa ergashadi
   useEffect(() => {
     if (sudralmoqda.current) return;
-    Animated.timing(idx, { toValue: state.index, duration: 240, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start();
+    Animated.spring(idx, { toValue: state.index, ...PRUJINA_YUMSHOQ, useNativeDriver: true }).start();
   }, [state.index]);
 
   // ── Panelni ushlab surish (Telegram kabi): indikator barmoq ortidan yuradi, barmoq ostidagi
@@ -117,15 +118,23 @@ function PastkiPanel({ state, descriptors, navigation }) {
     const { joylar: j, soni: n, kenglik: k } = holat.current;
     const x = pageX - barX.current;
     const markazlar = Array.from({ length: n }, (_, i) => (j[i] ? j[i].x + j[i].w / 2 : ((2 * i + 1) * k) / (2 * n)));
-    if (x <= markazlar[0]) return 0;
-    if (x >= markazlar[n - 1]) return n - 1;
+    // Chetdan tashqariga tortilsa — indikator rezinadek qarshilik bilan biroz cho'ziladi
+    const qadam = n > 1 ? (markazlar[n - 1] - markazlar[0]) / (n - 1) : 1;
+    if (x <= markazlar[0]) return -rezina(markazlar[0] - x, qadam * 0.45) / qadam;
+    if (x >= markazlar[n - 1]) return n - 1 + rezina(x - markazlar[n - 1], qadam * 0.45) / qadam;
     for (let i = 0; i < n - 1; i++) {
       if (x < markazlar[i + 1]) return i + (x - markazlar[i]) / (markazlar[i + 1] - markazlar[i]);
     }
     return n - 1;
   };
+  const chegara = (i) => Math.max(0, Math.min(holat.current.soni - 1, i));
+  const qadamPx = () => {
+    const { joylar: j, soni: n, kenglik: k } = holat.current;
+    return n > 1 && j[0] && j[n - 1] ? (j[n - 1].x + j[n - 1].w / 2 - j[0].x - j[0].w / 2) / (n - 1) : (k || 300) / Math.max(1, n);
+  };
   const otish = (i) => {
     const { state: st, navigation: nav } = holat.current;
+    i = chegara(i);
     if (i === st.index) return;
     const route = st.routes[i];
     oxirgiBosish.current = Date.now();
@@ -140,20 +149,21 @@ function PastkiPanel({ state, descriptors, navigation }) {
       idx.setValue(f);
       otish(Math.round(f));
     },
-    onPanResponderRelease: (e) => {
-      const i = Math.round(kasrIndeks(e.nativeEvent.pageX));
+    onPanResponderRelease: (e, g) => {
+      // Qo'yib yuborilganda barmoq tezligi davom etadi: prujina shu tezlikdan boshlab joyiga keladi
+      const i = chegara(Math.round(kasrIndeks(e.nativeEvent.pageX)));
       otish(i);
       sudralmoqda.current = false;
-      Animated.timing(idx, { toValue: i, duration: 200, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start();
+      Animated.spring(idx, { toValue: i, velocity: g.vx / qadamPx(), ...PRUJINA, useNativeDriver: true }).start();
     },
     onPanResponderTerminate: () => {
       sudralmoqda.current = false;
-      Animated.timing(idx, { toValue: holat.current.state.index, duration: 200, useNativeDriver: true }).start();
+      Animated.spring(idx, { toValue: holat.current.state.index, ...PRUJINA, useNativeDriver: true }).start();
     },
   })).current;
   const pillKeng = (i) => (joylar[i] ? joylar[i].w : (kenglik - 2 * ICHKI) / soni);
   const pillX = kenglik && soni > 1
-    ? idx.interpolate({ inputRange: kirishlar, outputRange: kirishlar.map((i) => markaz(i) - pillKeng(i) / 2), extrapolate: "clamp" })
+    ? idx.interpolate({ inputRange: kirishlar, outputRange: kirishlar.map((i) => markaz(i) - pillKeng(i) / 2), extrapolate: "extend" })
     : 0;
   // Fon kengligi tanlangan bo'limga silliq moslashadi (kenglik native driver'da animatsiya qilinmaydi)
   const pillW = useRef(new Animated.Value(0)).current;
@@ -162,7 +172,7 @@ function PastkiPanel({ state, descriptors, navigation }) {
     const w = pillKeng(state.index);
     if (!w) return;
     if (birinchi.current) { pillW.setValue(w); birinchi.current = false; return; }
-    Animated.timing(pillW, { toValue: w, duration: 240, easing: Easing.out(Easing.cubic), useNativeDriver: false }).start();
+    Animated.spring(pillW, { toValue: w, ...PRUJINA_YUMSHOQ, useNativeDriver: false }).start();
   }, [state.index, joylar, kenglik]);
 
   return (

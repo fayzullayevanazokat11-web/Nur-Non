@@ -1,10 +1,12 @@
 // Chapga suriladigan qator: surilganda o'ng tomonda bo'shagan joyda "O'chirish" tasdiq tugmasi
 // paydo bo'ladi — bosilsagina o'chiriladi (tasodifiy surish o'chirmaydi). O'ngga surish yoki
 // boshqa qatorni ochish bilan yopiladi. Tik yo'nalishdagi scroll'ga xalaqit bermaydi.
+// Fizika: chegaradan o'tganda rezina qarshiligi, qo'yib yuborilganda tezlikni saqlovchi prujina.
 import { useEffect, useRef } from "react";
 import { View, Text, Pressable, Animated, PanResponder, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { sezgi } from "../logic/sezgi";
+import { rezina, otilish, PRUJINA } from "../logic/fizika";
 import { C, T, R, temaStil } from "../theme";
 
 const KENG = 96; // ochilgan tugma kengligi
@@ -14,22 +16,25 @@ let ochiqYopish = null; // bir vaqtda faqat bitta qator ochiq
 export function SuriladiganQator({ children, onOchir, matn = "O'chirish", style, nom = "", ichki = false }) {
   const x = useRef(new Animated.Value(0)).current;
   const ochiq = useRef(false);
-  const yop = () => { ochiq.current = false; Animated.spring(x, { toValue: 0, useNativeDriver: true, bounciness: 0 }).start(); };
-  const och = () => {
+  // Prujina — qo'yib yuborilgandagi barmoq tezligidan davom etadi
+  const yop = (tezlik = 0) => { ochiq.current = false; Animated.spring(x, { toValue: 0, velocity: tezlik, ...PRUJINA, useNativeDriver: true }).start(); };
+  const och = (tezlik = 0) => {
     if (ochiqYopish && ochiqYopish !== yop) ochiqYopish();
     ochiqYopish = yop; ochiq.current = true; sezgi("bos");
-    Animated.spring(x, { toValue: -KENG, useNativeDriver: true, bounciness: 0 }).start();
+    Animated.spring(x, { toValue: -KENG, velocity: tezlik, ...PRUJINA, useNativeDriver: true }).start();
   };
   useEffect(() => () => { if (ochiqYopish === yop) ochiqYopish = null; }, []);
   const pan = useRef(PanResponder.create({
     onMoveShouldSetPanResponderCapture: (_, g) => Math.abs(g.dx) > 10 && Math.abs(g.dx) > Math.abs(g.dy) * 1.6,
     onPanResponderMove: (_, g) => {
-      const boshi = ochiq.current ? -KENG : 0;
-      x.setValue(Math.max(-KENG * 1.3, Math.min(0, boshi + g.dx)));
+      // Tugma kengligidan o'tib tortilsa (yoki o'ngga) — rezinadek qarshilik
+      const p = (ochiq.current ? -KENG : 0) + g.dx;
+      x.setValue(p < -KENG ? -KENG - rezina(-KENG - p, KENG * 0.5) : p > 0 ? rezina(p, 24) : p);
     },
     onPanResponderRelease: (_, g) => {
-      const boshi = ochiq.current ? -KENG : 0;
-      if (boshi + g.dx < -KENG / 2) och(); else yop();
+      // Tez "chertilsa" masofa kam bo'lsa ham ochiladi/yopiladi (tezlik bo'yicha taxmin)
+      const p = (ochiq.current ? -KENG : 0) + g.dx + otilish(g.vx);
+      if (p < -KENG / 2) och(g.vx); else yop(g.vx);
     },
     onPanResponderTerminate: () => (ochiq.current ? och() : yop()),
   })).current;

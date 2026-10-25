@@ -24,6 +24,7 @@ import { kunlikHtml, pdfUlash } from "../src/logic/ulashish";
 export default function Tarix() {
   const { nonlar, hisobotlarTarixi, ochirArxivga, akkauntNomi, oylikArxiv, hisobotPdfUlash } = useApp();
   const [qidiruv, setQidiruv] = useState("");
+  const korinadigan = [...(hisobotlarTarixi || [])].slice(0, 30).filter((h) => qidiruvMos(`${h.sana} ${sanaChiroyli(h.sana)}`, qidiruv));
   const pdf = (h) => hisobotPdfUlash(h)
     .catch(() => Alert.alert("Xatolik", "PDF tayyorlab bo'lmadi."));
 
@@ -52,8 +53,10 @@ export default function Tarix() {
 
         {(hisobotlarTarixi || []).length === 0 ? (
           <Card><Text style={styles.bosh}>Hali hisobot yo'q. Kunlik qop hisobi sahifasidagi "Kunni yakunlash"ni bossangiz, hisobot shu yerda paydo bo'ladi.</Text></Card>
+        ) : korinadigan.length === 0 ? (
+          <Text style={styles.topilmadi}>«{qidiruv.trim()}» bo'yicha hisobot topilmadi</Text>
         ) : (
-          <Guruh>{[...hisobotlarTarixi].slice(0, 30).filter((h) => qidiruvMos(`${h.sana} ${sanaChiroyli(h.sana)}`, qidiruv)).map((h) => {
+          <Guruh>{korinadigan.map((h) => {
             const tahlil = kunTahlili(h, hisobotlarTarixi);
             const daromad = parseFloat(h.daromad) || 0;
             const ishchiHaq = parseFloat(h.ishchiHaq) || 0;
@@ -152,6 +155,7 @@ const styles = temaStil(() => StyleSheet.create({
   scroll:   { padding: S[5], paddingBottom: S[8] },
   flex1:    { flex: 1 },
   bosh:     { fontSize: T.sm, color: C.muted },
+  topilmadi:{ fontSize: T.sm, color: C.muted, textAlign: "center", paddingVertical: S[5] },
   secHead:  { flexDirection: "row", alignItems: "center", gap: 6, marginTop: S[2], marginBottom: S[3] },
   secTitle: { fontSize: T.xs, color: C.sub, fontWeight: "700", letterSpacing: 1 },
 

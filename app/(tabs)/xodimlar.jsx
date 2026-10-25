@@ -351,6 +351,10 @@ export default function Xodimlar() {
                 />
               ))}
             </Bolim>
+            {/* Qidiruv bo'yicha hech kim chiqmasa — bo'sh sahifa o'rniga izoh */}
+            {aktiv.length + tatildagilar.length + ishdanKetgan.length === 0 && (
+              <Text style={styles.topilmadi}>«{qidiruv.trim()}» bo'yicha xodim topilmadi</Text>
+            )}
           </>
         )}
       </ScrollBox>
@@ -700,6 +704,7 @@ const styles = temaStil(() => StyleSheet.create({
   haqNom:    { flex: 1, fontSize: T.sm, color: C.text },
   haqVal:    { fontSize: T.sm, color: C.sub, fontWeight: "700", marginLeft: S[2] },
   muted:     { fontSize: T.sm, color: C.muted },
+  topilmadi: { fontSize: T.sm, color: C.muted, textAlign: "center", paddingVertical: S[5] },
   bodyActions:{ flexDirection: "row", flexWrap: "wrap", justifyContent: "flex-end", gap: S[3], rowGap: S[2], marginTop: S[3], borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: C.borderSoft, paddingTop: S[3] },
   actBtn:    { flexDirection: "row", alignItems: "center" },
   actTxt:    { fontSize: T.sm, fontWeight: "700" },

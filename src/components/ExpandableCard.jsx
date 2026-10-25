@@ -22,8 +22,14 @@ if (Platform.OS === "android" && UIManager.setLayoutAnimationEnabledExperimental
 // ── Butun ilova bo'ylab ochiq kartalar ro'yxati ──
 const kartalar = new Set();
 
+// Ochilish/yopilish: o'lcham o'zgarishi prujina bilan (sakramasdan), yangi qism xira holatdan paydo bo'ladi
 const silliq = () =>
-  LayoutAnimation.configureNext(LayoutAnimation.create(ANIM.duration, LayoutAnimation.Types.easeInEaseOut, LayoutAnimation.Properties.opacity));
+  LayoutAnimation.configureNext({
+    duration: ANIM.duration + 120,
+    create: { type: LayoutAnimation.Types.easeInEaseOut, property: LayoutAnimation.Properties.opacity },
+    update: { type: LayoutAnimation.Types.spring, springDamping: 0.86 },
+    delete: { type: LayoutAnimation.Types.easeInEaseOut, property: LayoutAnimation.Properties.opacity },
+  });
 
 // Ochiq kartalarni yopadi. `qoldir` — yopilmasligi kerak bo'lgan karta id(lar)i.
 export function yopKartalar({ qoldir } = {}) {

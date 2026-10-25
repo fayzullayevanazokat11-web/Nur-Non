@@ -1,5 +1,6 @@
 // "Saqlandi ✓" — qisqa tasdiq xabarchasi (ekran pastida 1.6 soniya). Istalgan joydan:
 //   saqlandiXabar()  yoki  saqlandiXabar("Qarz qo'shildi")
+import { PRUJINA, PRUJINA_YUMSHOQ } from "../logic/fizika";
 import { useEffect, useRef, useState } from "react";
 import { Text, Animated, Easing, StyleSheet } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -19,7 +20,7 @@ export function Xabarcha() {
       clearTimeout(t.current);
       setMatn(m);
       a.setValue(0);
-      Animated.timing(a, { toValue: 1, duration: 200, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start();
+      Animated.spring(a, { toValue: 1, ...PRUJINA, useNativeDriver: true }).start();
       t.current = setTimeout(() => {
         Animated.timing(a, { toValue: 0, duration: 200, useNativeDriver: true }).start(() => setMatn(null));
       }, 1600);
