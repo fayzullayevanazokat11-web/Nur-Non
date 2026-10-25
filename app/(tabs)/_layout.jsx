@@ -241,7 +241,8 @@ export default function TabsLayout() {
     >
       <SwipeTabs.Screen name="index" options={{ title: t("Markaz") }} />
       <SwipeTabs.Screen name="ishlab" options={{ title: t("Ishlab chiqarish"), tabBarLabel: t("Ishlab") }} />
-      <SwipeTabs.Screen name="kalkulyator" options={{ title: t("Kalkulyator") }} />
+      {/* Kalkulyatorda ekranni surib boshqa bo'limga o'tib bo'lmaydi — tez hisob paytida tasodifan chiqib ketmasin */}
+      <SwipeTabs.Screen name="kalkulyator" options={{ title: t("Kalkulyator"), swipeEnabled: false }} />
       <SwipeTabs.Screen name="xodimlar" options={{ title: t("Xodimlar") }} />
       <SwipeTabs.Screen name="ombor" options={{ title: t("Ombor") }} />
     </SwipeTabs>
