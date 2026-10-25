@@ -19,6 +19,8 @@ import { useTiklash } from "../../src/components/useTiklash";
 import { xomashyoRoyxati } from "../../src/logic/konstantalar";
 import { C, T, S, R, temaStil } from "../../src/theme";
 import { formatSom, getQopTannarx, getIngNarx, sonOl, xamirdanNonSoni, nonVazniOl } from "../../src/logic/hisob";
+import { saqlandiXabar } from "../../src/components/Xabarcha";
+import { BoshHolat } from "../../src/components/BoshHolat";
 
 const baseUnit = (birlik) => (birlik === "litr" ? "ml" : "g");
 const SUV = { id: "suv", nom: "Suv", birlik: "litr" };
@@ -80,6 +82,7 @@ export default function IshlabChiqarish() {
   useTiklash(() => { setIkonOchiq(null); setTab("assortiment"); });
   const tabTanla = (t) => { if (t === tab) return; silliq(); setIkonOchiq(null); setTab(t); };
   const [forma, setForma] = useState(BOSH);
+  const [formaOch, setFormaOch] = useState(0); // bo'sh holatdagi tugma formani ochadi
   const scrollRef = useRef(null);
 
   const yangila = (k, v) => setForma((p) => ({ ...p, [k]: v }));
@@ -179,6 +182,7 @@ export default function IshlabChiqarish() {
     } else {
       setNonlar((prev) => [...prev, { id: Date.now(), ...yangi }]);
     }
+    saqlandiXabar("Non saqlandi");
     tozala();
   };
 
@@ -240,7 +244,7 @@ export default function IshlabChiqarish() {
             <ExpandableCard
               id="forma"
               style={styles.formCard}
-              ochKaliti={tahrirId}
+              ochKaliti={tahrirId || formaOch || null}
               header={
                 <View style={styles.formHead}>
                   <Ionicons name={tahrirId ? "create-outline" : "add-circle-outline"} size={18} color={C.sub} />
@@ -320,7 +324,7 @@ export default function IshlabChiqarish() {
             {nonlar.length > 0 && <Text style={styles.ikonHint}>Xomashyo ikonkasini o'zgartirish uchun uning ustiga bosing</Text>}
 
             {nonlar.length === 0 ? (
-              <Card><Text style={styles.muted}>Hali non turi qo'shilmagan</Text></Card>
+              <BoshHolat icon="add-circle-outline" sarlavha="Hali non turi yo'q" matn="Birinchi nonni qo'shing: nomi, narxi, 1 qopga ketadigan xomashyo va bitta non vazni." tugma="Birinchi nonni qo'shish" onPress={() => { setFormaOch((x) => x + 1); setTimeout(() => scrollRef.current?.scrollToTop?.(true), 50); }} />
             ) : (
               nonlar.map((non) => {
                 const oz = non.ozIshlab !== false;

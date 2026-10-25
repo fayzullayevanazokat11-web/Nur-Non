@@ -165,7 +165,7 @@ const styles = temaStil(() => StyleSheet.create({
   ikon:     { width: 36, height: 36, borderRadius: R.sm, alignItems: "center", justifyContent: "center", backgroundColor: C.accent + "14" },
   nom:      { fontSize: T.sm, fontWeight: "800", color: C.text },
   narx:     { fontSize: 11, color: C.muted, marginTop: 2, fontWeight: "600" },
-  qadam:    { width: 32, height: 32, borderRadius: 16, alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: C.border, backgroundColor: C.surface },
+  qadam:    { width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: C.border, backgroundColor: C.surface },
   qadamOchiq:{ opacity: 0.4 },
   input:    { minWidth: 58, borderWidth: 1, borderColor: C.border, borderRadius: R.sm, paddingVertical: 7, paddingHorizontal: 8, backgroundColor: C.surface, alignItems: "center" },
   inputFaol:{ borderColor: C.accent },

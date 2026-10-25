@@ -10,11 +10,14 @@ import { useApp } from "../src/store/AppData";
 import { Card } from "../src/components/Card";
 import { Btn } from "../src/components/Btn";
 import { ExpandableCard, yopKartalar } from "../src/components/ExpandableCard";
+import { SuriladiganQator } from "../src/components/SuriladiganQator";
+import { saqlandiXabar } from "../src/components/Xabarcha";
 import { ScrollBox } from "../src/components/ScrollBox";
 import { SahifaSarlavha } from "../src/components/SahifaSarlavha";
 import { YakunIzoh } from "../src/components/YakunIzoh";
 import { C, T, S, R, temaStil } from "../src/theme";
 import { formatSom, kartaJami, kartaHisob, bugunSana, sonOl } from "../src/logic/hisob";
+import { BoshHolat } from "../src/components/BoshHolat";
 
 const soatMatni = (ms) => { const d = new Date(ms); return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`; };
 
@@ -58,6 +61,7 @@ export default function Karta() {
         sana: localSana(), vaqt: Date.now(), dona: pv.dona, sofFoyda: pv.sofFoyda,
       }]);
     }
+    saqlandiXabar("Karta to'lovi saqlandi");
     tozala();
   };
 
@@ -133,32 +137,32 @@ export default function Karta() {
         </View>
 
         {(kartalar || []).length === 0 ? (
-          <Card><Text style={styles.bosh}>Hali karta to'lovi yo'q</Text></Card>
+          <BoshHolat icon="card-outline" sarlavha="Hali karta to'lovi yo'q" matn="Mijoz karta orqali to'lasa — yuqoridagi formaga summani yozib «Saqlash»ni bosing." />
         ) : (
           [...kartalar].reverse().map((k) => (
-            <ExpandableCard
-              key={k.id}
-              style={styles.item}
-              header={
-                <View style={styles.mHead}>
-                  <Text style={[styles.itemIsm, styles.flex1]} numberOfLines={1}>{k.izoh || "Karta to'lovi"}</Text>
-                  <Text style={[styles.itemSumma, { color: C.green }]} numberOfLines={1}>{formatSom(k.summa)} so'm</Text>
+            <SuriladiganQator key={k.id} style={styles.item} nom={k.izoh || "Karta to'lovi"} onOchir={() => { yopKartalar(); ochirArxivga("karta", k.id); if (tahrirId === k.id) tozala(); saqlandiXabar("O'chirildi · Tarixdagilarda"); }}>
+              <ExpandableCard
+                header={
+                  <View style={styles.mHead}>
+                    <Text style={[styles.itemIsm, styles.flex1]} numberOfLines={1}>{k.izoh || "Karta to'lovi"}</Text>
+                    <Text style={[styles.itemSumma, { color: C.green }]} numberOfLines={1}>{formatSom(k.summa)} so'm</Text>
+                  </View>
+                }
+              >
+                <Text style={styles.itemIzoh}>≈ {k.dona} dona non · sof foyda {formatSom(k.sofFoyda)} so'm</Text>
+                <Text style={styles.itemSana}>{k.sana}{k.vaqt ? ` · ${soatMatni(k.vaqt)}` : ""}</Text>
+                <View style={styles.actions}>
+                  <Pressable onPress={() => tahrirla(k)} hitSlop={6} style={styles.actBtn}>
+                    <Ionicons name="create-outline" size={16} color={C.accent} />
+                    <Text style={[styles.actTxt, { color: C.accent }]}> Tahrirlash</Text>
+                  </Pressable>
+                  <Pressable onPress={() => ochirKarta(k.id)} hitSlop={6} style={styles.actBtn}>
+                    <Ionicons name="trash-outline" size={16} color={C.red} />
+                    <Text style={[styles.actTxt, { color: C.red }]}> O'chirish</Text>
+                  </Pressable>
                 </View>
-              }
-            >
-              <Text style={styles.itemIzoh}>≈ {k.dona} dona non · sof foyda {formatSom(k.sofFoyda)} so'm</Text>
-              <Text style={styles.itemSana}>{k.sana}{k.vaqt ? ` · ${soatMatni(k.vaqt)}` : ""}</Text>
-              <View style={styles.actions}>
-                <Pressable onPress={() => tahrirla(k)} hitSlop={6} style={styles.actBtn}>
-                  <Ionicons name="create-outline" size={16} color={C.accent} />
-                  <Text style={[styles.actTxt, { color: C.accent }]}> Tahrirlash</Text>
-                </Pressable>
-                <Pressable onPress={() => ochirKarta(k.id)} hitSlop={6} style={styles.actBtn}>
-                  <Ionicons name="trash-outline" size={16} color={C.red} />
-                  <Text style={[styles.actTxt, { color: C.red }]}> O'chirish</Text>
-                </Pressable>
-              </View>
-            </ExpandableCard>
+              </ExpandableCard>
+            </SuriladiganQator>
           ))
         )}
       </ScrollBox>

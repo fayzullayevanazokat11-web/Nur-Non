@@ -26,6 +26,12 @@ export function keyingiSana(sana) {
   const t = new Date(y, m - 1, d + 1);
   return `${t.getFullYear()}-${ikkiS(t.getMonth() + 1)}-${ikkiS(t.getDate())}`;
 }
+// "YYYY-MM-DD" dan oldingi kalendar kuni
+export function oldingiSana(sana) {
+  const [y, m, d] = String(sana).split("-").map(Number);
+  const t = new Date(y, m - 1, d - 1);
+  return `${t.getFullYear()}-${ikkiS(t.getMonth() + 1)}-${ikkiS(t.getDate())}`;
+}
 // Joriy ish kuni qachon tugaydi (keyingi 03:00 dan bir millisoniya oldin)
 export function kunTugashVaqti(ms = Date.now()) {
   const d = ishKuni(ms);
@@ -385,4 +391,15 @@ export function formatSom(n) {
   const x = Math.round(Number(n) || 0);
   const s = Math.abs(x).toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
   return (x < 0 ? "-" : "") + s;
+}
+
+// Katta summani qisqa ko'rsatish: 3 680 000 → "3,68 mln", 125 000 → "125 ming". Kichik joylar uchun.
+export function formatQisqa(n) {
+  const x = Math.round(Number(n) || 0);
+  const a = Math.abs(x), z = x < 0 ? "-" : "";
+  const kasr = (v) => String(Math.round(v * 100) / 100).replace(".", ",");
+  if (a >= 1e9) return `${z}${kasr(a / 1e9)} mlrd`;
+  if (a >= 1e6) return `${z}${kasr(a / 1e6)} mln`;
+  if (a >= 1e5) return `${z}${Math.round(a / 1e3)} ming`;
+  return formatSom(x);
 }

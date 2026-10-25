@@ -19,6 +19,7 @@ import { omborRoyxati } from "../../src/logic/konstantalar";
 import { ortachaSarf } from "../../src/logic/eslatma";
 import { XomashyoIkon } from "../../src/components/XomashyoIkon";
 import { useTiklash } from "../../src/components/useTiklash";
+import { saqlandiXabar } from "../../src/components/Xabarcha";
 
 // Har bir mahsulot id'si uchun bo'sh maydon (asosiy + Xomashyoda qo'shilganlar)
 const boshForma = (royxat) => Object.fromEntries(royxat.map((m) => [m.id, ""]));
@@ -159,6 +160,7 @@ export default function Ombor() {
       maydonlar,
     };
     setOmborlar((prev) => [entry, ...prev]);
+    saqlandiXabar("Set kirimi saqlandi");
     tozala();
   };
 
@@ -180,6 +182,7 @@ export default function Ombor() {
     const entry = { id: Date.now(), sana: bugunSana(), vaqt: Date.now(), turi: "yangilash", maydonlar };
     setOmborlar((prev) => [entry, ...prev]);
     amalArxivga("zaxiraYangilash", entry); // Tarixdagilar'dan qaytarilsa — avvalgi qoldiq tiklanadi
+    saqlandiXabar("Qoldiq yangilandi");
     tozala();
   };
 

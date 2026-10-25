@@ -10,6 +10,8 @@ import { useApp } from "../src/store/AppData";
 import { Card } from "../src/components/Card";
 import { Btn } from "../src/components/Btn";
 import { ExpandableCard, yopKartalar } from "../src/components/ExpandableCard";
+import { SuriladiganQator } from "../src/components/SuriladiganQator";
+import { saqlandiXabar } from "../src/components/Xabarcha";
 import { DateField } from "../src/components/DateField";
 import { NonIkon } from "../src/components/XomashyoIkon";
 import { VaqtField, hozirgiSoat } from "../src/components/VaqtField";
@@ -18,6 +20,7 @@ import { SahifaSarlavha } from "../src/components/SahifaSarlavha";
 import { YakunIzoh } from "../src/components/YakunIzoh";
 import { C, T, S, R, temaStil } from "../src/theme";
 import { formatSom, optomJami, bugunSana, sonOl } from "../src/logic/hisob";
+import { BoshHolat } from "../src/components/BoshHolat";
 
 
 export default function Optom() {
@@ -68,6 +71,7 @@ export default function Optom() {
       savat: savatHisob.items, summa: savatHisob.yakSumma, chegirma: savatHisob.jamiChegirma,
       izoh: forma.izoh.trim(),
     }]);
+    saqlandiXabar("Optom saqlandi");
     tozala();
   };
 
@@ -139,35 +143,35 @@ export default function Optom() {
         </View>
 
         {(optomlar || []).length === 0 ? (
-          <Card><Text style={styles.bosh}>Hali optom savdo yo'q</Text></Card>
+          <BoshHolat icon="storefront-outline" sarlavha="Hali optom savdo yo'q" matn="Do'kon yoki ulgurji xaridorga non bersangiz — yuqoridagi formadan yozing." />
         ) : (
           [...optomlar].reverse().map((o) => (
-            <ExpandableCard
-              key={o.id}
-              style={styles.item}
-              header={
-                <View style={styles.mHead}>
-                  <Text style={[styles.itemIsm, styles.flex1]} numberOfLines={1}>{o.ism}</Text>
-                  <Text style={[styles.itemSumma, { color: C.accent }]} numberOfLines={1}>{formatSom(o.summa)} so'm</Text>
+            <SuriladiganQator key={o.id} style={styles.item} nom={o.ism} onOchir={() => { yopKartalar(); ochirArxivga("optom", o.id); saqlandiXabar("O'chirildi · Tarixdagilarda"); }}>
+              <ExpandableCard
+                header={
+                  <View style={styles.mHead}>
+                    <Text style={[styles.itemIsm, styles.flex1]} numberOfLines={1}>{o.ism}</Text>
+                    <Text style={[styles.itemSumma, { color: C.accent }]} numberOfLines={1}>{formatSom(o.summa)} so'm</Text>
+                  </View>
+                }
+              >
+                {(o.savat || []).map((s, i) => (
+                  <View key={i} style={styles.savatLine}>
+                    <Text style={styles.savatLNom} numberOfLines={1}>{s.nonNomi}</Text>
+                    <Text style={styles.savatLV}>{s.soni} dona × {formatSom(s.narx)}</Text>
+                  </View>
+                ))}
+                {o.chegirma > 0 ? <Text style={styles.itemIzoh}>Chegirma: {formatSom(o.chegirma)} so'm</Text> : null}
+                {o.izoh ? <Text style={styles.itemIzoh}>{o.izoh}</Text> : null}
+                <Text style={styles.itemSana}>{o.sana}{o.soat ? ` · ${o.soat}` : ""}</Text>
+                <View style={styles.actions}>
+                  <Pressable onPress={() => ochirOptom(o.id)} hitSlop={6} style={styles.actBtn}>
+                    <Ionicons name="trash-outline" size={16} color={C.red} />
+                    <Text style={[styles.actTxt, { color: C.red }]}> O'chirish</Text>
+                  </Pressable>
                 </View>
-              }
-            >
-              {(o.savat || []).map((s, i) => (
-                <View key={i} style={styles.savatLine}>
-                  <Text style={styles.savatLNom} numberOfLines={1}>{s.nonNomi}</Text>
-                  <Text style={styles.savatLV}>{s.soni} dona × {formatSom(s.narx)}</Text>
-                </View>
-              ))}
-              {o.chegirma > 0 ? <Text style={styles.itemIzoh}>Chegirma: {formatSom(o.chegirma)} so'm</Text> : null}
-              {o.izoh ? <Text style={styles.itemIzoh}>{o.izoh}</Text> : null}
-              <Text style={styles.itemSana}>{o.sana}{o.soat ? ` · ${o.soat}` : ""}</Text>
-              <View style={styles.actions}>
-                <Pressable onPress={() => ochirOptom(o.id)} hitSlop={6} style={styles.actBtn}>
-                  <Ionicons name="trash-outline" size={16} color={C.red} />
-                  <Text style={[styles.actTxt, { color: C.red }]}> O'chirish</Text>
-                </Pressable>
-              </View>
-            </ExpandableCard>
+              </ExpandableCard>
+            </SuriladiganQator>
           ))
         )}
       </ScrollBox>

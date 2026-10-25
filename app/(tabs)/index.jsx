@@ -17,7 +17,7 @@ import { EslatmalarPanel } from "../../src/components/EslatmalarPanel";
 import { ErtalabTekshiruv } from "../../src/components/ErtalabTekshiruv";
 import { ixcham } from "../../src/components/Statistika";
 import { C, T, S, R, temaStil } from "../../src/theme";
-import { hisoblaKunlik, formatSom, qarzJami, optomJami, kartaJami, ishchiHaqlari, bugunSana, sutLitri } from "../../src/logic/hisob";
+import { hisoblaKunlik, formatSom, formatQisqa, qarzJami, optomJami, kartaJami, ishchiHaqlari, bugunSana, sutLitri, oldingiSana } from "../../src/logic/hisob";
 // Maxsus rasm ikonkalari (Ionicons o'rniga — premium ko'rinish)
 const ICONS = {
   qop:     require("../../assets/icons/qop.png"),
@@ -79,6 +79,11 @@ export default function Markaz() {
   );
   // Lock bo'lsa — snapshot, aks holda jonli hisob:
   const stats = locked ? { ...liveStats, ...locked } : liveStats;
+  // Solishtirish uchun kechagi (oldingi ish kuni) hisobot
+  const kechagiHisobot = useMemo(
+    () => (hisobotlarTarixi || []).find((h) => h.sana === oldingiSana(bugunSanasi)) || null,
+    [hisobotlarTarixi, bugunSanasi]
+  );
 
   // Kun yakunlangan bo'lsa — o'sha kun hisobotidagi ishchilar haqi (kiritmalar tozalangan)
   const yakunHisoboti = useMemo(() => {
@@ -127,16 +132,14 @@ export default function Markaz() {
       <ScrollBox contentContainerStyle={styles.scroll}>
         <ScreenHeader eyebrow="Bosh sahifa" title="Markaz" image={require("../../assets/tabicons/markaz.png")} />
 
+        {/* BOSH RAQAM — bugungi sof foyda (katta), kecha bilan solishtirma, ostida non va qop */}
+        <BoshRaqam stats={stats} kecha={kechagiHisobot} yakunlangan={!!locked} />
+
         <EslatmalarPanel />
 
         {/* KUNNI BOSHLASH — ertalabgi tekshiruv (davomat, ombor) */}
         <ErtalabTekshiruv kunYopiq={!!locked} />
 
-        <View style={styles.statsRow}>
-          <StatTile label="Sof foyda" unit="so'm" son={stats.sofFoyda} format={formatSom} color={stats.sofFoyda >= 0 ? C.green : C.red} icon="trending-up-outline" />
-          <StatTile label="Sotilgan non" unit="dona" son={stats.sotilganNon} color={C.accent} icon="cube-outline" />
-          <StatTile label="Kunlik qop" unit="qop" son={stats.jamiQop} color={C.accent} icon="layers-outline" />
-        </View>
 
         {/* STATISTIKA — ko'rsatkichlar tagida */}
         <Bosma
@@ -251,6 +254,57 @@ export default function Markaz() {
   );
 }
 
+// Bosh raqam: bugungi sof foyda katta, kecha bilan farq (↑/↓ %), ostida sotilgan non va qop.
+// Kechqurun (19:00 dan) kun hali yakunlanmagan bo'lsa — shu yerning o'zida «Kunni yakunlash» tugmasi.
+function BoshRaqam({ stats, kecha, yakunlangan }) {
+  const korinish = useAnimSon(stats.sofFoyda);
+  const kechaFoyda = kecha ? Number(kecha.sofFoyda) || 0 : null;
+  const farq = kechaFoyda !== null && kechaFoyda !== 0 && (yakunlangan || stats.sofFoyda !== 0)
+    ? Math.round(((stats.sofFoyda - kechaFoyda) / Math.abs(kechaFoyda)) * 100) : null;
+  const soat = new Date().getHours();
+  const kechqurun = !yakunlangan && (soat >= 19 || soat < 3) && (stats.jamiQop > 0 || stats.jamiNon > 0);
+  const manfiy = stats.sofFoyda < 0;
+  return (
+    <Card style={styles.bosh}>
+      <View style={styles.boshUst}>
+        <Text style={styles.boshNom}>{yakunlangan ? "BUGUNGI SOF FOYDA · YAKUNLANGAN" : "BUGUNGI SOF FOYDA"}</Text>
+        {farq !== null && (
+          <View style={[styles.farq, farq < 0 && styles.farqPast]}>
+            <Ionicons name={farq >= 0 ? "arrow-up" : "arrow-down"} size={11} color={farq >= 0 ? C.onAccent : C.text} />
+            <Text style={[styles.farqTxt, farq < 0 && { color: C.text }]}>{Math.abs(farq)}%</Text>
+          </View>
+        )}
+      </View>
+      <Text testID="bosh-sof-foyda" style={[styles.boshQiymat, manfiy && { color: C.red }]} numberOfLines={1} adjustsFontSizeToFit>
+        {formatSom(Math.round(korinish))} <Text style={styles.boshBirlik}>so'm</Text>
+      </Text>
+      <Text style={styles.boshKecha}>
+        {kechaFoyda !== null ? `Kecha: ${formatQisqa(kechaFoyda)} so'm` : "Kecha yakunlangan hisobot yo'q"}
+      </Text>
+      <View style={styles.boshPast}>
+        <View style={styles.boshKichik}>
+          <Ionicons name="cube-outline" size={15} color={C.sub} />
+          <Text style={styles.boshKichikNom}>Sotilgan non</Text>
+          <Text style={styles.boshKichikQiymat}>{formatSom(stats.sotilganNon)} dona</Text>
+        </View>
+        <View style={styles.boshAjrat} />
+        <View style={styles.boshKichik}>
+          <Ionicons name="layers-outline" size={15} color={C.sub} />
+          <Text style={styles.boshKichikNom}>Kunlik qop</Text>
+          <Text style={styles.boshKichikQiymat}>{formatSom(stats.jamiQop)} qop</Text>
+        </View>
+      </View>
+      {kechqurun && (
+        <Bosma accessibilityRole="button" accessibilityLabel="Kunni yakunlashga o'tish" onPress={() => router.push("/qop")} style={styles.yakunlaBtn}>
+          <Ionicons name="moon-outline" size={16} color={C.onAccent} />
+          <Text style={styles.yakunlaTxt}>Kun oxiri — kunni yakunlash</Text>
+          <Ionicons name="chevron-forward" size={16} color={C.onAccent} />
+        </Bosma>
+      )}
+    </Card>
+  );
+}
+
 // Ko'rsatkich plitkasi — qiymat o'zgarganda son silliq "sanab" boradi
 function StatTile({ label, son, format = (x) => String(x), unit, color, icon }) {
   const korinish = useAnimSon(son);
@@ -299,6 +353,22 @@ const styles = temaStil(() => StyleSheet.create({
   safe:      { flex: 1, backgroundColor: C.bg },
   scroll:    { padding: S[5], paddingBottom: S[8] },
   statsRow:  { flexDirection: "row", gap: S[2], marginBottom: S[3] },
+  bosh:      { marginBottom: S[3], paddingVertical: S[4] },
+  boshUst:   { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: S[2] },
+  boshNom:   { fontSize: 10, fontWeight: "800", color: C.muted, letterSpacing: 1 },
+  farq:      { flexDirection: "row", alignItems: "center", gap: 2, backgroundColor: C.accent, borderRadius: R.pill, paddingVertical: 3, paddingHorizontal: 8 },
+  farqPast:  { backgroundColor: C.panel },
+  farqTxt:   { fontSize: 11, fontWeight: "800", color: C.onAccent },
+  boshQiymat:{ fontSize: 36, fontWeight: "800", color: C.accent, letterSpacing: -0.8, marginTop: S[2] },
+  boshBirlik:{ fontSize: 18, fontWeight: "700", color: C.sub },
+  boshKecha: { fontSize: 12, color: C.muted, fontWeight: "600", marginTop: 2 },
+  boshPast:  { flexDirection: "row", alignItems: "center", marginTop: S[3], paddingTop: S[3], borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: C.borderSoft },
+  boshKichik:{ flex: 1, gap: 2 },
+  boshKichikNom:{ fontSize: 10, fontWeight: "700", color: C.muted, letterSpacing: 0.5, textTransform: "uppercase" },
+  boshKichikQiymat:{ fontSize: 17, fontWeight: "800", color: C.text },
+  boshAjrat: { width: StyleSheet.hairlineWidth, alignSelf: "stretch", backgroundColor: C.borderSoft, marginHorizontal: S[3] },
+  yakunlaBtn:{ flexDirection: "row", alignItems: "center", gap: S[2], marginTop: S[3], backgroundColor: C.accent, borderRadius: R.md, paddingVertical: 12, paddingHorizontal: S[3] },
+  yakunlaTxt:{ flex: 1, fontSize: T.sm, fontWeight: "800", color: C.onAccent },
   statTile:  { flex: 1, paddingVertical: S[3], paddingHorizontal: S[3] },
   statIcon:  { marginBottom: S[1] },
   statLabel: { fontSize: 9, color: C.muted, fontWeight: "700", letterSpacing: 0.8, textTransform: "uppercase", marginBottom: S[2] },

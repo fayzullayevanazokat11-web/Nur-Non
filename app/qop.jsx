@@ -3,7 +3,7 @@
 // moliyaviy xulosa va "Saqlash" / "Kunni yakunlash" tugmalari.
 // Kun KUNIGA BIR MARTA yakunlanadi. Yakunlangach sahifada faqat shu kunning hisoboti
 // (o'qish uchun) va PDF turadi; bekor qilish — Markazda, kun oxirigacha.
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { View, Text, Image, Pressable, TextInput, StyleSheet, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -70,6 +70,10 @@ export default function Qop() {
     [xomIshchilar, davomat, kunlikRollar, tanSana]
   );
   const sanaRasmlari = (qopRasmlari || []).filter((r) => r.kun === tanSana);
+  // Qadam ko'rsatkichi uchun bo'limlar joyi va holati
+  const scrollRef = useRef(null);
+  const joylar = useRef({});
+  const borQadam = (k) => scrollRef.current?.scrollTo({ y: Math.max(0, (joylar.current[k] || 0) - 12), animated: true });
 
   // Boshqa joydan yangilansa, joriy formani yangilab turamiz (faqat formaga tegilmasa)
   useEffect(() => { if (!tegildi) setFQop(toStr(ozIshlabQoplar)); }, [ozIshlabQoplar]);
@@ -100,6 +104,12 @@ export default function Qop() {
     sutLitr: sutLitri((sutKirimi || {})[tanSana]),
   };
   const stats = useMemo(() => hisoblaKunlik(args), [fQop, fTash, fSot, fYaroqsiz, nonlar, ishchilar, optomlar, qarzlar, mahsulotNarxlari, braklar, boshlangichQoldiq, kunlikXarajatlar, oxirgiYakunlashVaqti, tanSana, sutKirimi]);
+  const qadamlar = [
+    { k: "qop", nom: "Qop", ok: stats.jamiQop > 0 || stats.jamiNon > 0 },
+    { k: "sut", nom: "Sut", ok: sutLitri((sutKirimi || {})[tanSana]) > 0 },
+    { k: "rasm", nom: "Rasm", ok: sanaRasmlari.length > 0 },
+    { k: "yakun", nom: "Yakunlash", ok: false },
+  ];
   const qoldiqlar = useMemo(() => qoldiqlarHisobi(nonlar, args), [fQop, fTash, fSot, fYaroqsiz, nonlar, boshlangichQoldiq, optomlar, qarzlar, oxirgiYakunlashVaqti, tanSana]);
   const haq = useMemo(() => ishchiHaqlari(nonlar, ishchilar, fQop, bugungiBrak), [nonlar, ishchilar, fQop, bugungiBrak]);
 
@@ -273,8 +283,24 @@ export default function Qop() {
 
   return (
     <SafeAreaView style={styles.safe} edges={["top"]}>
-      <ScrollBox contentContainerStyle={styles.scroll}>
+      <ScrollBox ref={scrollRef} contentContainerStyle={styles.scroll}>
         <SahifaSarlavha eyebrow="KUNLIK HISOB" title="Kunlik qop hisobi" subtitle={`${stats.jamiQop} qop · ${stats.jamiNon} dona ishlab`} image={require("../assets/icons/qop.png")} />
+
+        {/* Qadamlar: Qop → Sut → Rasm → Yakunlash (bosilsa — o'sha bo'limga) */}
+        <View style={styles.qadamlar}>
+          {qadamlar.map((q, i) => {
+            const faol = !q.ok && qadamlar.slice(0, i).every((x) => x.ok);
+            return (
+              <Pressable key={q.k} accessibilityRole="button" accessibilityLabel={`Qadam: ${q.nom}`} accessibilityState={{ checked: q.ok }} onPress={() => borQadam(q.k)} style={styles.qadamQ}>
+                <View style={[styles.qadamDoira, q.ok && styles.qadamOk, faol && styles.qadamFaol]}>
+                  {q.ok ? <Ionicons name="checkmark" size={14} color={C.onAccent} /> : <Text style={[styles.qadamRaqam, faol && { color: C.accent }]}>{i + 1}</Text>}
+                </View>
+                <Text style={[styles.qadamNom, (q.ok || faol) && styles.qadamNomFaol]} numberOfLines={1}>{q.nom}</Text>
+                {i < qadamlar.length - 1 && <View style={[styles.qadamChiziq, q.ok && styles.qadamChiziqOk]} />}
+              </Pressable>
+            );
+          })}
+        </View>
 
         {/* Hisobot sanasi */}
         <Card accent style={styles.card}>
@@ -305,6 +331,7 @@ export default function Qop() {
         </Card>
 
         {/* Per-non kiritish */}
+        <View onLayout={(e) => { joylar.current.qop = e.nativeEvent.layout.y; }} />
         <Card style={styles.card}>
           <View style={styles.cardTitleRow}>
             <Ionicons name="layers-outline" size={18} color={C.sub} />
@@ -422,6 +449,7 @@ export default function Qop() {
         )}
 
         {/* Sut kirimi — 2 mahal (Kunlik vazifadan ham kiritiladi); kunlik daromaddan ayriladi */}
+        <View onLayout={(e) => { joylar.current.sut = e.nativeEvent.layout.y; }} />
         <Card style={styles.card}>
           <View style={styles.cardTitleRow}>
             <Ionicons name="water-outline" size={18} color={C.sub} />
@@ -429,7 +457,9 @@ export default function Qop() {
           </View>
           <SutKirimi sana={tanSana} />
         </Card>
+        <View onLayout={(e) => { joylar.current.rasm = e.nativeEvent.layout.y; }} />
         <QopRasmBolimi kun={tanSana} />
+        <View onLayout={(e) => { joylar.current.yakun = e.nativeEvent.layout.y; }} />
         <Btn secondary onPress={() => kunniYakunla()} icon="checkmark-done-outline">Kunni yakunlash</Btn>
         <View style={styles.gap14} />
       </ScrollBox>
@@ -463,6 +493,16 @@ function Row({ label, value, color = C.text, bold, big }) {
 }
 
 const styles = temaStil(() => StyleSheet.create({
+  qadamlar:  { flexDirection: "row", marginBottom: S[4] },
+  qadamQ:    { flex: 1, alignItems: "center" },
+  qadamDoira:{ width: 30, height: 30, borderRadius: 15, borderWidth: 1.5, borderColor: C.border, backgroundColor: C.surface, alignItems: "center", justifyContent: "center", zIndex: 1 },
+  qadamOk:   { backgroundColor: C.accent, borderColor: C.accent },
+  qadamFaol: { borderColor: C.accent, borderWidth: 2 },
+  qadamRaqam:{ fontSize: 12, fontWeight: "800", color: C.muted },
+  qadamNom:  { fontSize: 11, fontWeight: "700", color: C.muted, marginTop: 4 },
+  qadamNomFaol:{ color: C.text },
+  qadamChiziq:{ position: "absolute", top: 14, left: "50%", right: "-50%", height: 2, backgroundColor: C.borderSoft, marginLeft: 18, marginRight: 18 },
+  qadamChiziqOk:{ backgroundColor: C.accent },
   safe: { flex: 1, backgroundColor: C.bg },
   scroll: { padding: S[5], paddingBottom: S[8] },
   flex1: { flex: 1 },

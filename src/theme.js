@@ -7,6 +7,7 @@
 // Uslublar `temaStil(() => StyleSheet.create({...}))` bilan e'lon qilinadi —
 // mavzu almashganda o'zi qayta hisoblanadi. Ekranlar app/_layout.jsx'da qayta chiziladi.
 import { useSyncExternalStore } from "react";
+import { Appearance } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 // Har bir mavzu: bir xil kalitlar to'plami. Grafik ranglari (musbat/manfiy)
@@ -62,7 +63,9 @@ const toliq = (r) => ({
   blue: r.accent, blueDim: r.accent + "0D",
 });
 
-let joriy = "non";
+let joriy = "non";   // amaldagi ranglar (non | tun)
+let tanlov = "non";  // foydalanuvchi tanlovi (non | tun | avto — telefon sozlamasiga qarab)
+const tizimTema = () => (Appearance.getColorScheme?.() === "dark" ? "tun" : "non");
 export const C = toliq(TEMALAR.non.ranglar);
 
 // ── Mavzu holati (butun ilova bo'yicha) ──
@@ -81,9 +84,27 @@ export const temaQorongi = () => !!TEMALAR[joriy]?.qorongi;
 
 export function setTema(id) {
   if (!qoy(id)) return;
-  AsyncStorage.setItem("nurnon:tema", JSON.stringify(id)).catch(() => {});
   xabarBer();
 }
+
+// Foydalanuvchi tanlovi: "non" | "tun" | "avto". Avto — telefon kunduzgi/tungi rejimiga ergashadi.
+export const getTanlov = () => tanlov;
+export function useTanlov() {
+  return useSyncExternalStore(
+    (f) => { tinglovchilar.add(f); return () => tinglovchilar.delete(f); },
+    getTanlov,
+    getTanlov
+  );
+}
+export function tanlovAlmashtir(id) {
+  if (id !== "avto" && !TEMALAR[id]) return;
+  tanlov = id;
+  AsyncStorage.setItem("nurnon:tema", JSON.stringify(id)).catch(() => {});
+  const kerak = id === "avto" ? tizimTema() : id;
+  if (kerak !== joriy) temaAlmashtir(kerak); else xabarBer();
+}
+// Telefon rejimi almashsa (avto tanlangan bo'lsa) — mavzu ham almashadi
+Appearance.addChangeListener?.(() => { if (tanlov === "avto") temaAlmashtir(tizimTema()); });
 
 // Silliq almashtirish: ildiz layout o'tish pardasini ro'yxatdan o'tkazadi
 // (parda yopiladi → mavzu almashadi → parda ochiladi). Bo'lmasa — darhol.
@@ -104,7 +125,14 @@ export function useTema() {
 
 // Saqlangan mavzuni yuklaymiz (splash ekrani paytida tugaydi)
 AsyncStorage.getItem("nurnon:tema")
-  .then((raw) => { if (raw && qoy(JSON.parse(raw))) xabarBer(); })
+  .then((raw) => {
+    if (!raw) return;
+    const t = JSON.parse(raw);
+    if (t !== "avto" && !TEMALAR[t]) return;
+    tanlov = t;
+    qoy(t === "avto" ? tizimTema() : t);
+    xabarBer();
+  })
   .catch(() => {});
 
 // Mavzuga bog'liq uslublar: birinchi murojaatda va mavzu almashganda qayta hisoblanadi

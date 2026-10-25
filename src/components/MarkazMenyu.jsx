@@ -4,7 +4,7 @@
 //   • Tarixdagilar — o'chirilgan narsalar (7 kun), qaytarish mumkin
 //   • PDFlar arxivi — kunlik hisobot PDF'lari (30 kun)
 //   • Yozuv — Lotin / Кирилл (butun ilova matni darhol o'zgaradi)
-//   • Dizayn — mavzu tanlovi (Non — yorug', Tun — qorong'i)
+//   • Dizayn — mavzu tanlovi (Non — yorug', Tun — qorong'i, Avto — telefon sozlamasiga qarab)
 // Menyu FAQAT logotip bosilganda ochiladi; boshqa bo'limga o'tilganda, dasturdan
 // chiqilganda yoki dizayn almashganda yopiladi.
 import { useEffect, useRef } from "react";
@@ -16,7 +16,7 @@ import { ruxsatSora, ESLATMA_SOAT } from "../logic/bildirishnoma";
 import { tanishuvniOch } from "./Tanishuv";
 import { Bosma } from "./Bosma";
 import { useTil, setTil } from "../i18n/til";
-import { C, T, S, R, ANIM, temaStil, TEMALAR, useTema, temaAlmashtir } from "../theme";
+import { C, T, S, R, ANIM, temaStil, TEMALAR, useTema, useTanlov, tanlovAlmashtir } from "../theme";
 
 export function MarkazMenyu({ onYop }) {
   const { ochirilganlar, akkauntNomi, eslatmaYoqilgan, setEslatmaYoqilgan, eslatmaYangila, salomYoqilgan, setSalomYoqilgan } = useApp();
@@ -30,6 +30,7 @@ export function MarkazMenyu({ onYop }) {
   };
   const til = useTil();
   const tema = useTema();
+  const tanlov = useTanlov();
   const soni = (ochirilganlar || []).length;
 
   // Ochilish animatsiyasi: shaffoflik + yuqoridan sirpanish
@@ -191,18 +192,20 @@ export function MarkazMenyu({ onYop }) {
         </View>
       </View>
       <View style={styles.temalar}>
-        {Object.entries(TEMALAR).map(([id, t]) => {
-          const tanlangan = tema === id;
+        {[...Object.entries(TEMALAR), ["avto", { nom: "Avto", avto: true, ranglar: TEMALAR.non.ranglar }]].map(([id, t]) => {
+          const tanlangan = tanlov === id;
           return (
             <Pressable
               key={id}
               accessibilityRole="button"
               accessibilityLabel={`Dizayn: ${t.nom}`}
               accessibilityState={{ selected: tanlangan }}
-              onPress={() => { if (!tanlangan) temaAlmashtir(id); }}
+              onPress={() => { if (!tanlangan) tanlovAlmashtir(id); }}
               style={({ pressed }) => [styles.tema, pressed && styles.temaPressed]}
             >
               <View style={[styles.namuna, { backgroundColor: t.ranglar.card, borderColor: tanlangan ? C.accent : C.border }, tanlangan && styles.namunaTanlangan]}>
+                {/* Avto — yarmi Non, yarmi Tun */}
+                {t.avto && <View style={[styles.avtoYarim, { backgroundColor: TEMALAR.tun.ranglar.card }]} />}
                 <View style={[styles.namunaBar, { backgroundColor: t.ranglar.accent }]} />
                 <View style={styles.namunaQator}>
                   <View style={[styles.namunaNuqta, { backgroundColor: t.ranglar.text }]} />
@@ -215,6 +218,7 @@ export function MarkazMenyu({ onYop }) {
                 )}
               </View>
               <Text style={[styles.temaNom, tanlangan && styles.temaNomTanlangan]}>{t.nom}</Text>
+              {t.avto && <Text style={styles.avtoIzoh}>telefon bo'yicha</Text>}
             </Pressable>
           );
         })}
@@ -224,6 +228,8 @@ export function MarkazMenyu({ onYop }) {
 }
 
 const styles = temaStil(() => StyleSheet.create({
+  avtoYarim: { position: "absolute", top: 0, bottom: 0, right: 0, width: "50%" },
+  avtoIzoh:  { fontSize: 10, color: C.muted, textAlign: "center", marginTop: 1 },
   wrap:      { backgroundColor: C.card, borderRadius: R.lg, borderWidth: StyleSheet.hairlineWidth, borderColor: C.borderSoft, marginTop: -S[3], marginBottom: S[5], overflow: "hidden" },
   row:       { flexDirection: "row", alignItems: "center", gap: S[3], paddingVertical: S[3], paddingHorizontal: S[4] },
   rowPressed:{ opacity: 0.75 },

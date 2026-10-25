@@ -115,6 +115,8 @@ export function AppDataProvider({ children }) {
   // Sut kirimi (kuniga 2 mahal, litr): { "YYYY-MM-DD": { m1: 40, m2: 35 } } — omborda turmaydi,
   // shu kunning daromadidan to'g'ridan-to'g'ri ayriladi
   const [sutKirimi, setSutKirimi]                       = usePersistedState("nurnon:sutKirimi", {});
+  // Oylik maqsad (sof foyda, so'm) — Statistikada bajarilishi ko'rsatiladi; 0 — qo'yilmagan
+  const [oylikMaqsad, setOylikMaqsad]                   = usePersistedState("nurnon:oylikMaqsad", 0);
   // Xomashyo narxlari o'zgarish tarixi: [{ id, nom, eski, yangi, vaqt }] — 180 kun
   const [narxTarixi, setNarxTarixi]                     = usePersistedState("nurnon:narxTarixi", []);
   // Kun xulosasi (03:00) va ertalabki salom ekranlari yoqilganmi (qurilma sozlamasi)
@@ -712,6 +714,7 @@ export function AppDataProvider({ children }) {
     kelishVaqtlari: [kelishVaqtlari, setKelishVaqtlari, "object"],
     kunlikRollar: [kunlikRollar, setKunlikRollar, "object"],
     sutKirimi: [sutKirimi, setSutKirimi, "object"],
+    oylikMaqsad: [oylikMaqsad, setOylikMaqsad, "number"],
     narxTarixi: [narxTarixi, setNarxTarixi, "array"],
     xomashyoIkonlari: [xomashyoIkonlari, setXomashyoIkonlari, "object"],
     ertalabTekshiruv: [ertalabTekshiruv, setErtalabTekshiruv, "objectOrNull"],
@@ -823,7 +826,7 @@ export function AppDataProvider({ children }) {
     davomat, setDavomat, keldilar, kelmaganlar, keldiAlmash, ishchilarHaq,
     kelishVaqtlari, kelishVaqti, kelishVaqtiQoy,
     kunlikRollar, kunlikRol, kunlikRolQoy,
-    sutKirimi, sutQoy,
+    sutKirimi, sutQoy, oylikMaqsad, setOylikMaqsad,
     narxTarixi, setNarxTarixi,
     xomashyoIkonlari, xomashyoIkonQoy,
     salomYoqilgan, setSalomYoqilgan,

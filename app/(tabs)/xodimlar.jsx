@@ -21,6 +21,8 @@ import { Avatar } from "../../src/components/Avatar";
 import { C, T, S, R, temaStil } from "../../src/theme";
 import { formatSom, sonOl, kunRoliBilan, ishchiHaqlari } from "../../src/logic/hisob";
 import { LAVOZIMLAR, getLavozimLabel } from "../../src/logic/konstantalar";
+import { saqlandiXabar } from "../../src/components/Xabarcha";
+import { BoshHolat } from "../../src/components/BoshHolat";
 
 const BOSH = { ism: "", lavozimId: LAVOZIMLAR[0].id, lavozimCustom: "", haqTuri: "kunlik", miqdor: "", nonNarx: {}, holat: "Aktiv", tatilSana: "" };
 const HOLATLAR = ["Aktiv", "Ta'tilda"];
@@ -34,6 +36,7 @@ export default function Xodimlar() {
 
   const [tahrirId, setTahrirId] = useState(null);
   const [forma, setForma] = useState(BOSH);
+  const [formaOch, setFormaOch] = useState(0); // bo'sh holatdagi tugma formani ochadi
   const scrollRef = useRef(null);
 
   const hammaAktiv = (ishchilar || []).filter((w) => w.holat === "Aktiv");
@@ -100,6 +103,7 @@ export default function Xodimlar() {
     } else {
       setIshchilar((prev) => [...prev, { id: Date.now(), tel: "", tatilQaytishSana: "", tahrirSoni: 0, ...asos }]);
     }
+    saqlandiXabar("Xodim saqlandi");
     tozala();
   };
 
@@ -225,7 +229,7 @@ export default function Xodimlar() {
         <ExpandableCard
           id="forma"
           style={styles.formCard}
-          ochKaliti={tahrirId}
+          ochKaliti={tahrirId || formaOch || null}
           header={
             <View style={styles.formHead}>
               <Ionicons name={tahrirId ? "create-outline" : "person-add-outline"} size={18} color={C.sub} />
@@ -320,7 +324,7 @@ export default function Xodimlar() {
         </ExpandableCard>
 
         {(ishchilar || []).length === 0 ? (
-          <Card><Text style={styles.muted}>Xodimlar hali kiritilmagan</Text></Card>
+          <BoshHolat icon="people-outline" sarlavha="Hali xodim yo'q" matn="Xodimlarni qo'shing — davomat, kunlik haq va qop bo'yicha haq shu yerdan hisoblanadi." tugma="Birinchi xodimni qo'shish" onPress={() => { setFormaOch((x) => x + 1); setTimeout(() => scrollRef.current?.scrollToTop?.(true), 50); }} />
         ) : (
           <>
             <Bolim icon="checkmark-circle-outline" tint={C.green} nom="AKTIVLAR" soni={aktiv.length}>

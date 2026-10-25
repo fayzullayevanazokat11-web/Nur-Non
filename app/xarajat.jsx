@@ -11,6 +11,8 @@ import { useApp } from "../src/store/AppData";
 import { Card } from "../src/components/Card";
 import { Btn } from "../src/components/Btn";
 import { ExpandableCard, yopKartalar } from "../src/components/ExpandableCard";
+import { SuriladiganQator } from "../src/components/SuriladiganQator";
+import { saqlandiXabar } from "../src/components/Xabarcha";
 import { DateField } from "../src/components/DateField";
 import { VaqtField, hozirgiSoat } from "../src/components/VaqtField";
 import { ScrollBox } from "../src/components/ScrollBox";
@@ -18,6 +20,7 @@ import { SahifaSarlavha } from "../src/components/SahifaSarlavha";
 import { YakunIzoh } from "../src/components/YakunIzoh";
 import { C, T, S, R, temaStil } from "../src/theme";
 import { formatSom, bugunSana, sonOl } from "../src/logic/hisob";
+import { BoshHolat } from "../src/components/BoshHolat";
 
 
 export default function Xarajat() {
@@ -68,6 +71,7 @@ export default function Xarajat() {
     } else {
       setKunlikXarajatlar((prev) => [{ id: Date.now(), sana, soat, vaqt: Date.now(), summa, izoh: forma.izoh.trim() }, ...(prev || [])]);
     }
+    saqlandiXabar("Xarajat saqlandi");
     tozala();
   };
 
@@ -119,33 +123,33 @@ export default function Xarajat() {
         </View>
 
         {royxat.length === 0 ? (
-          <Card><Text style={styles.bosh}>Hali xarajat yo'q</Text></Card>
+          <BoshHolat icon="cash-outline" sarlavha="Hali xarajat yo'q" matn="Gaz, yo'l haqi, ta'mir kabi kunlik xarajatlarni yuqoridagi formadan yozing — sof foydadan ayriladi." />
         ) : (
           royxat.map((x) => (
-            <ExpandableCard
-              key={x.id}
-              style={styles.item}
-              header={
-                <View style={styles.mHead}>
-                  <View style={styles.flex1}>
-                    <Text style={styles.itemIsm} numberOfLines={1}>{x.izoh}</Text>
-                    <Text style={styles.itemSana}>{x.sana}{x.soat ? ` · ${x.soat}` : ""}{x.sana === bugun ? " · bugun" : ""}</Text>
+            <SuriladiganQator key={x.id} style={styles.item} nom={x.izoh} onOchir={() => { yopKartalar(); ochirArxivga("xarajat", x.id); if (tahrirId === x.id) tozala(); saqlandiXabar("O'chirildi · Tarixdagilarda"); }}>
+              <ExpandableCard
+                header={
+                  <View style={styles.mHead}>
+                    <View style={styles.flex1}>
+                      <Text style={styles.itemIsm} numberOfLines={1}>{x.izoh}</Text>
+                      <Text style={styles.itemSana}>{x.sana}{x.soat ? ` · ${x.soat}` : ""}{x.sana === bugun ? " · bugun" : ""}</Text>
+                    </View>
+                    <Text style={[styles.itemSumma, { color: C.red }]} numberOfLines={1}>− {formatSom(x.summa)} so'm</Text>
                   </View>
-                  <Text style={[styles.itemSumma, { color: C.red }]} numberOfLines={1}>− {formatSom(x.summa)} so'm</Text>
+                }
+              >
+                <View style={styles.actions}>
+                  <Pressable onPress={() => tahrirla(x)} hitSlop={6} style={styles.actBtn}>
+                    <Ionicons name="create-outline" size={16} color={C.accent} />
+                    <Text style={[styles.actTxt, { color: C.accent }]}> Tahrirlash</Text>
+                  </Pressable>
+                  <Pressable onPress={() => ochir(x.id)} hitSlop={6} style={styles.actBtn}>
+                    <Ionicons name="trash-outline" size={16} color={C.red} />
+                    <Text style={[styles.actTxt, { color: C.red }]}> O'chirish</Text>
+                  </Pressable>
                 </View>
-              }
-            >
-              <View style={styles.actions}>
-                <Pressable onPress={() => tahrirla(x)} hitSlop={6} style={styles.actBtn}>
-                  <Ionicons name="create-outline" size={16} color={C.accent} />
-                  <Text style={[styles.actTxt, { color: C.accent }]}> Tahrirlash</Text>
-                </Pressable>
-                <Pressable onPress={() => ochir(x.id)} hitSlop={6} style={styles.actBtn}>
-                  <Ionicons name="trash-outline" size={16} color={C.red} />
-                  <Text style={[styles.actTxt, { color: C.red }]}> O'chirish</Text>
-                </Pressable>
-              </View>
-            </ExpandableCard>
+              </ExpandableCard>
+            </SuriladiganQator>
           ))
         )}
 

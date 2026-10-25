@@ -22,6 +22,8 @@ import { C, T, S, R, temaStil } from "../src/theme";
 import { formatSom, qarzJami, donaFoyda, bugunSana, sonOl } from "../src/logic/hisob";
 import { Qidiruv, qidiruvMos } from "../src/components/Qidiruv";
 import { qarzdorlar, qarzdorTarixi, tolovQil, tolovniBekorQil, qarzdorKaliti, qarzQoldiq, kunOtdi } from "../src/logic/qarz";
+import { saqlandiXabar } from "../src/components/Xabarcha";
+import { BoshHolat } from "../src/components/BoshHolat";
 
 const ikki = (n) => String(n).padStart(2, "0");
 const vaqtMatni = (ms) => { const d = new Date(ms); return `${ikki(d.getDate())}.${ikki(d.getMonth() + 1)}.${d.getFullYear()}`; };
@@ -96,6 +98,7 @@ export default function Qarzlar() {
       savat: savatHisob.items, summa: savatHisob.yakSumma, chegirma: savatHisob.chegirma,
       izoh: forma.izoh.trim(), tolangan: false, tolanganVaqt: null, tolovlar: [],
     }]);
+    saqlandiXabar("Qarz saqlandi");
     tozala();
   };
 
@@ -208,7 +211,9 @@ export default function Qarzlar() {
         {guruhlar.length > 4 && <Qidiruv value={qidiruv} onChange={setQidiruv} placeholder="Qarzdorni qidirish" />}
 
         {korinadi.length === 0 ? (
-          <Card><Text style={styles.bosh}>{guruhlar.length ? "Topilmadi" : "Hali qarz yo'q"}</Text></Card>
+          guruhlar.length
+            ? <Card><Text style={styles.bosh}>Topilmadi</Text></Card>
+            : <BoshHolat icon="receipt-outline" sarlavha="Hali qarz yo'q" matn="Nonni qarzga bersangiz — yuqoridagi formadan yozing. To'lovlar shu yerda kuzatiladi." />
         ) : (
           korinadi.map((g) => {
             const kun = g.qoldiq > 0 ? kunOtdi(g.enEskiFaol) : 0;

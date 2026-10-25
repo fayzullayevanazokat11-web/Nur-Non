@@ -14,6 +14,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { formatSom, ishKuni } from "../logic/hisob";
 import { oylar, oyQisqa, oyNomi, joriyOy, oyQosh, haftaKunlari, davrTaqqos } from "../logic/davr";
 import { davrHtml, pdfUlash } from "../logic/ulashish";
+import { OylikMaqsad } from "./OylikMaqsad";
 
 // Grafik ranglari joriy mavzudan: C.musbat (foyda) va C.manfiy (zarar — qarama-qarshi qutb)
 const H = 168;             // grafik balandligi
@@ -130,6 +131,7 @@ export function Statistika({ hisobotlar, nonlar, arxiv, akkaunt }) {
 
   return (
     <View>
+      <OylikMaqsad />
       {/* Filtrlar — bitta qatorda */}
       <View style={styles.filtrQator}>
         <View style={styles.seg}>

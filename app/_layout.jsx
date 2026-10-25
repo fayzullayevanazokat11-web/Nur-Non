@@ -17,6 +17,7 @@ import { AppDataProvider } from "../src/store/AppData";
 import { Splash } from "../src/components/Splash";
 import { ErrorBoundary } from "../src/components/ErrorBoundary";
 import { BekorPanel } from "../src/components/BekorPanel";
+import { Xabarcha } from "../src/components/Xabarcha";
 import { Tanishuv } from "../src/components/Tanishuv";
 import { KunOtishi } from "../src/components/KunOtishi";
 import { C, TEMALAR, useTema, setTema, temaQorongi, temaAlmashtiruvchi } from "../src/theme";
@@ -109,6 +110,7 @@ export default function RootLayout() {
               </Stack>
             </ThemeProvider>
             <BekorPanel />
+            <Xabarcha />
             <Tanishuv />
             <KunOtishi />
             {parda}
