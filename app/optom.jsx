@@ -11,7 +11,6 @@ import { Card } from "../src/components/Card";
 import { Btn } from "../src/components/Btn";
 import { Guruh } from "../src/components/Guruh";
 import { ExpandableCard, yopKartalar } from "../src/components/ExpandableCard";
-import { SuriladiganQator } from "../src/components/SuriladiganQator";
 import { saqlandiXabar } from "../src/components/Xabarcha";
 import { DateField } from "../src/components/DateField";
 import { NonIkon } from "../src/components/XomashyoIkon";
@@ -147,8 +146,8 @@ export default function Optom() {
           <BoshHolat icon="storefront-outline" sarlavha="Hali optom savdo yo'q" matn="Do'kon yoki ulgurji xaridorga non bersangiz — yuqoridagi formadan yozing." />
         ) : (
           <Guruh>{[...optomlar].reverse().map((o) => (
-            <SuriladiganQator key={o.id} ichki nom={o.ism} onOchir={() => { yopKartalar(); ochirArxivga("optom", o.id); saqlandiXabar("O'chirildi · Tarixdagilarda"); }}>
               <ExpandableCard
+                key={o.id}
                 ichki
                 header={
                   <View style={styles.mHead}>
@@ -173,7 +172,6 @@ export default function Optom() {
                   </Pressable>
                 </View>
               </ExpandableCard>
-            </SuriladiganQator>
           ))}</Guruh>
         )}
       </ScrollBox>

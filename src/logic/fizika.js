@@ -15,6 +15,3 @@ export function rezina(x, d, c = REZINA_C) {
 export const PRUJINA = { stiffness: 320, damping: 32, mass: 1, overshootClamping: false };
 // Biroz yumshoqroq — katta masofalar (indikator, panel) uchun
 export const PRUJINA_YUMSHOQ = { stiffness: 220, damping: 26, mass: 1, overshootClamping: false };
-
-// Qo'yib yuborilgandagi tezlik bo'yicha qayerga "otilib" borishini taxmin qilish (px, ms ichida)
-export const otilish = (tezlik, ms = 160) => tezlik * ms;

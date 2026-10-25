@@ -12,7 +12,6 @@ import { Card } from "../src/components/Card";
 import { Btn } from "../src/components/Btn";
 import { Guruh } from "../src/components/Guruh";
 import { ExpandableCard, yopKartalar } from "../src/components/ExpandableCard";
-import { SuriladiganQator } from "../src/components/SuriladiganQator";
 import { saqlandiXabar } from "../src/components/Xabarcha";
 import { DateField } from "../src/components/DateField";
 import { VaqtField, hozirgiSoat } from "../src/components/VaqtField";
@@ -127,8 +126,8 @@ export default function Xarajat() {
           <BoshHolat icon="cash-outline" sarlavha="Hali xarajat yo'q" matn="Gaz, yo'l haqi, ta'mir kabi kunlik xarajatlarni yuqoridagi formadan yozing — sof foydadan ayriladi." />
         ) : (
           <Guruh>{royxat.map((x) => (
-            <SuriladiganQator key={x.id} ichki nom={x.izoh} onOchir={() => { yopKartalar(); ochirArxivga("xarajat", x.id); if (tahrirId === x.id) tozala(); saqlandiXabar("O'chirildi · Tarixdagilarda"); }}>
               <ExpandableCard
+                key={x.id}
                 ichki
                 header={
                   <View style={styles.mHead}>
@@ -151,7 +150,6 @@ export default function Xarajat() {
                   </Pressable>
                 </View>
               </ExpandableCard>
-            </SuriladiganQator>
           ))}</Guruh>
         )}
 

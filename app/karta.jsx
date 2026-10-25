@@ -11,7 +11,6 @@ import { Card } from "../src/components/Card";
 import { Btn } from "../src/components/Btn";
 import { Guruh } from "../src/components/Guruh";
 import { ExpandableCard, yopKartalar } from "../src/components/ExpandableCard";
-import { SuriladiganQator } from "../src/components/SuriladiganQator";
 import { saqlandiXabar } from "../src/components/Xabarcha";
 import { ScrollBox } from "../src/components/ScrollBox";
 import { SahifaSarlavha } from "../src/components/SahifaSarlavha";
@@ -141,8 +140,8 @@ export default function Karta() {
           <BoshHolat icon="card-outline" sarlavha="Hali karta to'lovi yo'q" matn="Mijoz karta orqali to'lasa — yuqoridagi formaga summani yozib «Saqlash»ni bosing." />
         ) : (
           <Guruh>{[...kartalar].reverse().map((k) => (
-            <SuriladiganQator key={k.id} ichki nom={k.izoh || "Karta to'lovi"} onOchir={() => { yopKartalar(); ochirArxivga("karta", k.id); if (tahrirId === k.id) tozala(); saqlandiXabar("O'chirildi · Tarixdagilarda"); }}>
               <ExpandableCard
+                key={k.id}
                 ichki
                 header={
                   <View style={styles.mHead}>
@@ -164,7 +163,6 @@ export default function Karta() {
                   </Pressable>
                 </View>
               </ExpandableCard>
-            </SuriladiganQator>
           ))}</Guruh>
         )}
       </ScrollBox>
