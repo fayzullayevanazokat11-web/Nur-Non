@@ -32,7 +32,7 @@ export function MarkazMenyu({ onYop }) {
   const til = useTil();
   const tema = useTema();
   const tanlov = useTanlov();
-  const soni = (ochirilganlar || []).length;
+  const soni = (ochirilganlar || []).filter((y) => y.tur !== "brak" && y.tur !== "ishHaqi").length; // olib tashlangan bo'limlar sanalmaydi
 
   // Ochilish animatsiyasi: shaffoflik + yuqoridan sirpanish
   const a = useRef(new Animated.Value(0)).current;

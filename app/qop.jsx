@@ -22,7 +22,7 @@ import { kunXulosasiniKorsat } from "../src/components/KunOtishi";
 import { ScrollBox } from "../src/components/ScrollBox";
 import { SahifaSarlavha } from "../src/components/SahifaSarlavha";
 import { C, T, S, R, temaStil } from "../src/theme";
-import { hisoblaKunlik, qoldiqlarHisobi, ishchiHaqlari, kunlikXomashyoSarfi, formatSom, bugunSana, kunTugashVaqti, kunRoliBilan, sutLitri } from "../src/logic/hisob";
+import { hisoblaKunlik, qoldiqlarHisobi, ishchiHaqlari, kunlikXomashyoSarfi, formatSom, bugunSana, kunTugashVaqti, kunRoliBilan, sutLitri, oldingiSana } from "../src/logic/hisob";
 
 const toStr = (obj) => Object.fromEntries(Object.entries(obj || {}).map(([k, v]) => [k, String(v)]));
 // Taqqoslash uchun: bo'sh maydonlar tashlanadi, kalitlar tartiblanadi
@@ -97,20 +97,23 @@ export default function Qop() {
     () => (braklar || []).filter((b) => (b.vaqt || 0) > (oxirgiYakunlashVaqti || 0) && (!b.sana || b.sana === tanSana)),
     [braklar, oxirgiYakunlashVaqti, tanSana]
   );
+  // O'tgan (unutilgan) kun: uning yozuvlari bugungi yakunlashdan oldin kiritilgan bo'lishi mumkin —
+  // shuning uchun "oxirgi yakunlashdan keyingi" filtri faqat bugun uchun; o'tgan kunda — sana bo'yicha
+  const chegaraVaqt = tanSana === localSana() ? oxirgiYakunlashVaqti : 0;
   const args = {
     nonlar, ishchilar, optomlar, qarzlar, mahsulotNarxlari, braklar,
     ozIshlabQoplar: fQop, tashqariSonlar: fTash, sotilmaganNon: fSot,
-    boshlangichQoldiq, qoldaYaroqsiz: fYaroqsiz, kunlikXarajatlar, oxirgiYakunlashVaqti, sana: tanSana,
+    boshlangichQoldiq, qoldaYaroqsiz: fYaroqsiz, kunlikXarajatlar, oxirgiYakunlashVaqti: chegaraVaqt, sana: tanSana,
     sutLitr: sutLitri((sutKirimi || {})[tanSana]),
   };
-  const stats = useMemo(() => hisoblaKunlik(args), [fQop, fTash, fSot, fYaroqsiz, nonlar, ishchilar, optomlar, qarzlar, mahsulotNarxlari, braklar, boshlangichQoldiq, kunlikXarajatlar, oxirgiYakunlashVaqti, tanSana, sutKirimi]);
+  const stats = useMemo(() => hisoblaKunlik(args), [fQop, fTash, fSot, fYaroqsiz, nonlar, ishchilar, optomlar, qarzlar, mahsulotNarxlari, braklar, boshlangichQoldiq, kunlikXarajatlar, chegaraVaqt, tanSana, sutKirimi]);
   const qadamlar = [
     { k: "qop", nom: "Qop", ok: stats.jamiQop > 0 || stats.jamiNon > 0 },
     { k: "sut", nom: "Sut", ok: sutLitri((sutKirimi || {})[tanSana]) > 0 },
     { k: "rasm", nom: "Rasm", ok: sanaRasmlari.length > 0 },
     { k: "yakun", nom: "Yakunlash", ok: false },
   ];
-  const qoldiqlar = useMemo(() => qoldiqlarHisobi(nonlar, args), [fQop, fTash, fSot, fYaroqsiz, nonlar, boshlangichQoldiq, optomlar, qarzlar, oxirgiYakunlashVaqti, tanSana]);
+  const qoldiqlar = useMemo(() => qoldiqlarHisobi(nonlar, args), [fQop, fTash, fSot, fYaroqsiz, nonlar, boshlangichQoldiq, optomlar, qarzlar, chegaraVaqt, tanSana]);
   const haq = useMemo(() => ishchiHaqlari(nonlar, ishchilar, fQop, bugungiBrak), [nonlar, ishchilar, fQop, bugungiBrak]);
 
   // Forma saqlanganidan farq qilmasa (va ichida ma'lumot bo'lsa) — tugma "Saqlandi"
@@ -163,7 +166,7 @@ export default function Qop() {
     }
     const oldingiKun = sanaTekshir !== localSana();
     Alert.alert("Kunni yakunlash", oldingiKun
-      ? `${sanaTekshir} sanasi uchun hisobot yoziladi. Bugungi kun yakunlanmaydi: bugungi yozuvlar saqlanadi, kun oxiri qoldig'i bugungi tonggi qoldiq bo'ladi. Davom etasizmi?`
+      ? `${sanaTekshir} sanasi uchun hisobot yoziladi. Bugungi kun yakunlanmaydi va bugungi yozuvlar saqlanadi.${sanaTekshir === oldingiSana(localSana()) ? " Kechagi kun oxiri qoldig'i bugungi tonggi qoldiq bo'ladi." : ""} Davom etasizmi?`
       : "Bugungi ma'lumot tarixga yoziladi va kun yopiladi. Bugun qayta yakunlab bo'lmaydi; xato bo'lsa — Markazdan kun oxirigacha bekor qilish mumkin. Davom etasizmi?", [
       { text: "Bekor", style: "cancel" },
       { text: "Yakunlash", onPress: () => {
@@ -174,7 +177,7 @@ export default function Qop() {
         // ── 1) ARXIV: bugungi karta/optom/brak/xarajat yozuvlarini snap ichiga
         //    olamiz (jadval o'chmaydi, ular hisobotlarTarixi'ga ham yoziladi)
         const ms = (e) => e?.vaqt || (e?.sana ? Date.parse(e.sana) : 0);
-        const yangi = (e) => ms(e) > (oxirgiYakunlashVaqti || 0);
+        const yangi = (e) => ms(e) > (sana === localSana() ? (oxirgiYakunlashVaqti || 0) : 0);
         const bugKarta   = (kartalar || []).filter((e) => e.sana === sana && yangi(e));
         const bugBrak    = (braklar  || []).filter((e) => e.sana === sana && yangi(e));
         const bugOptom   = (optomlar || []).filter((e) => e.sana === sana && yangi(e));

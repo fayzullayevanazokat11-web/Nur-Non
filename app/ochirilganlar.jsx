@@ -21,6 +21,8 @@ const ikki = (n) => String(n).padStart(2, "0");
 const vaqtMatni = (ms) => { const d = new Date(ms); return `${ikki(d.getDate())}.${ikki(d.getMonth() + 1)} ${ikki(d.getHours())}:${ikki(d.getMinutes())}`; };
 const som = (x) => `${formatSom(x)} so'm`;
 
+const ESKI_TURLAR = ["brak", "ishHaqi"];
+
 // Har bir tur: nomi, ikonka va qisqa tavsif
 const TURLAR = {
   qarz:        { nom: "Qarz",              icon: "receipt-outline",       tavsif: (e) => `${e.ism} · ${som(e.summa)}` },
@@ -56,7 +58,8 @@ export default function Ochirilganlar() {
   useEffect(() => () => clearTimeout(xabarT.current), []);
 
   const royxat = useMemo(
-    () => [...(ochirilganlar || [])].filter((y) => TURLAR[y.tur]).sort((a, b) => (b.vaqt || 0) - (a.vaqt || 0)),
+    // Olib tashlangan bo'limlar (brak, oylik ish haqi) yozuvlari ko'rsatilmaydi — qaytarilsa ko'rinmas ro'yxatga tushardi
+    () => [...(ochirilganlar || [])].filter((y) => TURLAR[y.tur] && !ESKI_TURLAR.includes(y.tur)).sort((a, b) => (b.vaqt || 0) - (a.vaqt || 0)),
     [ochirilganlar]
   );
   const mavjudTurlar = useMemo(() => Object.keys(TURLAR).filter((k) => royxat.some((y) => y.tur === k)), [royxat]);

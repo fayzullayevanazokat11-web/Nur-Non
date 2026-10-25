@@ -41,7 +41,7 @@ function donaFoydasi(non, narxlar) {
 export default function IshlabChiqarish() {
   const {
     nonlar, setNonlar, ishchilar, setIshchilar,
-    optomlar, setOptomlar, qarzlar, setQarzlar, braklar, setBraklar,
+    optomlar, setOptomlar, qarzlar, setQarzlar, braklar, setBraklar, setKunlikRollar,
     mahsulotNarxlari, customMahsulotlar, ochirArxivga,
     xomashyoIkonlari, xomashyoIkonQoy,
   } = useApp();
@@ -170,6 +170,14 @@ export default function IshlabChiqarish() {
         setOptomlar((prev) => (prev || []).map((o) => ({ ...o, savat: savatYangila(o.savat) })));
         setQarzlar((prev) => (prev || []).map((q) => ({ ...q, savat: savatYangila(q.savat), nonNomi: q.nonNomi === eskiNom ? yangiNom : q.nonNomi })));
         setBraklar((prev) => (prev || []).map((b) => b.nonNomi === eskiNom ? { ...b, nonNomi: yangiNom } : b));
+        // ── Kunlik rollar (bugun boshqa ishda / o'rniga, qop bo'yicha) — non nomi bilan bog'langan ──
+        setKunlikRollar((prev) => Object.fromEntries(Object.entries(prev || {}).map(([sana, kun]) => [sana, Object.fromEntries(Object.entries(kun || {}).map(([id, r]) => {
+          if (!r || !((r.nonTurlari || []).includes(eskiNom) || (r.nonNarxlari && eskiNom in r.nonNarxlari))) return [id, r];
+          const nonNarxlari = { ...(r.nonNarxlari || {}) };
+          if (eskiNom in nonNarxlari) { if (yangiOz) nonNarxlari[yangiNom] = nonNarxlari[eskiNom]; delete nonNarxlari[eskiNom]; }
+          const nonTurlari = (r.nonTurlari || []).map((t) => (t === eskiNom ? yangiNom : t)).filter((t) => yangiOz || t !== yangiNom);
+          return [id, { ...r, nonTurlari, nonNarxlari }];
+        }))])));
       } else if (eskiNom && !yangiOz) {
         // Tashqaridan'ga aylangan: ishchilardan olib tashlash (boshqalar tegmaydi)
         setIshchilar((prev) => (prev || []).map((w) => {

@@ -6,7 +6,7 @@ import usePersistedState, { useHidratsiya } from "./usePersistedState";
 import { arxivla } from "../logic/davr";
 import { kunYakunEslatmalari } from "../logic/bildirishnoma";
 import { nusxaSaqla, nusxaBormi } from "../logic/avtoZaxira";
-import { bugunSana, keyingiSana, kunRoliBilan } from "../logic/hisob";
+import { bugunSana, keyingiSana, oldingiSana, kunRoliBilan } from "../logic/hisob";
 import { rasmSaqla, rasmFaylOchir, pdfRasmlari } from "../logic/qopRasm";
 import { kunlikHtml, pdfUlash, pdfFaylYarat, pdfFaylUlash, pdfFaylOchir } from "../logic/ulashish";
 import { getTil } from "../i18n/til";
@@ -260,10 +260,17 @@ export function AppDataProvider({ children }) {
     }
     setHisobotlarTarixi((prev) => [snap, ...(prev || []).filter((h) => h.sana !== snap.sana)].sort((a, b) => String(b.sana).localeCompare(String(a.sana))));
     if (sorov) setOmborSorovlar((prev) => [sorov, ...(prev || []).filter((s) => s.sana !== sorov.sana)]);
-    if (bugunmi) setOxirgiYakunlashVaqti(vaqt);
-    // Kun oxiri qoldiq → ertangi tonggi zaxira; bugungi kiritmalar tozalanadi
-    setBoshlangichQoldiq(forma.sotilmaganNon || {});
-    setSotilmaganNon({}); setOzIshlabQoplar({}); setTashqariSonlar({}); setQoldaYaroqsiz({});
+    if (bugunmi) {
+      setOxirgiYakunlashVaqti(vaqt);
+      // Kun oxiri qoldiq → ertangi tonggi zaxira; bugungi kiritmalar tozalanadi
+      setBoshlangichQoldiq(forma.sotilmaganNon || {});
+      setSotilmaganNon({}); setOzIshlabQoplar({}); setTashqariSonlar({}); setQoldaYaroqsiz({});
+    } else if (snap.sana === oldingiSana(bugunSana())) {
+      // Unutilgan KECHAGI kun: uning qoldig'i bugungi tonggi qoldiq bo'ladi.
+      // Bugungi saqlangan qop/qoldiq kiritmalariga tegilmaydi (ular bugunniki).
+      setBoshlangichQoldiq(forma.sotilmaganNon || {});
+    }
+    // Undan ham eski kun — faqat hisobot yoziladi, bugungi holat o'zgarmaydi
     return true;
   };
 
@@ -283,7 +290,7 @@ export function AppDataProvider({ children }) {
           || (tasdiq ? { id: sorovId, sana: tasdiq.sana, vaqt: tasdiq.vaqt, manba: tasdiq.manba, maydonlar: tasdiq.maydonlar } : null)
         : null;
       amalArxivga("kunYakuni", {
-        kun: yakunBekor.kun, sana: snap.sana, snap, lock: lockedDayStats, sorov,
+        kun: yakunBekor.kun, sana: snap.sana, snap, lock: lockedDayStats, sorov, vaqtAsl: yakunBekor.vaqt || 0,
         forma: {
           ozIshlabQoplar: oldin.ozIshlabQoplar || {}, tashqariSonlar: oldin.tashqariSonlar || {},
           sotilmaganNon: oldin.sotilmaganNon || {}, qoldaYaroqsiz: oldin.qoldaYaroqsiz || {},
@@ -524,11 +531,23 @@ export function AppDataProvider({ children }) {
         // Shu ish kuni hali tugamagan — kun xuddi avvalgidek qayta yakunlanadi
         if (kunYakunlanganmi()) return "Bugun kun qayta yakunlangan. Avval uni Markazdan bekor qiling.";
         kunYakunla({ snap: e.snap, lock: e.lock, sorov: e.sorov, forma: e.forma || {} });
+        // Birinchi yakundan keyin kiritilgan yozuvlar (hisobotda yo'q) — yo'qolib qolmasin:
+        // yakundan keyingi yozuvlar kabi ertangi kunga o'tadi
+        if (e.vaqtAsl) {
+          const ertaga = keyingiSana(e.kun);
+          const ertagaOtkaz = (arr) => ((arr || []).some((x) => x.sana === e.kun && (x.vaqt || 0) > e.vaqtAsl)
+            ? arr.map((x) => (x.sana === e.kun && (x.vaqt || 0) > e.vaqtAsl ? { ...x, sana: ertaga } : x)) : arr);
+          setKartalarXom(ertagaOtkaz); setOptomlarXom(ertagaOtkaz); setQarzlarXom(ertagaOtkaz); setKunlikXarajatlarXom(ertagaOtkaz);
+        }
         return true;
       }
       // Kun o'tib ketgan — hisobot tarixga qaytadi
       if ((hisobotlarTarixi || []).some((h) => h.sana === e.snap.sana)) return `${e.snap.sana} uchun hisobot allaqachon bor.`;
       setHisobotlarTarixi((p) => [...(p || []), e.snap].sort((a, b) => String(b.sana).localeCompare(String(a.sana))));
+      // O'sha kunning xomashyo so'rovnomasi ham qaytadi (ombordan hali ayrilmagan bo'lsa)
+      if (e.sorov && !(omborTasdiqlar || []).some((t) => t.sorovId === e.sorov.id)) {
+        setOmborSorovlar((p) => ((p || []).some((s) => s.sana === e.sorov.sana) ? p : [e.sorov, ...(p || [])]));
+      }
       return true;
     },
     import: (e) => {
@@ -591,7 +610,7 @@ export function AppDataProvider({ children }) {
   // Faqat joriy ish kuniga tegishli; yangi kun (03:00) boshlanganda o'zi bo'shaydi.
   const ertalabOl = () => {
     const e = ertalabTekshiruv;
-    return e && e.kun === bugunSana() ? e : { kun: bugunSana(), davomat: false, ombor: false, rasm: false, tugallandi: 0 };
+    return e && e.kun === bugunSana() ? e : { kun: bugunSana(), davomat: false, ombor: false, sut: false, tugallandi: 0 };
   };
   const ertalab = ertalabOl();
   // Funksional yangilash: ketma-ket chaqiruvlar (rasm qo'shish, belgilash) bir-birining ustiga yozmasin
@@ -825,7 +844,7 @@ export function AppDataProvider({ children }) {
     eslatmaYoqilgan, setEslatmaYoqilgan, eslatmaYangila,
     davomat, setDavomat, keldilar, kelmaganlar, keldiAlmash, ishchilarHaq,
     kelishVaqtlari, kelishVaqti, kelishVaqtiQoy,
-    kunlikRollar, kunlikRol, kunlikRolQoy,
+    kunlikRollar, setKunlikRollar, kunlikRol, kunlikRolQoy,
     sutKirimi, sutQoy, oylikMaqsad, setOylikMaqsad,
     narxTarixi, setNarxTarixi,
     xomashyoIkonlari, xomashyoIkonQoy,

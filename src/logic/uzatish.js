@@ -122,7 +122,6 @@ const XULOSA = [
   ["qarzlar", "qarz"],
   ["optomlar", "optom"],
   ["kartalar", "karta to'lovi"],
-  ["braklar", "brak"],
   ["kunlikXarajatlar", "xarajat"],
   ["omborlar", "ombor kirimi"],
   ["omborSorovlar", "so'rovnoma"],
