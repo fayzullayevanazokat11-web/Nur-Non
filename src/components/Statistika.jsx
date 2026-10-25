@@ -173,7 +173,7 @@ export function Statistika({ hisobotlar, nonlar, arxiv, akkaunt }) {
         )}
 
         <View style={styles.plitkalar}>
-          <Plitka nom="O'rtacha kunlik" qiymat={ixcham(ortacha)} />
+          <Plitka nom="O'rtacha kunlik" qiymat={ixcham(ortacha)} birinchi />
           <Plitka nom="Eng yaxshi kun" qiymat={engYaxshiI >= 0 ? sanaQisqa(kunlar[engYaxshiI].sana) : "—"} />
           <Plitka nom="Hisobot kunlari" qiymat={String(n)} />
         </View>
@@ -306,9 +306,10 @@ export function Statistika({ hisobotlar, nonlar, arxiv, akkaunt }) {
   );
 }
 
-function Plitka({ nom, qiymat }) {
+// Ko'rsatkichlar bitta oq panelda, ustunlar ingichka chiziq bilan ajraladi
+function Plitka({ nom, qiymat, birinchi }) {
   return (
-    <View style={styles.plitka}>
+    <View style={[styles.plitka, !birinchi && styles.plitkaAjrat]}>
       <Text style={styles.plitkaNom} numberOfLines={1}>{nom}</Text>
       <Text style={styles.plitkaQiymat} numberOfLines={1}>{qiymat}</Text>
     </View>
@@ -333,8 +334,9 @@ const styles = temaStil(() => StyleSheet.create({
   heroLbl:    { fontSize: T.xs, color: C.sub, fontWeight: "700" },
   hero:       { fontSize: 44, fontWeight: "700", color: C.text, letterSpacing: -1, marginTop: 2 },
   heroBirlik: { fontSize: T.md, fontWeight: "600", color: C.sub, letterSpacing: 0 },
-  plitkalar:  { flexDirection: "row", gap: S[2], marginTop: S[3], marginBottom: S[4] },
-  plitka:     { flex: 1, backgroundColor: C.surface, borderRadius: R.md, paddingVertical: S[2], paddingHorizontal: S[3], borderWidth: StyleSheet.hairlineWidth, borderColor: C.borderSoft },
+  plitkalar:  { flexDirection: "row", marginTop: S[3], marginBottom: S[4], backgroundColor: C.surface, borderRadius: R.md, borderWidth: StyleSheet.hairlineWidth, borderColor: C.borderSoft, overflow: "hidden" },
+  plitka:     { flex: 1, paddingVertical: S[2], paddingHorizontal: S[3] },
+  plitkaAjrat:{ borderLeftWidth: StyleSheet.hairlineWidth, borderLeftColor: C.borderSoft },
   plitkaNom:  { fontSize: 10, color: C.muted, fontWeight: "700" },
   plitkaQiymat: { fontSize: T.md, color: C.text, fontWeight: "800", marginTop: 2 },
   bosh:       { fontSize: T.sm, color: C.muted },

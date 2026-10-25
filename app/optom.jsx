@@ -9,6 +9,7 @@ import { router } from "expo-router";
 import { useApp } from "../src/store/AppData";
 import { Card } from "../src/components/Card";
 import { Btn } from "../src/components/Btn";
+import { Guruh } from "../src/components/Guruh";
 import { ExpandableCard, yopKartalar } from "../src/components/ExpandableCard";
 import { SuriladiganQator } from "../src/components/SuriladiganQator";
 import { saqlandiXabar } from "../src/components/Xabarcha";
@@ -145,9 +146,10 @@ export default function Optom() {
         {(optomlar || []).length === 0 ? (
           <BoshHolat icon="storefront-outline" sarlavha="Hali optom savdo yo'q" matn="Do'kon yoki ulgurji xaridorga non bersangiz — yuqoridagi formadan yozing." />
         ) : (
-          [...optomlar].reverse().map((o) => (
-            <SuriladiganQator key={o.id} style={styles.item} nom={o.ism} onOchir={() => { yopKartalar(); ochirArxivga("optom", o.id); saqlandiXabar("O'chirildi · Tarixdagilarda"); }}>
+          <Guruh>{[...optomlar].reverse().map((o) => (
+            <SuriladiganQator key={o.id} ichki nom={o.ism} onOchir={() => { yopKartalar(); ochirArxivga("optom", o.id); saqlandiXabar("O'chirildi · Tarixdagilarda"); }}>
               <ExpandableCard
+                ichki
                 header={
                   <View style={styles.mHead}>
                     <Text style={[styles.itemIsm, styles.flex1]} numberOfLines={1}>{o.ism}</Text>
@@ -172,7 +174,7 @@ export default function Optom() {
                 </View>
               </ExpandableCard>
             </SuriladiganQator>
-          ))
+          ))}</Guruh>
         )}
       </ScrollBox>
     </SafeAreaView>

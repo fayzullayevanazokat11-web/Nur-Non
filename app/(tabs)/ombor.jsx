@@ -12,6 +12,7 @@ import { ErtalabQadamBelgisi } from "../../src/components/ErtalabTekshiruv";
 import { Bosma } from "../../src/components/Bosma";
 import { router } from "expo-router";
 import { ExpandableCard, yopKartalar } from "../../src/components/ExpandableCard";
+import { Guruh } from "../../src/components/Guruh";
 import { ScrollBox } from "../../src/components/ScrollBox";
 import { C, T, S, R, temaStil } from "../../src/theme";
 import { omborBalans, zaxiraMatni, omborKattaBirlik, bugunSana, sonOl } from "../../src/logic/hisob";
@@ -200,12 +201,12 @@ export default function Ombor() {
           <Text style={styles.muted}>Set kirimlari − tasdiqlangan xarajat ± qoldiq yangilashlari</Text>
           <View style={styles.gap10} />
           <View style={styles.grid}>
-            {balans.map((b) => {
+            {balans.map((b, i) => {
               const matn = zaxiraMatni(b.id, b.qiymat, b.birlik);
               const color = b.qiymat > 0 ? C.green : b.qiymat < 0 ? C.red : C.muted;
               const p = prognoz(b);
               return (
-                <View key={b.id} style={styles.cell}>
+                <View key={b.id} style={[styles.cell, i > 0 && styles.cellAjrat]}>
                   <XomashyoIkon m={b} quti size={17} qutiSize={32} />
                   <View style={styles.cellChap}>
                     <Text style={styles.cellNom} numberOfLines={1}>{b.nom}</Text>
@@ -216,12 +217,20 @@ export default function Ombor() {
               );
             })}
           </View>
+          {/* Nollash — alohida tugma emas, zaxira kartasining pastki amali */}
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Mavjud zaxirani nollash"
+            accessibilityState={{ disabled: !zaxiraBor }}
+            disabled={!zaxiraBor}
+            onPress={nollaZaxira}
+            hitSlop={6}
+            style={({ pressed }) => [styles.nollaQator, !zaxiraBor && { opacity: 0.4 }, pressed && { opacity: 0.6 }]}
+          >
+            <Ionicons name="refresh-outline" size={15} color={C.red} />
+            <Text style={styles.nollaTxt}>Mavjud zaxirani nollash</Text>
+          </Pressable>
         </Card>
-
-        <View style={styles.gap10} />
-        <Btn secondary icon="refresh-outline" disabled={!zaxiraBor} onPress={nollaZaxira}>
-          Mavjud zaxirani nollash
-        </Btn>
 
         {(omborSorovlar || []).length > 0 && (
           <>
@@ -255,7 +264,6 @@ export default function Ombor() {
                 <Btn onPress={() => tasdiqlaSorov(sorov)} icon="checkmark-outline">Tasdiqlash va chiqarish</Btn>
               </Card>
             ))}
-            <View style={styles.gap14} />
           </>
         )}
 
@@ -309,15 +317,12 @@ export default function Ombor() {
 
         {(omborTasdiqlar || []).length > 0 && (
           <>
-            <View style={styles.secHead}>
-              <Ionicons name="checkmark-done-outline" size={13} color={C.sub} />
-              <Text style={styles.secTitle}>TASDIQLANGAN (30 kun)</Text>
-              <Text style={styles.secCount}>{omborTasdiqlar.length} ta</Text>
-            </View>
+            <View style={styles.gap14} />
+            <Guruh sarlavha="TASDIQLANGAN (30 kun)" icon="checkmark-done-outline" soni={`${omborTasdiqlar.length} ta`}>
             {omborTasdiqlar.map((t) => (
               <ExpandableCard
                 key={t.id}
-                style={styles.sorov}
+                ichki
                 header={
                   <View style={styles.flex1}>
                     <Text style={styles.sorovManba}>{t.manba}</Text>
@@ -342,20 +347,18 @@ export default function Ombor() {
                 </View>
               </ExpandableCard>
             ))}
+            </Guruh>
           </>
         )}
 
         {setKirimlari.length > 0 && (
           <>
-            <View style={styles.secHead}>
-              <Ionicons name="cube-outline" size={13} color={C.sub} />
-              <Text style={styles.secTitle}>OXIRGI SET KIRIMLARI</Text>
-              <Text style={styles.secCount}>{setKirimlari.length} ta</Text>
-            </View>
+            <View style={styles.gap14} />
+            <Guruh sarlavha="OXIRGI SET KIRIMLARI" icon="cube-outline" soni={`${setKirimlari.length} ta`}>
             {setKirimlari.map((h) => (
               <ExpandableCard
                 key={h.id}
-                style={styles.sorov}
+                ichki
                 header={
                   <View style={styles.flex1}>
                     <Text style={styles.sorovManba}>Yangi set</Text>
@@ -377,6 +380,7 @@ export default function Ombor() {
                 </View>
               </ExpandableCard>
             ))}
+            </Guruh>
           </>
         )}
       </ScrollBox>
@@ -393,14 +397,18 @@ const styles = temaStil(() => StyleSheet.create({
   safe:      { flex: 1, backgroundColor: C.bg },
   scroll:    { padding: S[5], paddingBottom: S[8] },
   gap10:     { height: S[3] },
+  nollaQator:{ flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, marginTop: S[3], paddingTop: S[3], borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: C.accent + "33" },
+  nollaTxt:  { fontSize: T.sm, fontWeight: "800", color: C.red },
   gap12:     { height: S[3] },
   gap14:     { height: S[4] },
   cardTitleRow:{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: S[1] },
   cardTitle: { fontSize: T.md, fontWeight: "700", color: C.text },
   muted:     { fontSize: T.sm, color: C.sub },
 
-  grid:      { flexDirection: "row", flexWrap: "wrap", gap: S[2] },
-  cell:      { width: "100%", backgroundColor: C.surface, borderWidth: 1, borderColor: C.borderSoft, borderRadius: R.sm, paddingVertical: S[3], paddingHorizontal: S[4], flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+  // Zaxira ro'yxati — bitta oq panel, qatorlar ingichka chiziq bilan ajraladi
+  grid:      { backgroundColor: C.surface, borderWidth: 1, borderColor: C.borderSoft, borderRadius: R.md, overflow: "hidden" },
+  cell:      { paddingVertical: S[3], paddingHorizontal: S[4], flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+  cellAjrat: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: C.borderSoft },
   cellNom:   { fontSize: T.sm, color: C.sub, fontWeight: "600", flexShrink: 1 },
   cellVal:   { fontSize: T.sm, fontWeight: "700", marginLeft: S[2] },
   cellChap:  { flex: 1, marginLeft: S[3] },

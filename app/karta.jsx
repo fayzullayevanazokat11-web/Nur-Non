@@ -9,6 +9,7 @@ import { router } from "expo-router";
 import { useApp } from "../src/store/AppData";
 import { Card } from "../src/components/Card";
 import { Btn } from "../src/components/Btn";
+import { Guruh } from "../src/components/Guruh";
 import { ExpandableCard, yopKartalar } from "../src/components/ExpandableCard";
 import { SuriladiganQator } from "../src/components/SuriladiganQator";
 import { saqlandiXabar } from "../src/components/Xabarcha";
@@ -139,9 +140,10 @@ export default function Karta() {
         {(kartalar || []).length === 0 ? (
           <BoshHolat icon="card-outline" sarlavha="Hali karta to'lovi yo'q" matn="Mijoz karta orqali to'lasa — yuqoridagi formaga summani yozib «Saqlash»ni bosing." />
         ) : (
-          [...kartalar].reverse().map((k) => (
-            <SuriladiganQator key={k.id} style={styles.item} nom={k.izoh || "Karta to'lovi"} onOchir={() => { yopKartalar(); ochirArxivga("karta", k.id); if (tahrirId === k.id) tozala(); saqlandiXabar("O'chirildi · Tarixdagilarda"); }}>
+          <Guruh>{[...kartalar].reverse().map((k) => (
+            <SuriladiganQator key={k.id} ichki nom={k.izoh || "Karta to'lovi"} onOchir={() => { yopKartalar(); ochirArxivga("karta", k.id); if (tahrirId === k.id) tozala(); saqlandiXabar("O'chirildi · Tarixdagilarda"); }}>
               <ExpandableCard
+                ichki
                 header={
                   <View style={styles.mHead}>
                     <Text style={[styles.itemIsm, styles.flex1]} numberOfLines={1}>{k.izoh || "Karta to'lovi"}</Text>
@@ -163,7 +165,7 @@ export default function Karta() {
                 </View>
               </ExpandableCard>
             </SuriladiganQator>
-          ))
+          ))}</Guruh>
         )}
       </ScrollBox>
     </SafeAreaView>

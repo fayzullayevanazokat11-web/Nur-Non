@@ -10,6 +10,7 @@ import { router } from "expo-router";
 import { useApp } from "../src/store/AppData";
 import { Card } from "../src/components/Card";
 import { Btn } from "../src/components/Btn";
+import { Guruh } from "../src/components/Guruh";
 import { ExpandableCard, yopKartalar } from "../src/components/ExpandableCard";
 import { SuriladiganQator } from "../src/components/SuriladiganQator";
 import { saqlandiXabar } from "../src/components/Xabarcha";
@@ -125,9 +126,10 @@ export default function Xarajat() {
         {royxat.length === 0 ? (
           <BoshHolat icon="cash-outline" sarlavha="Hali xarajat yo'q" matn="Gaz, yo'l haqi, ta'mir kabi kunlik xarajatlarni yuqoridagi formadan yozing — sof foydadan ayriladi." />
         ) : (
-          royxat.map((x) => (
-            <SuriladiganQator key={x.id} style={styles.item} nom={x.izoh} onOchir={() => { yopKartalar(); ochirArxivga("xarajat", x.id); if (tahrirId === x.id) tozala(); saqlandiXabar("O'chirildi · Tarixdagilarda"); }}>
+          <Guruh>{royxat.map((x) => (
+            <SuriladiganQator key={x.id} ichki nom={x.izoh} onOchir={() => { yopKartalar(); ochirArxivga("xarajat", x.id); if (tahrirId === x.id) tozala(); saqlandiXabar("O'chirildi · Tarixdagilarda"); }}>
               <ExpandableCard
+                ichki
                 header={
                   <View style={styles.mHead}>
                     <View style={styles.flex1}>
@@ -150,7 +152,7 @@ export default function Xarajat() {
                 </View>
               </ExpandableCard>
             </SuriladiganQator>
-          ))
+          ))}</Guruh>
         )}
 
         <Text style={styles.note}>* Xarajatlar 7 kun saqlanadi. Bugungi xarajatlar kunlik sof foydadan ayriladi.</Text>

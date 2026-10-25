@@ -1,6 +1,6 @@
-// "Markaz" ekrani — kunlik ko'rsatkichlar, ularning tagida Statistika, kunlik qop
-// hisobi (yakunlangan bo'lsa — kun oxirigacha "bekor qilish"), bir qatorda 4 ta
-// kichik tugma (Qarz/Optom/Karta), qo'shimcha xarajatlar va ishchilar haqi.
+// "Markaz" ekrani — eslatmalar, kunlik vazifa, so'ng bitta kartada Qarzlar/Optom/Karta/Xarajat
+// ustunlari, "Hisob-kitob" guruhi (qop hisobi + kun yakunini bekor qilish, statistika)
+// va bugungi ishchilar haqi (jami bilan).
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { View, Text, Pressable, Image, StyleSheet, LayoutAnimation, AppState, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -12,12 +12,12 @@ import { Card } from "../../src/components/Card";
 import { ScreenHeader } from "../../src/components/ScreenHeader";
 import { ScrollBox } from "../../src/components/ScrollBox";
 import { Bosma } from "../../src/components/Bosma";
-import { useAnimSon } from "../../src/components/useAnimSon";
 import { EslatmalarPanel } from "../../src/components/EslatmalarPanel";
 import { ErtalabTekshiruv } from "../../src/components/ErtalabTekshiruv";
 import { ixcham } from "../../src/components/Statistika";
+import { Guruh, GuruhQator, KorsatkichQatori } from "../../src/components/Guruh";
 import { C, T, S, R, temaStil } from "../../src/theme";
-import { hisoblaKunlik, formatSom, formatQisqa, qarzJami, optomJami, kartaJami, ishchiHaqlari, bugunSana, sutLitri, oldingiSana } from "../../src/logic/hisob";
+import { hisoblaKunlik, formatSom, qarzJami, optomJami, kartaJami, ishchiHaqlari, bugunSana, sutLitri } from "../../src/logic/hisob";
 // Maxsus rasm ikonkalari (Ionicons o'rniga — premium ko'rinish)
 const ICONS = {
   qop:     require("../../assets/icons/qop.png"),
@@ -79,12 +79,6 @@ export default function Markaz() {
   );
   // Lock bo'lsa — snapshot, aks holda jonli hisob:
   const stats = locked ? { ...liveStats, ...locked } : liveStats;
-  // Solishtirish uchun kechagi (oldingi ish kuni) hisobot
-  const kechagiHisobot = useMemo(
-    () => (hisobotlarTarixi || []).find((h) => h.sana === oldingiSana(bugunSanasi)) || null,
-    [hisobotlarTarixi, bugunSanasi]
-  );
-
   // Kun yakunlangan bo'lsa — o'sha kun hisobotidagi ishchilar haqi (kiritmalar tozalangan)
   const yakunHisoboti = useMemo(() => {
     if (!locked) return null;
@@ -132,95 +126,60 @@ export default function Markaz() {
       <ScrollBox contentContainerStyle={styles.scroll}>
         <ScreenHeader eyebrow="Bosh sahifa" title="Markaz" image={require("../../assets/tabicons/markaz.png")} />
 
-        {/* BOSH RAQAM — bugungi sof foyda (katta), kecha bilan solishtirma, ostida non va qop */}
-        <BoshRaqam stats={stats} kecha={kechagiHisobot} yakunlangan={!!locked} />
-
         <EslatmalarPanel />
 
         {/* KUNNI BOSHLASH — ertalabgi tekshiruv (davomat, ombor) */}
         <ErtalabTekshiruv kunYopiq={!!locked} />
 
 
-        {/* STATISTIKA — ko'rsatkichlar tagida */}
-        <Bosma
-          accessibilityLabel="Hisobotlar tarixi"
-          accessibilityRole="button"
-          onPress={() => router.push("/tarix")}
-          style={styles.xarajatBtn}
-        >
-          <View style={[styles.navIcon, { backgroundColor: C.accent + "14" }]}>
-            <Ionicons name="stats-chart-outline" size={22} color={C.accent} />
-          </View>
-          <View style={styles.flex1}>
-            <Text style={styles.xarajatLabel}>Statistika va tarix</Text>
-            <Text style={styles.xarajatSub}>{(hisobotlarTarixi || []).length} ta hisobot · 30 kun</Text>
-          </View>
-          <Ionicons name="chevron-forward" size={18} color={C.muted} />
-        </Bosma>
+        {/* PUL OQIMI — Qarzlar / Optom / Karta / Xarajat bitta kartada, ustunlarga bo'lingan */}
+        <KorsatkichQatori
+          items={[
+            { label: "Qarzlar", image: ICONS.qarz, qiymat: qarz.summa ? ixcham(qarz.summa) : "0", birlik: qarz.kishi ? `${qarz.kishi} kishi` : "so'm", soni: qarz.kishi, onPress: () => router.push("/qarzlar") },
+            { label: "Optom", image: ICONS.optom, qiymat: optom.summa ? ixcham(optom.summa) : "0", birlik: optom.soni ? `${optom.soni} ta · bugun` : "bugun", onPress: () => router.push("/optom") },
+            { label: "Karta", image: ICONS.karta, qiymat: karta.summa ? ixcham(karta.summa) : "0", birlik: karta.soni ? `${karta.soni} ta · bugun` : "bugun", onPress: () => router.push("/karta") },
+            { label: "Xarajat", image: ICONS.xarajat, accessibilityLabel: "Kunlik qo'shimcha xarajatlar", qiymat: xarajatBugun ? ixcham(xarajatBugun) : "0", birlik: xarajatSoni ? `${xarajatSoni} ta · bugun` : "bugun", onPress: () => router.push("/xarajat") },
+          ]}
+        />
 
-        {/* Kunlik qop hisobi — alohida sahifaga olib boradi (to'liq tafsilot bilan) */}
-        <Bosma
-          accessibilityLabel="Kunlik qop hisobi"
-          accessibilityRole="button"
-          onPress={() => router.push("/qop")}
-          style={[styles.xarajatBtn, !bekorKorinadi && styles.qopBtn]}
-        >
-          <View style={[styles.navIcon, { backgroundColor: C.accent + "14" }]}>
-            <Image source={ICONS.qop} style={styles.navIconImg} resizeMode="contain" />
-          </View>
-          <View style={styles.flex1}>
-            <Text style={styles.xarajatLabel}>Kunlik qop hisobi</Text>
-            <Text style={styles.xarajatSub}>
-              {locked ? "Kun yakunlangan · hisobot va PDF" : `${stats.jamiBoshlang > 0 ? `${stats.jamiBoshlang} tonggi · ` : ""}${stats.jamiQop} qop · ${stats.jamiNon} dona ishlab`}
-            </Text>
-          </View>
-          <Ionicons name="chevron-forward" size={18} color={C.muted} />
-        </Bosma>
-
-        {/* KUN YAKUNINI BEKOR QILISH — yakunlangan kunning oxirigacha turadi */}
-        {bekorKorinadi && (
-          <View style={styles.yakunQator}>
-            <Ionicons name="lock-closed-outline" size={18} color={C.accent} />
-            <View style={styles.flex1}>
-              <Text style={styles.yakunMatn}>Kun yakunlangan · {soatMatni(yakunBekor?.vaqt)}</Text>
-              <Text style={styles.yakunIzoh}>Xato bo'lsa — tunda 03:00 gacha bekor qilish mumkin</Text>
+        {/* HISOB-KITOB — qop hisobi, xarajatlar va statistika bitta guruhda */}
+        <Guruh sarlavha="HISOB-KITOB" icon="albums-outline">
+          <GuruhQator
+            key="qop"
+            image={ICONS.qop}
+            nom="Kunlik qop hisobi"
+            izoh={locked ? "Kun yakunlangan · hisobot va PDF" : `${stats.jamiBoshlang > 0 ? `${stats.jamiBoshlang} tonggi · ` : ""}${stats.jamiQop} qop · ${stats.jamiNon} dona ishlab`}
+            onPress={() => router.push("/qop")}
+          />
+          {/* KUN YAKUNINI BEKOR QILISH — yakunlangan kunning oxirigacha turadi */}
+          {bekorKorinadi && (
+            <View key="bekor" style={styles.yakunQator}>
+              <Ionicons name="lock-closed-outline" size={18} color={C.accent} />
+              <View style={styles.flex1}>
+                <Text style={styles.yakunMatn}>Kun yakunlangan · {soatMatni(yakunBekor?.vaqt)}</Text>
+                <Text style={styles.yakunIzoh}>Xato bo'lsa — tunda 03:00 gacha bekor qilish mumkin</Text>
+              </View>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Kun yakunini bekor qilish"
+                onPress={yakunniBekorSora}
+                hitSlop={6}
+                style={({ pressed }) => [styles.yakunBtn, pressed && { opacity: 0.7 }]}
+              >
+                <Ionicons name="arrow-undo-outline" size={14} color={C.accent} />
+                <Text style={styles.yakunBtnTxt}>Bekor qilish</Text>
+              </Pressable>
             </View>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Kun yakunini bekor qilish"
-              onPress={yakunniBekorSora}
-              hitSlop={6}
-              style={({ pressed }) => [styles.yakunBtn, pressed && { opacity: 0.7 }]}
-            >
-              <Ionicons name="arrow-undo-outline" size={14} color={C.accent} />
-              <Text style={styles.yakunBtnTxt}>Bekor qilish</Text>
-            </Pressable>
-          </View>
-        )}
-
-        {/* 4 ta kichik tugma — bitta qatorda */}
-        <View style={styles.miniQator}>
-          <MiniTile image={ICONS.qarz} label="Qarzlar" qiymat={qarz.summa} soni={qarz.kishi} onPress={() => router.push("/qarzlar")} />
-          <MiniTile image={ICONS.optom} label="Optom" qiymat={optom.summa} soni={optom.soni} onPress={() => router.push("/optom")} />
-          <MiniTile image={ICONS.karta} label="Karta" qiymat={karta.summa} soni={karta.soni} onPress={() => router.push("/karta")} />
-        </View>
-
-        {/* Kunlik qo'shimcha xarajatlar — vertikal nav tugma */}
-        <Bosma
-          accessibilityLabel="Kunlik qo'shimcha xarajatlar"
-          accessibilityRole="button"
-          onPress={() => router.push("/xarajat")}
-          style={styles.xarajatBtn}
-        >
-          <View style={[styles.navIcon, { backgroundColor: C.accent + "14" }]}>
-            <Image source={ICONS.xarajat} style={styles.navIconImg} resizeMode="contain" />
-          </View>
-          <View style={styles.flex1}>
-            <Text style={styles.xarajatLabel}>Kunlik qo'shimcha xarajatlar</Text>
-            <Text style={styles.xarajatSub}>Bugun: {formatSom(xarajatBugun)} so'm • {xarajatSoni} ta</Text>
-          </View>
-          <Ionicons name="chevron-forward" size={18} color={C.muted} />
-        </Bosma>
+          )}
+          <GuruhQator
+            key="tarix"
+            icon="stats-chart-outline"
+            accessibilityLabel="Hisobotlar tarixi"
+            nom="Statistika va tarix"
+            izoh={`${(hisobotlarTarixi || []).length} ta hisobot · 30 kun`}
+            onPress={() => router.push("/tarix")}
+          />
+        </Guruh>
 
         {/* Davomat hali belgilanmagan — ishchilar haqi hisoblanmayapti */}
         {!locked && (ishchilar || []).some((w) => w.holat === "Aktiv") && !(ishchilar || []).some((w) => w.holat === "Aktiv" && !w.kelmadi) && (
@@ -231,116 +190,25 @@ export default function Markaz() {
           </Bosma>
         )}
 
-        {/* BUGUNGI ISHCHILAR HAQI (jonli) */}
+        {/* BUGUNGI ISHCHILAR HAQI (jonli) — bitta kartada, ostida jami */}
         {bugungiHaq.list.length > 0 && (
-          <Card style={styles.block}>
-            <View style={styles.cardTitleRow}>
-              <Ionicons name="people-outline" size={18} color={C.sub} />
-              <Text style={styles.cardTitle}>Bugungi ishchilar haqi</Text>
-            </View>
-            <View style={styles.gap10} />
+          <Guruh sarlavha="BUGUNGI ISHCHILAR HAQI" icon="people-outline" soni={`${bugungiHaq.list.length} nafar`}>
             {bugungiHaq.list.map((w) => (
               <View key={w.id} style={styles.haqRow}>
                 <Text style={styles.haqNom} numberOfLines={1}>{w.ism}{w.brak > 0 ? ` (brak −${formatSom(w.brak)})` : ""}</Text>
                 <Text style={styles.haqVal}>{formatSom(w.net)} so'm</Text>
               </View>
             ))}
-          </Card>
+            <View key="jami" style={[styles.haqRow, styles.haqJami]}>
+              <Text style={styles.haqJamiNom}>Jami</Text>
+              <Text style={styles.haqJamiVal}>{formatSom(bugungiHaq.list.reduce((s, w) => s + (Number(w.net) || 0), 0))} so'm</Text>
+            </View>
+          </Guruh>
         )}
 
       </ScrollBox>
 
     </SafeAreaView>
-  );
-}
-
-// Bosh raqam: bugungi sof foyda katta, kecha bilan farq (↑/↓ %), ostida sotilgan non va qop.
-// Kechqurun (19:00 dan) kun hali yakunlanmagan bo'lsa — shu yerning o'zida «Kunni yakunlash» tugmasi.
-function BoshRaqam({ stats, kecha, yakunlangan }) {
-  const korinish = useAnimSon(stats.sofFoyda);
-  const kechaFoyda = kecha ? Number(kecha.sofFoyda) || 0 : null;
-  const farq = kechaFoyda !== null && kechaFoyda !== 0 && (yakunlangan || stats.sofFoyda !== 0)
-    ? Math.round(((stats.sofFoyda - kechaFoyda) / Math.abs(kechaFoyda)) * 100) : null;
-  const soat = new Date().getHours();
-  const kechqurun = !yakunlangan && (soat >= 19 || soat < 3) && (stats.jamiQop > 0 || stats.jamiNon > 0);
-  const manfiy = stats.sofFoyda < 0;
-  return (
-    <Card style={styles.bosh}>
-      <View style={styles.boshUst}>
-        <Text style={styles.boshNom}>{yakunlangan ? "BUGUNGI SOF FOYDA · YAKUNLANGAN" : "BUGUNGI SOF FOYDA"}</Text>
-        {farq !== null && (
-          <View style={[styles.farq, farq < 0 && styles.farqPast]}>
-            <Ionicons name={farq >= 0 ? "arrow-up" : "arrow-down"} size={11} color={farq >= 0 ? C.onAccent : C.text} />
-            <Text style={[styles.farqTxt, farq < 0 && { color: C.text }]}>{Math.abs(farq)}%</Text>
-          </View>
-        )}
-      </View>
-      <Text testID="bosh-sof-foyda" style={[styles.boshQiymat, manfiy && { color: C.red }]} numberOfLines={1} adjustsFontSizeToFit>
-        {formatSom(Math.round(korinish))} <Text style={styles.boshBirlik}>so'm</Text>
-      </Text>
-      <Text style={styles.boshKecha}>
-        {kechaFoyda !== null ? `Kecha: ${formatQisqa(kechaFoyda)} so'm` : "Kecha yakunlangan hisobot yo'q"}
-      </Text>
-      <View style={styles.boshPast}>
-        <View style={styles.boshKichik}>
-          <Ionicons name="cube-outline" size={15} color={C.sub} />
-          <Text style={styles.boshKichikNom}>Sotilgan non</Text>
-          <Text style={styles.boshKichikQiymat}>{formatSom(stats.sotilganNon)} dona</Text>
-        </View>
-        <View style={styles.boshAjrat} />
-        <View style={styles.boshKichik}>
-          <Ionicons name="layers-outline" size={15} color={C.sub} />
-          <Text style={styles.boshKichikNom}>Kunlik qop</Text>
-          <Text style={styles.boshKichikQiymat}>{formatSom(stats.jamiQop)} qop</Text>
-        </View>
-      </View>
-      {kechqurun && (
-        <Bosma accessibilityRole="button" accessibilityLabel="Kunni yakunlashga o'tish" onPress={() => router.push("/qop")} style={styles.yakunlaBtn}>
-          <Ionicons name="moon-outline" size={16} color={C.onAccent} />
-          <Text style={styles.yakunlaTxt}>Kun oxiri — kunni yakunlash</Text>
-          <Ionicons name="chevron-forward" size={16} color={C.onAccent} />
-        </Bosma>
-      )}
-    </Card>
-  );
-}
-
-// Ko'rsatkich plitkasi — qiymat o'zgarganda son silliq "sanab" boradi
-function StatTile({ label, son, format = (x) => String(x), unit, color, icon }) {
-  const korinish = useAnimSon(son);
-  const value = format(Math.round(korinish));
-  const len = String(format(Math.round(Number(son) || 0))).length; // o'lcham yakuniy qiymatdan — sakramasin
-  const valSize = len > 9 ? 14 : len > 7 ? 16 : len > 5 ? 18 : 20;
-  return (
-    <Card style={styles.statTile}>
-      <Ionicons name={icon} size={16} color={C.sub} style={styles.statIcon} />
-      <Text style={styles.statLabel} numberOfLines={1}>{label}</Text>
-      <Text style={[styles.statValue, { color, fontSize: valSize }]} numberOfLines={1}>{value}</Text>
-      <Text style={styles.statUnit}>{unit}</Text>
-    </Card>
-  );
-}
-
-// Kichik navigatsiya tugmasi (4 tasi bitta qatorda): ikonka (soni nishonchada), nom, summa.
-// To'rttalasi bir xil aksent rangda.
-function MiniTile({ image, label, qiymat, soni, onPress }) {
-  const tint = C.accent;
-  return (
-    <Bosma
-      accessibilityRole="button"
-      accessibilityLabel={label}
-      onPress={onPress}
-      kichrayish={0.95}
-      tashqi={styles.flex1}
-      style={styles.miniTile}
-    >
-      <View style={[styles.miniIcon, { backgroundColor: tint + "14" }]}>
-        <Image source={image} style={[styles.miniIconImg, { tintColor: tint }]} resizeMode="contain" />
-        {soni > 0 && <View style={styles.miniSoni}><Text style={styles.miniSoniTxt}>{soni}</Text></View>}
-      </View>
-      <Text style={styles.miniLabel} numberOfLines={1}>{label}</Text>
-      <Text style={styles.miniQiymat} numberOfLines={1}>{qiymat ? ixcham(qiymat) : "0"}</Text>
-    </Bosma>
   );
 }
 
@@ -353,7 +221,7 @@ const styles = temaStil(() => StyleSheet.create({
   safe:      { flex: 1, backgroundColor: C.bg },
   scroll:    { padding: S[5], paddingBottom: S[8] },
   statsRow:  { flexDirection: "row", gap: S[2], marginBottom: S[3] },
-  bosh:      { marginBottom: S[3], paddingVertical: S[4] },
+  boshKarta: { marginBottom: S[4], paddingVertical: S[4] },
   boshUst:   { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: S[2] },
   boshNom:   { fontSize: 10, fontWeight: "800", color: C.muted, letterSpacing: 1 },
   farq:      { flexDirection: "row", alignItems: "center", gap: 2, backgroundColor: C.accent, borderRadius: R.pill, paddingVertical: 3, paddingHorizontal: 8 },
@@ -392,7 +260,7 @@ const styles = temaStil(() => StyleSheet.create({
   miniQiymat:{ fontSize: 11, fontWeight: "600", color: C.muted, marginTop: 1 },
   navTilePressed: { opacity: 0.7, transform: [{ scale: 0.97 }] },
   // Kun yakuni — bekor qilish qatori
-  yakunQator:{ flexDirection: "row", alignItems: "center", gap: S[3], backgroundColor: C.accent + "0F", borderRadius: R.md, borderWidth: 1, borderColor: C.accent + "33", paddingVertical: S[3], paddingHorizontal: S[4], marginBottom: S[5] },
+  yakunQator:{ flexDirection: "row", alignItems: "center", gap: S[3], backgroundColor: C.accent + "0F", paddingVertical: S[3], paddingHorizontal: S[4] },
   yakunMatn: { fontSize: T.sm, fontWeight: "800", color: C.text },
   yakunIzoh: { fontSize: 11, color: C.sub, marginTop: 2 },
   yakunBtn:  { flexDirection: "row", alignItems: "center", gap: 4, paddingVertical: 7, paddingHorizontal: 11, borderRadius: R.pill, borderWidth: 1, borderColor: C.accent + "66", backgroundColor: C.surface },
@@ -408,7 +276,10 @@ const styles = temaStil(() => StyleSheet.create({
   xarajatSub:   { fontSize: 11, color: C.muted, fontWeight: "600", marginTop: 2 },
 
   // Bugungi ishchilar haqi
-  haqRow:    { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: S[2] },
+  haqRow:    { flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingVertical: 11, paddingHorizontal: S[4] },
+  haqJami:   { backgroundColor: C.accent + "0D" },
+  haqJamiNom:{ flex: 1, fontSize: T.sm, fontWeight: "800", color: C.text, letterSpacing: 0.3 },
+  haqJamiVal:{ fontSize: T.md, fontWeight: "800", color: C.accent },
   haqNom:    { flex: 1, fontSize: T.sm, color: C.text },
   haqVal:    { fontSize: T.sm, color: C.accent, fontWeight: "800", marginLeft: S[2] },
 

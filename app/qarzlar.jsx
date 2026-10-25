@@ -11,6 +11,7 @@ import { router } from "expo-router";
 import { useApp } from "../src/store/AppData";
 import { Card } from "../src/components/Card";
 import { Btn } from "../src/components/Btn";
+import { Guruh } from "../src/components/Guruh";
 import { ExpandableCard, yopKartalar } from "../src/components/ExpandableCard";
 import { DateField } from "../src/components/DateField";
 import { NonIkon } from "../src/components/XomashyoIkon";
@@ -215,13 +216,13 @@ export default function Qarzlar() {
             ? <Card><Text style={styles.bosh}>Topilmadi</Text></Card>
             : <BoshHolat icon="receipt-outline" sarlavha="Hali qarz yo'q" matn="Nonni qarzga bersangiz — yuqoridagi formadan yozing. To'lovlar shu yerda kuzatiladi." />
         ) : (
-          korinadi.map((g) => {
+          <Guruh>{korinadi.map((g) => {
             const kun = g.qoldiq > 0 ? kunOtdi(g.enEskiFaol) : 0;
             const tarix = qarzdorTarixi(g);
             return (
               <ExpandableCard
                 key={g.kalit}
-                style={styles.item}
+                ichki
                 header={
                   <View style={styles.mHead}>
                     <View style={styles.flex1}>
@@ -297,7 +298,7 @@ export default function Qarzlar() {
                 ))}
               </ExpandableCard>
             );
-          })
+          })}</Guruh>
         )}
       </ScrollBox>
     </SafeAreaView>

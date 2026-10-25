@@ -9,6 +9,7 @@ import { router } from "expo-router";
 
 import { useApp } from "../src/store/AppData";
 import { Card } from "../src/components/Card";
+import { Guruh } from "../src/components/Guruh";
 import { ExpandableCard, yopKartalar } from "../src/components/ExpandableCard";
 import { ScrollBox } from "../src/components/ScrollBox";
 import { SahifaSarlavha } from "../src/components/SahifaSarlavha";
@@ -52,7 +53,7 @@ export default function Tarix() {
         {(hisobotlarTarixi || []).length === 0 ? (
           <Card><Text style={styles.bosh}>Hali hisobot yo'q. Kunlik qop hisobi sahifasidagi "Kunni yakunlash"ni bossangiz, hisobot shu yerda paydo bo'ladi.</Text></Card>
         ) : (
-          [...hisobotlarTarixi].slice(0, 30).filter((h) => qidiruvMos(`${h.sana} ${sanaChiroyli(h.sana)}`, qidiruv)).map((h) => {
+          <Guruh>{[...hisobotlarTarixi].slice(0, 30).filter((h) => qidiruvMos(`${h.sana} ${sanaChiroyli(h.sana)}`, qidiruv)).map((h) => {
             const tahlil = kunTahlili(h, hisobotlarTarixi);
             const daromad = parseFloat(h.daromad) || 0;
             const ishchiHaq = parseFloat(h.ishchiHaq) || 0;
@@ -60,7 +61,7 @@ export default function Tarix() {
             return (
               <ExpandableCard
                 key={h.id}
-                style={styles.item}
+                ichki
                 header={
                   <View style={styles.mHead}>
                     <Text style={[styles.itemIsm, styles.flex1]} numberOfLines={1}>{sanaChiroyli(h.sana)}</Text>
@@ -131,7 +132,7 @@ export default function Tarix() {
                 </View>
               </ExpandableCard>
             );
-          })
+          })}</Guruh>
         )}
       </ScrollBox>
     </SafeAreaView>

@@ -11,6 +11,7 @@ import { Card } from "../../src/components/Card";
 import { Btn } from "../../src/components/Btn";
 import { ScreenHeader } from "../../src/components/ScreenHeader";
 import { ExpandableCard, yopKartalar } from "../../src/components/ExpandableCard";
+import { Guruh } from "../../src/components/Guruh";
 import { MahsulotNarxi } from "../../src/components/MahsulotNarxi";
 import { TannarxKalk } from "../../src/components/TannarxKalk";
 import { XomashyoIkon, NonIkon, BosiladiganIkon, IkonTanlov, IKON_TANLOV, xomashyoIkonKaliti } from "../../src/components/XomashyoIkon";
@@ -315,24 +316,18 @@ export default function IshlabChiqarish() {
               </View>
             </ExpandableCard>
 
-            {/* RO'YXAT */}
-            <View style={styles.secHead}>
-              <Ionicons name="grid-outline" size={13} color={C.sub} />
-              <Text style={styles.secTitle}>NON TURLARI</Text>
-              <Text style={styles.secCount}>{nonlar.length} ta</Text>
-            </View>
-            {nonlar.length > 0 && <Text style={styles.ikonHint}>Xomashyo ikonkasini o'zgartirish uchun uning ustiga bosing</Text>}
-
+            {/* RO'YXAT — barcha nonlar bitta kartada */}
             {nonlar.length === 0 ? (
               <BoshHolat icon="add-circle-outline" sarlavha="Hali non turi yo'q" matn="Birinchi nonni qo'shing: nomi, narxi, 1 qopga ketadigan xomashyo va bitta non vazni." tugma="Birinchi nonni qo'shish" onPress={() => { setFormaOch((x) => x + 1); setTimeout(() => scrollRef.current?.scrollToTop?.(true), 50); }} />
             ) : (
-              nonlar.map((non) => {
+              <Guruh sarlavha="NON TURLARI" icon="grid-outline" soni={`${nonlar.length} ta`} izoh="Xomashyo ikonkasini o'zgartirish uchun uning ustiga bosing">
+              {nonlar.map((non) => {
                 const oz = non.ozIshlab !== false;
                 const foyda = donaFoydasi(non, mahsulotNarxlari);
                 return (
                   <ExpandableCard
                     key={non.id}
-                    style={styles.item}
+                    ichki
                     header={
                       <View style={styles.nonBosh}>
                         <View style={[styles.nonIkon, !oz && styles.nonIkonTashqi]}>
@@ -392,7 +387,8 @@ export default function IshlabChiqarish() {
                     </View>
                   </ExpandableCard>
                 );
-              })
+              })}
+              </Guruh>
             )}
           </>
         )}
@@ -422,7 +418,7 @@ const styles = temaStil(() => StyleSheet.create({
 
   // Inline forma
   formCard:  { marginBottom: S[5] },
-  formHead:  { flexDirection: "row", alignItems: "center", gap: S[2], marginBottom: S[3] },
+  formHead:  { flexDirection: "row", alignItems: "center", gap: S[2] },
   formTitle: { fontSize: T.md, fontWeight: "800", color: C.text },
   inputLabel:{ fontSize: T.xs, color: C.sub, fontWeight: "600", marginBottom: 6, marginTop: S[2], letterSpacing: 0.3 },
   input:     { borderWidth: 1, borderColor: C.border, borderRadius: R.md, paddingVertical: 12, paddingHorizontal: 14, fontSize: T.md, color: C.text, backgroundColor: C.surface },

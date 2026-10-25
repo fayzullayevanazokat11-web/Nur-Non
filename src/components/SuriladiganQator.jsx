@@ -10,7 +10,8 @@ import { C, T, R, temaStil } from "../theme";
 const KENG = 96; // ochilgan tugma kengligi
 let ochiqYopish = null; // bir vaqtda faqat bitta qator ochiq
 
-export function SuriladiganQator({ children, onOchir, matn = "O'chirish", style, nom = "" }) {
+// `ichki` — Guruh kartasi ichida: qator o'z fonida suriladi, tugma butun balandlikni egallaydi
+export function SuriladiganQator({ children, onOchir, matn = "O'chirish", style, nom = "", ichki = false }) {
   const x = useRef(new Animated.Value(0)).current;
   const ochiq = useRef(false);
   const yop = () => { ochiq.current = false; Animated.spring(x, { toValue: 0, useNativeDriver: true, bounciness: 0 }).start(); };
@@ -35,18 +36,18 @@ export function SuriladiganQator({ children, onOchir, matn = "O'chirish", style,
   const tugmaOpacity = x.interpolate({ inputRange: [-KENG, -20, 0], outputRange: [1, 0.4, 0], extrapolate: "clamp" });
   return (
     <View style={[styles.wrap, style]}>
-      <Animated.View style={[styles.orqa, { opacity: tugmaOpacity }]}>
+      <Animated.View style={[styles.orqa, ichki && styles.orqaIchki, { opacity: tugmaOpacity }]}>
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={`${nom ? nom + ": " : ""}${matn} (tasdiqlash)`}
           onPress={() => { yop(); sezgi("tayyor"); onOchir?.(); }}
-          style={({ pressed }) => [styles.tugma, pressed && { opacity: 0.8 }]}
+          style={({ pressed }) => [styles.tugma, ichki && styles.tugmaIchki, pressed && { opacity: 0.8 }]}
         >
           <Ionicons name="trash-outline" size={20} color="#FFF8EC" />
           <Text style={styles.tugmaTxt}>{matn}</Text>
         </Pressable>
       </Animated.View>
-      <Animated.View style={{ transform: [{ translateX: x }] }} {...pan.panHandlers}>
+      <Animated.View style={[ichki && styles.oldIchki, { transform: [{ translateX: x }] }]} {...pan.panHandlers}>
         {children}
       </Animated.View>
     </View>
@@ -57,5 +58,8 @@ const styles = temaStil(() => StyleSheet.create({
   wrap:   { position: "relative" },
   orqa:   { position: "absolute", top: 0, bottom: 0, right: 0, width: KENG - 6, justifyContent: "center", alignItems: "flex-end" },
   tugma:  { flex: 1, alignSelf: "stretch", width: KENG - 10, borderRadius: R.lg, backgroundColor: C.red, alignItems: "center", justifyContent: "center", gap: 3 },
+  orqaIchki:{ width: KENG },
+  tugmaIchki:{ width: KENG, borderRadius: 0 },
+  oldIchki: { backgroundColor: C.card },
   tugmaTxt:{ fontSize: 11, fontWeight: "800", color: "#FFF8EC" },
 }));

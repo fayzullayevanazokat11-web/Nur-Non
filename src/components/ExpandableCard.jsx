@@ -36,7 +36,8 @@ export function yopKartalar({ qoldir } = {}) {
 }
 
 // `ilova` — sarlavha tagida doim ko'rinadigan qism (masalan, ikonka tanlovi); bosilganda karta ochilmaydi
-export function ExpandableCard({ header, children, defaultOpen = false, ochKaliti, id, style, ilova }) {
+// `ichki` — Guruh ichida: o'z ramkasi/soyasi yo'q, ajratgichni Guruh chizadi
+export function ExpandableCard({ header, children, defaultOpen = false, ochKaliti, id, style, ilova, ichki = false }) {
   const [open, setOpen] = useState(defaultOpen || !!ochKaliti);
   const openRef = useRef(open);
   openRef.current = open;
@@ -90,8 +91,9 @@ export function ExpandableCard({ header, children, defaultOpen = false, ochKalit
   const spin = rot.interpolate({ inputRange: [0, 1], outputRange: ["0deg", "180deg"] });
   const headOpacity = press.interpolate({ inputRange: [0, 1], outputRange: [1, 0.6] });
 
+  const Qobiq = ichki ? View : Card;
   return (
-    <Card animate={false} style={[styles.card, style]}>
+    <Qobiq {...(ichki ? {} : { animate: false })} style={ichki ? [open && styles.ichkiOchiq, style] : [styles.card, style]}>
       <Pressable onPress={toggle} onPressIn={() => animatePress(1)} onPressOut={() => animatePress(0)}>
         <Animated.View needsOffscreenAlphaCompositing style={[styles.head, open ? styles.headOpen : styles.headClosed, { opacity: headOpacity }]}>
           <View style={styles.headLeft}>{header}</View>
@@ -102,12 +104,13 @@ export function ExpandableCard({ header, children, defaultOpen = false, ochKalit
       </Pressable>
       {ilova ? <View style={styles.ilova}>{ilova}</View> : null}
       {open ? <View style={styles.body}>{children}</View> : null}
-    </Card>
+    </Qobiq>
   );
 }
 
 const styles = temaStil(() => StyleSheet.create({
   card:       { padding: 0 },
+  ichkiOchiq: { backgroundColor: C.accent + "08" },
   head:       { flexDirection: "row", alignItems: "center", gap: S[2], paddingVertical: S[4], paddingHorizontal: S[5] },
   headClosed: { borderRadius: R.lg },
   headOpen:   { borderTopLeftRadius: R.lg, borderTopRightRadius: R.lg, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: C.borderSoft },

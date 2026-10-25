@@ -7,11 +7,9 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 
 import { useApp } from "../../src/store/AppData";
-import { Card } from "../../src/components/Card";
 import { Btn } from "../../src/components/Btn";
 import { ScreenHeader } from "../../src/components/ScreenHeader";
 import { ErtalabQadamBelgisi } from "../../src/components/ErtalabTekshiruv";
-import { NavQator } from "../../src/components/NavQator";
 import { Qidiruv, qidiruvMos } from "../../src/components/Qidiruv";
 import { ExpandableCard, yopKartalar } from "../../src/components/ExpandableCard";
 import { ScrollBox } from "../../src/components/ScrollBox";
@@ -23,6 +21,7 @@ import { formatSom, sonOl, kunRoliBilan, ishchiHaqlari } from "../../src/logic/h
 import { LAVOZIMLAR, getLavozimLabel } from "../../src/logic/konstantalar";
 import { saqlandiXabar } from "../../src/components/Xabarcha";
 import { BoshHolat } from "../../src/components/BoshHolat";
+import { Guruh, KorsatkichQatori } from "../../src/components/Guruh";
 
 const BOSH = { ism: "", lavozimId: LAVOZIMLAR[0].id, lavozimCustom: "", haqTuri: "kunlik", miqdor: "", nonNarx: {}, holat: "Aktiv", tatilSana: "" };
 const HOLATLAR = ["Aktiv", "Ta'tilda"];
@@ -152,31 +151,21 @@ export default function Xodimlar() {
         <ScreenHeader eyebrow="Jamoa" title="Xodimlar" image={require("../../assets/tabicons/xodimlar.png")} />
         <ErtalabQadamBelgisi qadam="davomat" matn="Bugungi davomatni belgilang, so'ng «Tayyor»" />
 
-        <View style={styles.statsRow}>
-          <Card style={styles.statTile}>
-            <Ionicons name="people-circle-outline" size={16} color={C.green} style={styles.statIcon} />
-            <Text style={styles.statLabel}>AKTIV</Text>
-            <Text style={[styles.statValue, { color: C.text }]}>{aktiv.length}</Text>
-            <Text style={styles.statUnit}>nafar</Text>
-          </Card>
-          <Card style={styles.statTile}>
-            <Ionicons name="airplane-outline" size={16} color={C.accent} style={styles.statIcon} />
-            <Text style={styles.statLabel}>TA'TILDA</Text>
-            <Text style={[styles.statValue, { color: C.text }]}>{tatildagilar.length}</Text>
-            <Text style={styles.statUnit}>nafar</Text>
-          </Card>
-          <Card style={styles.statTile}>
-            <Ionicons name="exit-outline" size={16} color={C.red} style={styles.statIcon} />
-            <Text style={styles.statLabel}>KETGAN</Text>
-            <Text style={[styles.statValue, { color: C.text }]}>{ishdanKetgan.length}</Text>
-            <Text style={styles.statUnit}>nafar</Text>
-          </Card>
-        </View>
+        <KorsatkichQatori
+          items={[
+            { label: "Aktiv", icon: "people-circle-outline", tint: C.green, qiymat: String(aktiv.length), birlik: "nafar" },
+            { label: "Ta'tilda", icon: "airplane-outline", tint: C.accent, qiymat: String(tatildagilar.length), birlik: "nafar" },
+            { label: "Ketgan", icon: "exit-outline", tint: C.red, qiymat: String(ishdanKetgan.length), birlik: "nafar" },
+          ]}
+        />
 
+        {/* Davomat va yangi xodim — bitta guruhda */}
+        <Guruh>
         {/* BUGUNGI DAVOMAT — kelmagan xodimga bugungi kunlik haq yozilmaydi */}
         {hammaAktiv.length > 0 && (
           <ExpandableCard
-            style={styles.formCard}
+            key="davomat"
+            ichki
             ochKaliti={ertalabYonalish === "davomat" ? "ertalab" : null}
             header={
               <View style={styles.formHead}>
@@ -223,12 +212,11 @@ export default function Xodimlar() {
           </ExpandableCard>
         )}
 
-        {(ishchilar || []).length > 5 && <Qidiruv value={qidiruv} onChange={setQidiruv} placeholder="Xodimni qidirish" />}
-
         {/* INLINE FORMA — ExpandableCard ichida, default yopiq. Tahrirlash holatida avto-ochiladi. */}
         <ExpandableCard
+          key="forma"
           id="forma"
-          style={styles.formCard}
+          ichki
           ochKaliti={tahrirId || formaOch || null}
           header={
             <View style={styles.formHead}>
@@ -322,6 +310,9 @@ export default function Xodimlar() {
             {tahrirId && <Btn secondary onPress={tozala}>Bekor</Btn>}
           </View>
         </ExpandableCard>
+        </Guruh>
+
+        {(ishchilar || []).length > 5 && <Qidiruv value={qidiruv} onChange={setQidiruv} placeholder="Xodimni qidirish" />}
 
         {(ishchilar || []).length === 0 ? (
           <BoshHolat icon="people-outline" sarlavha="Hali xodim yo'q" matn="Xodimlarni qo'shing — davomat, kunlik haq va qop bo'yicha haq shu yerdan hisoblanadi." tugma="Birinchi xodimni qo'shish" onPress={() => { setFormaOch((x) => x + 1); setTimeout(() => scrollRef.current?.scrollToTop?.(true), 50); }} />
@@ -367,20 +358,10 @@ export default function Xodimlar() {
   );
 }
 
+// Holat bo'yicha bo'lim — xodimlar bitta kartada, ingichka ajratgichlar bilan
 function Bolim({ icon, tint, nom, soni, children }) {
   if (soni === 0) return null;
-  return (
-    <>
-      <View style={styles.secHead}>
-        <View style={styles.secHeadLeft}>
-          <Ionicons name={icon} size={13} color={tint} />
-          <Text style={[styles.section, { color: tint }]}>{nom}</Text>
-        </View>
-        <Text style={[styles.secSum, { color: tint }]}>{soni} nafar</Text>
-      </View>
-      {children}
-    </>
-  );
+  return <Guruh sarlavha={nom} icon={icon} tint={tint} soni={`${soni} nafar`}>{children}</Guruh>;
 }
 
 // Kelgan vaqt — qo'lda kiritiladi ("0730" → "07:30"); noto'g'ri vaqt saqlanmaydi
@@ -547,7 +528,7 @@ function KartaWrap({ w, ochTahrir, ochir, haydash, tatildanQaytar, qaytarish, ta
   const ketgan = w.holat === "Ishdan ketgan";
   return (
     <ExpandableCard
-      style={styles.item}
+      ichki
       header={
         <View style={styles.left}>
           <Avatar name={w.ism} />
@@ -670,7 +651,7 @@ const styles = temaStil(() => StyleSheet.create({
 
   // Inline forma
   formCard:  { marginBottom: S[5] },
-  formHead:  { flexDirection: "row", alignItems: "center", gap: S[2], marginBottom: S[3] },
+  formHead:  { flexDirection: "row", alignItems: "center", gap: S[2] },
   formTitle: { fontSize: T.md, fontWeight: "800", color: C.text },
   inputLabel:{ fontSize: T.xs, color: C.sub, fontWeight: "600", marginBottom: 6, marginTop: S[3], letterSpacing: 0.3 },
   input:     { borderWidth: 1, borderColor: C.border, borderRadius: R.md, paddingVertical: 12, paddingHorizontal: 14, fontSize: T.md, color: C.text, backgroundColor: C.surface },

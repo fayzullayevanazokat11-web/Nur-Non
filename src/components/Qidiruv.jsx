@@ -39,6 +39,6 @@ export function Qidiruv({ value, onChange, placeholder = "Qidirish", style }) {
 }
 
 const styles = temaStil(() => StyleSheet.create({
-  wrap:  { flexDirection: "row", alignItems: "center", gap: S[2], borderWidth: 1, borderColor: C.border, borderRadius: R.pill, paddingHorizontal: S[4], backgroundColor: C.surface, marginBottom: S[3] },
+  wrap:  { flexDirection: "row", alignItems: "center", gap: S[2], borderWidth: 1, borderColor: C.border, borderRadius: R.pill, paddingHorizontal: S[4], backgroundColor: C.surface, marginBottom: S[4] },
   input: { flex: 1, paddingVertical: 10, fontSize: T.sm, color: C.text },
 }));
