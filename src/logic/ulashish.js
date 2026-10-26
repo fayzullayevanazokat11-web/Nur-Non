@@ -43,7 +43,7 @@ const USLUB = `
 function sahifa({ sarlavha, davr, akkaunt, ichi, oxiri = "" }) {
   return `<!doctype html><html><head><meta charset="utf-8"><style>${USLUB}</style></head><body>
     <div class="bosh">
-      <div><div class="brend">Nur-Non</div>${akkaunt ? `<div class="akk">${tx(akkaunt)}</div>` : ""}</div>
+      <div><div class="brend">${tx("Nur-Non")}</div>${akkaunt ? `<div class="akk">${tx(akkaunt)}</div>` : ""}</div>
       <div class="sana"><h1>${tx(sarlavha)}</h1>${tx(davr)}</div>
     </div>
     ${ichi}

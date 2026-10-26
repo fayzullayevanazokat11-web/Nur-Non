@@ -9,7 +9,7 @@ import { nusxaSaqla, nusxaBormi } from "../logic/avtoZaxira";
 import { bugunSana, keyingiSana, oldingiSana, kunRoliBilan } from "../logic/hisob";
 import { rasmSaqla, rasmFaylOchir, pdfRasmlari } from "../logic/qopRasm";
 import { kunlikHtml, pdfUlash, pdfFaylYarat, pdfFaylUlash, pdfFaylOchir } from "../logic/ulashish";
-import { getTil } from "../i18n/til";
+import { getTil, useTil } from "../i18n/til";
 import { ogir } from "../i18n/translit";
 import { SEED_NONLAR, SEED_ISHCHILAR, SEED_MAHSULOT_NARXLARI } from "../logic/data";
 
@@ -679,6 +679,8 @@ export function AppDataProvider({ children }) {
   const pdfMalumot = useRef({}); pdfMalumot.current = { hisobotlarTarixi, qopRasmlari, akkauntNomi, nonlar };
   const pdfBand = useRef(false);
   const [pdfTik, setPdfTik] = useState(0);
+  // PDF ilova tilida (lotin/kirill) yoziladi: til almashsa — arxivdagi PDF'lar yangi yozuvda qayta yaratiladi
+  const joriyTil = useTil();
   const pdfKutish = useRef(false);
   useEffect(() => {
     if (!tayyor || Platform.OS === "web") return;
@@ -695,24 +697,30 @@ export function AppDataProvider({ children }) {
           ortiqcha.forEach((e) => pdfFaylOchir(e.uri));
           setPdfArxiv((p) => (p || []).filter((e) => idlar.has(e.hisobotId)));
         }
-        const bor = new Set((pdfArxivRef.current || []).map((e) => e.hisobotId));
+        const til = getTil();
+        // Boshqa yozuvda (lotin/kirill) yaratilganlari "yo'q" hisoblanadi — qayta yaratiladi
+        const bor = new Set((pdfArxivRef.current || []).filter((e) => (e.til || "lotin") === til).map((e) => e.hisobotId));
         for (const h of hisobotlar) {
           if (bor.has(h.id)) continue;
           const rasmlar = await pdfRasmlari(rs, h.sana);
           const f = await pdfFaylYarat(kunlikHtml(h, { akkaunt: akk, nonlar: nl, rasmlar }), `nur-non-${h.sana}-${h.id}`).catch(() => null);
           if (!f) continue;
-          setPdfArxiv((p) => [...(p || []).filter((e) => e.hisobotId !== h.id), { hisobotId: h.id, sana: h.sana, uri: f.uri, hajm: f.hajm, rasmSoni: rasmlar.length, vaqt: Date.now() }]);
+          if (getTil() !== til) break; // yaratish paytida til yana almashdi — keyingi aylanishda qayta
+          const eski = (pdfArxivRef.current || []).find((e) => e.hisobotId === h.id);
+          if (eski?.uri && eski.uri !== f.uri) pdfFaylOchir(eski.uri);
+          setPdfArxiv((p) => [...(p || []).filter((e) => e.hisobotId !== h.id), { hisobotId: h.id, sana: h.sana, uri: f.uri, hajm: f.hajm, rasmSoni: rasmlar.length, vaqt: Date.now(), til }]);
         }
       } finally {
         pdfBand.current = false;
         if (pdfKutish.current) { pdfKutish.current = false; setPdfTik((x) => x + 1); }
       }
     })();
-  }, [tayyor, hisobotlarTarixi, pdfTik]);
+  }, [tayyor, hisobotlarTarixi, pdfTik, joriyTil]);
 
   // Hisobot PDF'ini ulashish: arxivda tayyor fayl bo'lsa — o'sha, bo'lmasa yangidan yaratiladi
   const hisobotPdfUlash = async (h) => {
-    const e = (pdfArxiv || []).find((x) => x.hisobotId === h.id);
+    // Arxivdagi fayl faqat joriy yozuvda (lotin/kirill) bo'lsa beriladi, aks holda yangidan yaratiladi
+    const e = (pdfArxiv || []).find((x) => x.hisobotId === h.id && (x.til || "lotin") === getTil());
     if (e?.uri && Platform.OS !== "web") {
       const fayl = await FileSystem.getInfoAsync(e.uri).catch(() => null);
       if (fayl?.exists) return pdfFaylUlash(e.uri, `nur-non-${h.sana}`);
