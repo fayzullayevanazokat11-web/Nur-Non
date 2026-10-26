@@ -18,7 +18,6 @@ import { C, T, S, R, temaStil } from "../src/theme";
 import { formatSom } from "../src/logic/hisob";
 import { sanaChiroyli, kunTahlili } from "../src/logic/davr";
 import { Qidiruv, qidiruvMos } from "../src/components/Qidiruv";
-import { OylikMaqsad } from "../src/components/OylikMaqsad";
 import { useState } from "react";
 import { kunlikHtml, pdfUlash } from "../src/logic/ulashish";
 
@@ -40,9 +39,7 @@ export default function Tarix() {
       <ScrollBox contentContainerStyle={styles.scroll}>
         <SahifaSarlavha eyebrow="HISOBOTLAR TARIXI" title="Statistika" subtitle={`30 kun davomida saqlanadi · ${(hisobotlarTarixi || []).length} ta`} icon="stats-chart-outline" />
 
-        {((hisobotlarTarixi || []).length > 0 || Object.keys(oylikArxiv || {}).length > 0)
-          ? <Statistika hisobotlar={hisobotlarTarixi || []} nonlar={nonlar} arxiv={oylikArxiv} akkaunt={akkauntNomi} />
-          : <OylikMaqsad /> /* yangi o'rnatishda ham oylik maqsad qo'yish mumkin bo'lsin */}
+        {((hisobotlarTarixi || []).length > 0 || Object.keys(oylikArxiv || {}).length > 0) && <Statistika hisobotlar={hisobotlarTarixi || []} nonlar={nonlar} arxiv={oylikArxiv} akkaunt={akkauntNomi} />}
 
         {(hisobotlarTarixi || []).length > 0 && (
           <>

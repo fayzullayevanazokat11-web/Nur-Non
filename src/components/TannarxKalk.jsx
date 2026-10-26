@@ -2,7 +2,7 @@
 // Tannarx = xomashyo + qoplik ishchilar + kunlik ishchilar ulushi (o'rtacha kunlik
 // qopga bo'linadi, oxirgi hisobotlardan avtomatik). Narx o'zgarsa — darhol qayta hisoblanadi.
 // "Sinov narxi" — narxni o'zgartirsangiz qancha foyda qolishini ko'rsatadi (saqlanmaydi).
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { View, Text, TextInput, StyleSheet, LayoutAnimation } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
@@ -16,6 +16,8 @@ import { xomashyoRoyxati } from "../logic/konstantalar";
 import { C, T, S, R, temaStil } from "../theme";
 import { XomashyoIkon, NonIkon, BosiladiganIkon, IkonTanlov, IKON_TANLOV, xomashyoIkonKaliti } from "./XomashyoIkon";
 
+const NARX_KORINISH = 60 * 60 * 1000; // narx o'zgarishi 1 soat ko'rinadi
+
 // Tannarx qismlari ikonkalari
 const QISM_IKON = { xomashyo: "basket-outline", qoplik: "people-outline", kunlik: "person-outline" };
 
@@ -27,6 +29,10 @@ export function TannarxKalk() {
   const xOl = (m) => royxat.find((x) => x.id === m.id) || m;
   // Ikonkani bosib o'zgartirish (non va xomashyo) — tanlov shu joyda ochiladi
   const [ikonOchiq, setIkonOchiq] = useState(null);
+  // Narx o'zgarishlari faqat 1 soat ko'rinadi — har daqiqada tekshiriladi, muddati o'tgani o'zi yo'qoladi
+  const [hozir, setHozir] = useState(Date.now());
+  useEffect(() => { const id = setInterval(() => setHozir(Date.now()), 60000); return () => clearInterval(id); }, []);
+  const yangiNarxlar = (narxTarixi || []).filter((o) => hozir - (o.vaqt || 0) < NARX_KORINISH);
   useTiklash(() => setIkonOchiq(null));
   const ikonAlmash = (k) => {
     LayoutAnimation.configureNext(LayoutAnimation.create(200, LayoutAnimation.Types.easeInEaseOut, LayoutAnimation.Properties.opacity));
@@ -59,13 +65,13 @@ export function TannarxKalk() {
         1 dona non tannarxi: xomashyo + ishchilar haqi.{ortacha > 0 ? ` Kunlik ishchilar haqi o'rtacha ${String(ortacha).replace(".", ",")} qopga bo'lib hisoblanadi.` : ""}
       </Text>
 
-      {(narxTarixi || []).length > 0 && (
+      {yangiNarxlar.length > 0 && (
         <Card style={styles.card}>
           <View style={styles.head}>
             <Ionicons name="pricetags-outline" size={18} color={C.sub} />
             <Text style={styles.headTxt}>Narx o'zgarishlari</Text>
           </View>
-          {(narxTarixi || []).slice(0, 5).map((o) => {
+          {yangiNarxlar.slice(0, 5).map((o) => {
             const tasir = narxTasiri(o, nonlar);
             return (
               <View key={o.id} style={styles.narxQator}>
