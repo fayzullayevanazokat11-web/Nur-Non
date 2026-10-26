@@ -526,6 +526,18 @@ function KelishVaqti({ ism, qiymat, onSaqla }) {
   );
 }
 
+// Xodim kartasidagi amal: katta yumaloq ikonka, tagida kichik shriftda nomi (to'rttasi bir qatorda teng)
+function AmalTugma({ icon, rang, nom, qisqa, onPress }) {
+  return (
+    <Pressable accessibilityRole="button" accessibilityLabel={nom} onPress={onPress} hitSlop={4} style={({ pressed }) => [styles.amal, pressed && { opacity: 0.6, transform: [{ scale: 0.95 }] }]}>
+      <View style={[styles.amalIkon, { backgroundColor: rang + "14", borderColor: rang + "33" }]}>
+        <Ionicons name={icon} size={22} color={rang} />
+      </View>
+      <Text style={[styles.amalNom, { color: rang }]} numberOfLines={1}>{qisqa || nom}</Text>
+    </Pressable>
+  );
+}
+
 function KartaWrap({ w, ochTahrir, ochir, haydash, tatildanQaytar, qaytarish, tatilgaChiqar }) {
   const qop = w.haqTuri === "qop";
   const nonlarRo = Object.entries(w.nonNarxlari || {});
@@ -574,41 +586,14 @@ function KartaWrap({ w, ochTahrir, ochir, haydash, tatildanQaytar, qaytarish, ta
           ))}
         </View>
       )}
+      {/* Amallar — bitta qatorda katta ikonka-tugmalar, tagida kichik nomi */}
       <View style={styles.bodyActions}>
-        {tatildanQaytar && (
-          <Pressable accessibilityLabel="Ta'tildan qaytdi" onPress={tatildanQaytar} hitSlop={8} style={styles.actBtn}>
-            <Ionicons name="checkmark-circle-outline" size={16} color={C.green} />
-            <Text style={[styles.actTxt, { color: C.green }]}> Ta'tildan qaytdi</Text>
-          </Pressable>
-        )}
-        {tatilgaChiqar && (
-          <Pressable accessibilityLabel="Ta'tilga chiqarish" onPress={tatilgaChiqar} hitSlop={8} style={styles.actBtn}>
-            <Ionicons name="airplane-outline" size={16} color={C.accent} />
-            <Text style={[styles.actTxt, { color: C.accent }]}> Ta'tilga chiqarish</Text>
-          </Pressable>
-        )}
-        {qaytarish && (
-          <Pressable accessibilityLabel="Ishga qaytarish" onPress={qaytarish} hitSlop={8} style={styles.actBtn}>
-            <Ionicons name="arrow-undo-outline" size={16} color={C.green} />
-            <Text style={[styles.actTxt, { color: C.green }]}> Qaytarish</Text>
-          </Pressable>
-        )}
-        {ochTahrir && (
-          <Pressable accessibilityLabel="Tahrirlash" onPress={ochTahrir} hitSlop={8} style={styles.actBtn}>
-            <Ionicons name="create-outline" size={16} color={C.accent} />
-            <Text style={[styles.actTxt, { color: C.accent }]}> Tahrirlash</Text>
-          </Pressable>
-        )}
-        {haydash && (
-          <Pressable accessibilityLabel="Ishdan haydash" onPress={haydash} hitSlop={8} style={styles.actBtn}>
-            <Ionicons name="exit-outline" size={16} color={C.red} />
-            <Text style={[styles.actTxt, { color: C.red }]}> Haydash</Text>
-          </Pressable>
-        )}
-        <Pressable accessibilityLabel="O'chirish" onPress={ochir} hitSlop={8} style={styles.actBtn}>
-          <Ionicons name="trash-outline" size={16} color={C.red} />
-          <Text style={[styles.actTxt, { color: C.red }]}> O'chirish</Text>
-        </Pressable>
+        {tatildanQaytar && <AmalTugma icon="checkmark-circle-outline" rang={C.green} nom="Ta'tildan qaytdi" qisqa="Qaytdi" onPress={tatildanQaytar} />}
+        {tatilgaChiqar && <AmalTugma icon="airplane-outline" rang={C.accent} nom="Ta'tilga chiqarish" qisqa="Ta'tilga" onPress={tatilgaChiqar} />}
+        {qaytarish && <AmalTugma icon="arrow-undo-outline" rang={C.green} nom="Ishga qaytarish" qisqa="Qaytarish" onPress={qaytarish} />}
+        {ochTahrir && <AmalTugma icon="create-outline" rang={C.accent} nom="Tahrirlash" onPress={ochTahrir} />}
+        {haydash && <AmalTugma icon="exit-outline" rang={C.red} nom="Ishdan haydash" qisqa="Haydash" onPress={haydash} />}
+        <AmalTugma icon="trash-outline" rang={C.red} nom="O'chirish" onPress={ochir} />
       </View>
     </ExpandableCard>
   );
@@ -705,9 +690,10 @@ const styles = temaStil(() => StyleSheet.create({
   haqVal:    { fontSize: T.sm, color: C.sub, fontWeight: "700", marginLeft: S[2] },
   muted:     { fontSize: T.sm, color: C.muted },
   topilmadi: { fontSize: T.sm, color: C.muted, textAlign: "center", paddingVertical: S[5] },
-  bodyActions:{ flexDirection: "row", flexWrap: "wrap", justifyContent: "flex-end", gap: S[3], rowGap: S[2], marginTop: S[3], borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: C.borderSoft, paddingTop: S[3] },
-  actBtn:    { flexDirection: "row", alignItems: "center" },
-  actTxt:    { fontSize: T.sm, fontWeight: "700" },
+  bodyActions:{ flexDirection: "row", gap: S[2], marginTop: S[3], borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: C.borderSoft, paddingTop: S[3] },
+  amal:      { flex: 1, alignItems: "center", gap: 5, paddingVertical: 2 },
+  amalIkon:  { width: 50, height: 50, borderRadius: 25, borderWidth: 1, alignItems: "center", justifyContent: "center" },
+  amalNom:   { fontSize: 11, fontWeight: "700", textAlign: "center" },
   kelishInput:{ width: 74, marginRight: S[2], borderWidth: 1, borderColor: C.border, borderRadius: R.sm, paddingVertical: 6, paddingHorizontal: 6, fontSize: T.sm, fontWeight: "800", color: C.text, backgroundColor: C.surface, textAlign: "center" },
   kelishTayyor:{ borderColor: C.accent, color: C.accent },
   kelishXato:{ borderColor: C.red },
