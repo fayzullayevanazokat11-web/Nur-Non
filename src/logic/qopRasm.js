@@ -1,11 +1,13 @@
 // Ertalabgi qop rasmlari: kamera yoki galereyadan olinadi, telefon xotirasida
 // (ilova papkasida) saqlanadi va 7 kundan keyin o'chiriladi. Rasmlar faqat shu
 // telefonda turadi — ma'lumot ko'chirish matniga qo'shilmaydi (hajmi katta).
+import { testmi } from "../store/rejim";
 import { Platform } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import * as FileSystem from "expo-file-system";
 
-const PAPKA = (FileSystem.documentDirectory || "") + "qop-rasmlar/";
+// Test maydonida alohida papka — test rasmlari asl rasmlarga aralashmaydi
+const papka = () => (FileSystem.documentDirectory || "") + (testmi() ? "qop-rasmlar-test/" : "qop-rasmlar/");
 const WEB = Platform.OS === "web";
 
 // Natija: { uri[] } yoki { xato } — foydalanuvchi bekor qilsa bo'sh ro'yxat
@@ -32,8 +34,8 @@ export async function rasmTanla(manba) {
 export async function rasmSaqla(uri, id) {
   if (WEB || !FileSystem.documentDirectory) return uri;
   try {
-    await FileSystem.makeDirectoryAsync(PAPKA, { intermediates: true }).catch(() => {});
-    const yangi = `${PAPKA}${id}.jpg`;
+    await FileSystem.makeDirectoryAsync(papka(), { intermediates: true }).catch(() => {});
+    const yangi = `${papka()}${id}.jpg`;
     await FileSystem.copyAsync({ from: uri, to: yangi });
     return yangi;
   } catch {
@@ -57,6 +59,6 @@ export async function pdfRasmlari(qopRasmlari, kun) {
 }
 
 export function rasmFaylOchir(uri) {
-  if (WEB || !uri || !uri.startsWith(PAPKA)) return;
+  if (WEB || !uri || !uri.startsWith(papka())) return;
   FileSystem.deleteAsync(uri, { idempotent: true }).catch(() => {});
 }

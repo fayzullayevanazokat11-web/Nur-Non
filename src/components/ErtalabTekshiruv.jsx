@@ -49,9 +49,13 @@ export function ErtalabTekshiruv({ kunYopiq, onDavomat }) {
   const aktiv = (ishchilarHaq || []).filter((w) => w.holat === "Aktiv").length;
   const keldi = aktiv - (kelmaganlar || []).filter((id) => (ishchilarHaq || []).some((w) => w.id === id && w.holat === "Aktiv")).length;
   // Bajarilgandan keyin: 2-mahal hali yozilmagan kirimlar eslatmasi
+  // (faqat 1-mahal kelgan, 2-mahal hali yozilmagan bo'lsa — "kelmadi" yoki bir mahallik kunlarda eslatilmaydi)
   const ikkinchi = [];
-  if (!((sutKirimi || {})[bugun] || {}).m2) ikkinchi.push("sut");
-  if (qadamlar.some((q) => q.k === "tashqi") && !Object.values(((tashqiKirim || {})[bugun] || {}).m2 || {}).some((v) => v > 0)) ikkinchi.push("tashqi non");
+  const sutKun = (sutKirimi || {})[bugun] || {};
+  if (sutKun.m1 > 0 && !(sutKun.m2 > 0)) ikkinchi.push("sut");
+  const tKun = (tashqiKirim || {})[bugun] || {};
+  const borMi = (m) => Object.values(tKun[m] || {}).some((v) => v > 0);
+  if (qadamlar.some((q) => q.k === "tashqi") && borMi("m1") && !borMi("m2")) ikkinchi.push("tashqi non");
 
   // Yopiq kirim qadami sarlavhasida qisqa xulosa
   const kirimXulosa = (k) => {
@@ -169,7 +173,7 @@ export function ErtalabTekshiruv({ kunYopiq, onDavomat }) {
                       <Ionicons name={ochiqQadam === q.k ? "chevron-up" : "chevron-down"} size={16} color={C.muted} />
                     </Bosma>
                     {ochiqQadam === q.k && (
-                      <View style={styles.kirimIchi}>{q.k === "sut" ? <SutKirimi /> : <TashqiKirim />}</View>
+                      <View style={styles.kirimIchi}>{q.k === "sut" ? <SutKirimi faqatKorish={!!kunYopiq} /> : <TashqiKirim faqatKorish={!!kunYopiq} />}</View>
                     )}
                   </View>
                 )}

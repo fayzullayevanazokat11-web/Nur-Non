@@ -2,6 +2,7 @@
 // Butun baza bitta matnga aylanadi (nusxa olish / ulashish / fayl qilib yuborish);
 // boshqa telefonda shu matnni qo'yib (yoki faylni tanlab) hammasi tiklanadi —
 // internetsiz "offlayn akkaunt". Yuklashdan oldingi holat zaxirada qoladi.
+import { testmi } from "../src/store/rejim";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { View, Text, TextInput, Pressable, StyleSheet, Alert, Share, Platform, LayoutAnimation } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -305,10 +306,15 @@ export default function Akkaunt() {
               </View>
             ))
           )}
-          <Pressable onPress={() => { avtoNusxaOl(true); ayt("Nusxa saqlandi"); }} hitSlop={6} style={styles.hozirBtn}>
-            <Ionicons name="save-outline" size={15} color={C.accent} />
-            <Text style={styles.hozirTxt}> Hozir saqlash</Text>
-          </Pressable>
+          {testmi() ? (
+            // Test maydonida avtomatik nusxa olinmaydi (asl nusxalar test ma'lumoti bilan almashmasin)
+            <Text style={styles.tahlilMeta}>Test maydonida nusxa saqlanmaydi — bular asl tizim nusxalari.</Text>
+          ) : (
+            <Pressable onPress={() => { avtoNusxaOl(true); ayt("Nusxa saqlandi"); }} hitSlop={6} style={styles.hozirBtn}>
+              <Ionicons name="save-outline" size={15} color={C.accent} />
+              <Text style={styles.hozirTxt}> Hozir saqlash</Text>
+            </Pressable>
+          )}
         </Card>
 
         {importZaxira ? (

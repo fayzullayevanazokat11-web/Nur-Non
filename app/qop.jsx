@@ -40,7 +40,7 @@ export default function Qop() {
     sotilmaganNon, setSotilmaganNon,
     boshlangichQoldiq, qoldaYaroqsiz, setQoldaYaroqsiz,
     kunlikXarajatlar,
-    oxirgiYakunlashVaqti, customMahsulotlar, tashqiKirim, kelmaslikIzohlari,
+    oxirgiYakunlashVaqti, customMahsulotlar, tashqiKirim, kelmaslikIzohlari, kelmaslikIzohQoy,
     hisobotlarTarixi, kunYakunlanganmi, kunYakunla, lockedDayStats, yakunBekor,
     ertalab, qopRasmlari, davomat, kelishVaqtlari, kunlikRollar, keldiAlmash, sutKirimi,
   } = useApp();
@@ -81,6 +81,16 @@ export default function Qop() {
   useEffect(() => { if (!tegildi) setFSot(toStr(sotilmaganNon)); }, [sotilmaganNon]);
   useEffect(() => { if (!tegildi) setFYaroqsiz(toStr(qoldaYaroqsiz)); }, [qoldaYaroqsiz]);
 
+  // O'tgan (unutilgan) kun tanlansa — tashqi non soni o'sha kunning Kunlik vazifa kirimidan olinadi
+  // (bugungi sonlar boshqa kunga aralashmasin); bugunga qaytilsa — bugungi saqlangan sonlar
+  useEffect(() => {
+    if (tegildi) return;
+    if (tanSana === localSana()) { setFTash(toStr(tashqariSonlar)); return; }
+    const k = (tashqiKirim || {})[tanSana] || {};
+    const ids = new Set([...Object.keys(k.m1 || {}), ...Object.keys(k.m2 || {})]);
+    setFTash(Object.fromEntries([...ids].map((id) => [id, String((parseInt((k.m1 || {})[id]) || 0) + (parseInt((k.m2 || {})[id]) || 0))])));
+  }, [tanSana]);
+
   const formaTeg = (setter, key, val) => { setTegildi(true); setter((p) => ({ ...p, [key]: val })); };
 
   // "Kecha kabi" — oxirgi yakunlangan kunning qop/dona sonlarini bir bosishda to'ldirish
@@ -115,6 +125,7 @@ export default function Qop() {
   ];
   // Tashqi non kirimi (Kunlik vazifa): "ertalab 50 + obed 30"
   const kirimKun = (tashqiKirim || {})[tanSana] || {};
+  const kirimJami = (id) => (parseInt((kirimKun.m1 || {})[id]) || 0) + (parseInt((kirimKun.m2 || {})[id]) || 0);
   const kirimMatni = (id) => {
     const a = parseInt((kirimKun.m1 || {})[id]) || 0, b = parseInt((kirimKun.m2 || {})[id]) || 0;
     return a || b ? `ertalab ${a} + obeddan keyin ${b}` : "";
@@ -343,6 +354,20 @@ export default function Qop() {
                   </Pressable>
                 ))}
               </View>
+              {/* Kelmaganlar sababi (ixtiyoriy) — o'sha kun hisobotiga yoziladi */}
+              {(ishchilar || []).filter((w) => w.holat === "Aktiv" && w.kelmadi).map((w) => (
+                <View key={`${tanSana}-${w.id}`} style={styles.sababQator}>
+                  <Text style={styles.sababIsm} numberOfLines={1}>{w.ism}</Text>
+                  <TextInput
+                    accessibilityLabel={`${w.ism}: ${tanSana} kelmaganlik sababi`}
+                    defaultValue={((kelmaslikIzohlari || {})[tanSana] || {})[w.id] || ""}
+                    onChangeText={(v) => kelmaslikIzohQoy(w.id, v, tanSana)}
+                    placeholder="Sababi (ixtiyoriy)"
+                    placeholderTextColor={C.muted}
+                    style={styles.sababInput}
+                  />
+                </View>
+              ))}
             </View>
           )}
         </Card>
@@ -392,6 +417,9 @@ export default function Qop() {
                 )}
                 {!oz && kirimMatni(n.id) ? (
                   <Text style={styles.flow}>Kunlik vazifadan: {kirimMatni(n.id)} · olish {formatSom(olishNarxi(n))} so'm/dona</Text>
+                ) : null}
+                {!oz && kirimJami(n.id) > 0 && (parseInt(fTash[n.id]) || 0) !== kirimJami(n.id) ? (
+                  <Text style={styles.ogoh}>Kunlik vazifadagi kirim ({kirimJami(n.id)} dona) bu yerdagi sondan farq qiladi — hisobga shu yerdagi son olinadi.</Text>
                 ) : null}
                 {(q.jamiZaxira > 0 || q.boshlang > 0) && (
                   <Text style={styles.flow}>
@@ -548,6 +576,9 @@ const styles = temaStil(() => StyleSheet.create({
   input: { borderWidth: 1, borderColor: C.border, borderRadius: R.sm, paddingVertical: 9, paddingHorizontal: 10, fontSize: T.sm, color: C.text, backgroundColor: C.surface, textAlign: "center" },
   flow: { fontSize: 11, color: C.muted, marginTop: 6, lineHeight: 15 },
   ogoh: { fontSize: 11, color: C.red, fontWeight: "700", marginTop: 6, lineHeight: 15 },
+  sababQator:{ flexDirection: "row", alignItems: "center", gap: S[2], marginTop: 6 },
+  sababIsm:  { width: 96, fontSize: 12, fontWeight: "700", color: C.sub },
+  sababInput:{ flex: 1, borderWidth: 1, borderColor: C.borderSoft, borderRadius: R.sm, paddingVertical: 6, paddingHorizontal: 9, fontSize: 12, color: C.text, backgroundColor: C.surface },
   otganDavomat: { marginTop: S[3] },
   davChiplar: { flexDirection: "row", flexWrap: "wrap", gap: 6 },
   davChip: { flexDirection: "row", alignItems: "center", gap: 4, paddingVertical: 6, paddingHorizontal: 10, borderRadius: R.pill, backgroundColor: C.panel },

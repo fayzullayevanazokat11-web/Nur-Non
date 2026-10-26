@@ -11,6 +11,8 @@
 // chiqilganda soat to'xtaydi; davom ettirilganda qolgan joyidan yuradi.
 import { useSyncExternalStore } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Platform } from "react-native";
+import * as FileSystem from "expo-file-system";
 
 const ASL_DATE = globalThis.Date;
 const realNow = () => ASL_DATE.now();
@@ -30,6 +32,8 @@ const xabar = () => tinglovchilar.forEach((f) => f());
 const ozgar = (patch) => { holat = { ...holat, ...patch }; xabar(); };
 
 export const getRejim = () => holat.rejim;
+// Haqiqiy (virtual emas) vaqt — bildirishnomalar kabi tashqi dunyo bilan ishlaydigan joylar uchun
+export const haqiqiySana = (...a) => new ASL_DATE(...(a.length ? a : [realNow()]));
 export const testmi = () => holat.rejim === "test";
 export function useRejim() {
   return useSyncExternalStore((f) => { tinglovchilar.add(f); return () => tinglovchilar.delete(f); }, () => holat, () => holat);
@@ -74,6 +78,14 @@ async function testKalitlari() {
   const hammasi = await AsyncStorage.getAllKeys().catch(() => []);
   return (hammasi || []).filter((k) => k.startsWith(TEST_OLD));
 }
+// Test maydonining fayllari (PDF arxivi, qop rasmlari) — alohida papkalarda; nollashda o'chiriladi
+async function testFayllariniOchir() {
+  if (Platform.OS === "web" || !FileSystem.documentDirectory) return;
+  for (const p of ["pdf-arxiv-test/", "qop-rasmlar-test/"]) {
+    await FileSystem.deleteAsync(FileSystem.documentDirectory + p, { idempotent: true }).catch(() => {});
+  }
+}
+
 // Oldingi test bormi (Davom ettirish tugmasi uchun)
 export async function testBormi() {
   return (await testKalitlari()).some((k) => k !== SOAT_KALIT);
@@ -85,7 +97,7 @@ export async function testSoati() {
 
 // Test maydonini ochish: yangi — noldan (oldingi test o'chiriladi), aks holda davom ettiriladi
 export async function testniOch({ yangi = false } = {}) {
-  if (yangi) await AsyncStorage.multiRemove(await testKalitlari()).catch(() => {});
+  if (yangi) { await AsyncStorage.multiRemove(await testKalitlari()).catch(() => {}); await testFayllariniOchir(); }
   const s = yangi ? null : await testSoati();
   baza = { real: realNow(), virt: s?.virt || realNow() };
   holat = { ...holat, tezlik: s?.tezlik || 1 };
@@ -107,6 +119,7 @@ export async function testdanChiq() {
 // Test maydonini nollash: ma'lumot o'chadi, soat hozirgi vaqtga qaytadi (tezlik saqlanadi)
 export async function testniNolla() {
   await AsyncStorage.multiRemove(await testKalitlari()).catch(() => {});
+  await testFayllariniOchir();
   baza = { real: realNow(), virt: realNow() };
   ozgar({ avlod: holat.avlod + 1 });
   soatniSaqla();

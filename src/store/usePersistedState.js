@@ -7,6 +7,8 @@ import { useState, useEffect, useSyncExternalStore } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { kalit } from "./rejim";
 
+// Yuklanishi kutilayotgan hook nusxalari (nom emas, nusxa bo'yicha — rejim almashganda bir xil kalitli
+// eski va yangi nusxalar bir-birining holatini o'chirib yubormasin)
 const kutilmoqda = new Set();
 let royxatdanOtdi = false;
 const tinglovchilar = new Set();
@@ -26,7 +28,8 @@ export function useHidratsiya() {
 export default function usePersistedState(asliKey, initial, { hidratsiya = true } = {}) {
   const [key] = useState(() => kalit(asliKey));
   const [val, setVal] = useState(initial);
-  const [loaded, setLoaded] = useState(() => { if (hidratsiya) { kutilmoqda.add(key); royxatdanOtdi = true; } return false; });
+  const [belgi] = useState(() => ({ key })); // shu hook nusxasining noyob belgisi
+  const [loaded, setLoaded] = useState(() => { if (hidratsiya) { kutilmoqda.add(belgi); royxatdanOtdi = true; } return false; });
 
   useEffect(() => {
     let tirik = true;
@@ -36,11 +39,11 @@ export default function usePersistedState(asliKey, initial, { hidratsiya = true 
       .finally(() => {
         if (!tirik) return;
         setLoaded(true);
-        kutilmoqda.delete(key);
+        kutilmoqda.delete(belgi);
         xabarBer();
       });
     // Yuklanib ulgurmay o'chirilsa (rejim almashganda) — kutish ro'yxatidan chiqadi, "tayyor" tiqilib qolmaydi
-    return () => { tirik = false; if (kutilmoqda.delete(key)) xabarBer(); };
+    return () => { tirik = false; if (kutilmoqda.delete(belgi)) xabarBer(); };
   }, [key]);
 
   useEffect(() => {

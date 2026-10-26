@@ -10,7 +10,7 @@ import { C, T, S, R, temaStil } from "../theme";
 
 const MAHALLAR = [["m1", "1-mahal"], ["m2", "2-mahal"]];
 
-function LitrMaydon({ sana, mahal, nom, qiymat, onSaqla }) {
+function LitrMaydon({ sana, mahal, nom, qiymat, onSaqla, faqatKorish }) {
   const [matn, setMatn] = useState(qiymat ? String(qiymat) : "");
   useEffect(() => { setMatn(qiymat ? String(qiymat) : ""); }, [qiymat, sana]);
   return (
@@ -28,7 +28,8 @@ function LitrMaydon({ sana, mahal, nom, qiymat, onSaqla }) {
           placeholder="0"
           placeholderTextColor={C.muted}
           keyboardType="decimal-pad"
-          style={styles.input}
+          editable={!faqatKorish}
+          style={[styles.input, faqatKorish && { opacity: 0.6 }]}
         />
         <Text style={styles.birlik}>l</Text>
       </View>
@@ -36,7 +37,8 @@ function LitrMaydon({ sana, mahal, nom, qiymat, onSaqla }) {
   );
 }
 
-export function SutKirimi({ sana = bugunSana(), ixcham = false }) {
+// faqatKorish — kun yakunlangan: ko'rinadi, o'zgartirib bo'lmaydi (sut xarajati hisobotga yozilgan)
+export function SutKirimi({ sana = bugunSana(), ixcham = false, faqatKorish = false }) {
   const { sutKirimi, sutQoy, mahsulotNarxlari } = useApp();
   const kun = (sutKirimi || {})[sana] || {};
   const litr = sutLitri(kun);
@@ -45,11 +47,13 @@ export function SutKirimi({ sana = bugunSana(), ixcham = false }) {
     <View style={[styles.wrap, ixcham && styles.ixcham]}>
       <View style={styles.qator}>
         {MAHALLAR.map(([k, nom]) => (
-          <LitrMaydon key={k} sana={sana} mahal={k} nom={nom} qiymat={kun[k]} onSaqla={(v) => sutQoy(sana, k, v)} />
+          <LitrMaydon key={k} sana={sana} mahal={k} nom={nom} qiymat={kun[k]} faqatKorish={faqatKorish} onSaqla={(v) => sutQoy(sana, k, v)} />
         ))}
       </View>
       <Text style={[styles.jami, !narx && litr > 0 && styles.ogoh]}>
-        {litr > 0
+        {faqatKorish
+          ? "Kun yakunlangan — sut hisobotga yozilgan. O'zgartirish uchun Markazda yakunni bekor qiling."
+          : litr > 0
           ? (narx ? `Jami ${String(litr).replace(".", ",")} l × ${formatSom(narx)} = ${formatSom(Math.round(litr * narx))} so'm — bugungi daromaddan ayriladi`
                   : `Jami ${String(litr).replace(".", ",")} l — sut narxi kiritilmagan (Ishlab chiqarish › Xomashyo)`)
           : "Kelgan sut litrini yozing (ertalab va kechqurun)"}

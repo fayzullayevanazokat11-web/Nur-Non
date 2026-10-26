@@ -209,7 +209,8 @@ export function AppDataProvider({ children }) {
       setTashqiKirim((p) => Object.fromEntries(Object.entries(p || {}).filter(([s]) => (now - (Date.parse(s) || now)) < 60 * D)));
     };
     yuritish();
-    const t = setInterval(yuritish, 6 * 60 * 60 * 1000);
+    // Test maydonida vaqt tezlashtirilishi mumkin — tozalash har daqiqada (Ultra'da = har kun)
+    const t = setInterval(yuritish, testmi() ? 60 * 1000 : 6 * 60 * 60 * 1000);
     return () => clearInterval(t);
   }, [tayyor]);
 
@@ -429,7 +430,7 @@ export function AppDataProvider({ children }) {
       return { ...(p || {}), [sana]: kun };
     });
     // Kunlik vazifaning 3-qadami: kamida bir mahal sut yozilsa bajarildi, ikkalasi ham o'chirilsa — bekor
-    if (sana === bugunSana()) {
+    if (sana === bugunSana() && !ertalabOl().tugallandi) {
       const boshqa = parseFloat(((sutKirimi || {})[sana] || {})[mahal === "m1" ? "m2" : "m1"]) || 0;
       ertalabBelgila("sut", litr > 0 || boshqa > 0);
     }
@@ -444,13 +445,18 @@ export function AppDataProvider({ children }) {
     const yangiKun = { ...eski, [mahal]: yangiMahal };
     setTashqiKirim((p) => ({ ...(p || {}), [sana]: { ...((p || {})[sana] || {}), [mahal]: yangiMahal } }));
     if (sana === bugunSana() && !kunYakunlanganmi()) {
-      const jami = (parseInt((yangiKun.m1 || {})[nonId]) || 0) + (parseInt((yangiKun.m2 || {})[nonId]) || 0);
+      const jamiOl = (k) => (parseInt((k.m1 || {})[nonId]) || 0) + (parseInt((k.m2 || {})[nonId]) || 0);
+      const jami = jamiOl(yangiKun), eskiJami = jamiOl(eski);
       setTashqariSonlar((p) => {
+        // Qop hisobida qo'lda boshqa son saqlangan bo'lsa — jim almashtirilmaydi (u yerda farq ogohlantirishi chiqadi)
+        const joriy = (p || {})[nonId];
+        if (joriy != null && String(joriy) !== "" && (parseInt(joriy) || 0) !== eskiJami) return p;
         const q = { ...(p || {}) };
         if (jami > 0) q[nonId] = String(jami); else delete q[nonId];
         return q;
       });
-      // Ertalabgi kirim yozilsa — qadam bajarildi
+      // Ertalabgi kirim yozilsa — qadam bajarildi (vazifa tasdiqlangandan keyin belgilar o'zgarmaydi)
+      if (ertalabOl().tugallandi) return;
       const ertalabgi = Object.values(yangiKun.m1 || {}).some((v) => v > 0) || Object.values(yangiKun.m2 || {}).some((v) => v > 0);
       ertalabBelgila("tashqi", ertalabgi);
     }
@@ -719,6 +725,10 @@ export function AppDataProvider({ children }) {
         for (const h of hisobotlar) {
           if (bor.has(h.id)) continue;
           const rasmlar = await pdfRasmlari(rs, h.sana);
+          // Boshqa yozuvdagi eski PDF'da rasmlar bor, ular esa endi o'chgan (7 kundan eski) — qayta
+          // yaratilsa rasmlar yo'qoladi. Bunday PDF eski yozuvida qoladi (rasmlari bilan).
+          const avvalgi = (pdfArxivRef.current || []).find((e) => e.hisobotId === h.id);
+          if (avvalgi && rasmlar.length < (avvalgi.rasmSoni || 0)) continue;
           const f = await pdfFaylYarat(kunlikHtml(h, { akkaunt: akk, nonlar: nl, rasmlar }), `nur-non-${h.sana}-${h.id}`).catch(() => null);
           if (!f) continue;
           if (getTil() !== til) break; // yaratish paytida til yana almashdi — keyingi aylanishda qayta
@@ -735,13 +745,15 @@ export function AppDataProvider({ children }) {
 
   // Hisobot PDF'ini ulashish: arxivda tayyor fayl bo'lsa — o'sha, bo'lmasa yangidan yaratiladi
   const hisobotPdfUlash = async (h) => {
-    // Arxivdagi fayl faqat joriy yozuvda (lotin/kirill) bo'lsa beriladi, aks holda yangidan yaratiladi
-    const e = (pdfArxiv || []).find((x) => x.hisobotId === h.id && (x.til || "lotin") === getTil());
+    // Arxivdagi fayl joriy yozuvda (lotin/kirill) bo'lsa — o'sha; boshqa yozuvda bo'lsa yangidan yaratiladi,
+    // lekin rasmlar endi o'chgan bo'lsa (eski hisobot) — rasmli arxiv fayli afzal
+    const rasmlar = await pdfRasmlari(qopRasmlari, h.sana);
+    const e = (pdfArxiv || []).find((x) => x.hisobotId === h.id
+      && ((x.til || "lotin") === getTil() || rasmlar.length < (x.rasmSoni || 0)));
     if (e?.uri && Platform.OS !== "web") {
       const fayl = await FileSystem.getInfoAsync(e.uri).catch(() => null);
       if (fayl?.exists) return pdfFaylUlash(e.uri, `nur-non-${h.sana}`);
     }
-    const rasmlar = await pdfRasmlari(qopRasmlari, h.sana);
     return pdfUlash(kunlikHtml(h, { akkaunt: akkauntNomi, nonlar, rasmlar }), `nur-non-${h.sana}`);
   };
 

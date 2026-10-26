@@ -7,6 +7,7 @@ import * as FileSystem from "expo-file-system";
 import { formatSom } from "./hisob";
 import { getTil } from "../i18n/til";
 import { ogir } from "../i18n/translit";
+import { testmi } from "../store/rejim";
 
 const t = (s) => ogir(String(s ?? ""), getTil());
 const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -86,10 +87,13 @@ export function kunlikHtml(h, { akkaunt, nonlar, rasmlar = [] } = {}) {
     return [t(n.nom), oz ? `${ishlab} ${t("qop")}` : "—", formatSom(dona), formatSom(tonggi), formatSom(yaroqsiz), formatSom(qoldiq)];
   }).filter(Boolean);
 
-  const qoshimcha = [
-    ["Karta to'lovlari", a.kartaSum], ["Optom savdo", a.optomSum], ["Brak", a.brakSum], ["Qo'shimcha xarajat", h.xarajatJami],
+  // Sof foyda = daromad − ayirmalar (hammasi ro'yxatda); karta/optom — daromad ichida, faqat ma'lumot
+  const ayirmalar = [
+    ["Tashqaridan olingan non", h.tashqariTannarx], ["Qo'shimcha xarajat", h.xarajatJami],
     [`${t("Sut")} (${String(son(h.sutLitr)).replace(".", ",")} l)`, h.sutXarajat],
-  ].filter(([, v]) => son(v) > 0).map(([l, v]) => [t(l), som(v)]);
+  ].filter(([, v]) => son(v) > 0).map(([l, v]) => [t(l), `− ${som(v)}`]);
+  const malumot = [["Karta to'lovlari (daromad ichida)", a.kartaSum], ["Optom savdo (daromad ichida)", a.optomSum]]
+    .filter(([, v]) => son(v) > 0).map(([l, v]) => [t(l), som(v)]);
 
   const bolim = (nom, ich) => `<div class="bolim">${tx(nom)}</div>${ich}`;
   const vaqtli = (arr) => [...(arr || [])].sort((x, y) => (x.vaqt || 0) - (y.vaqt || 0));
@@ -135,9 +139,9 @@ export function kunlikHtml(h, { akkaunt, nonlar, rasmlar = [] } = {}) {
   ]));
 
   ichi += bolim("Moliya", jadval(["Ko'rsatkich", "Summa"], [
-    [t("Daromad"), som(daromad)], ...(son(h.xomashyo) ? [[t("Xomashyo"), som(h.xomashyo)]] : []), [t("Ishchi haqi"), som(haq)],
-    [t("Kun oxiri (daromad − ishchi haqi)"), som(daromad - haq)], ...qoshimcha,
+    [t("Daromad"), som(daromad)], [t("Ishchi haqi"), `− ${som(haq)}`], ...ayirmalar,
   ], [t("Sof foyda"), som(h.sofFoyda)]));
+  if (malumot.length) ichi += jadval(["Ma'lumot uchun", "Summa"], malumot);
 
   // Kun davomidagi yozuvlar — vaqti bilan
   const kartalar = vaqtli(a.kartalar);
@@ -191,14 +195,16 @@ export async function pdfUlash(html, nom) {
 }
 
 // ── PDFlar arxivi: kunlik hisobot PDF'i yakunlanganda telefon xotirasiga saqlanadi (30 kun) ──
-const PDF_PAPKA = (FileSystem.documentDirectory || "") + "pdf-arxiv/";
+// Test maydonida alohida papka — test PDF'lari asl PDF'larni hech qachon ustidan yozmaydi/o'chirmaydi
+const pdfPapka = () => (FileSystem.documentDirectory || "") + (testmi() ? "pdf-arxiv-test/" : "pdf-arxiv/");
 
 // Fayl yaratadi va arxiv papkasiga qo'yadi. Natija: { uri, hajm } (web'da null — fayl yo'q)
 export async function pdfFaylYarat(html, nom) {
   if (Platform.OS === "web" || !FileSystem.documentDirectory) return null;
   const { uri } = await Print.printToFileAsync({ html });
-  await FileSystem.makeDirectoryAsync(PDF_PAPKA, { intermediates: true }).catch(() => {});
-  const yangi = `${PDF_PAPKA}${nom}.pdf`;
+  const papka = pdfPapka();
+  await FileSystem.makeDirectoryAsync(papka, { intermediates: true }).catch(() => {});
+  const yangi = `${papka}${nom}.pdf`;
   await FileSystem.deleteAsync(yangi, { idempotent: true });
   await FileSystem.moveAsync({ from: uri, to: yangi });
   const info = await FileSystem.getInfoAsync(yangi).catch(() => ({}));
@@ -220,6 +226,6 @@ export async function pdfFaylUlash(uri, nom) {
 }
 
 export function pdfFaylOchir(uri) {
-  if (Platform.OS === "web" || !uri || !uri.startsWith(PDF_PAPKA)) return;
+  if (Platform.OS === "web" || !uri || !uri.startsWith(pdfPapka())) return;
   FileSystem.deleteAsync(uri, { idempotent: true }).catch(() => {});
 }

@@ -1,6 +1,7 @@
 // Kechqurungi "Kunni yakunlashni unutmang" bildirishnomasi (telefonning o'zida,
 // internetsiz). Keyingi 7 kun uchun soat 20:00 ga rejalashtiriladi; kun yakunlansa —
 // bugungisi bekor qilinadi. Ilova har ochilganda ro'yxat qayta tuziladi.
+import { haqiqiySana } from "../store/rejim";
 import { Platform } from "react-native";
 import * as Notifications from "expo-notifications";
 
@@ -55,9 +56,9 @@ export async function kunYakunEslatmalari({ yoqilgan, yakunlanganSana, sarlavha,
     if (!yoqilgan) return;
     const ruxsat = await Notifications.getPermissionsAsync();
     if (!ruxsat.granted) return;
-    const hozir = new Date();
+    const hozir = haqiqiySana(); // test maydonidagi virtual soat emas — haqiqiy vaqt
     for (let i = 0; i < 7; i++) {
-      const d = new Date(hozir.getFullYear(), hozir.getMonth(), hozir.getDate() + i, ESLATMA_SOAT, 0, 0);
+      const d = haqiqiySana(hozir.getFullYear(), hozir.getMonth(), hozir.getDate() + i, ESLATMA_SOAT, 0, 0);
       if (d.getTime() <= hozir.getTime() + 60000) continue;
       if (sanaKalit(d) === yakunlanganSana) continue;
       await Notifications.scheduleNotificationAsync({

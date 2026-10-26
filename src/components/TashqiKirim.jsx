@@ -10,7 +10,7 @@ import { C, T, S, R, temaStil } from "../theme";
 
 export const MAHALLAR = [["m1", "Ertalab"], ["m2", "Obeddan keyin"]];
 
-function SonMaydon({ nom, qiymat, onSaqla }) {
+function SonMaydon({ nom, qiymat, onSaqla, faqatKorish }) {
   const [matn, setMatn] = useState(qiymat ? String(qiymat) : "");
   useEffect(() => { setMatn(qiymat ? String(qiymat) : ""); }, [qiymat]);
   return (
@@ -21,7 +21,8 @@ function SonMaydon({ nom, qiymat, onSaqla }) {
       placeholder="0"
       placeholderTextColor={C.muted}
       keyboardType="number-pad"
-      style={styles.input}
+      editable={!faqatKorish}
+      style={[styles.input, faqatKorish && styles.inputYopiq]}
     />
   );
 }
@@ -29,7 +30,8 @@ function SonMaydon({ nom, qiymat, onSaqla }) {
 // Tashqi nonlar ro'yxati (bo'sh bo'lsa — qadam ko'rsatilmaydi)
 export const tashqiNonlar = (nonlar) => (nonlar || []).filter((n) => n.ozIshlab === false);
 
-export function TashqiKirim({ sana = bugunSana() }) {
+// faqatKorish — kun yakunlangan: kiritilgani ko'rinadi, o'zgartirib bo'lmaydi (hisobotga yozilgan)
+export function TashqiKirim({ sana = bugunSana(), faqatKorish = false }) {
   const { nonlar, tashqiKirim, tashqiKirimQoy } = useApp();
   const royxat = tashqiNonlar(nonlar);
   const kun = (tashqiKirim || {})[sana] || {};
@@ -50,12 +52,14 @@ export function TashqiKirim({ sana = bugunSana() }) {
             <Text style={styles.narx} numberOfLines={1}>olish {formatSom(olishNarxi(n))}</Text>
           </View>
           {MAHALLAR.map(([k, l]) => (
-            <SonMaydon key={k} nom={`${n.nom}: ${l.toLowerCase()}`} qiymat={son(k, n.id)} onSaqla={(v) => tashqiKirimQoy(sana, k, n.id, v)} />
+            <SonMaydon key={k} nom={`${n.nom}: ${l.toLowerCase()}`} qiymat={son(k, n.id)} faqatKorish={faqatKorish} onSaqla={(v) => tashqiKirimQoy(sana, k, n.id, v)} />
           ))}
         </View>
       ))}
       <Text style={styles.jami}>
-        {jamiDona > 0
+        {faqatKorish
+          ? "Kun yakunlangan — kirim hisobotga yozilgan. O'zgartirish uchun Markazda yakunni bekor qiling."
+          : jamiDona > 0
           ? `Jami ${formatSom(jamiDona)} dona · ${formatSom(jamiSumma)} so'm — sotib olish narxi sof foydadan ayriladi`
           : "Tashqaridan kelgan nonlar sonini yozing (ertalab va obeddan keyin)"}
       </Text>
@@ -72,5 +76,6 @@ const styles = temaStil(() => StyleSheet.create({
   nom:      { flex: 1, fontSize: 12, fontWeight: "700", color: C.text },
   narx:     { fontSize: 10, color: C.muted, fontWeight: "600", marginTop: 1 },
   input:    { width: 74, borderWidth: 1, borderColor: C.border, borderRadius: R.md, paddingVertical: 8, paddingHorizontal: 8, fontSize: T.sm, fontWeight: "800", color: C.text, backgroundColor: C.surface, textAlign: "center" },
+  inputYopiq: { opacity: 0.6 },
   jami:     { fontSize: 11, fontWeight: "700", color: C.accent, marginTop: 4, lineHeight: 15 },
 }));

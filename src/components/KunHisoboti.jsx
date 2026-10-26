@@ -30,10 +30,13 @@ export function KunHisoboti({ h }) {
     const q = oz ? (parseInt((h.ozIshlabQoplar || {})[n.id]) || 0) : (parseInt((h.tashqariSonlar || {})[n.id]) || 0);
     return q > 0 ? { id: n.id, nom: n.nom, non: (nonlar || []).find((x) => x.id === n.id) || n, matn: `${q} ${oz ? "qop" : "dona"}` } : null;
   }).filter(Boolean);
-  const qoshimcha = [
-    ["Karta to'lovlari", a.kartaSum], ["Optom savdo", a.optomSum], ["Brak", a.brakSum], ["Qo'shimcha xarajat", h.xarajatJami],
+  // Sof foyda = daromad − (ishchi haqi, tashqaridan olingan non, qo'shimcha xarajat, sut) — hammasi ko'rinadi
+  const ayirmalar = [
+    ["Ishchi haqi", haq], ["Tashqaridan olingan non", h.tashqariTannarx], ["Qo'shimcha xarajat", h.xarajatJami],
     [`Sut (${String(son(h.sutLitr)).replace(".", ",")} l)`, h.sutXarajat],
   ].filter(([, v]) => son(v) > 0);
+  // Daromad ichidagi qismlar — faqat ma'lumot uchun (alohida ayrilmaydi)
+  const malumot = [["Karta to'lovlari (daromad ichida)", a.kartaSum], ["Optom savdo (daromad ichida)", a.optomSum]].filter(([, v]) => son(v) > 0);
 
   return (
     <View>
@@ -73,11 +76,10 @@ export function KunHisoboti({ h }) {
       <Card style={styles.card}>
         <Sarlavha icon="cash-outline" matn="Moliya" />
         <Qator nom="Daromad" qiymat={`${formatSom(daromad)} so'm`} />
-        <Qator nom="Ishchi haqi" qiymat={`${formatSom(haq)} so'm`} />
-        <Qator nom="Kun oxiri (daromad − ishchi haqi)" qiymat={`${formatSom(daromad - haq)} so'm`} />
-        {qoshimcha.map(([nom, v]) => <Qator key={nom} nom={nom} qiymat={`${formatSom(v)} so'm`} />)}
+        {ayirmalar.map(([nom, v]) => <Qator key={nom} nom={nom} qiymat={`− ${formatSom(v)} so'm`} />)}
         <View style={styles.chiziq} />
         <Qator nom="Sof foyda" qiymat={`${formatSom(h.sofFoyda)} so'm`} qalin katta />
+        {malumot.map(([nom, v]) => <Qator key={nom} nom={nom} qiymat={`${formatSom(v)} so'm`} />)}
       </Card>
 
       {(h.ishchiHaqlari || []).length > 0 && (
@@ -94,7 +96,7 @@ export function KunHisoboti({ h }) {
             <Qator
               key={d.ism}
               nom={`${d.ism}${d.lavozim ? ` · ${d.lavozim}` : ""}${d.orniga ? ` · ${d.orniga} o'rniga` : ""}`}
-              qiymat={d.keldi ? (d.soat || "Vaqtida") : "Kelmadi"}
+              qiymat={d.keldi ? (d.soat || "Vaqtida") : (d.izoh ? `Kelmadi · ${d.izoh}` : "Kelmadi")}
             />
           ))}
         </Card>

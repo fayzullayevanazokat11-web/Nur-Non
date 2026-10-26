@@ -26,7 +26,6 @@ const ICONS = {
   qarz:    require("../../assets/icons/qarz.png"),
   optom:   require("../../assets/icons/optom.png"),
   karta:   require("../../assets/icons/karta.png"),
-  brak:    require("../../assets/icons/brak.png"),
   xarajat: require("../../assets/icons/xarajat.png"),
 };
 
