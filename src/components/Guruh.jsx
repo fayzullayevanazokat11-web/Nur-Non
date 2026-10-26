@@ -68,48 +68,54 @@ export function GuruhQator({ icon, image, nom, izoh, qiymat, onPress, accessibil
 }
 
 // Bir kartada ustunlar: [{ label, qiymat, birlik, icon|image, tint, soni, onPress, accessibilityLabel }]
-// 4 ta bo'lsa — 2×2 to'r (tor ekranda sig'ishi uchun), aks holda bitta qator
+// 4 tadan ko'p bo'lmasa — bitta qatorda; 4 ta bo'lsa ixcham (tik: ikonka, nom, qiymat — markazda),
+// tor ekranda ham yozuvlar kesilmasligi uchun
 export function KorsatkichQatori({ items, style }) {
-  const qatorlar = items.length === 4 ? [items.slice(0, 2), items.slice(2)] : [items];
+  const ixcham = items.length >= 4;
   return (
     <Card animate={false} style={[styles.korKarta, style]}>
-      {qatorlar.map((qator, q) => (
-        <Fragment key={q}>
-          {q > 0 && <View style={styles.korQatorAjrat} />}
-          <View style={styles.korQator}>
-            {qator.map((it, i) => (
-              <Fragment key={it.label}>
-                {i > 0 && <View style={styles.korAjrat} />}
-                <KorsatkichUstun it={it} />
-              </Fragment>
-            ))}
-          </View>
-        </Fragment>
-      ))}
+      <View style={styles.korQator}>
+        {items.map((it, i) => (
+          <Fragment key={it.label}>
+            {i > 0 && <View style={styles.korAjrat} />}
+            <KorsatkichUstun it={it} ixcham={ixcham} />
+          </Fragment>
+        ))}
+      </View>
     </Card>
   );
 }
 
-function KorsatkichUstun({ it }) {
-  const ichi = (
+function KorsatkichUstun({ it, ixcham }) {
+  const ikon = it.image
+    ? <Image source={it.image} style={[ixcham ? styles.korRasmKatta : styles.korRasm, { tintColor: it.tint || C.accent }]} resizeMode="contain" />
+    : it.icon ? <Ionicons name={it.icon} size={ixcham ? 20 : 15} color={it.tint || C.accent} /> : null;
+  const nishon = it.soni > 0 ? <View style={[styles.korSoni, ixcham && styles.korSoniUst]}><Text style={styles.korSoniTxt}>{it.soni}</Text></View> : null;
+  const ichi = ixcham ? (
+    <>
+      <View>{ikon}{nishon}</View>
+      <Text style={styles.korLabelIx} numberOfLines={1}>{it.label}</Text>
+      <Text style={styles.korQiymatIx} numberOfLines={1} adjustsFontSizeToFit>{it.qiymat}</Text>
+      {it.birlik ? <Text style={styles.korBirlikIx} numberOfLines={1}>{it.birlik}</Text> : null}
+    </>
+  ) : (
     <>
       <View style={styles.korUst}>
-        {it.image
-          ? <Image source={it.image} style={[styles.korRasm, { tintColor: it.tint || C.accent }]} resizeMode="contain" />
-          : it.icon ? <Ionicons name={it.icon} size={15} color={it.tint || C.accent} /> : null}
+        {ikon}
         <Text style={styles.korLabel} numberOfLines={1}>{it.label}</Text>
-        {it.soni > 0 ? <View style={styles.korSoni}><Text style={styles.korSoniTxt}>{it.soni}</Text></View> : null}
+        {nishon}
       </View>
       <Text style={styles.korQiymat} numberOfLines={1} adjustsFontSizeToFit>{it.qiymat}</Text>
       {it.birlik ? <Text style={styles.korBirlik} numberOfLines={1}>{it.birlik}</Text> : null}
     </>
   );
+  const uslub = ixcham ? styles.korUstunIx : styles.korUstun;
   return it.onPress ? (
-    <Bosma accessibilityRole="button" accessibilityLabel={it.accessibilityLabel || it.label} onPress={it.onPress} kichrayish={0.95} tashqi={styles.flex1} style={styles.korUstun}>
+    <Bosma accessibilityRole="button" accessibilityLabel={it.accessibilityLabel || it.label} onPress={it.onPress} kichrayish={0.95} tashqi={styles.flex1} style={uslub}>
       {ichi}
     </Bosma>
   ) : (
-    <View style={[styles.flex1, styles.korUstun]}>{ichi}</View>
+    <View style={[styles.flex1, uslub]}>{ichi}</View>
   );
 }
 
@@ -131,7 +137,13 @@ const styles = temaStil(() => StyleSheet.create({
 
   korKarta: { padding: 0, marginBottom: S[4], overflow: "hidden" },
   korQator: { flexDirection: "row" },
-  korQatorAjrat:{ height: StyleSheet.hairlineWidth, backgroundColor: C.borderSoft, marginHorizontal: S[3] },
+  // Ixcham (4 ta bir qatorda): markazda tik joylashuv
+  korUstunIx:{ alignItems: "center", paddingVertical: S[3], paddingHorizontal: 4, gap: 3 },
+  korRasmKatta:{ width: 22, height: 22 },
+  korSoniUst:{ position: "absolute", top: -6, right: -10, borderWidth: 1.5, borderColor: C.card },
+  korLabelIx:{ fontSize: 9, color: C.muted, fontWeight: "800", letterSpacing: 0.3, textTransform: "uppercase", marginTop: 2 },
+  korQiymatIx:{ fontSize: 16, fontWeight: "800", color: C.text, letterSpacing: -0.3 },
+  korBirlikIx:{ fontSize: 9, color: C.muted, fontWeight: "600" },
   korUstun: { paddingVertical: S[3], paddingHorizontal: S[4] },
   korAjrat: { width: StyleSheet.hairlineWidth, backgroundColor: C.borderSoft, marginVertical: S[3] },
   korUst:   { flexDirection: "row", alignItems: "center", gap: 4 },

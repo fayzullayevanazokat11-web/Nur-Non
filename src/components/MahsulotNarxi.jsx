@@ -245,7 +245,7 @@ const styles = temaStil(() => StyleSheet.create({
   // Inline forma
   qoshCard:   { marginBottom: 0 },
   qoshHead:   { flexDirection: "row", alignItems: "center", gap: S[2] },
-  qoshTitle:  { fontSize: T.md, fontWeight: "800", color: C.text },
+  qoshTitle:  { fontSize: T.md, fontWeight: "800", color: C.text, flexShrink: 1 },
   qoshActions:{ marginTop: S[3] },
   lbl2:       { fontSize: T.xs, color: C.sub, fontWeight: "600", marginBottom: 6, marginTop: S[2], letterSpacing: 0.3 },
   unitRow:    { flexDirection: "row", gap: S[2] },

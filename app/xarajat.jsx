@@ -167,7 +167,7 @@ const styles = temaStil(() => StyleSheet.create({
 
   formCard: { marginBottom: S[5] },
   formHead: { flexDirection: "row", alignItems: "center", gap: S[2], marginBottom: S[4] },
-  formTitle:{ fontSize: T.md, fontWeight: "800", color: C.text },
+  formTitle:{ fontSize: T.md, fontWeight: "800", color: C.text, flexShrink: 1 },
   inputLabel:{ fontSize: T.xs, color: C.sub, fontWeight: "600", marginBottom: 6, marginTop: S[3], letterSpacing: 0.3 },
   input:    { borderWidth: 1, borderColor: C.border, borderRadius: R.md, paddingVertical: 12, paddingHorizontal: 14, fontSize: T.md, color: C.text, backgroundColor: C.surface },
   inputMulti:{ minHeight: 72, textAlignVertical: "top" },

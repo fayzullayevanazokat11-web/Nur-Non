@@ -5,6 +5,7 @@
 import { useEffect, useState } from "react";
 import { View, Text, Image, Pressable, StyleSheet, LayoutAnimation, AppState } from "react-native";
 import { MarkazMenyu } from "./MarkazMenyu";
+import { SuzuvchiFon } from "./SuzuvchiFon";
 import { useTiklash } from "./useTiklash";
 import { Ionicons } from "@expo/vector-icons";
 import { useApp } from "../store/AppData";
@@ -67,6 +68,7 @@ export function BrandHeader({ onLogo, menuOchiq = false, sahifa, suzuvchi = fals
       disabled={!onLogo}
       style={({ pressed }) => [styles.banner, suzuvchi && styles.suzuvchi, pressed && styles.bannerPressed]}
     >
+      {suzuvchi && <SuzuvchiFon rang={C.accent + "E6"} radius={R.xl} kuch={45} />}
       <View style={styles.tile}>
         <Image source={LOGO} style={styles.logo} resizeMode="contain" />
         {onLogo ? (
@@ -92,8 +94,8 @@ export function BrandHeader({ onLogo, menuOchiq = false, sahifa, suzuvchi = fals
 }
 
 const styles = temaStil(() => StyleSheet.create({
-  // Suzuvchi (kontent ustida turadigan) bar — pastki panel kabi soya bilan
-  suzuvchi: { marginBottom: 0, shadowColor: "#000", shadowOpacity: temaQorongi() ? 0.5 : 0.18, shadowRadius: 16, shadowOffset: { width: 0, height: 6 }, elevation: 12 },
+  // Suzuvchi (kontent ustida turadigan) bar — soya yo'q; foni yarim shaffof, ortidagi kontent xiralashadi
+  suzuvchi: { marginBottom: 0, backgroundColor: "transparent", shadowOpacity: 0, elevation: 0 },
   bannerPressed: { opacity: 0.92, transform: [{ scale: 0.985 }] },
   banner: {
     flexDirection: "row",

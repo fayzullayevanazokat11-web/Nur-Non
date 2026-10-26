@@ -119,10 +119,11 @@ export function ExpandableCard({ header, children, defaultOpen = false, ochKalit
 const styles = temaStil(() => StyleSheet.create({
   card:       { padding: 0 },
   ichkiOchiq: { backgroundColor: C.accent + "08" },
-  head:       { flexDirection: "row", alignItems: "center", gap: S[2], paddingVertical: S[4], paddingHorizontal: S[5] },
+  // Sarlavha matni uzun bo'lsa o'raladi — chevron bilan to'qnashmaydi (orasida doim bo'sh joy)
+  head:       { flexDirection: "row", alignItems: "center", gap: S[3], paddingVertical: S[4], paddingHorizontal: S[5] },
   headClosed: { borderRadius: R.lg },
   headOpen:   { borderTopLeftRadius: R.lg, borderTopRightRadius: R.lg, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: C.borderSoft },
-  headLeft:   { flex: 1 },
+  headLeft:   { flex: 1, minWidth: 0 },
   body:       { paddingVertical: S[4], paddingHorizontal: S[5] },
   ilova:      { paddingHorizontal: S[4], paddingBottom: S[2] },
 }));

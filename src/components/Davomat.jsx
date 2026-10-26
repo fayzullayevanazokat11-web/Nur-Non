@@ -32,7 +32,7 @@ export function DavomatKarta({ ochKaliti, onOchildi, style }) {
           <View style={styles.flex1}>
             <Text style={styles.boshNom}>Bugungi davomat</Text>
             <Text style={[styles.boshIzoh, keldi === 0 && { color: C.red }]} numberOfLines={1}>
-              {keldi === 0 ? "Hali belgilanmagan — ishchilar haqi hisoblanmayapti" : `${keldi}/${hammaAktiv.length} keldi`}
+              {keldi === 0 ? `0/${hammaAktiv.length} keldi — belgilanmagan, haq hisoblanmayapti` : `${keldi}/${hammaAktiv.length} keldi`}
             </Text>
           </View>
           <Text style={styles.davomatSoni}>{keldi}/{hammaAktiv.length}</Text>

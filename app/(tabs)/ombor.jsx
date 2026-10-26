@@ -437,7 +437,7 @@ const styles = temaStil(() => StyleSheet.create({
   // Inline forma (ExpandableCard ichida)
   qoshCard:   { marginBottom: S[3] },
   qoshHead:   { flexDirection: "row", alignItems: "center", gap: S[2] },
-  qoshTitle:  { fontSize: T.md, fontWeight: "800", color: C.text },
+  qoshTitle:  { fontSize: T.md, fontWeight: "800", color: C.text, flexShrink: 1 },
   qoshActions:{ marginTop: S[3] },
   field:      { marginBottom: S[3] },
   inputLabel: { fontSize: T.xs, color: C.sub, fontWeight: "600", marginBottom: 5, letterSpacing: 0.3 },

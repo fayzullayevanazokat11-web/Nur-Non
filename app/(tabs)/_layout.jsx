@@ -12,6 +12,7 @@ import { useTil } from "../../src/i18n/til";
 import { ogir } from "../../src/i18n/translit";
 import { tabBosildi, PastkiJoy, TepaJoy } from "../../src/components/ScrollBox";
 import { BrandHeader } from "../../src/components/BrandHeader";
+import { SuzuvchiFon } from "../../src/components/SuzuvchiFon";
 import { MarkazMenyu } from "../../src/components/MarkazMenyu";
 import { useSafeAreaInsets as useInsets } from "react-native-safe-area-context";
 import { rezina, PRUJINA, PRUJINA_YUMSHOQ } from "../../src/logic/fizika";
@@ -183,6 +184,7 @@ function PastkiPanel({ state, descriptors, navigation }) {
     {!klaviatura && (
     <View pointerEvents="box-none" style={[styles.tashqi, { paddingBottom: 8 + insets.bottom }]}>
     <View ref={barRef} style={styles.bar} onLayout={(e) => { setKenglik(e.nativeEvent.layout.width); olchash(); }} {...surish.panHandlers}>
+      <SuzuvchiFon rang={C.card + (temaQorongi() ? "C8" : "B3")} radius={36} />
       {kenglik > 0 && (
         <Animated.View pointerEvents="none" style={[styles.pillQuti, { transform: [{ translateX: pillX }] }]}>
           <Animated.View testID="tab-indikator" style={[styles.pill, { width: pillW }]} />
@@ -268,8 +270,8 @@ const styles = temaStil(() => StyleSheet.create({
   tepaMenyuScroll:{ borderRadius: 22, overflow: "hidden" },
   tashqi:  { position: "absolute", left: 0, right: 0, bottom: 0, paddingHorizontal: 12 },
   bar:     {
-    flexDirection: "row", backgroundColor: C.card + "FA", borderRadius: 36, borderWidth: StyleSheet.hairlineWidth, borderColor: C.border, padding: ICHKI,
-    shadowColor: "#000", shadowOpacity: temaQorongi() ? 0.5 : 0.16, shadowRadius: 18, shadowOffset: { width: 0, height: 6 }, elevation: 14,
+    // Soya yo'q — fon SuzuvchiFon (ortidagi kontent xiralashadi)
+    flexDirection: "row", borderRadius: 36, borderWidth: StyleSheet.hairlineWidth, borderColor: C.border, padding: ICHKI,
   },
   pillQuti:{ position: "absolute", top: ICHKI, bottom: ICHKI, left: 0 },
   pill:    { flex: 1, borderRadius: 30, backgroundColor: C.accent + "1C" },
