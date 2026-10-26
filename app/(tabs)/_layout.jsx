@@ -48,8 +48,9 @@ function TepaPanel({ state, descriptors }) {
     const sub = AppState.addEventListener("change", (h) => { if (h !== "active") setMenu(false); });
     return () => sub.remove();
   }, []);
+  // Menyu o'zi silliq paydo bo'ladi (MarkazMenyu ichida). Bu yerda LayoutAnimation (shaffoflik) yo'q —
+  // Android'da soyali qobiq yarim shaffof bo'lganda chetlari bir lahza qorayardi.
   const almash = () => {
-    LayoutAnimation.configureNext(LayoutAnimation.create(220, LayoutAnimation.Types.easeInEaseOut, LayoutAnimation.Properties.opacity));
     setMenu((m) => !m);
   };
   const route = state.routes[state.index];
@@ -64,6 +65,7 @@ function TepaPanel({ state, descriptors }) {
         // Tashqi qobiq — soya va yumaloq shakl; ichki ScrollView burchaklardan kesiladi va oxirida
         // Android'ning cho'zilish (overscroll) effekti o'chirilgan — to'rtburchak qism chiqmaydi
         <View style={[styles.tepaMenyu, { maxHeight: Math.max(220, ekranH - insets.top - insets.bottom - barH - 130) }]}>
+          <SuzuvchiFon rang={C.card + (temaQorongi() ? "F2" : "F0")} radius={22} kuch={50} />
           <ScrollView
             style={styles.tepaMenyuScroll}
             showsVerticalScrollIndicator={false}
@@ -266,7 +268,8 @@ export default function TabsLayout() {
 const styles = temaStil(() => StyleSheet.create({
   // Panel kontent ustida suzadi: orqasida fon yo'q, kartalar uning ostidan ko'rinib turadi
   tepaTashqi:{ position: "absolute", left: 20, right: 20 },
-  tepaMenyu:{ marginTop: 10, borderRadius: 22, backgroundColor: C.card, shadowColor: "#000", shadowOpacity: temaQorongi() ? 0.5 : 0.16, shadowRadius: 16, shadowOffset: { width: 0, height: 6 }, elevation: 10 },
+  // Soya (elevation) yo'q — barlar kabi orqa fon xiralashadi; chegarani ingichka chiziq beradi
+  tepaMenyu:{ marginTop: 10, borderRadius: 22, borderWidth: StyleSheet.hairlineWidth, borderColor: C.border, overflow: "hidden" },
   tepaMenyuScroll:{ borderRadius: 22, overflow: "hidden" },
   tashqi:  { position: "absolute", left: 0, right: 0, bottom: 0, paddingHorizontal: 12 },
   bar:     {

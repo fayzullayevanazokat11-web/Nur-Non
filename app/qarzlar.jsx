@@ -2,6 +2,7 @@
 // chegirma, izoh darrov sahifa ichida.
 // Pastda QARZDORLAR: bir xil ismli qarzlar bitta kishiga yig'iladi — olgan,
 // to'lagan, qoldiq; qisman to'lov (eng eski qarzdan boshlab yopiladi) va to'liq tarix.
+import { ISM_SUKUT } from "../src/logic/konstantalar";
 import { useEffect, useMemo, useState } from "react";
 import { View, Text, Image, Pressable, TextInput, StyleSheet, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -89,13 +90,12 @@ export default function Qarzlar() {
   const tozala = () => { setForma(BOSH); yopKartalar(); };
 
   const saqla = () => {
-    if (!forma.ism.trim()) { Alert.alert("Ism kiritilmagan", "Iltimos, qarz oluvchi ismini kiriting."); return; }
     if (savatHisob.items.length === 0) { Alert.alert("Non tanlanmagan", "Kamida bitta non turidan soni kiriting."); return; }
     // Qo'lda tanlanmagan bo'lsa har safar joriy kun
     const sana = forma.sanaTanlandi && forma.sana ? forma.sana : localSana();
     const soat = forma.soat || hozirgiSoat(); // qo'lda tanlanmasa — hozirgi vaqt
     setQarzlar((prev) => [...prev, {
-      id: Date.now(), ism: forma.ism.trim(), sana, soat, vaqt: Date.now(),
+      id: Date.now(), ism: forma.ism.trim() || ISM_SUKUT, sana, soat, vaqt: Date.now(),
       savat: savatHisob.items, summa: savatHisob.yakSumma, chegirma: savatHisob.chegirma,
       izoh: forma.izoh.trim(), tolangan: false, tolanganVaqt: null, tolovlar: [],
     }]);
@@ -158,8 +158,8 @@ export default function Qarzlar() {
           <VaqtField value={forma.soat} onChange={(v) => setForma((p) => ({ ...p, soat: v }))} />
           {!forma.sanaTanlandi && !forma.soat && <Text style={styles.hint}>Bugungi sana va hozirgi vaqt avtomatik. O'zgartirish uchun bosing.</Text>}
 
-          <Text style={styles.inputLabel}>Qarz oluvchi *</Text>
-          <TextInput value={forma.ism} onChangeText={(v) => yangila("ism", v)} placeholder="Ism familiya" placeholderTextColor={C.muted} style={styles.input} />
+          <Text style={styles.inputLabel}>Qarz oluvchi</Text>
+          <TextInput accessibilityLabel="Qarz oluvchi" value={forma.ism} onChangeText={(v) => yangila("ism", v)} placeholder={`${ISM_SUKUT} (yozilmasa)`} placeholderTextColor={C.muted} style={styles.input} />
           {takliflar.length > 0 && (
             <View style={styles.takliflar}>
               {takliflar.map((g) => (

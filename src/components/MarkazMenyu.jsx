@@ -42,7 +42,8 @@ export function MarkazMenyu({ onYop }) {
   const translateY = a.interpolate({ inputRange: [0, 1], outputRange: [-8, 0] });
 
   return (
-    <Animated.View style={[styles.wrap, { opacity: a, transform: [{ translateY }] }]}>
+    // needsOffscreenAlphaCompositing — shaffoflik o'zgarganda karta bitta qatlam bo'lib chiziladi (chetlari qoraymaydi)
+    <Animated.View needsOffscreenAlphaCompositing style={[styles.wrap, { opacity: a, transform: [{ translateY }] }]}>
       <Bosma
         accessibilityRole="button"
         onPress={() => { onYop?.(); router.push("/akkaunt"); }}
@@ -231,7 +232,8 @@ export function MarkazMenyu({ onYop }) {
 const styles = temaStil(() => StyleSheet.create({
   avtoYarim: { position: "absolute", top: 0, bottom: 0, right: 0, width: "50%" },
   avtoIzoh:  { fontSize: 10, color: C.muted, textAlign: "center", marginTop: 1 },
-  wrap:      { backgroundColor: C.card, borderRadius: R.lg, borderWidth: StyleSheet.hairlineWidth, borderColor: C.borderSoft, overflow: "hidden" },
+  // Fon va chegarani tashqi qobiq beradi (xiralashgan fon) — bu yerda faqat kontent
+  wrap:      { overflow: "hidden" },
   row:       { flexDirection: "row", alignItems: "center", gap: S[3], paddingVertical: S[3], paddingHorizontal: S[4] },
   rowPressed:{ opacity: 0.75 },
   icon:      { width: 40, height: 40, borderRadius: R.md, alignItems: "center", justifyContent: "center", backgroundColor: C.accent + "14" },

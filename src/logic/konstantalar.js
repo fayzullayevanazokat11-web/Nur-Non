@@ -48,3 +48,6 @@ export function xomashyoRoyxati(custom) {
 export function omborRoyxati(custom) {
   return xomashyoRoyxati(custom).filter((m) => !omborEmasmi(m));
 }
+
+// Qarz/optomda ism yozilmasa — shu nom bilan saqlanadi
+export const ISM_SUKUT = "Nurafshon";
