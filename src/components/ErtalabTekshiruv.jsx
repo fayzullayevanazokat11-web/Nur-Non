@@ -1,5 +1,5 @@
 // Markazdagi "Kunlik vazifa" (ish kuni 03:00 da boshlanadi):
-//   1) Ishchilar davomati  → Xodimlar bo'limi (kim keldi / kelmadi)
+//   1) Ishchilar davomati  → Markazdagi "Bugungi davomat" kartasi ochiladi (kim keldi / kelmadi)
 //   2) Omborni tekshirish  → Ombor bo'limi (zaxira, so'rovnomalar)
 //   3) Sut kirimi          → shu yerning o'zida, 2 mahal litr (omborda turmaydi, kunlik daromaddan ayriladi)
 //   4) Tashqi non kirimi   → shu yerda, ertalab va obeddan keyin nechta kelgani (tashqi non bo'lsa)
@@ -25,13 +25,16 @@ const ikki = (n) => String(n).padStart(2, "0");
 const soat = (ms) => { const d = new Date(ms); return `${ikki(d.getHours())}:${ikki(d.getMinutes())}`; };
 
 const QADAMLAR = [
-  { k: "davomat", nom: "Ishchilar davomati", izoh: "Kim keldi, kim kelmadi", icon: "people-outline", yol: "/xodimlar" },
+  { k: "davomat", nom: "Ishchilar davomati", izoh: "Kim keldi, kim kelmadi", icon: "people-outline", markazda: true },
   { k: "ombor", nom: "Omborni tekshirish", izoh: "Zaxira va so'rovnomalar", icon: "cube-outline", yol: "/ombor" },
   { k: "sut", nom: "Sut kirimi", izoh: "Bugun kelgan sut, litr (2 mahal)", icon: "water-outline", kelmadi: "Bugun sut kelmadimi?" },
   { k: "tashqi", nom: "Tashqi non kirimi", izoh: "Tashqaridan kelgan non, dona (ertalab va obeddan keyin)", icon: "storefront-outline", kelmadi: "Bugun tashqaridan non kelmadimi?" },
 ];
 
-export function ErtalabTekshiruv({ kunYopiq }) {
+// sahifali qadam: boshqa bo'limga o'tadi (yol) yoki Markazning o'zidagi kartani ochadi (markazda)
+const sahifali = (q) => !!(q.yol || q.markazda);
+
+export function ErtalabTekshiruv({ kunYopiq, onDavomat }) {
   const { ertalab, ertalabBelgila, ertalabTugalla, setErtalabYonalish, ertalabPanel, setErtalabPanel, ishchilarHaq, kelmaganlar, sutKirimi, tashqiKirim, nonlar } = useApp();
   // Kirim qadamlari (sut, tashqi non) — har biri alohida ochiladi/yopiladi; boshqa sahifaga o'tilsa yopiladi
   const [ochiqQadam, setOchiqQadam] = useState(null);
@@ -62,13 +65,18 @@ export function ErtalabTekshiruv({ kunYopiq }) {
     return jam("m1") || jam("m2") ? `Ertalab ${jam("m1")} · obeddan keyin ${jam("m2")} dona` : "";
   };
   const almash = () => { silliq(); setErtalabPanel(!ertalabPanel); };
-  const bor = (q) => { if (!tugallangan) ertalabBelgila(q.k, true); setErtalabYonalish(tugallangan ? null : q.k); router.navigate(q.yol); };
+  const bor = (q) => {
+    if (!tugallangan) ertalabBelgila(q.k, true);
+    // Davomat — Markazning o'zida: vazifa paneli yopilib, tagidagi davomat kartasi ochiladi
+    if (q.markazda) { silliq(); setErtalabPanel(false); onDavomat?.(); return; }
+    setErtalabYonalish(tugallangan ? null : q.k); router.navigate(q.yol);
+  };
   // Belgi: sahifali qadam — sahifa ochilgandan keyingina; kirim qadami — kirim yozilsa o'zi belgilanadi,
   // yozilmagan bo'lsa "kelmadi" deb ongli tasdiqlash kerak
   const belgila = (q, ok) => {
     if (tugallangan) return;
     if (ok) { silliq(); ertalabBelgila(q.k, false); return; }
-    if (q.yol && !korildi[q.k]) {
+    if (sahifali(q) && !korildi[q.k]) {
       Alert.alert("Avval sahifani oching", `«${q.nom}» hali ko'rilmagan. Sahifani ochib tekshiring — so'ng belgilanadi.`, [
         { text: "Bekor", style: "cancel" },
         { text: "Ochish", onPress: () => bor(q) },
@@ -123,18 +131,18 @@ export function ErtalabTekshiruv({ kunYopiq }) {
           {qadamlar.map((q, i) => {
             const ok = !!ertalab[q.k];
             return (
-              <View key={q.k} style={[styles.qadam, i > 0 && styles.qadamChiziq, !q.yol && styles.qadamUst]}>
+              <View key={q.k} style={[styles.qadam, i > 0 && styles.qadamChiziq, !sahifali(q) && styles.qadamUst]}>
                 <Pressable
                   accessibilityRole="checkbox"
                   accessibilityLabel={`${q.nom}: belgi`}
                   accessibilityState={{ checked: ok, disabled: tugallangan }}
                   onPress={() => belgila(q, ok)}
                   hitSlop={8}
-                  style={[styles.belgi, ok && styles.belgiOk, !ok && q.yol && !korildi[q.k] && styles.belgiYopiq, !q.yol && styles.belgiUst]}
+                  style={[styles.belgi, ok && styles.belgiOk, !ok && sahifali(q) && !korildi[q.k] && styles.belgiYopiq, !sahifali(q) && styles.belgiUst]}
                 >
                   {ok ? <Ionicons name="checkmark" size={14} color={C.onAccent} /> : <Text style={styles.raqam}>{i + 1}</Text>}
                 </Pressable>
-                {q.yol ? (
+                {sahifali(q) ? (
                 <Bosma accessibilityRole="link" accessibilityLabel={q.nom} onPress={() => bor(q)} tashqi={styles.flex1} style={styles.havola}>
                   <Ionicons name={q.icon} size={18} color={C.accent} />
                   <View style={styles.flex1}>

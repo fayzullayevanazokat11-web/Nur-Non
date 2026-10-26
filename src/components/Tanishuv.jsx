@@ -175,7 +175,7 @@ export function Tanishuv() {
                 <Ikon nom="sunny-outline" pop={ikonPop} />
                 <Text style={styles.sarlavha}>Har kungi tartib</Text>
                 <View style={styles.royxat}>
-                  <Band raqam="1" sarlavha="Kunlik vazifa" matn="Markazda: davomat («Keldi»), omborni tekshirish va kelgan sut litri (2 mahal)." />
+                  <Band raqam="1" sarlavha="Kunlik vazifa" matn="Markazda: davomat («Keldi»), omborni tekshirish, sut litri va tashqi non kirimi (2 mahal)." />
                   <Band raqam="2" sarlavha="Qoplarni kiriting" matn="«Kunlik qop hisobi»da har non uchun qop/dona sonini yozib, «Saqlash»ni bosing." />
                   <Band raqam="3" sarlavha="Savdoni yozib boring" matn="Qarz, optom, karta va xarajatlar — sana va vaqti o'zi qo'yiladi." />
                   <Band raqam="4" sarlavha="Kunni yakunlang" matn="Qop rasmini oling va «Kunni yakunlash» — hisobot, PDF va statistika tayyor." />
@@ -191,7 +191,7 @@ export function Tanishuv() {
                 <View style={styles.bolimlar}>
                   <Bolim rasm={TAB_IKON.markaz} nom="Markaz" matn="Kunlik ko'rsatkichlar" />
                   <Bolim rasm={TAB_IKON.ishlab} nom="Ishlab" matn="Non, xomashyo, tannarx" />
-                  <Bolim rasm={TAB_IKON.xodimlar} nom="Xodimlar" matn="Jamoa, davomat" />
+                  <Bolim rasm={TAB_IKON.xodimlar} nom="Xodimlar" matn="Jamoa, haq va holatlar" />
                   <Bolim rasm={TAB_IKON.ombor} nom="Ombor" matn="Zaxira, prognoz" />
                 </View>
                 <Text style={styles.matn}>Bo'limlar orasida chapga-o'ngga surib o'ting. Markazdagi logotipni bossangiz — menyu ochiladi.</Text>

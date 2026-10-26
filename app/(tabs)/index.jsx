@@ -14,6 +14,7 @@ import { ScrollBox } from "../../src/components/ScrollBox";
 import { Bosma } from "../../src/components/Bosma";
 import { EslatmalarPanel } from "../../src/components/EslatmalarPanel";
 import { ErtalabTekshiruv } from "../../src/components/ErtalabTekshiruv";
+import { DavomatKarta } from "../../src/components/Davomat";
 import { ixcham } from "../../src/components/Statistika";
 import { Guruh, GuruhQator, KorsatkichQatori } from "../../src/components/Guruh";
 import { C, T, S, R, temaStil } from "../../src/theme";
@@ -37,7 +38,7 @@ export default function Markaz() {
     ozIshlabQoplar, tashqariSonlar, sotilmaganNon, mahsulotNarxlari,
     hisobotlarTarixi, braklar, sutKirimi,
     boshlangichQoldiq, qoldaYaroqsiz, kunlikXarajatlar, oxirgiYakunlashVaqti,
-    lockedDayStats, yakunBekor, yakunBekorMumkinmi, kunYakuniniBekor, setErtalabYonalish,
+    lockedDayStats, yakunBekor, yakunBekorMumkinmi, kunYakuniniBekor, setErtalabYonalish, ertalabKorildi,
   } = useApp();
 
   // Har 30 soniyada tick — ish kuni tugaganda (tunda 03:00) lock va sana ko'rsatkichlari
@@ -45,6 +46,7 @@ export default function Markaz() {
   // Markazga qaytilgach ertalabgi qadam bannerlari ("Tayyor") boshqa sahifalarda qolib ketmasin
   useFocusEffect(useCallback(() => { setErtalabYonalish(null); }, []));
 
+  const [davomatOch, setDavomatOch] = useState(0); // Kunlik vazifadan bosilganda davomat kartasi ochiladi
   const [tick, setTick] = useState(0);
   useEffect(() => {
     const id = setInterval(() => setTick((t) => (t + 1) % 1000000), 30000);
@@ -129,7 +131,10 @@ export default function Markaz() {
         <EslatmalarPanel />
 
         {/* KUNNI BOSHLASH — ertalabgi tekshiruv (davomat, ombor) */}
-        <ErtalabTekshiruv kunYopiq={!!locked} />
+        <ErtalabTekshiruv kunYopiq={!!locked} onDavomat={() => setDavomatOch((x) => x + 1)} />
+
+        {/* BUGUNGI DAVOMAT — Markazda (ochilganda Kunlik vazifada "ko'rildi" deb qayd etiladi) */}
+        <DavomatKarta ochKaliti={davomatOch || null} onOchildi={() => ertalabKorildi("davomat")} />
 
 
         {/* PUL OQIMI — Qarzlar / Optom / Karta / Xarajat bitta kartada, ustunlarga bo'lingan */}
@@ -180,15 +185,6 @@ export default function Markaz() {
             onPress={() => router.push("/tarix")}
           />
         </Guruh>
-
-        {/* Davomat hali belgilanmagan — ishchilar haqi hisoblanmayapti */}
-        {!locked && (ishchilar || []).some((w) => w.holat === "Aktiv") && !(ishchilar || []).some((w) => w.holat === "Aktiv" && !w.kelmadi) && (
-          <Bosma accessibilityRole="button" accessibilityLabel="Davomatni belgilash" onPress={() => router.navigate("/xodimlar")} style={styles.davomatEslatma}>
-            <Ionicons name="people-outline" size={18} color={C.accent} />
-            <Text style={styles.davomatEslatmaTxt}>Bugungi davomat belgilanmagan — ishchilar haqi hisoblanmayapti. Belgilash uchun bosing.</Text>
-            <Ionicons name="chevron-forward" size={16} color={C.muted} />
-          </Bosma>
-        )}
 
         {/* BUGUNGI ISHCHILAR HAQI (jonli) — bitta kartada, ostida jami */}
         {bugungiHaq.list.length > 0 && (

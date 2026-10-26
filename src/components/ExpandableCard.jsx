@@ -43,7 +43,8 @@ export function yopKartalar({ qoldir } = {}) {
 
 // `ilova` — sarlavha tagida doim ko'rinadigan qism (masalan, ikonka tanlovi); bosilganda karta ochilmaydi
 // `ichki` — Guruh ichida: o'z ramkasi/soyasi yo'q, ajratgichni Guruh chizadi
-export function ExpandableCard({ header, children, defaultOpen = false, ochKaliti, id, style, ilova, ichki = false }) {
+// `onOchildi` — karta ochilganda chaqiriladi (masalan, Kunlik vazifada "ko'rildi" deb qayd etish)
+export function ExpandableCard({ header, children, defaultOpen = false, ochKaliti, id, style, ilova, ichki = false, onOchildi }) {
   const [open, setOpen] = useState(defaultOpen || !!ochKaliti);
   const openRef = useRef(open);
   openRef.current = open;
@@ -83,11 +84,12 @@ export function ExpandableCard({ header, children, defaultOpen = false, ochKalit
 
   // Tahrir rejimi: kalit yangi rost qiymatga o'zgarsa — ochiladi
   useEffect(() => {
-    if (ochKaliti) { silliq(); setOpen(true); }
+    if (ochKaliti) { silliq(); setOpen(true); onOchildi?.(); }
   }, [ochKaliti]);
 
   const toggle = () => {
     silliq();
+    if (!openRef.current) onOchildi?.();
     setOpen((o) => !o);
   };
 

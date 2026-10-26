@@ -322,7 +322,7 @@ export default function Qop() {
           <Text style={styles.fieldLabel}>Hisobot sanasi</Text>
           <DateField value={kunlikSana || localSana()} onChange={(v) => { setKunlikSana(v); setSanaTanlandi(true); }} />
           {!sanaTanlandi && <Text style={styles.sanaHint}>Bugungi kun avtomatik. Boshqa sana uchun kalendarni oching.</Text>}
-          {/* O'tgan kun tanlansa — o'sha kun davomati shu yerda belgilanadi (Xodimlar faqat bugunni ko'rsatadi) */}
+          {/* O'tgan kun tanlansa — o'sha kun davomati shu yerda belgilanadi (Markazdagi davomat faqat bugunni ko'rsatadi) */}
           {tanSana < localSana() && (
             <View style={styles.otganDavomat}>
               <Text style={styles.fieldLabel}>{tanSana} davomati — kelganlarni belgilang</Text>

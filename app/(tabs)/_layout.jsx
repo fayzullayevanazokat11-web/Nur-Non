@@ -109,7 +109,7 @@ function PastkiPanel({ state, descriptors, navigation }) {
   const sudralmoqda = useRef(false); // panel ustida barmoq surilayotgan payt — indikator barmoqqa ergashadi
   useEffect(() => {
     if (sudralmoqda.current) return;
-    Animated.spring(idx, { toValue: state.index, ...PRUJINA_YUMSHOQ, useNativeDriver: true }).start();
+    Animated.spring(idx, { toValue: state.index, ...PRUJINA_YUMSHOQ, useNativeDriver: false }).start();
   }, [state.index]);
 
   // ── Panelni ushlab surish (Telegram kabi): indikator barmoq ortidan yuradi, barmoq ostidagi
@@ -159,26 +159,23 @@ function PastkiPanel({ state, descriptors, navigation }) {
       const i = chegara(Math.round(kasrIndeks(e.nativeEvent.pageX)));
       otish(i);
       sudralmoqda.current = false;
-      Animated.spring(idx, { toValue: i, velocity: g.vx / qadamPx(), ...PRUJINA, useNativeDriver: true }).start();
+      Animated.spring(idx, { toValue: i, velocity: g.vx / qadamPx(), ...PRUJINA, useNativeDriver: false }).start();
     },
     onPanResponderTerminate: () => {
       sudralmoqda.current = false;
-      Animated.spring(idx, { toValue: holat.current.state.index, ...PRUJINA, useNativeDriver: true }).start();
+      Animated.spring(idx, { toValue: holat.current.state.index, ...PRUJINA, useNativeDriver: false }).start();
     },
   })).current;
   const pillKeng = (i) => (joylar[i] ? joylar[i].w : (kenglik - 2 * ICHKI) / soni);
   const pillX = kenglik && soni > 1
     ? idx.interpolate({ inputRange: kirishlar, outputRange: kirishlar.map((i) => markaz(i) - pillKeng(i) / 2), extrapolate: "extend" })
     : 0;
-  // Fon kengligi tanlangan bo'limga silliq moslashadi (kenglik native driver'da animatsiya qilinmaydi)
-  const pillW = useRef(new Animated.Value(0)).current;
-  const birinchi = useRef(true);
-  useEffect(() => {
-    const w = pillKeng(state.index);
-    if (!w) return;
-    if (birinchi.current) { pillW.setValue(w); birinchi.current = false; return; }
-    Animated.spring(pillW, { toValue: w, ...PRUJINA_YUMSHOQ, useNativeDriver: false }).start();
-  }, [state.index, joylar, kenglik]);
+  // Kenglik ham XUDDI SHU qiymatdan (idx) — joyi va kengligi doim birga yuradi. Avval kenglik alohida
+  // animatsiya edi: surib o'tganda ikkalasi ajralib, indikator bir lahza siljib "titrar" edi.
+  // (kenglik native driver'da animatsiya qilinmaydi — shuning uchun idx JS driver'da)
+  const pillW = kenglik && soni > 1
+    ? idx.interpolate({ inputRange: kirishlar, outputRange: kirishlar.map((i) => pillKeng(i)), extrapolate: "clamp" })
+    : pillKeng(state.index);
 
   return (
     <>
