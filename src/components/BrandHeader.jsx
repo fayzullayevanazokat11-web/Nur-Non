@@ -2,7 +2,8 @@
 // nonvoyxona (profil) nomi (kiritilmagan bo'lsa "Nur-Non") va ostida joriy bo'lim nomi.
 // O'ng chetda joriy sana va vaqt (har 30s yangilanadi).
 // Butun banner bosilganda menyu (Akkaunt, Tarixdagilar, PDFlar, yozuv, dizayn...) ochiladi/yopiladi.
-import { tikMs, useRejim, TEZLIKLAR } from "../store/rejim";
+import { tikMs, useRejim, TEZLIKLAR, tezlikQoy } from "../store/rejim";
+import { sezgi } from "../logic/sezgi";
 import { useEffect, useState } from "react";
 import { View, Text, Image, Pressable, StyleSheet, LayoutAnimation, AppState } from "react-native";
 import { MarkazMenyu } from "./MarkazMenyu";
@@ -55,6 +56,13 @@ export function BrandHeader({ onLogo, menuOchiq = false, sahifa, suzuvchi = fals
   const nom = (akkauntNomi || "").trim() || "Nur-Non";
   const { rejim, tezlik } = useRejim();
   const test = rejim === "test";
+  const tezlikNomi = (TEZLIKLAR.find((x) => x.k === tezlik) || {}).nom || `${tezlik}×`;
+  const tezlikAlmash = () => {
+    const i = TEZLIKLAR.findIndex((x) => x.k === tezlik);
+    tezlikQoy(TEZLIKLAR[(i + 1) % TEZLIKLAR.length].k);
+    sezgi("bos");
+    setTimeout(() => setT(hozir()), 50);
+  };
   const [t, setT] = useState(hozir());
   useEffect(() => {
     const id = setInterval(() => setT(hozir()), tikMs(30000)); // 30s (test rejimida — har soniya)
@@ -87,19 +95,40 @@ export function BrandHeader({ onLogo, menuOchiq = false, sahifa, suzuvchi = fals
           {/* Test maydonida — doim ko'rinadigan belgi (asl tizim bilan adashtirmaslik uchun) */}
           {test && (
             <View style={styles.testBelgi}>
-              <Text style={styles.testTxt}>TEST{tezlik > 1 ? ` · ${(TEZLIKLAR.find((x) => x.k === tezlik) || {}).nom || `${tezlik}×`}` : ""}</Text>
+              <Text style={styles.testTxt}>TEST</Text>
             </View>
           )}
           <Text style={[styles.sub, styles.flexShrink]} numberOfLines={1}>{sahifa || "Boshqaruv tizimi"}</Text>
         </View>
       </View>
-      <View style={styles.clock}>
-        <View style={styles.clockRow}>
-          <Ionicons name="time-outline" size={12} color={C.onAccent} />
-          <Text style={styles.clockTime}>{t.vaqt}</Text>
+      {test ? (
+        // Test maydonida soat — vaqt tezligi tugmasi: bosilganda 1× → 60× → Ultra → 1× (faqat testda)
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={`Soat — vaqt tezligini almashtirish (hozir ${tezlikNomi})`}
+          onPress={tezlikAlmash}
+          hitSlop={6}
+          style={({ pressed }) => [styles.clock, styles.clockTest, pressed && { opacity: 0.75 }]}
+        >
+          <View style={styles.clockRow}>
+            <Ionicons name="time-outline" size={12} color={C.onAccent} />
+            <Text style={styles.clockTime}>{t.vaqt}</Text>
+          </View>
+          <Text style={styles.clockDate}>{t.sana}</Text>
+          <View style={styles.tezlikQator}>
+            <Ionicons name={tezlik > 1 ? "play-forward" : "play"} size={9} color={C.accent} />
+            <Text style={styles.tezlikTxt}>{tezlikNomi}</Text>
+          </View>
+        </Pressable>
+      ) : (
+        <View style={styles.clock}>
+          <View style={styles.clockRow}>
+            <Ionicons name="time-outline" size={12} color={C.onAccent} />
+            <Text style={styles.clockTime}>{t.vaqt}</Text>
+          </View>
+          <Text style={styles.clockDate}>{t.sana}</Text>
         </View>
-        <Text style={styles.clockDate}>{t.sana}</Text>
-      </View>
+      )}
     </Pressable>
   );
 }
@@ -148,6 +177,9 @@ const styles = temaStil(() => StyleSheet.create({
     borderRadius: R.md,
     backgroundColor: C.onAccent + "1F",
   },
+  clockTest: { borderWidth: 1, borderColor: "#FFFFFF66" },
+  tezlikQator: { flexDirection: "row", alignItems: "center", gap: 2, marginTop: 3, backgroundColor: "#FFFFFF", borderRadius: 5, paddingHorizontal: 5, paddingVertical: 1 },
+  tezlikTxt: { fontSize: 9, fontWeight: "900", color: C.accent, letterSpacing: 0.3 },
   clockRow:  { flexDirection: "row", alignItems: "center", gap: 3 },
   clockTime: { fontSize: T.md, color: C.onAccent, fontWeight: "800", letterSpacing: 0.3 },
   clockDate: { fontSize: 10, color: C.onAccentSub, fontWeight: "700", marginTop: 1, letterSpacing: 0.4 },
