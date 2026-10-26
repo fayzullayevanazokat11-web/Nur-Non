@@ -2,6 +2,7 @@
 // nonvoyxona (profil) nomi (kiritilmagan bo'lsa "Nur-Non") va ostida joriy bo'lim nomi.
 // O'ng chetda joriy sana va vaqt (har 30s yangilanadi).
 // Butun banner bosilganda menyu (Akkaunt, Tarixdagilar, PDFlar, yozuv, dizayn...) ochiladi/yopiladi.
+import { tikMs, useRejim, TEZLIKLAR } from "../store/rejim";
 import { useEffect, useState } from "react";
 import { View, Text, Image, Pressable, StyleSheet, LayoutAnimation, AppState } from "react-native";
 import { MarkazMenyu } from "./MarkazMenyu";
@@ -52,9 +53,11 @@ const nomShrift = (nom) => (nom.length <= 10 ? null : nom.length <= 14 ? { fontS
 export function BrandHeader({ onLogo, menuOchiq = false, sahifa, suzuvchi = false }) {
   const { akkauntNomi } = useApp();
   const nom = (akkauntNomi || "").trim() || "Nur-Non";
+  const { rejim, tezlik } = useRejim();
+  const test = rejim === "test";
   const [t, setT] = useState(hozir());
   useEffect(() => {
-    const id = setInterval(() => setT(hozir()), 30000); // 30s
+    const id = setInterval(() => setT(hozir()), tikMs(30000)); // 30s (test rejimida — har soniya)
     return () => clearInterval(id);
   }, []);
 
@@ -80,7 +83,15 @@ export function BrandHeader({ onLogo, menuOchiq = false, sahifa, suzuvchi = fals
       <View style={styles.flex1}>
         {/* Nonvoyxona (profil) nomi — faqat shu yerda; ostida joriy bo'lim nomi */}
         <Text style={[styles.title, nomShrift(nom)]} numberOfLines={1} adjustsFontSizeToFit>{nom}</Text>
-        <Text style={styles.sub} numberOfLines={1}>{sahifa || "Boshqaruv tizimi"}</Text>
+        <View style={styles.subQator}>
+          {/* Test maydonida — doim ko'rinadigan belgi (asl tizim bilan adashtirmaslik uchun) */}
+          {test && (
+            <View style={styles.testBelgi}>
+              <Text style={styles.testTxt}>TEST{tezlik > 1 ? ` · ${(TEZLIKLAR.find((x) => x.k === tezlik) || {}).nom || `${tezlik}×`}` : ""}</Text>
+            </View>
+          )}
+          <Text style={[styles.sub, styles.flexShrink]} numberOfLines={1}>{sahifa || "Boshqaruv tizimi"}</Text>
+        </View>
       </View>
       <View style={styles.clock}>
         <View style={styles.clockRow}>
@@ -124,6 +135,10 @@ const styles = temaStil(() => StyleSheet.create({
   flex1: { flex: 1 },
   title: { fontSize: 23, fontWeight: "800", color: C.onAccent, letterSpacing: -0.3 },
   sub:   { fontSize: T.sm, color: C.onAccentSub, marginTop: 2, fontWeight: "500" },
+  subQator: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 2 },
+  flexShrink: { flexShrink: 1, marginTop: 0 },
+  testBelgi: { backgroundColor: "#FFFFFF", borderRadius: 6, paddingHorizontal: 6, paddingVertical: 1 },
+  testTxt:   { fontSize: 10, fontWeight: "900", color: C.accent, letterSpacing: 0.6 },
   akkRow:{ flexDirection: "row", alignItems: "center", gap: 4, marginTop: 2 },
   akk:   { marginTop: 0, fontWeight: "700", flexShrink: 1 },
   clock: {

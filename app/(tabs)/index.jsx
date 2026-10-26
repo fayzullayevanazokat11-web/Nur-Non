@@ -1,6 +1,7 @@
 // "Markaz" ekrani — eslatmalar, kunlik vazifa, so'ng bitta kartada Qarzlar/Optom/Karta/Xarajat
 // ustunlari, "Hisob-kitob" guruhi (qop hisobi + kun yakunini bekor qilish, statistika)
 // va bugungi ishchilar haqi (jami bilan).
+import { tikMs } from "../../src/store/rejim";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { View, Text, Pressable, Image, StyleSheet, LayoutAnimation, AppState, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -49,7 +50,7 @@ export default function Markaz() {
   const [davomatOch, setDavomatOch] = useState(0); // Kunlik vazifadan bosilganda davomat kartasi ochiladi
   const [tick, setTick] = useState(0);
   useEffect(() => {
-    const id = setInterval(() => setTick((t) => (t + 1) % 1000000), 30000);
+    const id = setInterval(() => setTick((t) => (t + 1) % 1000000), tikMs(30000));
     return () => clearInterval(id);
   }, []);
   const bugunSanasi = useMemo(() => localSana(), [tick]);

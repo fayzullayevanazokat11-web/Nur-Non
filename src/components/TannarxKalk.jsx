@@ -2,6 +2,7 @@
 // Tannarx = xomashyo + qoplik ishchilar + kunlik ishchilar ulushi (o'rtacha kunlik
 // qopga bo'linadi, oxirgi hisobotlardan avtomatik). Narx o'zgarsa — darhol qayta hisoblanadi.
 // "Sinov narxi" — narxni o'zgartirsangiz qancha foyda qolishini ko'rsatadi (saqlanmaydi).
+import { tikMs } from "../store/rejim";
 import { useEffect, useMemo, useState } from "react";
 import { View, Text, TextInput, StyleSheet, LayoutAnimation } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
@@ -31,7 +32,7 @@ export function TannarxKalk() {
   const [ikonOchiq, setIkonOchiq] = useState(null);
   // Narx o'zgarishlari faqat 1 soat ko'rinadi — har daqiqada tekshiriladi, muddati o'tgani o'zi yo'qoladi
   const [hozir, setHozir] = useState(Date.now());
-  useEffect(() => { const id = setInterval(() => setHozir(Date.now()), 60000); return () => clearInterval(id); }, []);
+  useEffect(() => { const id = setInterval(() => setHozir(Date.now()), tikMs(60000)); return () => clearInterval(id); }, []);
   const yangiNarxlar = (narxTarixi || []).filter((o) => hozir - (o.vaqt || 0) < NARX_KORINISH);
   useTiklash(() => setIkonOchiq(null));
   const ikonAlmash = (k) => {

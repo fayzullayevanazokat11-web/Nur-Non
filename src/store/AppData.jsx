@@ -1,4 +1,5 @@
 // Butun ilova holati — har bir kolleksiya "nurnon:" prefiksi bilan AsyncStorage'da.
+import { tikMs, testmi } from "./rejim";
 import { createContext, useContext, useState, useEffect, useMemo, useRef } from "react";
 import { LayoutAnimation, AppState, Platform } from "react-native";
 import * as FileSystem from "expo-file-system";
@@ -104,12 +105,16 @@ export function AppDataProvider({ children }) {
   // 30 kundan eskirgan kunlik hisobotlarning oylik yig'masi (oylar taqqoslash, oylik ish haqi)
   const [oylikArxiv, setOylikArxiv]                     = usePersistedState("nurnon:oylikArxiv", {});
   // Kechqurungi "Kunni yakunlash" eslatmasi (bildirishnoma) yoqilganmi
-  const [eslatmaYoqilgan, setEslatmaYoqilgan]           = usePersistedState("nurnon:eslatmaYoqilgan", true);
+  // Kechki eslatma — doim yoqiq (foydalanuvchi o'chira olmaydi; eski "o'chiq" qiymati e'tiborsiz)
+  const eslatmaYoqilgan = true;
+  const setEslatmaYoqilgan = () => {};
   // Davomat: { "2026-10-17": [kelmagan ishchi id'lari] } — 60 kun saqlanadi
   // Davomat: { "YYYY-MM-DD": [kelgani TASDIQLANGAN xodim id'lari] } — sukut: hali hech kim kelmagan
   const [davomat, setDavomat]                           = usePersistedState("nurnon:keldilar", {});
   // Xodimlar kelgan vaqti (qo'lda kiritiladi): { "2026-10-17": { ishchiId: "07:30" } } — 60 kun
   const [kelishVaqtlari, setKelishVaqtlari]             = usePersistedState("nurnon:kelishVaqtlari", {});
+  // Kelmaganlik sababi (izoh): { [sana]: { [xodimId]: "kasal" } }
+  const [kelmaslikIzohlari, setKelmaslikIzohlari]       = usePersistedState("nurnon:kelmaslikIzohlari", {});
   // Xodimning shu kungi ishi: { "YYYY-MM-DD": { [id]: { lavozimId?, haq?, orniga? } } }
   const [kunlikRollar, setKunlikRollar]                 = usePersistedState("nurnon:kunlikRollar", {});
   // Sut kirimi (kuniga 2 mahal, litr): { "YYYY-MM-DD": { m1: 40, m2: 35 } } — omborda turmaydi,
@@ -121,7 +126,10 @@ export function AppDataProvider({ children }) {
   // Xomashyo narxlari o'zgarish tarixi: [{ id, nom, eski, yangi, vaqt }] — 180 kun
   const [narxTarixi, setNarxTarixi]                     = usePersistedState("nurnon:narxTarixi", []);
   // Kun xulosasi (03:00) va ertalabki salom ekranlari yoqilganmi (qurilma sozlamasi)
-  const [salomYoqilgan, setSalomYoqilgan]               = usePersistedState("nurnon:salomYoqilgan", true);
+  // Salom va kun xulosasi — doim yoqiq. Faqat avtomatik testlar uchun yashirin kalit (ilovada tugmasi yo'q)
+  const [salomTestdaOchiq] = usePersistedState("nurnon:salomOchirTest", false, { hidratsiya: false });
+  const salomYoqilgan = salomTestdaOchiq !== true;
+  const setSalomYoqilgan = () => {};
   // Ertalabgi qop rasmlari (7 kun, faqat shu telefonda): [{ id, kun, uri, vaqt }]
   const [qopRasmlari, setQopRasmlari]                   = usePersistedState("nurnon:qopRasmlari", []);
   // PDFlar arxivi (30 kun, faqat shu telefonda): [{ hisobotId, sana, uri, hajm, rasmSoni, vaqt }]
@@ -195,6 +203,7 @@ export function AppDataProvider({ children }) {
       }));
       setDavomat((p) => Object.fromEntries(Object.entries(p || {}).filter(([s]) => (now - (Date.parse(s) || now)) < 60 * D)));
       setKelishVaqtlari((p) => Object.fromEntries(Object.entries(p || {}).filter(([s]) => (now - (Date.parse(s) || now)) < 60 * D)));
+      setKelmaslikIzohlari((p) => Object.fromEntries(Object.entries(p || {}).filter(([s]) => (now - (Date.parse(s) || now)) < 60 * D)));
       setKunlikRollar((p) => Object.fromEntries(Object.entries(p || {}).filter(([s]) => (now - (Date.parse(s) || now)) < 60 * D)));
       setSutKirimi((p) => Object.fromEntries(Object.entries(p || {}).filter(([s]) => (now - (Date.parse(s) || now)) < 60 * D)));
       setTashqiKirim((p) => Object.fromEntries(Object.entries(p || {}).filter(([s]) => (now - (Date.parse(s) || now)) < 60 * D)));
@@ -366,7 +375,7 @@ export function AppDataProvider({ children }) {
   const [, setKunKalit] = useState(bugunSana());
   useEffect(() => {
     const tekshir = () => setKunKalit((p) => { const b = bugunSana(); return p === b ? p : b; });
-    const t = setInterval(tekshir, 30000);
+    const t = setInterval(tekshir, tikMs(30000));
     const sub = AppState.addEventListener("change", (h) => { if (h === "active") tekshir(); });
     return () => { clearInterval(t); sub.remove(); };
   }, []);
@@ -399,6 +408,12 @@ export function AppDataProvider({ children }) {
   };
   // Bugun kelgan vaqtlar va ularni o'rnatish ("" — o'chirish)
   const kelishVaqti = useMemo(() => (kelishVaqtlari || {})[bugun] || {}, [kelishVaqtlari, bugun]);
+  const kelmaslikIzohi = useMemo(() => (kelmaslikIzohlari || {})[bugun] || {}, [kelmaslikIzohlari, bugun]);
+  const kelmaslikIzohQoy = (id, matn, sana = bugun) => setKelmaslikIzohlari((p) => {
+    const kun = { ...((p || {})[sana] || {}) };
+    if (String(matn || "").trim()) kun[id] = matn; else delete kun[id];
+    return { ...(p || {}), [sana]: kun };
+  });
   const kelishVaqtiQoy = (id, soat) => setKelishVaqtlari((p) => {
     const kun = { ...((p || {})[bugun] || {}) };
     if (soat) kun[id] = soat; else delete kun[id];
@@ -456,7 +471,8 @@ export function AppDataProvider({ children }) {
   const [eslatmaKalit, setEslatmaKalit] = useState(0);
   const eslatmaYangila = () => setEslatmaKalit((k) => k + 1);
   useEffect(() => {
-    if (!tayyor) return;
+    // Test maydonida bildirishnomalarga tegilmaydi (asl tizimning kechki eslatmasi buzilmasin)
+    if (!tayyor || testmi()) return;
     const til = getTil();
     kunYakunEslatmalari({
       yoqilgan: !!eslatmaYoqilgan,
@@ -767,6 +783,7 @@ export function AppDataProvider({ children }) {
     ishHaqiYozuvlari: [ishHaqiYozuvlari, setIshHaqiYozuvlari, "array"],
     oylikArxiv: [oylikArxiv, setOylikArxiv, "object"],
     keldilar: [davomat, setDavomat, "object"],
+    kelmaslikIzohlari: [kelmaslikIzohlari, setKelmaslikIzohlari, "object"],
     kelishVaqtlari: [kelishVaqtlari, setKelishVaqtlari, "object"],
     kunlikRollar: [kunlikRollar, setKunlikRollar, "object"],
     sutKirimi: [sutKirimi, setSutKirimi, "object"],
@@ -812,13 +829,14 @@ export function AppDataProvider({ children }) {
   const [oxirgiNusxa, setOxirgiNusxa] = useState(0);
   const oxirgiNusxaRef = useRef(0);
   const nusxaOl = (majburiy = false) => {
+    if (testmi()) return; // Test maydoni avtomatik zaxira nusxaga yozilmaydi (asl nusxalar saqlanadi)
     const hozir = Date.now();
     if (!majburiy && hozir - oxirgiNusxaRef.current < 10 * 60 * 1000) return;
     oxirgiNusxaRef.current = hozir;
     nusxaSaqla(eksportRef.current(), bugunSana()).then(() => setOxirgiNusxa(Date.now())).catch(() => {});
   };
   useEffect(() => {
-    if (!tayyor) return undefined;
+    if (!tayyor || testmi()) return undefined;
     const t = setTimeout(() => {
       nusxaBormi(bugunSana()).then((bor) => { if (!bor) nusxaOl(true); else setOxirgiNusxa(Date.now()); }).catch(() => {});
     }, 3000);
@@ -880,6 +898,7 @@ export function AppDataProvider({ children }) {
     oylikArxiv, setOylikArxiv,
     eslatmaYoqilgan, setEslatmaYoqilgan, eslatmaYangila,
     davomat, setDavomat, keldilar, kelmaganlar, keldiAlmash, ishchilarHaq,
+    kelmaslikIzohlari, kelmaslikIzohi, kelmaslikIzohQoy,
     kelishVaqtlari, kelishVaqti, kelishVaqtiQoy,
     kunlikRollar, setKunlikRollar, kunlikRol, kunlikRolQoy,
     sutKirimi, sutQoy, tashqiKirim, tashqiKirimQoy,

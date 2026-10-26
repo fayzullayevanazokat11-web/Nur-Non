@@ -4,6 +4,7 @@
 //   • Ertalabki salom — 04:00 dan keyin dastur birinchi ochilganda: vaqt, hafta kuni,
 //     bayram va kechagi natijaga qarab salom (kecha xulosasi ko'rilmagan bo'lsa — shu yerda).
 // Har biri kuniga bir marta; "Markazga qaytish" bilan yopiladi. Menyuda o'chirib qo'yish mumkin.
+import { kalit, tikMs, getTezlik } from "../store/rejim";
 import { useEffect, useRef, useState } from "react";
 import { View, Text, Pressable, Animated, Easing, StyleSheet, AppState, BackHandler } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -59,25 +60,28 @@ export function KunOtishi() {
 
   // Saqlangan holat va yo'riqnoma belgisi
   useEffect(() => {
-    AsyncStorage.multiGet([KALIT, "nurnon:tanishuv"])
+    AsyncStorage.multiGet([kalit(KALIT), "nurnon:tanishuv"])
       .then((r) => {
         const o = Object.fromEntries(r);
-        setHolat(o[KALIT] ? JSON.parse(o[KALIT]) || {} : {});
+        setHolat(o[kalit(KALIT)] ? JSON.parse(o[kalit(KALIT)]) || {} : {});
         setTanishuv(o["nurnon:tanishuv"] != null && JSON.parse(o["nurnon:tanishuv"]) === true);
       })
       .catch(() => { setHolat({}); setTanishuv(true); });
   }, []);
-  const saqla = (yangi) => { setHolat(yangi); AsyncStorage.setItem(KALIT, JSON.stringify(yangi)).catch(() => {}); };
+  const saqla = (yangi) => { setHolat(yangi); AsyncStorage.setItem(kalit(KALIT), JSON.stringify(yangi)).catch(() => {}); };
 
   // Vaqt o'tishini kuzatamiz: har 30 soniyada va dastur oldingi planga chiqqanda
   useEffect(() => {
-    const t = setInterval(() => setTick((x) => x + 1), 30000);
+    const t = setInterval(() => setTick((x) => x + 1), tikMs(30000));
     const sub = AppState.addEventListener("change", (h) => { if (h === "active") setTick((x) => x + 1); });
     return () => { clearInterval(t); sub.remove(); };
   }, []);
 
   useEffect(() => {
     if (ekran || !tayyor || !holat || tanishuv == null || salomYoqilgan === false) return;
+    // Test maydonida vaqt tezlashtirilgan bo'lsa (60×, Ultra) — salom/xulosa ekrani chiqmaydi
+    // (Ultra'da har daqiqada ekranni to'sib qo'yardi)
+    if (getTezlik() > 1) return;
     const hozir = new Date();
     const bugunD = ishKuni(hozir.getTime());
     const bugun = sanaStr(bugunD);

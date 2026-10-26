@@ -122,9 +122,11 @@ export function kunlikHtml(h, { akkaunt, nonlar, rasmlar = [] } = {}) {
   // Shu kungi ish (boshqa lavozim / kimning o'rniga) bo'lsa — alohida ustun
   const ishBor = davomat.some((d) => d.lavozim || d.orniga);
   const kunIshi = (d) => [d.lavozim ? t(d.lavozim) : "", d.orniga ? `${t(d.orniga)} ${t("o'rniga")}` : ""].filter(Boolean).join(" · ");
+  // Kelmaganlarning sababi (izoh) — vaqt ustunida
+  const izohBor = davomat.some((d) => !d.keldi && d.izoh);
   if (davomat.length) ichi += bolim("Davomat", jadval(
-    ["Xodim", "Holat", "Kelgan vaqti", ...(ishBor ? ["Bugungi ishi"] : [])],
-    davomat.map((d) => [t(d.ism), t(d.keldi ? "Keldi" : "Kelmadi"), d.keldi ? (d.soat || t("Vaqtida")) : "—", ...(ishBor ? [kunIshi(d) || "—"] : [])])));
+    ["Xodim", "Holat", izohBor ? "Vaqt / sabab" : "Kelgan vaqti", ...(ishBor ? ["Bugungi ishi"] : [])],
+    davomat.map((d) => [t(d.ism), t(d.keldi ? "Keldi" : "Kelmadi"), d.keldi ? (d.soat || t("Vaqtida")) : (d.izoh ? t(d.izoh) : "—"), ...(ishBor ? [kunIshi(d) || "—"] : [])])));
 
   if (nonQatorlar.length) ichi += bolim("Ishlab chiqarish", jadval(["Non turi", "Qop", "Ishlab (dona)", "Tonggi qoldiq", "Yaroqsiz", "Kun oxiri qoldiq"], nonQatorlar));
   ichi += bolim("Umumiy son", jadval(["Ko'rsatkich", "Dona"], [

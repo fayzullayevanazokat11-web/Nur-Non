@@ -14,7 +14,7 @@ import { C, T, S, R, temaStil } from "../theme";
 
 // ochKaliti — qiymati o'zgarsa karta ochiladi (Kunlik vazifadan bosilganda); onOchildi — ochilganda
 export function DavomatKarta({ ochKaliti, onOchildi, style }) {
-  const { ishchilar, nonlar, kelmaganlar, keldiAlmash, kelishVaqti, kelishVaqtiQoy, kunlikRol, kunlikRolQoy } = useApp();
+  const { ishchilar, nonlar, kelmaganlar, keldiAlmash, kelishVaqti, kelishVaqtiQoy, kunlikRol, kunlikRolQoy, kelmaslikIzohi, kelmaslikIzohQoy } = useApp();
   const [ochiqRol, setOchiqRol] = useState(null); // "Bugungi ishi" ochiq xodim
   useTiklash(() => setOchiqRol(null));
   const hammaAktiv = (ishchilar || []).filter((w) => w.holat === "Aktiv");
@@ -66,6 +66,10 @@ export function DavomatKarta({ ochKaliti, onOchildi, style }) {
               <Text style={[styles.belgiTxt, !kelmadi && { color: C.onAccent }]}>{kelmadi ? "Kelmadi" : "Keldi"}</Text>
             </Pressable>
            </View>
+            {/* Kelmagan xodim — sababi (ixtiyoriy izoh) */}
+            {kelmadi && (
+              <IzohMaydon ism={w.ism} qiymat={kelmaslikIzohi[w.id] || ""} onSaqla={(v) => kelmaslikIzohQoy(w.id, v)} />
+            )}
             {!kelmadi && ochiqRol === w.id && (
               <BugungiIsh w={w} rol={rol} ishchilar={ishchilar} nonlar={nonlar} boshqalar={hammaAktiv.filter((x) => x.id !== w.id && kelmaganlar.includes(x.id))} onQoy={(patch) => kunlikRolQoy(w.id, patch)} />
             )}
@@ -211,6 +215,22 @@ function BugungiIsh({ w, rol, ishchilar, nonlar, boshqalar, onQoy }) {
   );
 }
 
+// Kelmaganlik sababi: yozilgan zahoti saqlanadi (kasal, ta'tilda, oilaviy...)
+function IzohMaydon({ ism, qiymat, onSaqla }) {
+  const [matn, setMatn] = useState(qiymat);
+  useEffect(() => { setMatn(qiymat); }, [qiymat]);
+  return (
+    <TextInput
+      accessibilityLabel={`${ism}: kelmaganlik sababi`}
+      value={matn}
+      onChangeText={(v) => { setMatn(v); onSaqla(v); }}
+      placeholder="Sababi (ixtiyoriy): kasal, oilaviy..."
+      placeholderTextColor={C.muted}
+      style={styles.izohInput}
+    />
+  );
+}
+
 function KelishVaqti({ ism, qiymat, onSaqla }) {
   const [matn, setMatn] = useState(qiymat);
   useEffect(() => { setMatn(qiymat); }, [qiymat]);
@@ -238,6 +258,7 @@ function KelishVaqti({ ism, qiymat, onSaqla }) {
 
 const styles = temaStil(() => StyleSheet.create({
   karta:     { marginBottom: S[4] },
+  izohInput: { marginTop: 6, borderWidth: 1, borderColor: C.borderSoft, borderRadius: R.sm, paddingVertical: 7, paddingHorizontal: 10, fontSize: 12, color: C.text, backgroundColor: C.surface },
   flex1:     { flex: 1 },
   bosh:      { flexDirection: "row", alignItems: "center", gap: S[3] },
   boshIkon:  { width: 40, height: 40, borderRadius: R.sm, alignItems: "center", justifyContent: "center", backgroundColor: C.accent + "14" },

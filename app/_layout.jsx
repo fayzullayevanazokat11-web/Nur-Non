@@ -14,6 +14,7 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { useFonts } from "expo-font";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { AppDataProvider } from "../src/store/AppData";
+import { useRejim } from "../src/store/rejim";
 import { Splash } from "../src/components/Splash";
 import { ErrorBoundary } from "../src/components/ErrorBoundary";
 import { BekorPanel } from "../src/components/BekorPanel";
@@ -55,6 +56,8 @@ export default function RootLayout() {
   const [splash, setSplash] = useState(true);
   useFonts(Ionicons.font); // best-effort; render'ni bloklamaydi
   const tema = useTema();
+  // Test maydoni ochilganda/yopilganda butun ma'lumot qatlami qayta o'rnatiladi (boshqa kalitlar bilan)
+  const { avlod } = useRejim();
   const parda = useTemaParda();
 
   // Telefonning "Orqaga" tugmasi dasturdan chiqarib yubormaydi: avval oxirgi ochilgan
@@ -91,11 +94,11 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <ErrorBoundary>
-        <AppDataProvider>
+        <AppDataProvider key={avlod}>
           <View style={[styles.ildiz, { backgroundColor: C.bg }]}>
             <StatusBar style={splash || temaQorongi() ? "light" : "dark"} />
             <ThemeProvider value={navTema}>
-              <Stack key={tema} screenOptions={{ headerShown: false, animation: "fade", contentStyle: { backgroundColor: C.bg } }}>
+              <Stack key={`${tema}-${avlod}`} screenOptions={{ headerShown: false, animation: "fade", contentStyle: { backgroundColor: C.bg } }}>
                 <Stack.Screen name="(tabs)" />
                 <Stack.Screen name="qarzlar" />
                 <Stack.Screen name="optom" />

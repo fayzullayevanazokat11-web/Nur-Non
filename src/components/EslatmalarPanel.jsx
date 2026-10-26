@@ -1,6 +1,7 @@
 // Markazdagi "Diqqat" paneli — kam xomashyo, tasdiqlanmagan so'rovnoma, eski qarz,
 // yakunlanmagan kun. Bosilsa tegishli sahifa ochiladi; × — bugunga yashiradi.
 // Hech narsa bo'lmasa panel umuman ko'rinmaydi (minimal).
+import { tikMs } from "../store/rejim";
 import { useEffect, useMemo, useState } from "react";
 import { View, Text, Pressable, StyleSheet, LayoutAnimation } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
@@ -20,7 +21,7 @@ export function EslatmalarPanel() {
   // Yashirilganlar: { id: sana } — faqat shu kun uchun
   const [yashirin, setYashirin] = usePersistedState("nurnon:yashirinEslatmalar", {}, { hidratsiya: false });
   const [daqiqa, setDaqiqa] = useState(0);
-  useEffect(() => { const t = setInterval(() => setDaqiqa((x) => x + 1), 60000); return () => clearInterval(t); }, []);
+  useEffect(() => { const t = setInterval(() => setDaqiqa((x) => x + 1), tikMs(60000)); return () => clearInterval(t); }, []);
 
   const royxat = useMemo(() => omborRoyxati(customMahsulotlar), [customMahsulotlar]);
   const hammasi = useMemo(() => (tayyor ? eslatmalar({

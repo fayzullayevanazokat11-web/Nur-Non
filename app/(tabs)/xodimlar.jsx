@@ -2,7 +2,7 @@
 // tahrirlash to'g'ridan-to'g'ri sahifa ichida.
 import { useEffect, useMemo, useRef, useState } from "react";
 import { router } from "expo-router";
-import { View, Text, Pressable, TextInput, StyleSheet, Alert } from "react-native";
+import { View, Text, Pressable, TextInput, StyleSheet, Alert, Linking } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 
@@ -22,7 +22,7 @@ import { saqlandiXabar } from "../../src/components/Xabarcha";
 import { BoshHolat } from "../../src/components/BoshHolat";
 import { Guruh, KorsatkichQatori } from "../../src/components/Guruh";
 
-const BOSH = { ism: "", lavozimId: LAVOZIMLAR[0].id, lavozimCustom: "", haqTuri: "kunlik", miqdor: "", nonNarx: {}, holat: "Aktiv", tatilSana: "" };
+const BOSH = { ism: "", tel: "", lavozimId: LAVOZIMLAR[0].id, lavozimCustom: "", haqTuri: "kunlik", miqdor: "", nonNarx: {}, holat: "Aktiv", tatilSana: "" };
 const HOLATLAR = ["Aktiv", "Ta'tilda"];
 
 export default function Xodimlar() {
@@ -50,7 +50,7 @@ export default function Xodimlar() {
     const nonNarx = {};
     Object.entries(w.nonNarxlari || {}).forEach(([nom, narx]) => { nonNarx[nom] = String(narx); });
     setForma({
-      ism: w.ism, lavozimId: w.lavozimId, lavozimCustom: w.lavozimCustom || "",
+      ism: w.ism, tel: w.tel || "", lavozimId: w.lavozimId, lavozimCustom: w.lavozimCustom || "",
       haqTuri: w.haqTuri || "kunlik",
       miqdor: String(w.miqdor || ""), nonNarx, holat: w.holat || "Aktiv",
       tatilSana: w.tatilQaytishSana || "",
@@ -87,7 +87,7 @@ export default function Xodimlar() {
       qoshimcha = { haqTuri: "kunlik", miqdor: sonOl(forma.miqdor), nonTurlari: [], nonNarxlari: {} };
     }
     const asos = {
-      ism: forma.ism.trim(), lavozimId: forma.lavozimId,
+      ism: forma.ism.trim(), tel: forma.tel.trim(), lavozimId: forma.lavozimId,
       lavozimCustom: forma.lavozimId === "boshqasi" ? forma.lavozimCustom.trim() : "",
       holat: forma.holat,
       tatilQaytishSana: forma.holat === "Ta'tilda" ? forma.tatilSana : "",
@@ -171,6 +171,17 @@ export default function Xodimlar() {
         >
           <Text style={styles.inputLabel}>Ism *</Text>
           <TextInput value={forma.ism} onChangeText={(v) => yangila("ism", v)} placeholder="Masalan: Akmal aka" placeholderTextColor={C.muted} style={styles.input} />
+
+          <Text style={styles.inputLabel}>Telefon raqami</Text>
+          <TextInput
+            accessibilityLabel="Telefon raqami"
+            value={forma.tel}
+            onChangeText={(v) => yangila("tel", v.replace(/[^\d+\s()-]/g, ""))}
+            placeholder="+998 90 123 45 67"
+            placeholderTextColor={C.muted}
+            keyboardType="phone-pad"
+            style={styles.input}
+          />
 
           <Text style={styles.inputLabel}>Lavozim</Text>
           <View style={styles.lavGrid}>
@@ -359,6 +370,13 @@ function KartaWrap({ w, ochTahrir, ochir, haydash, tatildanQaytar, qaytarish, ta
         </View>
         {!ketgan && <Text style={styles.haq}>{qop ? "Qoplik" : `${formatSom(w.miqdor)} so'm/kun`}</Text>}
       </View>
+      {w.tel ? (
+        // Telefon — bosilsa qo'ng'iroq qilinadi
+        <Pressable accessibilityRole="link" accessibilityLabel={`${w.ism}: qo'ng'iroq`} onPress={() => Linking.openURL(`tel:${String(w.tel).replace(/[^\d+]/g, "")}`).catch(() => {})} style={({ pressed }) => [styles.telQator, pressed && { opacity: 0.6 }]}>
+          <Ionicons name="call-outline" size={15} color={C.accent} />
+          <Text style={styles.telTxt}>{w.tel}</Text>
+        </Pressable>
+      ) : null}
       {w.holat === "Ta'tilda" && w.tatilQaytishSana ? (
         <Text style={styles.tatil}>Ta'tildan qaytadi: {w.tatilQaytishSana}</Text>
       ) : null}
@@ -442,6 +460,8 @@ const styles = temaStil(() => StyleSheet.create({
   tatilBadge:{ flexDirection: "row", alignItems: "center", gap: 4, backgroundColor: C.accent + "14", paddingVertical: 3, paddingHorizontal: 8, borderRadius: R.pill },
   tatilBadgeTxt:{ fontSize: 10, fontWeight: "700", color: C.accent, letterSpacing: 0.2 },
   haq:       { fontSize: T.sm, fontWeight: "800", color: C.accent },
+  telQator:  { flexDirection: "row", alignItems: "center", gap: 6, marginTop: S[2], alignSelf: "flex-start" },
+  telTxt:    { fontSize: T.sm, fontWeight: "700", color: C.accent },
   tatil:     { fontSize: T.xs, color: C.muted, marginTop: 6 },
   haqWrap:   { marginTop: S[3], borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: C.borderSoft, paddingTop: S[2] },
   haqRow:    { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 5 },

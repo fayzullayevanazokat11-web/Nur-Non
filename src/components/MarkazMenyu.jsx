@@ -8,25 +8,27 @@
 // Menyu FAQAT logotip bosilganda ochiladi; boshqa bo'limga o'tilganda, dasturdan
 // chiqilganda yoki dizayn almashganda yopiladi.
 import { PRUJINA, PRUJINA_YUMSHOQ } from "../logic/fizika";
-import { useEffect, useRef } from "react";
+import { TestMaydoni } from "./TestMaydoni";
+import { useEffect, useRef, useState } from "react";
 import { View, Text, Pressable, Animated, Easing, StyleSheet, Switch, Alert, Platform } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useApp } from "../store/AppData";
-import { ruxsatSora, ESLATMA_SOAT } from "../logic/bildirishnoma";
+import { ruxsatSora, ruxsatHolati, ESLATMA_SOAT } from "../logic/bildirishnoma";
 import { tanishuvniOch } from "./Tanishuv";
 import { Bosma } from "./Bosma";
 import { useTil, setTil } from "../i18n/til";
 import { C, T, S, R, ANIM, temaStil, TEMALAR, useTema, useTanlov, tanlovAlmashtir } from "../theme";
 
 export function MarkazMenyu({ onYop }) {
-  const { ochirilganlar, akkauntNomi, eslatmaYoqilgan, setEslatmaYoqilgan, eslatmaYangila, salomYoqilgan, setSalomYoqilgan } = useApp();
-  const eslatmaAlmash = async (v) => {
-    if (!v) { setEslatmaYoqilgan(false); return; }
-    setEslatmaYoqilgan(true);
-    if (Platform.OS === "web") return;
+  const { ochirilganlar, akkauntNomi, eslatmaYangila } = useApp();
+  // Eslatma doim yoqiq — faqat bildirishnoma ruxsati bo'lmasa "Ruxsat berish" chiqadi
+  const [ruxsat, setRuxsat] = useState(null);
+  useEffect(() => { ruxsatHolati().then(setRuxsat).catch(() => {}); }, []);
+  const ruxsatBer = async () => {
     const bor = await ruxsatSora();
-    if (bor) eslatmaYangila(); // ruxsat endi berilgan bo'lsa — eslatmalar darhol rejalashtiriladi
+    setRuxsat(bor ? "bor" : "yoq");
+    if (bor) eslatmaYangila(); // ruxsat berilgach — eslatmalar darhol rejalashtiriladi
     else Alert.alert("Ruxsat kerak", "Eslatma kelishi uchun telefon sozlamalarida Nur-Non ilovasiga bildirishnomalarni yoqing.");
   };
   const til = useTil();
@@ -132,21 +134,18 @@ export function MarkazMenyu({ onYop }) {
 
       <View style={styles.divider} />
 
+      {/* Kechki eslatma va salom — doim yoqiq (o'chirib bo'lmaydi); faqat bildirishnoma ruxsati so'raladi */}
       <View style={styles.row}>
         <View style={styles.icon}><Ionicons name="alarm-outline" size={20} color={C.accent} /></View>
         <View style={styles.flex1}>
           <Text style={styles.label}>Kechki eslatma</Text>
           <Text style={styles.sub}>Har kuni {ESLATMA_SOAT}:00 da, kun yakunlanmagan bo'lsa</Text>
         </View>
-        <Switch
-          accessibilityLabel="Kechki eslatma"
-          value={!!eslatmaYoqilgan}
-          onValueChange={eslatmaAlmash}
-          trackColor={{ false: C.border, true: C.accent }}
-          thumbColor={C.surface}
-          activeThumbColor={C.surface}
-          ios_backgroundColor={C.border}
-        />
+        {ruxsat === "yoq" ? (
+          <Pressable accessibilityRole="button" accessibilityLabel="Bildirishnomaga ruxsat berish" onPress={ruxsatBer} style={({ pressed }) => [styles.ruxsatBtn, pressed && { opacity: 0.75 }]}>
+            <Text style={styles.ruxsatTxt}>Ruxsat berish</Text>
+          </Pressable>
+        ) : <DoimYoqiq />}
       </View>
 
       <View style={styles.divider} />
@@ -157,16 +156,13 @@ export function MarkazMenyu({ onYop }) {
           <Text style={styles.label}>Salom va kun xulosasi</Text>
           <Text style={styles.sub}>Tunda 03:00 da xulosa, ertalab salom</Text>
         </View>
-        <Switch
-          accessibilityLabel="Salom va kun xulosasi"
-          value={salomYoqilgan !== false}
-          onValueChange={(v) => setSalomYoqilgan(v)}
-          trackColor={{ false: C.border, true: C.accent }}
-          thumbColor={C.surface}
-          activeThumbColor={C.surface}
-          ios_backgroundColor={C.border}
-        />
+        <DoimYoqiq />
       </View>
+
+      <View style={styles.divider} />
+
+      {/* Test maydoni — asl tizimga tegmaydigan parallel tizim (vaqtni tezlatish bilan) */}
+      <TestMaydoni onYop={onYop} />
 
       <View style={styles.divider} />
 
@@ -229,7 +225,21 @@ export function MarkazMenyu({ onYop }) {
   );
 }
 
+// "Doim yoqiq" belgisi (o'chirish tugmasi o'rnida)
+function DoimYoqiq() {
+  return (
+    <View style={styles.doim}>
+      <Ionicons name="checkmark-circle" size={14} color={C.accent} />
+      <Text style={styles.doimTxt}>Doim yoqiq</Text>
+    </View>
+  );
+}
+
 const styles = temaStil(() => StyleSheet.create({
+  doim:      { flexDirection: "row", alignItems: "center", gap: 4, paddingVertical: 5, paddingHorizontal: 9, borderRadius: R.pill, backgroundColor: C.accent + "14" },
+  doimTxt:   { fontSize: 11, fontWeight: "800", color: C.accent },
+  ruxsatBtn: { paddingVertical: 7, paddingHorizontal: 11, borderRadius: R.pill, backgroundColor: C.accent },
+  ruxsatTxt: { fontSize: 11, fontWeight: "800", color: C.onAccent },
   avtoYarim: { position: "absolute", top: 0, bottom: 0, right: 0, width: "50%" },
   avtoIzoh:  { fontSize: 10, color: C.muted, textAlign: "center", marginTop: 1 },
   // Fon va chegarani tashqi qobiq beradi (xiralashgan fon) — bu yerda faqat kontent

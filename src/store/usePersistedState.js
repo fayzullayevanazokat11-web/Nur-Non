@@ -5,6 +5,7 @@
 // eslatmalar va avtomatik nusxa faqat shundan keyin ishlaydi).
 import { useState, useEffect, useSyncExternalStore } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { kalit } from "./rejim";
 
 const kutilmoqda = new Set();
 let royxatdanOtdi = false;
@@ -21,7 +22,9 @@ export function useHidratsiya() {
 }
 
 // hidratsiya: false — ilova umumiy "tayyor" holatiga ta'sir qilmaydigan mayda sozlamalar uchun
-export default function usePersistedState(key, initial, { hidratsiya = true } = {}) {
+// Test maydonida kalit "nurnon-test:..." bo'ladi (rejim almashganda provider qayta o'rnatiladi)
+export default function usePersistedState(asliKey, initial, { hidratsiya = true } = {}) {
+  const [key] = useState(() => kalit(asliKey));
   const [val, setVal] = useState(initial);
   const [loaded, setLoaded] = useState(() => { if (hidratsiya) { kutilmoqda.add(key); royxatdanOtdi = true; } return false; });
 
@@ -36,7 +39,8 @@ export default function usePersistedState(key, initial, { hidratsiya = true } = 
         kutilmoqda.delete(key);
         xabarBer();
       });
-    return () => { tirik = false; };
+    // Yuklanib ulgurmay o'chirilsa (rejim almashganda) — kutish ro'yxatidan chiqadi, "tayyor" tiqilib qolmaydi
+    return () => { tirik = false; if (kutilmoqda.delete(key)) xabarBer(); };
   }, [key]);
 
   useEffect(() => {

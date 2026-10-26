@@ -40,7 +40,7 @@ export default function Qop() {
     sotilmaganNon, setSotilmaganNon,
     boshlangichQoldiq, qoldaYaroqsiz, setQoldaYaroqsiz,
     kunlikXarajatlar,
-    oxirgiYakunlashVaqti, customMahsulotlar, tashqiKirim,
+    oxirgiYakunlashVaqti, customMahsulotlar, tashqiKirim, kelmaslikIzohlari,
     hisobotlarTarixi, kunYakunlanganmi, kunYakunla, lockedDayStats, yakunBekor,
     ertalab, qopRasmlari, davomat, kelishVaqtlari, kunlikRollar, keldiAlmash, sutKirimi,
   } = useApp();
@@ -261,6 +261,8 @@ export default function Qop() {
               // Shu kungi ish: boshqa lavozim va kimning o'rniga
               lavozim: !w.kelmadi && w.kunRol?.lavozimId ? getLavozimLabel(w) : "",
               orniga: !w.kelmadi && w.kunRol?.orniga ? ((xomIshchilar || []).find((x) => x.id === w.kunRol.orniga)?.ism || "") : "",
+              // Kelmagan bo'lsa — sababi (izoh)
+              izoh: w.kelmadi ? ((kelmaslikIzohlari || {})[sana] || {})[w.id] || "" : "",
             })),
             rasmSoni: sanaRasmlari.length,
             sut: (sutKirimi || {})[sana] || null,
