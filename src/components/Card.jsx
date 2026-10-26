@@ -5,7 +5,9 @@ import { useEffect, useRef } from "react";
 import { View, Animated, Easing, StyleSheet } from "react-native";
 import { C, R, S, shadow, ANIM, temaStil } from "../theme";
 
-export function Card({ children, danger = false, accent = false, animate = true, style }) {
+// animate — faqat so'ralganda: sahifa ochilganda o'nlab kartaning har biri alohida fade bo'lsa,
+// sahifaning o'z o'tishi bilan ustma-ust tushib miltillardi
+export function Card({ children, danger = false, accent = false, animate = false, style }) {
   // Fon SHAFFOFMAS (opaque) — yarim-shaffof fon + elevation Android'да
   // burchaklarda soya "sizib o'tishi" (qalin halo) artefaktini beradi.
   const variant = danger

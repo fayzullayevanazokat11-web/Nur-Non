@@ -13,6 +13,7 @@ import { ogir } from "../../src/i18n/translit";
 import { tabBosildi, PastkiJoy, TepaJoy } from "../../src/components/ScrollBox";
 import { BrandHeader } from "../../src/components/BrandHeader";
 import { SuzuvchiFon } from "../../src/components/SuzuvchiFon";
+import { XiraZona } from "../../src/components/XiraZona";
 import { MarkazMenyu } from "../../src/components/MarkazMenyu";
 import { useSafeAreaInsets as useInsets } from "react-native-safe-area-context";
 import { rezina, PRUJINA, PRUJINA_YUMSHOQ } from "../../src/logic/fizika";
@@ -56,6 +57,9 @@ function TepaPanel({ state, descriptors }) {
   const route = state.routes[state.index];
   const sahifa = descriptors[route.key]?.options?.title;
   return (
+    <>
+    {/* Bar ortidagi xira zona — tagidan o'tayotgan kontent fonga singib ketadi */}
+    <XiraZona joy="tepa" qattiq={insets.top + 8 + barH} otish={32} />
     <View pointerEvents="box-none" style={[styles.tepaTashqi, { top: insets.top + 8 }]}>
       <View onLayout={(e) => { olchovQoy(e.nativeEvent.layout.height); setBarH(e.nativeEvent.layout.height); }}>
         <BrandHeader onLogo={almash} menuOchiq={menu} sahifa={sahifa} suzuvchi />
@@ -77,12 +81,14 @@ function TepaPanel({ state, descriptors }) {
         </View>
       )}
     </View>
+    </>
   );
 }
 
 function PastkiPanel({ state, descriptors, navigation }) {
   const insets = useSafeAreaInsets();
   const [kenglik, setKenglik] = useState(0);
+  const [pastH, setPastH] = useState(0); // pastki panel (pastki bo'shliq bilan) balandligi — xira zona uchun
   // Klaviatura ochiq bo'lsa panel yashirinadi — formalarga ko'proq joy qoladi
   const [klaviatura, setKlaviatura] = useState(false);
   useEffect(() => {
@@ -112,7 +118,7 @@ function PastkiPanel({ state, descriptors, navigation }) {
   const sudralmoqda = useRef(false); // panel ustida barmoq surilayotgan payt — indikator barmoqqa ergashadi
   useEffect(() => {
     if (sudralmoqda.current) return;
-    Animated.spring(idx, { toValue: state.index, ...PRUJINA_YUMSHOQ, useNativeDriver: false }).start();
+    Animated.spring(idx, { toValue: state.index, ...PRUJINA_YUMSHOQ, useNativeDriver: true }).start();
   }, [state.index]);
 
   // ── Panelni ushlab surish (Telegram kabi): indikator barmoq ortidan yuradi, barmoq ostidagi
@@ -162,29 +168,28 @@ function PastkiPanel({ state, descriptors, navigation }) {
       const i = chegara(Math.round(kasrIndeks(e.nativeEvent.pageX)));
       otish(i);
       sudralmoqda.current = false;
-      Animated.spring(idx, { toValue: i, velocity: g.vx / qadamPx(), ...PRUJINA, useNativeDriver: false }).start();
+      Animated.spring(idx, { toValue: i, velocity: g.vx / qadamPx(), ...PRUJINA, useNativeDriver: true }).start();
     },
     onPanResponderTerminate: () => {
       sudralmoqda.current = false;
-      Animated.spring(idx, { toValue: holat.current.state.index, ...PRUJINA, useNativeDriver: false }).start();
+      Animated.spring(idx, { toValue: holat.current.state.index, ...PRUJINA, useNativeDriver: true }).start();
     },
   })).current;
   const pillKeng = (i) => (joylar[i] ? joylar[i].w : (kenglik - 2 * ICHKI) / soni);
+  // Indikator kengligi o'zgarmas (bo'limlar o'rtacha kengligi) — faqat joyi native driver'da suriladi.
+  // Kenglik animatsiyasi JS'da bo'lardi: sahifa ochilayotganda JS band — indikator turtinib, joyi bilan
+  // ajralib "titrar" edi.
+  const pillW = soni > 0 ? Array.from({ length: soni }, (_, i) => pillKeng(i)).reduce((a, b) => a + b, 0) / soni : 0;
   const pillX = kenglik && soni > 1
-    ? idx.interpolate({ inputRange: kirishlar, outputRange: kirishlar.map((i) => markaz(i) - pillKeng(i) / 2), extrapolate: "extend" })
+    ? idx.interpolate({ inputRange: kirishlar, outputRange: kirishlar.map((i) => markaz(i) - pillW / 2), extrapolate: "extend" })
     : 0;
-  // Kenglik ham XUDDI SHU qiymatdan (idx) — joyi va kengligi doim birga yuradi. Avval kenglik alohida
-  // animatsiya edi: surib o'tganda ikkalasi ajralib, indikator bir lahza siljib "titrar" edi.
-  // (kenglik native driver'da animatsiya qilinmaydi — shuning uchun idx JS driver'da)
-  const pillW = kenglik && soni > 1
-    ? idx.interpolate({ inputRange: kirishlar, outputRange: kirishlar.map((i) => pillKeng(i)), extrapolate: "clamp" })
-    : pillKeng(state.index);
 
   return (
     <>
     <TepaPanel state={state} descriptors={descriptors} />
+    {!klaviatura && <XiraZona joy="past" qattiq={pastH} otish={32} />}
     {!klaviatura && (
-    <View pointerEvents="box-none" style={[styles.tashqi, { paddingBottom: 8 + insets.bottom }]}>
+    <View pointerEvents="box-none" onLayout={(e) => setPastH(e.nativeEvent.layout.height)} style={[styles.tashqi, { paddingBottom: 8 + insets.bottom }]}>
     <View ref={barRef} style={styles.bar} onLayout={(e) => { setKenglik(e.nativeEvent.layout.width); olchash(); }} {...surish.panHandlers}>
       <SuzuvchiFon rang={C.card + (temaQorongi() ? "C8" : "B3")} radius={36} />
       {kenglik > 0 && (
@@ -247,8 +252,8 @@ export default function TabsLayout() {
   const [tepaH, setTepaH] = useState(0);
   return (
     <TepaOlchovQoy.Provider value={(h) => setTepaH((p) => (Math.abs(p - h) > 0.5 ? h : p))}>
-    <TepaJoy.Provider value={tepaH ? tepaH + 8 : 0}>
-    <PastkiJoy.Provider value={84 + insets.bottom}>
+    <TepaJoy.Provider value={tepaH ? tepaH + 20 : 0 /* + xira zona yumshoq qismi */}>
+    <PastkiJoy.Provider value={104 + insets.bottom /* + xira zona yumshoq qismi */}>
     <SwipeTabs
       tabBarPosition="bottom"
       tabBar={(props) => <PastkiPanel {...props} />}

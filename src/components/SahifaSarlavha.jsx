@@ -15,10 +15,6 @@ const orqagaQayt = () => (router.canGoBack() ? router.back() : router.replace("/
 export function SahifaSarlavha({ eyebrow, title, subtitle, icon, image, ton = "accent", orqaga = "Markaz", style }) {
   const rang = C[ton] || C.accent;
 
-  const kirish = useRef(new Animated.Value(0)).current;
-  useEffect(() => {
-    Animated.timing(kirish, { toValue: 1, duration: 280, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start();
-  }, [kirish]);
 
   const bos = useRef(new Animated.Value(0)).current;
   const bosish = (v) => Animated.timing(bos, { toValue: v, duration: ANIM.pressDuration, easing: Easing.inOut(Easing.ease), useNativeDriver: true }).start();
@@ -48,12 +44,8 @@ export function SahifaSarlavha({ eyebrow, title, subtitle, icon, image, ton = "a
         </Pressable>
       ) : null}
 
-      <Animated.View
-        style={[styles.titleRow, {
-          opacity: kirish,
-          transform: [{ translateY: kirish.interpolate({ inputRange: [0, 1], outputRange: [8, 0] }) }],
-        }]}
-      >
+      {/* Alohida kirish animatsiyasi yo'q — sahifa o'zi fade bilan ochiladi (ustma-ust animatsiya miltillatardi) */}
+      <View style={styles.titleRow}>
         {image || icon ? (
           <View style={[styles.iconBox, { backgroundColor: rang + "14" }]}>
             {image
@@ -66,7 +58,7 @@ export function SahifaSarlavha({ eyebrow, title, subtitle, icon, image, ton = "a
           <Text style={styles.title}>{title}</Text>
           {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
         </View>
-      </Animated.View>
+      </View>
     </View>
   );
 }

@@ -28,15 +28,17 @@ export const ScrollBox = forwardRef(function ScrollBox(
   }), []);
 
   // Paydo bo'lish animatsiyasi
-  const kir = useRef(new Animated.Value(0)).current;
-  const [animda, setAnimda] = useState(true);
+  const pastkiJoyBor = useContext(PastkiJoy) > 0; // bo'lim (tab) sahifasimi
+  const kir = useRef(new Animated.Value(pastkiJoyBor ? 0 : 1)).current;
+  const [animda, setAnimda] = useState(pastkiJoyBor);
   const korsat = () => {
     kir.setValue(0);
     setAnimda(true);
     Animated.timing(kir, { toValue: 1, duration: 260, easing: Easing.out(Easing.cubic), useNativeDriver: true })
       .start(() => setAnimda(false));
   };
-  useEffect(() => { korsat(); }, []);
+  // Stack sahifalari (Qop, Qarzlar...) — o'tishning o'zi fade; ustiga yana kontent animatsiyasi miltillatardi
+  useEffect(() => { if (pastkiJoyBor) korsat(); }, []);
   const navigation = useContext(NavigationContext);
   const pastkiJoy = useContext(PastkiJoy);
   const tepaJoy = useContext(TepaJoy);
