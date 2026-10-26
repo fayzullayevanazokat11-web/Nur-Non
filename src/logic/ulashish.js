@@ -103,10 +103,15 @@ export function kunlikHtml(h, { akkaunt, nonlar, rasmlar = [] } = {}) {
     tartib.push([t("Kunlik vazifa"), tf.ertalab.tugallandi ? `${t("bajarildi")} ${soat(tf.ertalab.tugallandi)}` : t("bajarilmagan")]);
     tartib.push([t("Ishchilar davomati"), holat(tf.ertalab.davomat)], [t("Ombor tekshiruvi"), holat(tf.ertalab.ombor)]);
     if (tf.ertalab.sut !== undefined) tartib.push([t("Sut kirimi yozildi"), holat(tf.ertalab.sut)]);
+    if (tf.ertalab.tashqi !== undefined) tartib.push([t("Tashqi non kirimi yozildi"), holat(tf.ertalab.tashqi)]);
   }
   if (tf.sut && (son(tf.sut.m1) || son(tf.sut.m2))) {
     tartib.push([t("Sut kirimi"), `${t("1-mahal")} ${String(son(tf.sut.m1)).replace(".", ",")} l · ${t("2-mahal")} ${String(son(tf.sut.m2)).replace(".", ",")} l`]);
   }
+  // Tashqi non kirimi — har bir non: ertalab + obeddan keyin
+  (tf.tashqiKirim || []).forEach((k) => {
+    tartib.push([`${t(k.nom)} (${t("tashqaridan")})`, `${t("ertalab")} ${formatSom(k.m1)} + ${t("obeddan keyin")} ${formatSom(k.m2)} = ${formatSom(k.m1 + k.m2)} ${t("dona")} · ${som((k.m1 + k.m2) * k.narx)}`]);
+  });
   if (tf.rasmSoni != null) tartib.push([t("Qop rasmlari"), `${tf.rasmSoni} ${t("ta")}`]);
   if ((tf.kelmaganlar || []).length && !(tf.davomat || []).length) tartib.push([t("Kelmagan xodimlar"), tf.kelmaganlar.map(t).join(", ")]);
   tartib.push([t("Kun yakunlandi"), soat(h.vaqt)]);

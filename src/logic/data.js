@@ -51,10 +51,10 @@ export const SEED_NONLAR = [
       { id: "achitqi", nom: "Achitqi (Droja)",  birlik: "g",  emoji: "🍞", miqdor: 50,    narx: 0 },
     ],
   },
-  { id: 4, nom: "Kichik garmqoqi",        narx: 10000, nonSoni: 0, ozIshlab: false, tashqariFoyda: 2000, mahsulotlar: [] },
-  { id: 5, nom: "Katta garmqoqi",         narx: 10000, nonSoni: 0, ozIshlab: false, tashqariFoyda: 2000, mahsulotlar: [] },
-  { id: 6, nom: "Katta qora garmqoqi",    narx: 15000, nonSoni: 0, ozIshlab: false, tashqariFoyda: 2000, mahsulotlar: [] },
-  { id: 7, nom: "Kulcha (Samarqand non)", narx: 15000, nonSoni: 0, ozIshlab: false, tashqariFoyda: 2000, mahsulotlar: [] },
+  { id: 4, nom: "Kichik garmqoqi",        narx: 10000, nonSoni: 0, ozIshlab: false, tashqariFoyda: 2000, olishNarxi: 8000, mahsulotlar: [] },
+  { id: 5, nom: "Katta garmqoqi",         narx: 10000, nonSoni: 0, ozIshlab: false, tashqariFoyda: 2000, olishNarxi: 8000, mahsulotlar: [] },
+  { id: 6, nom: "Katta qora garmqoqi",    narx: 15000, nonSoni: 0, ozIshlab: false, tashqariFoyda: 2000, olishNarxi: 13000, mahsulotlar: [] },
+  { id: 7, nom: "Kulcha (Samarqand non)", narx: 15000, nonSoni: 0, ozIshlab: false, tashqariFoyda: 2000, olishNarxi: 13000, mahsulotlar: [] },
 ];
 
 export const SEED_MAHSULOT_NARXLARI = {

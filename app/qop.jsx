@@ -22,7 +22,7 @@ import { kunXulosasiniKorsat } from "../src/components/KunOtishi";
 import { ScrollBox } from "../src/components/ScrollBox";
 import { SahifaSarlavha } from "../src/components/SahifaSarlavha";
 import { C, T, S, R, temaStil } from "../src/theme";
-import { hisoblaKunlik, qoldiqlarHisobi, ishchiHaqlari, kunlikXomashyoSarfi, formatSom, bugunSana, kunTugashVaqti, kunRoliBilan, sutLitri, oldingiSana } from "../src/logic/hisob";
+import { hisoblaKunlik, qoldiqlarHisobi, ishchiHaqlari, kunlikXomashyoSarfi, formatSom, bugunSana, kunTugashVaqti, kunRoliBilan, sutLitri, oldingiSana, olishNarxi } from "../src/logic/hisob";
 
 const toStr = (obj) => Object.fromEntries(Object.entries(obj || {}).map(([k, v]) => [k, String(v)]));
 // Taqqoslash uchun: bo'sh maydonlar tashlanadi, kalitlar tartiblanadi
@@ -40,7 +40,7 @@ export default function Qop() {
     sotilmaganNon, setSotilmaganNon,
     boshlangichQoldiq, qoldaYaroqsiz, setQoldaYaroqsiz,
     kunlikXarajatlar,
-    oxirgiYakunlashVaqti, customMahsulotlar,
+    oxirgiYakunlashVaqti, customMahsulotlar, tashqiKirim,
     hisobotlarTarixi, kunYakunlanganmi, kunYakunla, lockedDayStats, yakunBekor,
     ertalab, qopRasmlari, davomat, kelishVaqtlari, kunlikRollar, keldiAlmash, sutKirimi,
   } = useApp();
@@ -113,6 +113,12 @@ export default function Qop() {
     { k: "rasm", nom: "Rasm", ok: sanaRasmlari.length > 0 },
     { k: "yakun", nom: "Yakunlash", ok: false },
   ];
+  // Tashqi non kirimi (Kunlik vazifa): "ertalab 50 + obed 30"
+  const kirimKun = (tashqiKirim || {})[tanSana] || {};
+  const kirimMatni = (id) => {
+    const a = parseInt((kirimKun.m1 || {})[id]) || 0, b = parseInt((kirimKun.m2 || {})[id]) || 0;
+    return a || b ? `ertalab ${a} + obeddan keyin ${b}` : "";
+  };
   const qoldiqlar = useMemo(() => qoldiqlarHisobi(nonlar, args), [fQop, fTash, fSot, fYaroqsiz, nonlar, boshlangichQoldiq, optomlar, qarzlar, chegaraVaqt, tanSana]);
   const haq = useMemo(() => ishchiHaqlari(nonlar, ishchilar, fQop, bugungiBrak), [nonlar, ishchilar, fQop, bugungiBrak]);
 
@@ -242,7 +248,13 @@ export default function Qop() {
           tafsilot: {
             qarzlar: (qarzlar || []).filter((q) => q.sana === sana).map((q) => ({ ism: q.ism, soat: q.soat || "", vaqt: q.vaqt, summa: q.summa, savat: q.savat })),
             tolovlar: (qarzlar || []).flatMap((q) => (q.tolovlar || []).filter((t) => t.sana === sana).map((t) => ({ ism: q.ism, vaqt: t.vaqt, summa: t.summa }))),
-            ertalab: ertalab.kun === sana ? { davomat: !!ertalab.davomat, ombor: !!ertalab.ombor, sut: !!ertalab.sut, tugallandi: ertalab.tugallandi || 0 } : null,
+            ertalab: ertalab.kun === sana ? { davomat: !!ertalab.davomat, ombor: !!ertalab.ombor, sut: !!ertalab.sut, tashqi: !!ertalab.tashqi, tugallandi: ertalab.tugallandi || 0 } : null,
+            // Tashqi non kirimi (2 mahal) — sotib olish narxi bilan
+            tashqiKirim: nonlar.filter((n) => n.ozIshlab === false).map((n) => ({
+              nom: n.nom, narx: olishNarxi(n),
+              m1: parseInt(((tashqiKirim || {})[sana]?.m1 || {})[n.id]) || 0,
+              m2: parseInt(((tashqiKirim || {})[sana]?.m2 || {})[n.id]) || 0,
+            })).filter((k) => k.m1 || k.m2),
             kelmaganlar: (ishchilar || []).filter((w) => w.kelmadi).map((w) => w.ism),
             davomat: (ishchilar || []).filter((w) => w.holat === "Aktiv").map((w) => ({
               ism: w.ism, keldi: !w.kelmadi, soat: w.kelmadi ? "" : (kelishVaqti || {})[w.id] || "",
@@ -376,6 +388,9 @@ export default function Qop() {
                 {q.yaroqsiz + q.qoldiq > q.jamiZaxira && (
                   <Text style={styles.ogoh}>Qoldiq va yaroqsiz ({q.yaroqsiz + q.qoldiq}) zaxiradan ({q.jamiZaxira}) ko'p — sonlarni tekshiring.</Text>
                 )}
+                {!oz && kirimMatni(n.id) ? (
+                  <Text style={styles.flow}>Kunlik vazifadan: {kirimMatni(n.id)} · olish {formatSom(olishNarxi(n))} so'm/dona</Text>
+                ) : null}
                 {(q.jamiZaxira > 0 || q.boshlang > 0) && (
                   <Text style={styles.flow}>
                     {q.boshlang} + {q.ishlab} = {q.jamiZaxira} · Sotilgan {q.jamiSotilgan}{q.divertedShu > 0 ? ` (${q.divertedShu} optom/qarz)` : ""}{q.yaroqsiz > 0 ? ` · Yaroqsiz ${q.yaroqsiz}` : ""}

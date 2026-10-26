@@ -161,7 +161,7 @@ export function TannarxKalk() {
                 {!r.nonSoni && <Text style={styles.ogoh}>1 qopdan chiqadigan non soni hisoblanmagan — Assortimentda xomashyo va bitta non xamiri vaznini kiriting.</Text>}
               </>
             ) : (
-              <Text style={styles.hint}>Tashqaridan olinadigan non: tannarx = narx − belgilangan foyda ({formatSom(r.foyda)} so'm).</Text>
+              <Text style={styles.hint}>Tashqaridan olinadigan non: tannarx = sotib olish narxi ({formatSom(r.dona)} so'm), foyda = sotuv − olish ({formatSom(r.foyda)} so'm).</Text>
             )}
 
             <Text style={styles.lbl}>Sinov narxi</Text>

@@ -19,24 +19,19 @@ import { ScrollBox } from "../../src/components/ScrollBox";
 import { useTiklash } from "../../src/components/useTiklash";
 import { xomashyoRoyxati } from "../../src/logic/konstantalar";
 import { C, T, S, R, temaStil } from "../../src/theme";
-import { formatSom, getQopTannarx, getIngNarx, sonOl, xamirdanNonSoni, nonVazniOl } from "../../src/logic/hisob";
+import { formatSom, getQopTannarx, getIngNarx, sonOl, xamirdanNonSoni, nonVazniOl, donaFoyda, olishNarxi } from "../../src/logic/hisob";
 import { saqlandiXabar } from "../../src/components/Xabarcha";
 import { BoshHolat } from "../../src/components/BoshHolat";
 
 const baseUnit = (birlik) => (birlik === "litr" ? "ml" : "g");
 const SUV = { id: "suv", nom: "Suv", birlik: "litr" };
-const BOSH = { nom: "", narx: "", oz: true, nonVazni: "", donaFoyda: "", ing: {} };
+const BOSH = { nom: "", narx: "", oz: true, nonVazni: "", olishNarxi: "", ing: {} };
 const kgMatn = (g) => `${String(Math.round(g / 100) / 10).replace(".", ",")} kg`;
 
 const silliq = () => LayoutAnimation.configureNext(LayoutAnimation.create(200, LayoutAnimation.Types.easeInEaseOut, LayoutAnimation.Properties.opacity));
 
-// Non uchun dona foydasi
-function donaFoydasi(non, narxlar) {
-  if (non.ozIshlab === false) return parseFloat(non.tashqariFoyda) || 0;
-  const son = parseFloat(non.nonSoni) || 0;
-  if (son <= 0) return 0;
-  return Math.round((parseFloat(non.narx) || 0) - getQopTannarx(non, narxlar) / son);
-}
+// Non uchun dona foydasi (tashqaridan — sotuv narxi − sotib olish narxi)
+const donaFoydasi = donaFoyda;
 
 export default function IshlabChiqarish() {
   const {
@@ -96,7 +91,7 @@ export default function IshlabChiqarish() {
     setForma({
       nom: non.nom, narx: String(non.narx || ""), oz,
       nonVazni: oz && nonVazniOl(non) ? String(nonVazniOl(non)) : "",
-      donaFoyda: oz ? "" : String(non.tashqariFoyda || ""),
+      olishNarxi: oz ? "" : String(olishNarxi(non)),
       ing: oz ? Object.fromEntries((non.mahsulotlar || []).map((m) => [m.id, String(m.miqdor ?? "")])) : {},
     });
     yopKartalar({ qoldir: "forma" }); // non kartasi yopiladi, forma ochiq qoladi
@@ -116,7 +111,7 @@ export default function IshlabChiqarish() {
   const formaSon = xamirdanNonSoni(formaMahsulotlar, sonOl(forma.nonVazni));
   const formaDonaFoyda = forma.oz
     ? Math.round((sonOl(forma.narx)) - (formaSon > 0 ? formaQopNarx / formaSon : 0))
-    : (sonOl(forma.donaFoyda));
+    : sonOl(forma.narx) - sonOl(forma.olishNarxi);
 
   const saqla = () => {
     if (!forma.nom.trim() || !forma.narx) {
@@ -131,6 +126,10 @@ export default function IshlabChiqarish() {
       return;
     }
     const narx = sonOl(forma.narx);
+    if (!forma.oz && !String(forma.olishNarxi).trim()) {
+      Alert.alert("Sotib olish narxi kiritilmagan", "Tashqaridan bu nonni 1 donasini necha so'mdan sotib olasiz?");
+      return;
+    }
     if (forma.oz && formaSon <= 0) {
       Alert.alert("Non soni hisoblanmadi", "1 qopga ketadigan xomashyo miqdorlarini va bitta non xamiri vaznini (gramm) kiriting.");
       return;
@@ -142,7 +141,9 @@ export default function IshlabChiqarish() {
         .filter((m) => m.miqdor > 0);
       yangi = { nom: forma.nom.trim(), narx, ozIshlab: true, nonVazni: sonOl(forma.nonVazni), nonSoni: formaSon, tashqariFoyda: 0, mahsulotlar };
     } else {
-      yangi = { nom: forma.nom.trim(), narx, ozIshlab: false, nonSoni: 0, tashqariFoyda: sonOl(forma.donaFoyda), mahsulotlar: [] };
+      // olishNarxi — asosiy; tashqariFoyda eski hisoblar bilan moslik uchun (sotuv − olish)
+      const olish = sonOl(forma.olishNarxi);
+      yangi = { nom: forma.nom.trim(), narx, ozIshlab: false, nonSoni: 0, olishNarxi: olish, tashqariFoyda: narx - olish, mahsulotlar: [] };
     }
     if (tahrirId) {
       // Tahrirlash: nomi o'zgargan yoki "tashqaridan"ga o'zgargan bo'lsa ishchilar nonNarxlari/nonTurlari'ni sinxronlaymiz
@@ -306,14 +307,17 @@ export default function IshlabChiqarish() {
                 </>
               ) : (
                 <>
-                  <Text style={styles.inputLabel}>Donadan qoladigan foyda (so'm) *</Text>
-                  <TextInput value={forma.donaFoyda} onChangeText={(v) => yangila("donaFoyda", v)} placeholder="0" placeholderTextColor={C.muted} keyboardType="numeric" style={styles.input} />
+                  <Text style={styles.inputLabel}>Sotib olish narxi (1 dona, so'm) *</Text>
+                  <TextInput accessibilityLabel="Sotib olish narxi" value={forma.olishNarxi} onChangeText={(v) => yangila("olishNarxi", v)} placeholder="Masalan: 8000" placeholderTextColor={C.muted} keyboardType="numeric" style={styles.input} />
+                  <Text style={styles.izohKichik}>Kunlik vazifada yozilgan kirim soni shu narxga ko'paytirilib, sof foydadan ayriladi.</Text>
                 </>
               )}
 
               <View style={styles.foydaBox}>
-                {forma.oz && (
+                {forma.oz ? (
                   <View style={styles.foydaLine}><Text style={styles.foydaLbl}>1 qopga xomashyo</Text><Text style={styles.foydaSub}>{formatSom(formaQopNarx)} so'm</Text></View>
+                ) : (
+                  <View style={styles.foydaLine}><Text style={styles.foydaLbl}>Sotuv − sotib olish</Text><Text style={styles.foydaSub}>{formatSom(sonOl(forma.narx))} − {formatSom(sonOl(forma.olishNarxi))}</Text></View>
                 )}
                 <View style={styles.foydaLine}><Text style={styles.foydaLblBig}>Dona foydasi</Text><Text style={styles.foydaVal}>{formatSom(formaDonaFoyda)} so'm</Text></View>
               </View>
@@ -348,6 +352,7 @@ export default function IshlabChiqarish() {
                               <Text style={[styles.chipTxt, { color: oz ? C.accent : C.sub }]}>{oz ? "O'zimizniki" : "Tashqaridan"}</Text>
                             </View>
                             {oz && parseFloat(non.nonSoni) > 0 && <Text style={styles.nonMetaTxt}>qopdan {non.nonSoni} dona</Text>}
+                            {!oz && <Text style={styles.nonMetaTxt}>olish {formatSom(olishNarxi(non))}</Text>}
                           </View>
                         </View>
                         <View style={styles.nonNarxQ}>
@@ -360,6 +365,7 @@ export default function IshlabChiqarish() {
                     <Row label="Sotuv narxi" value={`${formatSom(non.narx)} so'm`} bold />
                     {oz && <Row label="1 qopdan (avtomatik)" value={`${non.nonSoni} dona`} />}
                     {oz && nonVazniOl(non) > 0 && <Row label="Bitta non xamiri" value={`${formatSom(nonVazniOl(non))} g`} />}
+                    {!oz && <Row label="Sotib olish narxi" value={`${formatSom(olishNarxi(non))} so'm`} />}
                     <Row label="Dona foydasi" value={`${formatSom(foyda)} so'm`} valueColor={C.accent} bold last={!oz} />
                     {oz && (non.mahsulotlar || []).length > 0 && (
                       <View style={styles.ingWrap}>
@@ -456,6 +462,7 @@ const styles = temaStil(() => StyleSheet.create({
   secHead:   { flexDirection: "row", alignItems: "center", gap: 6, marginBottom: S[3] },
   secTitle:  { fontSize: T.xs, color: C.sub, fontWeight: "700", letterSpacing: 1, flex: 1 },
   secCount:  { fontSize: T.sm, color: C.sub, fontWeight: "700" },
+  izohKichik:{ fontSize: 11, color: C.muted, marginTop: 6, lineHeight: 15 },
   ikonHint:  { fontSize: 11, color: C.muted, marginTop: -S[2], marginBottom: S[3] },
 
   // Ro'yxat

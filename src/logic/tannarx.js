@@ -1,7 +1,7 @@
 // Tannarx kalkulyatori: 1 dona non qancha turadi va qancha foyda qoladi.
 // 1 qop uchun: xomashyo (retsept × narxlar) + qoplik ishchilar stavkasi +
 // kunlik ishchilar ulushi (kunlik haq ÷ o'rtacha kunlik qop).
-import { getQopTannarx } from "./hisob";
+import { getQopTannarx, olishNarxi } from "./hisob";
 
 const son = (x) => parseFloat(String(x ?? "").replace(/\s/g, "")) || 0;
 
@@ -22,8 +22,8 @@ export function tannarxHisobi({ nonlar, mahsulotNarxlari, ishchilar, kunlikQop }
   return (nonlar || []).map((n) => {
     const narx = son(n.narx);
     if (n.ozIshlab === false) {
-      const foyda = son(n.tashqariFoyda);
-      const dona = Math.max(0, narx - foyda);
+      const dona = olishNarxi(n);
+      const foyda = narx - dona;
       return { id: n.id, nom: n.nom, oz: false, narx, dona, foyda, marja: narx ? foyda / narx : 0 };
     }
     const nonSoni = son(n.nonSoni);

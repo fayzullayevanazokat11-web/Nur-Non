@@ -115,6 +115,8 @@ export function AppDataProvider({ children }) {
   // Sut kirimi (kuniga 2 mahal, litr): { "YYYY-MM-DD": { m1: 40, m2: 35 } } — omborda turmaydi,
   // shu kunning daromadidan to'g'ridan-to'g'ri ayriladi
   const [sutKirimi, setSutKirimi]                       = usePersistedState("nurnon:sutKirimi", {});
+  // Tashqaridan keladigan non kirimi: { [sana]: { m1: { [nonId]: soni }, m2: {...} } } — ertalab va obeddan keyin
+  const [tashqiKirim, setTashqiKirim]                   = usePersistedState("nurnon:tashqiKirim", {});
   // Oylik maqsad (sof foyda, so'm) — Statistikada bajarilishi ko'rsatiladi; 0 — qo'yilmagan
   const [oylikMaqsad, setOylikMaqsad]                   = usePersistedState("nurnon:oylikMaqsad", 0);
   // Xomashyo narxlari o'zgarish tarixi: [{ id, nom, eski, yangi, vaqt }] — 180 kun
@@ -196,6 +198,7 @@ export function AppDataProvider({ children }) {
       setKelishVaqtlari((p) => Object.fromEntries(Object.entries(p || {}).filter(([s]) => (now - (Date.parse(s) || now)) < 60 * D)));
       setKunlikRollar((p) => Object.fromEntries(Object.entries(p || {}).filter(([s]) => (now - (Date.parse(s) || now)) < 60 * D)));
       setSutKirimi((p) => Object.fromEntries(Object.entries(p || {}).filter(([s]) => (now - (Date.parse(s) || now)) < 60 * D)));
+      setTashqiKirim((p) => Object.fromEntries(Object.entries(p || {}).filter(([s]) => (now - (Date.parse(s) || now)) < 60 * D)));
     };
     yuritish();
     const t = setInterval(yuritish, 6 * 60 * 60 * 1000);
@@ -417,6 +420,27 @@ export function AppDataProvider({ children }) {
       ertalabBelgila("sut", litr > 0 || boshqa > 0);
     }
   };
+  // Tashqi non kirimi (Kunlik vazifa, 4-qadam). Bugungi kun yakunlanmagan bo'lsa — ikkala mahal yig'indisi
+  // Kunlik qop hisobidagi "olingan dona"ga (tashqariSonlar) yoziladi: sotib olish narxi × son sof foydadan ayriladi.
+  const tashqiKirimQoy = (sana, mahal, nonId, soni) => {
+    const n = Math.max(0, parseInt(soni) || 0);
+    const eski = (tashqiKirim || {})[sana] || {};
+    const yangiMahal = { ...(eski[mahal] || {}) };
+    if (n > 0) yangiMahal[nonId] = n; else delete yangiMahal[nonId];
+    const yangiKun = { ...eski, [mahal]: yangiMahal };
+    setTashqiKirim((p) => ({ ...(p || {}), [sana]: { ...((p || {})[sana] || {}), [mahal]: yangiMahal } }));
+    if (sana === bugunSana() && !kunYakunlanganmi()) {
+      const jami = (parseInt((yangiKun.m1 || {})[nonId]) || 0) + (parseInt((yangiKun.m2 || {})[nonId]) || 0);
+      setTashqariSonlar((p) => {
+        const q = { ...(p || {}) };
+        if (jami > 0) q[nonId] = String(jami); else delete q[nonId];
+        return q;
+      });
+      // Ertalabgi kirim yozilsa — qadam bajarildi
+      const ertalabgi = Object.values(yangiKun.m1 || {}).some((v) => v > 0) || Object.values(yangiKun.m2 || {}).some((v) => v > 0);
+      ertalabBelgila("tashqi", ertalabgi);
+    }
+  };
   const kunlikRolQoy = (id, patch) => setKunlikRollar((p) => {
     const kun = { ...((p || {})[bugun] || {}) };
     const yangi = { ...(kun[id] || {}), ...(patch || {}) };
@@ -610,11 +634,17 @@ export function AppDataProvider({ children }) {
   // Faqat joriy ish kuniga tegishli; yangi kun (03:00) boshlanganda o'zi bo'shaydi.
   const ertalabOl = () => {
     const e = ertalabTekshiruv;
-    return e && e.kun === bugunSana() ? e : { kun: bugunSana(), davomat: false, ombor: false, sut: false, tugallandi: 0 };
+    return e && e.kun === bugunSana() ? e : { kun: bugunSana(), davomat: false, ombor: false, sut: false, tashqi: false, korildi: {}, tugallandi: 0 };
   };
   const ertalab = ertalabOl();
   // Funksional yangilash: ketma-ket chaqiruvlar (rasm qo'shish, belgilash) bir-birining ustiga yozmasin
-  const ertalabBosh = () => ({ kun: bugunSana(), davomat: false, ombor: false, sut: false, tugallandi: 0 });
+  const ertalabBosh = () => ({ kun: bugunSana(), davomat: false, ombor: false, sut: false, tashqi: false, korildi: {}, tugallandi: 0 });
+  // Qadam sahifasi haqiqatan ochildi (Xodimlar/Ombor fokusga keldi) — shundan keyingina belgilash mumkin
+  const ertalabKorildi = (qadam) =>
+    setErtalabTekshiruv((p) => {
+      const b = p && p.kun === bugunSana() ? p : ertalabBosh();
+      return (b.korildi || {})[qadam] ? p : { ...b, korildi: { ...(b.korildi || {}), [qadam]: true } };
+    });
   const ertalabBelgila = (qadam, qiymat = true) =>
     setErtalabTekshiruv((p) => ({ ...(p && p.kun === bugunSana() ? p : ertalabBosh()), [qadam]: !!qiymat }));
   const ertalabTugalla = () =>
@@ -733,6 +763,7 @@ export function AppDataProvider({ children }) {
     kelishVaqtlari: [kelishVaqtlari, setKelishVaqtlari, "object"],
     kunlikRollar: [kunlikRollar, setKunlikRollar, "object"],
     sutKirimi: [sutKirimi, setSutKirimi, "object"],
+    tashqiKirim: [tashqiKirim, setTashqiKirim, "object"],
     oylikMaqsad: [oylikMaqsad, setOylikMaqsad, "number"],
     narxTarixi: [narxTarixi, setNarxTarixi, "array"],
     xomashyoIkonlari: [xomashyoIkonlari, setXomashyoIkonlari, "object"],
@@ -845,14 +876,14 @@ export function AppDataProvider({ children }) {
     davomat, setDavomat, keldilar, kelmaganlar, keldiAlmash, ishchilarHaq,
     kelishVaqtlari, kelishVaqti, kelishVaqtiQoy,
     kunlikRollar, setKunlikRollar, kunlikRol, kunlikRolQoy,
-    sutKirimi, sutQoy, oylikMaqsad, setOylikMaqsad,
+    sutKirimi, sutQoy, tashqiKirim, tashqiKirimQoy, oylikMaqsad, setOylikMaqsad,
     narxTarixi, setNarxTarixi,
     xomashyoIkonlari, xomashyoIkonQoy,
     salomYoqilgan, setSalomYoqilgan,
     tayyorSavat, setTayyorSavat,
     qopRasmlari, bugungiRasmlar, qopRasmQosh, qopRasmOchir,
     pdfArxiv, hisobotPdfUlash,
-    ertalab, ertalabBelgila, ertalabTugalla, ertalabYonalish, setErtalabYonalish, ertalabPanel, setErtalabPanel,
+    ertalab, ertalabBelgila, ertalabTugalla, ertalabKorildi, ertalabYonalish, setErtalabYonalish, ertalabPanel, setErtalabPanel,
     oxirgiNusxa, nusxaOl,
     bekor, bekorTaklif, bekorQil, bekorYop,
     tayyor,

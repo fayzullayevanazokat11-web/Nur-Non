@@ -95,10 +95,19 @@ export function getQopTannarx(non, narxlar) {
   return (non.mahsulotlar || []).reduce((s, m) => s + getIngNarx(m, narxlar), 0);
 }
 
+// Tashqaridan olinadigan nonning 1 dona SOTIB OLISH narxi. Yangi yozuvlarda to'g'ridan kiritiladi
+// (olishNarxi); eskilarida — sotuv narxi − kiritilgan foyda (foyda kiritilmagan bo'lsa 2000 so'm).
+const kiritilgan = (v) => v !== undefined && v !== null && String(v).trim() !== "";
+export function olishNarxi(non) {
+  if (kiritilgan(non?.olishNarxi)) return Math.max(0, parseFloat(non.olishNarxi) || 0);
+  const narx = parseFloat(non?.narx) || 0;
+  return Math.max(0, narx - (kiritilgan(non?.tashqariFoyda) ? (parseFloat(non.tashqariFoyda) || 0) : 2000));
+}
+
 // Bitta nondan qoladigan foyda: o'zimizniki → narx − (1 qop xomashyo / non soni);
-// tashqaridan → tashqariFoyda (to'g'ridan kiritilgan).
+// tashqaridan → sotuv narxi − sotib olish narxi.
 export function donaFoyda(non, narxlar) {
-  if (non.ozIshlab === false) return parseFloat(non.tashqariFoyda) || 0;
+  if (non.ozIshlab === false) return Math.round((parseFloat(non.narx) || 0) - olishNarxi(non));
   const son = parseFloat(non.nonSoni) || 0;
   if (son <= 0) return 0;
   return Math.round((parseFloat(non.narx) || 0) - getQopTannarx(non, narxlar) / son);
@@ -174,9 +183,8 @@ export function hisoblaKunlik({
       sotilgan += Math.max(0, boshlang + olingan - yaroqsiz - qoldiq);
       const retailSold = Math.max(0, boshlang + olingan - yaroqsiz - qoldiq - divertedShu);
       daromad += retailSold * narx;
-      // Foyda kiritilmagan (eski yozuv) bo'lsa 2000, aniq 0 kiritilgan bo'lsa 0 (Tannarx bo'limi bilan bir xil)
-      const foydaKiritilgan = non.tashqariFoyda !== undefined && non.tashqariFoyda !== null && String(non.tashqariFoyda).trim() !== "";
-      const tannarx = Math.max(0, narx - (foydaKiritilgan ? (parseFloat(non.tashqariFoyda) || 0) : 2000));
+      // Sotib olish narxi (1 dona) × olingan son
+      const tannarx = olishNarxi(non);
       // Optom/qarzga ketgani ham sotib olingan — uning daromadi ham kunlikka kiradi
       tashqariTannarx += olingan * tannarx;
     }
