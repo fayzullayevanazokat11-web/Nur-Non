@@ -8,7 +8,8 @@
 import { View, Text, Pressable, StyleSheet, Alert, LayoutAnimation } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { router, useFocusEffect } from "expo-router";
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
+import { useTiklash } from "./useTiklash";
 import { useApp } from "../store/AppData";
 import { SutKirimi } from "./SutKirimi";
 import { TashqiKirim, tashqiNonlar } from "./TashqiKirim";
@@ -32,6 +33,9 @@ const QADAMLAR = [
 
 export function ErtalabTekshiruv({ kunYopiq }) {
   const { ertalab, ertalabBelgila, ertalabTugalla, setErtalabYonalish, ertalabPanel, setErtalabPanel, ishchilarHaq, kelmaganlar, sutKirimi, tashqiKirim, nonlar } = useApp();
+  // Kirim qadamlari (sut, tashqi non) — har biri alohida ochiladi/yopiladi; boshqa sahifaga o'tilsa yopiladi
+  const [ochiqQadam, setOchiqQadam] = useState(null);
+  useTiklash(() => setOchiqQadam(null));
   if (kunYopiq && !ertalab.tugallandi) return null;
   const bugun = bugunSana();
   const qadamlar = QADAMLAR.filter((q) => q.k !== "tashqi" || tashqiNonlar(nonlar).length > 0);
@@ -46,6 +50,17 @@ export function ErtalabTekshiruv({ kunYopiq }) {
   if (!((sutKirimi || {})[bugun] || {}).m2) ikkinchi.push("sut");
   if (qadamlar.some((q) => q.k === "tashqi") && !Object.values(((tashqiKirim || {})[bugun] || {}).m2 || {}).some((v) => v > 0)) ikkinchi.push("tashqi non");
 
+  // Yopiq kirim qadami sarlavhasida qisqa xulosa
+  const kirimXulosa = (k) => {
+    if (k === "sut") {
+      const s = (sutKirimi || {})[bugun] || {};
+      const l = (v) => String(parseFloat(v) || 0).replace(".", ",");
+      return s.m1 || s.m2 ? `1-mahal ${l(s.m1)} l · 2-mahal ${l(s.m2)} l` : "";
+    }
+    const t = (tashqiKirim || {})[bugun] || {};
+    const jam = (m) => Object.values(t[m] || {}).reduce((a, v) => a + (parseInt(v) || 0), 0);
+    return jam("m1") || jam("m2") ? `Ertalab ${jam("m1")} · obeddan keyin ${jam("m2")} dona` : "";
+  };
   const almash = () => { silliq(); setErtalabPanel(!ertalabPanel); };
   const bor = (q) => { if (!tugallangan) ertalabBelgila(q.k, true); setErtalabYonalish(tugallangan ? null : q.k); router.navigate(q.yol); };
   // Belgi: sahifali qadam — sahifa ochilgandan keyingina; kirim qadami — kirim yozilsa o'zi belgilanadi,
@@ -115,7 +130,7 @@ export function ErtalabTekshiruv({ kunYopiq }) {
                   accessibilityState={{ checked: ok, disabled: tugallangan }}
                   onPress={() => belgila(q, ok)}
                   hitSlop={8}
-                  style={[styles.belgi, ok && styles.belgiOk, !ok && q.yol && !korildi[q.k] && styles.belgiYopiq]}
+                  style={[styles.belgi, ok && styles.belgiOk, !ok && q.yol && !korildi[q.k] && styles.belgiYopiq, !q.yol && styles.belgiUst]}
                 >
                   {ok ? <Ionicons name="checkmark" size={14} color={C.onAccent} /> : <Text style={styles.raqam}>{i + 1}</Text>}
                 </Pressable>
@@ -129,16 +144,25 @@ export function ErtalabTekshiruv({ kunYopiq }) {
                   <Ionicons name="chevron-forward" size={16} color={C.muted} />
                 </Bosma>
                 ) : (
-                  // Sut va tashqi non — sahifaga o'tmasdan shu yerning o'zida kiritiladi
-                  <View style={[styles.flex1, styles.havola, styles.havolaUst]}>
-                    <View style={styles.sutBosh}>
+                  // Sut va tashqi non — sahifaga o'tmasdan shu yerda kiritiladi; sarlavhasi bosilsa ochiladi/yopiladi
+                  <View style={[styles.flex1, styles.havolaUst]}>
+                    <Bosma
+                      accessibilityRole="button"
+                      accessibilityLabel={q.nom}
+                      accessibilityState={{ expanded: ochiqQadam === q.k }}
+                      onPress={() => { silliq(); setOchiqQadam(ochiqQadam === q.k ? null : q.k); }}
+                      style={styles.havola}
+                    >
                       <Ionicons name={q.icon} size={18} color={C.accent} />
                       <View style={styles.flex1}>
                         <Text style={[styles.qadamNom, ok && styles.qadamOk]}>{q.nom}</Text>
-                        <Text style={styles.qadamIzoh}>{q.izoh}</Text>
+                        <Text style={styles.qadamIzoh} numberOfLines={2}>{kirimXulosa(q.k) || q.izoh}</Text>
                       </View>
-                    </View>
-                    {q.k === "sut" ? <SutKirimi /> : <TashqiKirim />}
+                      <Ionicons name={ochiqQadam === q.k ? "chevron-up" : "chevron-down"} size={16} color={C.muted} />
+                    </Bosma>
+                    {ochiqQadam === q.k && (
+                      <View style={styles.kirimIchi}>{q.k === "sut" ? <SutKirimi /> : <TashqiKirim />}</View>
+                    )}
                   </View>
                 )}
               </View>
@@ -203,7 +227,9 @@ const styles = temaStil(() => StyleSheet.create({
   belgiYopiq:{ borderStyle: "dashed", opacity: 0.6 },
   tayyorIzoh:{ fontSize: 11, color: C.muted, marginTop: S[3], lineHeight: 15 },
   havolaUst: { flexDirection: "column", alignItems: "stretch", minWidth: 0 },
-  qadamUst:  { alignItems: "flex-start", paddingTop: S[3] },
+  qadamUst:  { alignItems: "flex-start" },
+  kirimIchi: { paddingBottom: S[2] },
+  belgiUst:  { marginTop: 13 },
   sutBosh:   { flexDirection: "row", alignItems: "center", gap: S[3], marginBottom: S[2] },
   tayyorSoat:{ fontSize: T.xs, fontWeight: "700", color: C.sub },
   qadamBelgi:{ flexDirection: "row", alignItems: "center", gap: S[2], backgroundColor: C.accent + "12", borderRadius: R.md, borderWidth: 1, borderColor: C.accent + "33", paddingVertical: S[2], paddingLeft: S[3], paddingRight: S[2], marginBottom: S[4] },

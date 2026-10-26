@@ -60,13 +60,18 @@ function TepaPanel({ state, descriptors }) {
       </View>
       {menu && (
         // Menyu ham suzadi; ekranga sig'masa — ichida scroll (pastki panelgacha)
-        <ScrollView
-          style={[styles.tepaMenyu, { maxHeight: Math.max(220, ekranH - insets.top - insets.bottom - barH - 130) }]}
-          contentContainerStyle={styles.tepaMenyuIch}
-          showsVerticalScrollIndicator={false}
-        >
-          <MarkazMenyu onYop={() => setMenu(false)} />
-        </ScrollView>
+        // Tashqi qobiq — soya va yumaloq shakl; ichki ScrollView burchaklardan kesiladi va oxirida
+        // Android'ning cho'zilish (overscroll) effekti o'chirilgan — to'rtburchak qism chiqmaydi
+        <View style={[styles.tepaMenyu, { maxHeight: Math.max(220, ekranH - insets.top - insets.bottom - barH - 130) }]}>
+          <ScrollView
+            style={styles.tepaMenyuScroll}
+            showsVerticalScrollIndicator={false}
+            overScrollMode="never"
+            bounces={false}
+          >
+            <MarkazMenyu onYop={() => setMenu(false)} />
+          </ScrollView>
+        </View>
       )}
     </View>
   );
@@ -262,8 +267,8 @@ export default function TabsLayout() {
 const styles = temaStil(() => StyleSheet.create({
   // Panel kontent ustida suzadi: orqasida fon yo'q, kartalar uning ostidan ko'rinib turadi
   tepaTashqi:{ position: "absolute", left: 20, right: 20 },
-  tepaMenyu:{ marginTop: 10, borderRadius: 22, shadowColor: "#000", shadowOpacity: temaQorongi() ? 0.5 : 0.16, shadowRadius: 16, shadowOffset: { width: 0, height: 6 }, elevation: 10 },
-  tepaMenyuIch:{ paddingTop: 12 },
+  tepaMenyu:{ marginTop: 10, borderRadius: 22, backgroundColor: C.card, shadowColor: "#000", shadowOpacity: temaQorongi() ? 0.5 : 0.16, shadowRadius: 16, shadowOffset: { width: 0, height: 6 }, elevation: 10 },
+  tepaMenyuScroll:{ borderRadius: 22, overflow: "hidden" },
   tashqi:  { position: "absolute", left: 0, right: 0, bottom: 0, paddingHorizontal: 12 },
   bar:     {
     flexDirection: "row", backgroundColor: C.card + "FA", borderRadius: 36, borderWidth: StyleSheet.hairlineWidth, borderColor: C.border, padding: ICHKI,
