@@ -32,7 +32,7 @@ const vaqtMatni = (ms) => { const d = new Date(ms); return `${ikki(d.getDate())}
 
 
 export default function Qarzlar() {
-  const { nonlar, qarzlar, setQarzlar, mahsulotNarxlari, ochirArxivga, amalArxivga, yozuvSanasi } = useApp();
+  const { nonlar, qarzlar, setQarzlar, mahsulotNarxlari, ochirArxivga, amalArxivga, yozuvSanasi, sanaYopiqmi } = useApp();
   // Bugun yakunlangan bo'lsa — yangi yozuv ertangi ish kuniga tushadi
   const localSana = yozuvSanasi;
   // sana: bo'sh bo'lsa => "avtomatik bugun". Qo'lda tanlansa => shu qiymat.
@@ -66,6 +66,8 @@ export default function Qarzlar() {
   };
   const [qidiruv, setQidiruv] = useState("");
   const korinadi = guruhlar.filter((g) => qidiruvMos(g.ism, qidiruv));
+  // Qarzdor tarixi har qarzdor uchun bir marta (formaga yozilganda butun ro'yxat qayta hisoblanmaydi)
+  const tarixlar = useMemo(() => new Map(guruhlar.map((g) => [g.kalit, qarzdorTarixi(g)])), [guruhlar]);
   const [tolovlar, setTolovlar] = useState({}); // qarzdor kaliti → kiritilayotgan to'lov
 
   const savatHisob = useMemo(() => {
@@ -89,10 +91,18 @@ export default function Qarzlar() {
   const yangilaSavat = (id, v) => setForma((p) => ({ ...p, savat: { ...p.savat, [id]: v } }));
   const tozala = () => { setForma(BOSH); yopKartalar(); };
 
-  const saqla = () => {
+  const saqla = (tasdiq = false) => {
     if (savatHisob.items.length === 0) { Alert.alert("Non tanlanmagan", "Kamida bitta non turidan soni kiriting."); return; }
     // Qo'lda tanlanmagan bo'lsa har safar joriy kun
     const sana = forma.sanaTanlandi && forma.sana ? forma.sana : localSana();
+    // Yakunlangan kunga eski qarzni yozish mumkin (qarzdor ro'yxatida turadi), lekin o'sha kun hisobotiga tushmaydi
+    if (!tasdiq && forma.sanaTanlandi && sanaYopiqmi(sana)) {
+      Alert.alert("Kun yakunlangan", `${sana} kuni yakunlangan — qarz qarzdorlar ro'yxatiga yoziladi, lekin o'sha kun hisobotiga (daromadga) tushmaydi. Saqlaysizmi?`, [
+        { text: "Bekor", style: "cancel" },
+        { text: "Saqlash", onPress: () => saqla(true) },
+      ]);
+      return;
+    }
     const soat = forma.soat || hozirgiSoat(); // qo'lda tanlanmasa — hozirgi vaqt
     setQarzlar((prev) => [...prev, {
       id: Date.now(), ism: forma.ism.trim() || ISM_SUKUT, sana, soat, vaqt: Date.now(),
@@ -109,7 +119,7 @@ export default function Qarzlar() {
     if (summa <= 0) { Alert.alert("Summa kiritilmagan", "To'lov summasini kiriting."); return; }
     if (summa > g.qoldiq + 0.5) { Alert.alert("Ortiqcha summa", `${g.ism}ning qarzi ${formatSom(g.qoldiq)} so'm. Undan ko'p to'lab bo'lmaydi.`); return; }
     const bajar = () => {
-      setQarzlar((prev) => tolovQil(prev, g.kalit, summa));
+      setQarzlar((prev) => tolovQil(prev, g.kalit, summa, Date.now(), yozuvSanasi()));
       setTolovlar((p) => ({ ...p, [g.kalit]: "" }));
       if (summa >= g.qoldiq - 0.5) yopKartalar();
     };
@@ -198,7 +208,7 @@ export default function Qarzlar() {
           )}
 
           <View style={styles.formActions}>
-            <Btn color={C.accent} onPress={saqla}>Saqlash</Btn>
+            <Btn color={C.accent} onPress={() => saqla()}>Saqlash</Btn>
           </View>
         </Card>
 
@@ -218,7 +228,7 @@ export default function Qarzlar() {
         ) : (
           <Guruh>{korinadi.map((g) => {
             const kun = g.qoldiq > 0 ? kunOtdi(g.enEskiFaol) : 0;
-            const tarix = qarzdorTarixi(g);
+            const tarix = tarixlar.get(g.kalit) || qarzdorTarixi(g);
             return (
               <ExpandableCard
                 key={g.kalit}

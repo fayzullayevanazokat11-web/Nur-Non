@@ -6,9 +6,9 @@
 //     Ustun bosilsa — sana va qiymat yuqorida ko'rsatiladi.
 //   • Non turlari bo'yicha ishlab chiqarilgan qoplar
 // Har bir mavzu ranglari validator bilan tekshirilgan (dataviz: lightness, chroma, CVD, kontrast — PASS).
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useTiklash } from "./useTiklash";
-import { View, Text, Pressable, Animated, Easing, StyleSheet, LayoutAnimation, Alert } from "react-native";
+import { View, Text, Pressable, Animated, Easing, StyleSheet, Alert, Platform } from "react-native";
 import { C, T, S, R, temaStil } from "../theme";
 import { Ionicons } from "@expo/vector-icons";
 import { formatSom, ishKuni } from "../logic/hisob";
@@ -42,7 +42,6 @@ const KORSATKICHLAR = [
 ];
 const DAVRLAR = [{ k: 7, nom: "7 kun" }, { k: 30, nom: "30 kun" }];
 
-const silliq = () => LayoutAnimation.configureNext(LayoutAnimation.create(220, LayoutAnimation.Types.easeInEaseOut, LayoutAnimation.Properties.opacity));
 const qiymatMatni = (v, birlik) => (birlik === "so'm" ? `${formatSom(v)} so'm` : `${formatSom(v)} ${birlik}`);
 
 export function Statistika({ hisobotlar, nonlar, arxiv, akkaunt }) {
@@ -70,11 +69,13 @@ export function Statistika({ hisobotlar, nonlar, arxiv, akkaunt }) {
   useEffect(() => { setTanlangan(null); }, [davr, korK]);
   const tI = tanlangan != null && tanlangan < qiymatlar.length ? tanlangan : qiymatlar.length - 1;
 
-  // O'sish animatsiyasi (ko'rsatkich/davr o'zgarganda qayta)
+  // O'sish animatsiyasi (ko'rsatkich/davr o'zgarganda qayta). Balandlik emas, scaleY — native driver
+  // (UI thread'da, har kadrda layout hisoblanmaydi). setValue(0) chizishdan OLDIN — yangi ustunlar bir
+  // kadr to'liq bo'yda ko'rinib qolmasin.
   const osish = useRef(new Animated.Value(0)).current;
-  useEffect(() => {
+  useLayoutEffect(() => {
     osish.setValue(0);
-    Animated.timing(osish, { toValue: 1, duration: 420, easing: Easing.out(Easing.cubic), useNativeDriver: false }).start();
+    Animated.timing(osish, { toValue: 1, duration: 460, easing: Easing.out(Easing.cubic), useNativeDriver: Platform.OS !== "web" }).start();
   }, [davr, korK, kunlar.length, osish]);
 
   // Masshtab: nol chizig'i har doim ko'rinadi
@@ -134,7 +135,7 @@ export function Statistika({ hisobotlar, nonlar, arxiv, akkaunt }) {
       <View style={styles.filtrQator}>
         <View style={styles.seg}>
           {DAVRLAR.map((d) => (
-            <Pressable key={d.k} onPress={() => { silliq(); setDavr(d.k); }} style={[styles.segBtn, davr === d.k && styles.segBtnActive]}>
+            <Pressable key={d.k} onPress={() => setDavr(d.k)} style={[styles.segBtn, davr === d.k && styles.segBtnActive]}>
               <Text style={[styles.segTxt, davr === d.k && styles.segTxtActive]}>{d.nom}</Text>
             </Pressable>
           ))}
@@ -149,7 +150,7 @@ export function Statistika({ hisobotlar, nonlar, arxiv, akkaunt }) {
       </View>
       <View style={styles.chips}>
         {KORSATKICHLAR.map((x) => (
-          <Pressable key={x.k} onPress={() => { silliq(); setKorK(x.k); }} style={[styles.chip, korK === x.k && styles.chipActive]}>
+          <Pressable key={x.k} onPress={() => setKorK(x.k)} style={[styles.chip, korK === x.k && styles.chipActive]}>
             <Text style={[styles.chipTxt, korK === x.k && styles.chipTxtActive]}>{x.nom}</Text>
           </Pressable>
         ))}
@@ -210,6 +211,7 @@ export function Statistika({ hisobotlar, nonlar, arxiv, akkaunt }) {
                           key={kunlar[i].id || i}
                           accessibilityLabel={`${kunlar[i].sana}: ${qiymatMatni(v, kor.birlik)}`}
                           onPress={() => setTanlangan(i)}
+                          animatsiya={false}
                           style={[styles.slot, { width: slot }]}
                         >
                           <Animated.View
@@ -217,9 +219,12 @@ export function Statistika({ hisobotlar, nonlar, arxiv, akkaunt }) {
                               styles.ustun,
                               {
                                 width: ustunEni,
-                                height: osish.interpolate({ inputRange: [0, 1], outputRange: [0, Math.max(h, v !== 0 ? 2 : 0)] }),
+                                height: Math.max(h, v !== 0 ? 2 : 0),
                                 backgroundColor: musbat ? C.musbat : C.manfiy,
                                 opacity: faol ? 1 : 0.55,
+                                // Nol chizig'idan o'sadi: musbat — pastdan yuqoriga, manfiy — yuqoridan pastga
+                                transformOrigin: musbat ? "bottom" : "top",
+                                transform: [{ scaleY: osish }],
                               },
                               musbat
                                 ? { bottom: H - nolY, borderTopLeftRadius: 4, borderTopRightRadius: 4 }

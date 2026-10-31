@@ -29,6 +29,9 @@ function useTemaParda() {
   const [parda, setParda] = useState(null); // { eski, yangi }
   const ochiq = useRef(new Animated.Value(0)).current;
   const rang = useRef(new Animated.Value(0)).current;
+  // Rang interpolatsiyasi o'rniga ikki qatlam: pastda yangi rang, ustida eski rang — ustkisining
+  // shaffofligi native driver bilan 1→0 (JS qayta chizish bilan band bo'lsa ham silliq)
+  const eskiOp = useRef(rang.interpolate({ inputRange: [0, 1], outputRange: [1, 0] })).current;
 
   useEffect(() => temaAlmashtiruvchi((id) => {
     ochiq.setValue(0);
@@ -37,7 +40,7 @@ function useTemaParda() {
     Animated.timing(ochiq, { toValue: 1, duration: 150, easing: Easing.out(Easing.quad), useNativeDriver: true }).start(() => {
       setTema(id); // ekranlar parda ostida qayta chiziladi
       setTimeout(() => {
-        Animated.timing(rang, { toValue: 1, duration: 160, easing: Easing.inOut(Easing.quad), useNativeDriver: false }).start(() => {
+        Animated.timing(rang, { toValue: 1, duration: 180, easing: Easing.inOut(Easing.quad), useNativeDriver: true }).start(() => {
           Animated.timing(ochiq, { toValue: 0, duration: 260, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start(() => setParda(null));
         });
       }, 60);
@@ -47,7 +50,8 @@ function useTemaParda() {
   if (!parda) return null;
   return (
     <Animated.View style={[StyleSheet.absoluteFill, { opacity: ochiq }]}>
-      <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: rang.interpolate({ inputRange: [0, 1], outputRange: [parda.eski, parda.yangi] }) }]} />
+      <View style={[StyleSheet.absoluteFill, { backgroundColor: parda.yangi }]} />
+      <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: parda.eski, opacity: eskiOp }]} />
     </Animated.View>
   );
 }

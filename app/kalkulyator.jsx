@@ -16,7 +16,7 @@ import { SahifaSarlavha } from "../src/components/SahifaSarlavha";
 import { ScrollBox, TepaJoy } from "../src/components/ScrollBox";
 import { useTiklash } from "../src/components/useTiklash";
 import { NonIkon } from "../src/components/XomashyoIkon";
-import { useAnimSon } from "../src/components/useAnimSon";
+import { AnimSon } from "../src/components/useAnimSon";
 import { C, T, S, R, temaStil } from "../src/theme";
 import { formatSom } from "../src/logic/hisob";
 
@@ -38,7 +38,6 @@ export default function Kalkulyator() {
     });
     return { summa, dona };
   }, [soni, nonlar]);
-  const korinish = useAnimSon(hisob.summa);
 
   // Raqamlar qatori qaysi non uchun ochiq (bir vaqtda bittasi)
   const [ochiq, setOchiq] = useState(null);
@@ -68,7 +67,7 @@ export default function Kalkulyator() {
     <View style={styles.jami}>
       <View style={styles.flex1}>
         <Text style={styles.jamiNom}>UMUMIY NARX</Text>
-        <Text style={styles.jamiQiymat} numberOfLines={1} adjustsFontSizeToFit>{formatSom(Math.round(korinish))} so'm</Text>
+        <AnimSon qiymat={hisob.summa} style={styles.jamiQiymat} numberOfLines={1} adjustsFontSizeToFit />
         <Text style={styles.jamiDona}>{hisob.dona} dona non</Text>
       </View>
       {hisob.dona > 0 && (

@@ -20,8 +20,12 @@ export function EslatmalarPanel() {
   const { nonlar, hisobotlarTarixi, ozIshlabQoplar, tashqariSonlar, omborlar, omborSorovlar, qarzlar, customMahsulotlar, lockedDayStats, tayyor } = useApp();
   // Yashirilganlar: { id: sana } — faqat shu kun uchun
   const [yashirin, setYashirin] = usePersistedState("nurnon:yashirinEslatmalar", {}, { hidratsiya: false });
-  const [daqiqa, setDaqiqa] = useState(0);
-  useEffect(() => { const t = setInterval(() => setDaqiqa((x) => x + 1), tikMs(60000)); return () => clearInterval(t); }, []);
+  const [daqiqa, setDaqiqa] = useState(() => new Date().getHours());
+  // Eslatmalar soat bo'yicha o'zgaradi (masalan, kechqurun) — qayta hisob faqat soat almashganda
+  useEffect(() => {
+    const t = setInterval(() => setDaqiqa((x) => { const n = new Date().getHours(); return x === n ? x : n; }), tikMs(60000));
+    return () => clearInterval(t);
+  }, []);
 
   const royxat = useMemo(() => omborRoyxati(customMahsulotlar), [customMahsulotlar]);
   const hammasi = useMemo(() => (tayyor ? eslatmalar({

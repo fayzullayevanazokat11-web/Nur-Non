@@ -6,6 +6,8 @@ import * as FileSystem from "expo-file-system";
 import usePersistedState, { useHidratsiya } from "./usePersistedState";
 import { arxivla } from "../logic/davr";
 import { kunYakunEslatmalari, birinchiMartaRuxsat } from "../logic/bildirishnoma";
+import { tanishuvTinglash } from "../logic/tanishuvSignal";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { nusxaSaqla, nusxaBormi } from "../logic/avtoZaxira";
 import { bugunSana, keyingiSana, oldingiSana, kunRoliBilan } from "../logic/hisob";
 import { rasmSaqla, rasmFaylOchir, pdfRasmlari } from "../logic/qopRasm";
@@ -34,15 +36,21 @@ export function BAZA_TUR_MOS(qiymat, tur) {
   return false;
 }
 
-// Ro'yxatga element qo'shilsa yoki o'chirilsa — qolganlari silliq siljiydi (barcha sahifalarda)
+// Ro'yxatga element qo'shilsa yoki o'chirilsa — qolganlari silliq siljiydi (barcha sahifalarda).
+// LayoutAnimation setState updater'i ICHIDA emas (render fazasi), setter chaqirilgan joyda sozlanadi;
+// uzunlik o'zgarishi joriy qiymat (ref) bo'yicha oldindan tekshiriladi. Ma'lumot yuklash (import,
+// bekor qilish) paytida o'chiq — butun ilova bitta katta commit bilan animatsiyalanmasin.
 const silliqAnim = () =>
   LayoutAnimation.configureNext(LayoutAnimation.create(220, LayoutAnimation.Types.easeInEaseOut, LayoutAnimation.Properties.opacity));
-const silliqSetter = (set) => (v) =>
-  set((p) => {
+let silliqJim = false;
+const silliqSetter = (set, ol) => (v) => {
+  if (!silliqJim) {
+    const p = ol();
     const n = typeof v === "function" ? v(p) : v;
     if (Array.isArray(n) && Array.isArray(p) && n.length !== p.length) silliqAnim();
-    return n;
-  });
+  }
+  set(v);
+};
 
 // Import: id'li yozuvlar ro'yxatida faqat id'si bor obyektlar qoladi —
 // buzilgan matn ilovani ishdan chiqarmasligi uchun
@@ -52,6 +60,23 @@ export function tozalaRoyxat(kalit, qiymat) {
   if (!ID_ROYXATLAR.has(kalit) || !Array.isArray(qiymat)) return qiymat;
   return qiymat.filter((x) => x && typeof x === "object" && !Array.isArray(x) && x.id != null);
 }
+
+// Forma taqqoslash: bo'sh maydonlar tashlanadi, kalitlar tartiblanadi (qop.jsx dagi kabi)
+const tekisla = (obj) => JSON.stringify(Object.keys(obj || {})
+  .filter((k) => String(obj[k] ?? "").trim() !== "")
+  .sort()
+  .map((k) => [k, String(obj[k]).trim()]));
+// Yozuvlar sanasini ko'chirish: `dan` sanali va `vaqtDan` dan keyin kiritilganlar → `ga`.
+// Qarz to'lovlari (ichki tolovlar) ham ko'chiriladi.
+const sanaKochir = (dan, ga, vaqtDan) => (arr) => {
+  const mos = (x) => x && x.sana === dan && (x.vaqt || 0) > (vaqtDan || 0);
+  if (!(arr || []).some((x) => mos(x) || (x?.tolovlar || []).some(mos))) return arr;
+  return arr.map((x) => {
+    let y = mos(x) ? { ...x, sana: ga } : x;
+    if ((y.tolovlar || []).some(mos)) y = { ...y, tolovlar: y.tolovlar.map((t) => (mos(t) ? { ...t, sana: ga } : t)) };
+    return y;
+  });
+};
 
 export function AppDataProvider({ children }) {
   // ── Saqlanadigan ma'lumotlar ──
@@ -150,20 +175,24 @@ export function AppDataProvider({ children }) {
   }, [yuklandi, tayyor]);
 
   // Ro'yxat setterlari — uzunlik o'zgarsa silliq animatsiya bilan (identifikatori barqaror)
-  const setNonlar = useMemo(() => silliqSetter(setNonlarXom), [setNonlarXom]);
-  const setIshchilar = useMemo(() => silliqSetter(setIshchilarXom), [setIshchilarXom]);
-  const setCustomMahsulotlar = useMemo(() => silliqSetter(setCustomMahsulotlarXom), [setCustomMahsulotlarXom]);
-  const setQarzlar = useMemo(() => silliqSetter(setQarzlarXom), [setQarzlarXom]);
-  const setOptomlar = useMemo(() => silliqSetter(setOptomlarXom), [setOptomlarXom]);
-  const setKartalar = useMemo(() => silliqSetter(setKartalarXom), [setKartalarXom]);
-  const setOmborlar = useMemo(() => silliqSetter(setOmborlarXom), [setOmborlarXom]);
-  const setOmborSorovlar = useMemo(() => silliqSetter(setOmborSorovlarXom), [setOmborSorovlarXom]);
-  const setOmborTasdiqlar = useMemo(() => silliqSetter(setOmborTasdiqlarXom), [setOmborTasdiqlarXom]);
-  const setHisobotlarTarixi = useMemo(() => silliqSetter(setHisobotlarTarixiXom), [setHisobotlarTarixiXom]);
-  const setBraklar = useMemo(() => silliqSetter(setBraklarXom), [setBraklarXom]);
-  const setKunlikXarajatlar = useMemo(() => silliqSetter(setKunlikXarajatlarXom), [setKunlikXarajatlarXom]);
-  const setOchirilganlar = useMemo(() => silliqSetter(setOchirilganlarXom), [setOchirilganlarXom]);
-  const setIshHaqiYozuvlari = useMemo(() => silliqSetter(setIshHaqiYozuvlariXom), [setIshHaqiYozuvlariXom]);
+  const roy = useRef({});
+  roy.current = { nonlar, ishchilar, customMahsulotlar, qarzlar, optomlar, kartalar, omborlar, omborSorovlar, omborTasdiqlar,
+    hisobotlarTarixi, braklar, kunlikXarajatlar, ochirilganlar, ishHaqiYozuvlari };
+  const sS = (set, k) => silliqSetter(set, () => roy.current[k]);
+  const setNonlar = useMemo(() => sS(setNonlarXom, "nonlar"), [setNonlarXom]);
+  const setIshchilar = useMemo(() => sS(setIshchilarXom, "ishchilar"), [setIshchilarXom]);
+  const setCustomMahsulotlar = useMemo(() => sS(setCustomMahsulotlarXom, "customMahsulotlar"), [setCustomMahsulotlarXom]);
+  const setQarzlar = useMemo(() => sS(setQarzlarXom, "qarzlar"), [setQarzlarXom]);
+  const setOptomlar = useMemo(() => sS(setOptomlarXom, "optomlar"), [setOptomlarXom]);
+  const setKartalar = useMemo(() => sS(setKartalarXom, "kartalar"), [setKartalarXom]);
+  const setOmborlar = useMemo(() => sS(setOmborlarXom, "omborlar"), [setOmborlarXom]);
+  const setOmborSorovlar = useMemo(() => sS(setOmborSorovlarXom, "omborSorovlar"), [setOmborSorovlarXom]);
+  const setOmborTasdiqlar = useMemo(() => sS(setOmborTasdiqlarXom, "omborTasdiqlar"), [setOmborTasdiqlarXom]);
+  const setHisobotlarTarixi = useMemo(() => sS(setHisobotlarTarixiXom, "hisobotlarTarixi"), [setHisobotlarTarixiXom]);
+  const setBraklar = useMemo(() => sS(setBraklarXom, "braklar"), [setBraklarXom]);
+  const setKunlikXarajatlar = useMemo(() => sS(setKunlikXarajatlarXom, "kunlikXarajatlar"), [setKunlikXarajatlarXom]);
+  const setOchirilganlar = useMemo(() => sS(setOchirilganlarXom, "ochirilganlar"), [setOchirilganlarXom]);
+  const setIshHaqiYozuvlari = useMemo(() => sS(setIshHaqiYozuvlariXom, "ishHaqiYozuvlari"), [setIshHaqiYozuvlariXom]);
 
   // ── Vaqtinchalik oqim bayroqlari (saqlanmaydi) ──
   const [qopTasdiqlandi, setQopTasdiqlandi]       = useState(false);
@@ -245,17 +274,20 @@ export function AppDataProvider({ children }) {
     && (lockedDayStats.kun || lockedDayStats.sana) === bugunSana()
     && (!lockedDayStats.lockedUntil || Date.now() <= lockedDayStats.lockedUntil));
   const kunYakunlangan = kunYakunlanganmi();
+  // Sana yopiqmi: hisoboti yozilgan yoki bugun yakunlangan
+  const sanaYopiqmi = (s) => (hisobotlarTarixi || []).some((h) => h.sana === s) || (s === bugunSana() && kunYakunlanganmi());
   // Yangi yozuv (karta, brak, optom, qarz, xarajat) sanasi: bugun yakunlangan bo'lsa —
   // ertangi ish kuni (aks holda 03:00 gacha kiritilgani hech bir hisobotga tushmay qolardi).
   const yozuvSanasi = () => (kunYakunlanganmi() ? keyingiSana(bugunSana()) : bugunSana());
 
-  const kunYakunla = ({ snap, lock, sorov, forma }) => {
+  // vaqt — yakunlash vaqti (Tarixdagilardan tiklanganda — asl yakun vaqti, yakundan keyingi yozuvlar yo'qolmasin)
+  const kunYakunla = ({ snap, lock, sorov, forma, vaqt: berilganVaqt }) => {
     // O'tgan sana bilan yakunlash (unutilgan kun): hisobot tarixga yoziladi, qoldiq ertangi
     // tonggiga o'tadi, lekin BUGUNGI kun yakunlangan deb belgilanmaydi va bugungi yozuvlar
     // (karta, xarajat...) yo'qolmaydi — shuning uchun muhr va "oxirgi yakunlash vaqti" tegilmaydi.
     const bugunmi = snap.sana === bugunSana();
     if (bugunmi && kunYakunlanganmi()) return false;
-    const vaqt = Date.now();
+    const vaqt = berilganVaqt || Date.now();
     const almashganHisobot = (hisobotlarTarixi || []).find((h) => h.sana === snap.sana) || null;
     const almashganSorov = sorov ? (omborSorovlar || []).find((s) => s.sana === sorov.sana) || null : null;
     if (bugunmi) {
@@ -279,11 +311,21 @@ export function AppDataProvider({ children }) {
       setSotilmaganNon({}); setOzIshlabQoplar({}); setTashqariSonlar({}); setQoldaYaroqsiz({});
     } else if (snap.sana === oldingiSana(bugunSana())) {
       // Unutilgan KECHAGI kun: uning qoldig'i bugungi tonggi qoldiq bo'ladi.
-      // Bugungi saqlangan qop/qoldiq kiritmalariga tegilmaydi (ular bugunniki).
       setBoshlangichQoldiq(forma.sotilmaganNon || {});
+      // Saqlangan kiritmalar aynan kechagi formaning o'zi bo'lsa (kecha kiritilib, yakunlanmay qolgan) —
+      // ular endi hisobotda; bugunga ikkinchi marta tushmasligi uchun tozalanadi. Farq qilsa — bugunniki, tegilmaydi.
+      kechagiKiritmalarniTozala(forma);
     }
     // Undan ham eski kun — faqat hisobot yoziladi, bugungi holat o'zgarmaydi
     return true;
+  };
+
+  // Saqlangan kunlik kiritmalar berilgan forma bilan bir xil bo'lsa — tozalanadi
+  const kechagiKiritmalarniTozala = (forma) => {
+    const juft = [[ozIshlabQoplar, forma.ozIshlabQoplar], [sotilmaganNon, forma.sotilmaganNon], [qoldaYaroqsiz, forma.qoldaYaroqsiz], [tashqariSonlar, forma.tashqariSonlar]];
+    if (juft.some(([s]) => tekisla(s) !== "[]") && juft.every(([s, f]) => tekisla(s) === tekisla(f))) {
+      setOzIshlabQoplar({}); setSotilmaganNon({}); setQoldaYaroqsiz({}); setTashqariSonlar({});
+    }
   };
 
   // Bekor qilish mumkinmi: faqat shu kuni va yakun hali turgan bo'lsa
@@ -327,11 +369,7 @@ export function AppDataProvider({ children }) {
       });
     }
     // Yakundan keyin ertangi sanaga yozilganlar — yana bugungi kunga qaytadi
-    const ertaga = keyingiSana(yakunBekor.kun), bugun = yakunBekor.kun;
-    const bugungaQaytar = (arr) => {
-      if (!(arr || []).some((e) => e.sana === ertaga && (e.vaqt || 0) > (yakunBekor.vaqt || 0))) return arr;
-      return arr.map((e) => (e.sana === ertaga && (e.vaqt || 0) > (yakunBekor.vaqt || 0) ? { ...e, sana: bugun } : e));
-    };
+    const bugungaQaytar = sanaKochir(keyingiSana(yakunBekor.kun), yakunBekor.kun, yakunBekor.vaqt || 0);
     setKartalarXom(bugungaQaytar); setBraklarXom(bugungaQaytar); setOptomlarXom(bugungaQaytar); setQarzlarXom(bugungaQaytar); setKunlikXarajatlarXom(bugungaQaytar);
     setLockedDayStats(oldin.lockedDayStats || null);
     setOxirgiYakunlashVaqti(oldin.oxirgiYakunlashVaqti || 0);
@@ -476,24 +514,37 @@ export function AppDataProvider({ children }) {
   // Bildirishnoma ruxsati berilgach eslatmalarni qayta rejalashtirish uchun
   const [eslatmaKalit, setEslatmaKalit] = useState(0);
   const eslatmaYangila = () => setEslatmaKalit((k) => k + 1);
+  // Yozuv (lotin/kirill) almashsa — bildirishnoma matni ham yangi yozuvda qayta rejalashtiriladi
+  const joriyTil = useTil();
   useEffect(() => {
     // Test maydonida bildirishnomalarga tegilmaydi (asl tizimning kechki eslatmasi buzilmasin)
     if (!tayyor || testmi()) return;
-    const til = getTil();
     kunYakunEslatmalari({
       yoqilgan: !!eslatmaYoqilgan,
       yakunlanganSana: yakunSana,
-      sarlavha: ogir("Kunni yakunlashni unutmang", til),
-      matn: ogir("Bugungi qop hisobini kiriting va «Kunni yakunlash»ni bosing.", til),
+      sarlavha: ogir("Kunni yakunlashni unutmang", joriyTil),
+      matn: ogir("Bugungi qop hisobini kiriting va «Kunni yakunlash»ni bosing.", joriyTil),
+      kanalNomi: ogir("Eslatmalar", joriyTil),
     });
-  }, [tayyor, eslatmaYoqilgan, yakunSana, eslatmaKalit]);
+  }, [tayyor, eslatmaYoqilgan, yakunSana, eslatmaKalit, joriyTil]);
 
-  // Kechki eslatma standart: ruxsat hali so'ralmagan bo'lsa — ilova ochilgach bir marta so'raladi,
-  // berilsa eslatmalar darhol rejalashtiriladi (test maydonida emas)
+  // Kechki eslatma standart: ruxsat hali so'ralmagan bo'lsa — bir marta so'raladi, berilsa eslatmalar
+  // darhol rejalashtiriladi. Yo'riqnoma ochiq paytda so'ralmaydi (tizim oynasi uning ustida chiqmasin):
+  // yo'riqnoma ko'rilgan bo'lsa — ilova ochilgach, aks holda — u yopilgach. Test maydonida emas.
   useEffect(() => {
     if (!tayyor || testmi()) return undefined;
-    const t = setTimeout(() => { birinchiMartaRuxsat().then((bor) => { if (bor) eslatmaYangila(); }); }, 2500);
-    return () => clearTimeout(t);
+    let tirik = true, t = null;
+    const sora = (kut) => {
+      clearTimeout(t);
+      t = setTimeout(() => { if (tirik) birinchiMartaRuxsat().then((bor) => { if (bor && tirik) eslatmaYangila(); }); }, kut);
+    };
+    AsyncStorage.getItem("nurnon:tanishuv").then((v) => {
+      let korilgan = false;
+      try { korilgan = v != null && JSON.parse(v) === true; } catch {}
+      if (korilgan) sora(2500);
+    }).catch(() => {});
+    const off = tanishuvTinglash(() => sora(1200));
+    return () => { tirik = false; clearTimeout(t); off(); };
   }, [tayyor]);
 
   // ── Tarixdagilar: o'chirish (arxivga) va qaytarish ──
@@ -523,6 +574,15 @@ export function AppDataProvider({ children }) {
     const indeks = (royxat || []).findIndex((x) => x.id === id);
     if (indeks < 0) return;
     const element = royxat[indeks];
+    // Non: shu kungi kiritmalari (qop, tonggi qoldiq, qoldiq, yaroqsiz, olingan dona) ham saqlanadi —
+    // shu kuni qaytarilsa, ular ham tiklanadi (aks holda yetim kalit sifatida tozalanib yo'qolardi)
+    if (tur === "non") {
+      const k = String(id);
+      qoshimcha = { ...qoshimcha, kun: bugunSana(), kunlik: {
+        boshlangichQoldiq: (boshlangichQoldiq || {})[k], ozIshlabQoplar: (ozIshlabQoplar || {})[k],
+        tashqariSonlar: (tashqariSonlar || {})[k], sotilmaganNon: (sotilmaganNon || {})[k], qoldaYaroqsiz: (qoldaYaroqsiz || {})[k],
+      } };
+    }
     set((p) => (p || []).filter((x) => x.id !== id));
     setOchirilganlar((p) => [
       { id: `${Date.now()}-${Math.floor(Math.random() * 1e6)}`, tur, vaqt: Date.now(), element, qoshimcha: { ...qoshimcha, indeks } },
@@ -541,7 +601,10 @@ export function AppDataProvider({ children }) {
   // Har bir amalni ortga qaytarish. Natija: true yoki nima uchun bo'lmagani (matn)
   const AMALLAR = {
     haydash: (e) => {
-      if (!(ishchilar || []).some((w) => w.id === e.id)) return "Xodim topilmadi — o'chirilgan bo'lishi mumkin.";
+      const w = (ishchilar || []).find((x) => x.id === e.id);
+      if (!w) return "Xodim topilmadi — o'chirilgan bo'lishi mumkin.";
+      // Keyin ishga qaytarilgan (ta'til va h.k.) bo'lsa — eski holat yangi holatni bosib ketmasin
+      if (w.holat !== "Ishdan ketgan") return "Xodim allaqachon ishga qaytarilgan.";
       setIshchilar((p) => (p || []).map((w) => (w.id === e.id ? { ...w, holat: e.holat || "Aktiv", tatilQaytishSana: e.tatilQaytishSana || "" } : w)));
       return true;
     },
@@ -583,20 +646,29 @@ export function AppDataProvider({ children }) {
       if (e.kun === bugunSana()) {
         // Shu ish kuni hali tugamagan — kun xuddi avvalgidek qayta yakunlanadi
         if (kunYakunlanganmi()) return "Bugun kun qayta yakunlangan. Avval uni Markazdan bekor qiling.";
-        kunYakunla({ snap: e.snap, lock: e.lock, sorov: e.sorov, forma: e.forma || {} });
-        // Birinchi yakundan keyin kiritilgan yozuvlar (hisobotda yo'q) — yo'qolib qolmasin:
-        // yakundan keyingi yozuvlar kabi ertangi kunga o'tadi
+        // Asl yakun vaqti bilan: yakundan keyin kiritilgan yozuvlar (hisobotda yo'q) yakundan keyingi
+        // yozuvlar kabi ertangi kunga o'tadi va ertangi hisobotga tushadi
+        kunYakunla({ snap: e.snap, lock: e.lock, sorov: e.sorov, forma: e.forma || {}, vaqt: e.vaqtAsl || undefined });
         if (e.vaqtAsl) {
-          const ertaga = keyingiSana(e.kun);
-          const ertagaOtkaz = (arr) => ((arr || []).some((x) => x.sana === e.kun && (x.vaqt || 0) > e.vaqtAsl)
-            ? arr.map((x) => (x.sana === e.kun && (x.vaqt || 0) > e.vaqtAsl ? { ...x, sana: ertaga } : x)) : arr);
-          setKartalarXom(ertagaOtkaz); setOptomlarXom(ertagaOtkaz); setQarzlarXom(ertagaOtkaz); setKunlikXarajatlarXom(ertagaOtkaz);
+          const ertagaOtkaz = sanaKochir(e.kun, keyingiSana(e.kun), e.vaqtAsl);
+          setKartalarXom(ertagaOtkaz); setBraklarXom(ertagaOtkaz); setOptomlarXom(ertagaOtkaz); setQarzlarXom(ertagaOtkaz); setKunlikXarajatlarXom(ertagaOtkaz);
         }
         return true;
       }
       // Kun o'tib ketgan — hisobot tarixga qaytadi
       if ((hisobotlarTarixi || []).some((h) => h.sana === e.snap.sana)) return `${e.snap.sana} uchun hisobot allaqachon bor.`;
       setHisobotlarTarixi((p) => [...(p || []), e.snap].sort((a, b) => String(b.sana).localeCompare(String(a.sana))));
+      // Kecha yakuni bekor qilinib, qayta yakunlanmay qolgan bo'lsa: bekor qilish o'sha kun formasini
+      // kiritmalarga qaytargan edi — endi ular hisobotda. Tonggi qoldiq — o'sha kun oxiri qoldig'i.
+      if (e.snap.sana === oldingiSana(bugunSana())) {
+        setBoshlangichQoldiq((e.forma || {}).sotilmaganNon || {});
+        kechagiKiritmalarniTozala(e.forma || {});
+      }
+      // Asl yakundan keyin kiritilgan yozuvlar (bekor qilinganda o'sha kunga qaytgan) — keyingi kunga
+      if (e.vaqtAsl) {
+        const keyingiga = sanaKochir(e.kun, keyingiSana(e.kun), e.vaqtAsl);
+        setKartalarXom(keyingiga); setBraklarXom(keyingiga); setOptomlarXom(keyingiga); setQarzlarXom(keyingiga); setKunlikXarajatlarXom(keyingiga);
+      }
       // O'sha kunning xomashyo so'rovnomasi ham qaytadi (ombordan hali ayrilmagan bo'lsa)
       if (e.sorov && !(omborTasdiqlar || []).some((t) => t.sorovId === e.sorov.id)) {
         setOmborSorovlar((p) => ((p || []).some((s) => s.sana === e.sorov.sana) ? p : [e.sorov, ...(p || [])]));
@@ -627,6 +699,22 @@ export function AppDataProvider({ children }) {
     // Bir sanaga ikkita hisobot bo'lmasin (o'chirilgandan keyin shu kun qayta yakunlangan bo'lishi mumkin)
     if (y.tur === "hisobot" && (hisobotlarTarixi || []).some((h) => h.sana === y.element?.sana && h.id !== y.element?.id))
       return `${y.element.sana} uchun hisobot allaqachon bor.`;
+    // Bir xil nomli ikkita non/xodim bo'lmasin (o'chirilgandan keyin shu nomda yangisi qo'shilgan bo'lishi mumkin):
+    // nom bo'yicha bog'lanishlar (xodim stavkalari, optom savati) buziladi
+    const nomi = (x) => String(x?.nom ?? x?.ism ?? "").trim().toLowerCase();
+    if ((y.tur === "non" || y.tur === "ishchi") && (KOLLEKSIYA[y.tur][0] || []).some((x) => x.id !== y.element?.id && nomi(x) === nomi(y.element)))
+      return `«${y.element?.nom || y.element?.ism}» nomli ${y.tur === "non" ? "non" : "xodim"} allaqachon bor — avval uni boshqa nomga o'zgartiring.`;
+    // Pul yozuvi yakunlangan (hisoboti yozilgan) kunga qaytsa va o'sha hisobotga KIRMAGAN bo'lsa (hisobotdan
+    // oldin o'chirilgan yoki hisobotdan keyin kiritilgan) — hech bir hisobotga tushmay qolardi, shuning uchun
+    // u joriy ochiq ish kuniga (yozuvSanasi) o'tadi. Hisobotga kirgani (hisobotdan keyin o'chirilgan) — o'z
+    // sanasida qaytadi (aks holda ikki marta sanalardi).
+    let element = y.element;
+    // (Qarz bundan mustasno: uning vaqti qarz yoshi va to'lov tartibini belgilaydi — o'z sanasida qaytadi)
+    if (["karta", "optom", "xarajat", "brak"].includes(y.tur) && element?.sana && sanaYopiqmi(element.sana)) {
+      const hv = (hisobotlarTarixi || []).find((h) => h.sana === element.sana)?.vaqt || 0;
+      const hisobotdaBor = hv > 0 && (element.vaqt || 0) <= hv && (y.vaqt || 0) > hv;
+      if (!hisobotdaBor) element = { ...element, sana: yozuvSanasi(), vaqt: Date.now(), ...(element.vaqt ? { asliVaqt: element.vaqt } : {}) };
+    }
     const q = y.qoshimcha || {};
     const kirit = (set, el, indeks) => set((p) => {
       const a = [...(p || [])];
@@ -634,7 +722,14 @@ export function AppDataProvider({ children }) {
       a.splice(Math.min(indeks ?? a.length, a.length), 0, el);
       return a;
     });
-    kirit(KOLLEKSIYA[y.tur][1], y.element, q.indeks);
+    kirit(KOLLEKSIYA[y.tur][1], element, q.indeks);
+    // Non shu kuni qaytarilsa — shu kungi kiritmalari ham qaytadi (bo'sh bo'lmaganlari)
+    if (y.tur === "non" && q.kunlik && q.kun === bugunSana()) {
+      const k = String(y.element.id);
+      const tikla = (set, v) => { if (v !== undefined && v !== null && v !== "") set((p) => ((p || {})[k] !== undefined ? p : { ...(p || {}), [k]: v })); };
+      tikla(setBoshlangichQoldiq, q.kunlik.boshlangichQoldiq); tikla(setOzIshlabQoplar, q.kunlik.ozIshlabQoplar);
+      tikla(setTashqariSonlar, q.kunlik.tashqariSonlar); tikla(setSotilmaganNon, q.kunlik.sotilmaganNon); tikla(setQoldaYaroqsiz, q.kunlik.qoldaYaroqsiz);
+    }
     if (y.tur === "ingredient" && q.narx) {
       setMahsulotNarxlari((p) => ({ ...p, [y.element.id]: q.narx }));
     }
@@ -706,11 +801,10 @@ export function AppDataProvider({ children }) {
   //    saqlanadi. Kun yakunlanganda darrov yaratiladi (rasmlar 7 kundan keyin o'chsa ham PDF qoladi);
   //    yakun bekor qilinsa yoki hisobot 30 kundan eskirsa — fayli o'chiriladi.
   const pdfArxivRef = useRef(pdfArxiv); pdfArxivRef.current = pdfArxiv;
-  const pdfMalumot = useRef({}); pdfMalumot.current = { hisobotlarTarixi, qopRasmlari, akkauntNomi, nonlar };
+  const pdfMalumot = useRef({}); pdfMalumot.current = { hisobotlarTarixi, qopRasmlari, akkauntNomi, nonlar, ochirilganlar, importZaxira };
   const pdfBand = useRef(false);
   const [pdfTik, setPdfTik] = useState(0);
-  // PDF ilova tilida (lotin/kirill) yoziladi: til almashsa — arxivdagi PDF'lar yangi yozuvda qayta yaratiladi
-  const joriyTil = useTil();
+  // PDF ilova tilida (lotin/kirill) yoziladi: til almashsa — arxivdagi PDF'lar yangi yozuvda qayta yaratiladi (joriyTil)
   const pdfKutish = useRef(false);
   useEffect(() => {
     if (!tayyor || Platform.OS === "web") return;
@@ -718,10 +812,17 @@ export function AppDataProvider({ children }) {
     pdfBand.current = true;
     (async () => {
       try {
-        const { hisobotlarTarixi: hs, qopRasmlari: rs, akkauntNomi: akk, nonlar: nl } = pdfMalumot.current;
+        const { hisobotlarTarixi: hs, qopRasmlari: rs, akkauntNomi: akk, nonlar: nl, ochirilganlar: och, importZaxira: iz } = pdfMalumot.current;
         const chegara = Date.now() - 30 * 86400000;
         const hisobotlar = (hs || []).filter((h) => (h.vaqt || 0) >= chegara);
         const idlar = new Set(hisobotlar.map((h) => h.id));
+        // Hisobot Tarixdagilar'da yoki "Oldingi holat" nusxasida turgan bo'lsa — rasmli PDF fayli o'chirilmaydi
+        // (qaytarilsa, rasmlar 7 kundan keyin o'chgan bo'lsa ham PDF ichida saqlanib qoladi)
+        (och || []).forEach((y) => {
+          const h = y.tur === "hisobot" ? y.element : y.tur === "kunYakuni" ? y.element?.snap : null;
+          if (h?.id != null && (h.vaqt || 0) >= chegara) idlar.add(h.id);
+        });
+        (iz?.data?.hisobotlarTarixi || []).forEach((h) => { if (h?.id != null && (h.vaqt || 0) >= chegara) idlar.add(h.id); });
         const ortiqcha = (pdfArxivRef.current || []).filter((e) => !idlar.has(e.hisobotId));
         if (ortiqcha.length) {
           ortiqcha.forEach((e) => pdfFaylOchir(e.uri));
@@ -749,7 +850,7 @@ export function AppDataProvider({ children }) {
         if (pdfKutish.current) { pdfKutish.current = false; setPdfTik((x) => x + 1); }
       }
     })();
-  }, [tayyor, hisobotlarTarixi, pdfTik, joriyTil]);
+  }, [tayyor, hisobotlarTarixi, pdfTik, joriyTil, ochirilganlar, importZaxira]);
 
   // Hisobot PDF'ini ulashish: arxivda tayyor fayl bo'lsa — o'sha, bo'lmasa yangidan yaratiladi
   const hisobotPdfUlash = async (h) => {
@@ -827,11 +928,14 @@ export function AppDataProvider({ children }) {
     const zaxira = zaxiraOl ? eksportMalumot() : null;
     if (zaxira) setImportZaxira(zaxira);
     let soni = 0;
-    Object.keys(BAZA).forEach((k) => {
-      if (!(k in data) || !BAZA_TUR_MOS(data[k], BAZA[k][2])) return;
-      BAZA[k][1](tozalaRoyxat(k, data[k]));
-      soni++;
-    });
+    silliqJim = true;
+    try {
+      Object.keys(BAZA).forEach((k) => {
+        if (!(k in data) || !BAZA_TUR_MOS(data[k], BAZA[k][2])) return;
+        BAZA[k][1](tozalaRoyxat(k, data[k]));
+        soni++;
+      });
+    } finally { silliqJim = false; }
     // Tarixdagilar'ga (yuklangan ro'yxat ustiga): oldingi holatga qaytarish mumkin
     if (zaxira && soni > 0) amalArxivga("import", { akkaunt: zaxira.akkaunt || "", zaxiraVaqt: zaxira.vaqt, yangiAkkaunt: String(paket?.akkaunt || "") });
     if (typeof paket?.akkaunt === "string" && paket.akkaunt.trim()) setAkkauntNomi(paket.akkaunt.trim());
@@ -911,7 +1015,7 @@ export function AppDataProvider({ children }) {
     kunlikXarajatlar, setKunlikXarajatlar,
     oxirgiYakunlashVaqti, setOxirgiYakunlashVaqti,
     lockedDayStats, setLockedDayStats,
-    kunYakunlangan, kunYakunlanganmi, yozuvSanasi, kunYakunla, yakunBekor, yakunBekorMumkin, yakunBekorMumkinmi, kunYakuniniBekor,
+    kunYakunlangan, kunYakunlanganmi, yozuvSanasi, sanaYopiqmi, kunYakunla, yakunBekor, yakunBekorMumkin, yakunBekorMumkinmi, kunYakuniniBekor,
     ochirilganlar, ochirArxivga, amalArxivga, qaytar, butunlayOchir,
     akkauntNomi, setAkkauntNomi,
     ishHaqiYozuvlari, setIshHaqiYozuvlari,

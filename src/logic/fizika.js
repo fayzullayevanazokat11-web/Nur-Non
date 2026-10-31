@@ -16,7 +16,7 @@ export const PRUJINA = { stiffness: 320, damping: 32, mass: 1, overshootClamping
 // Biroz yumshoqroq — katta masofalar (indikator, panel) uchun
 export const PRUJINA_YUMSHOQ = { stiffness: 220, damping: 26, mass: 1, overshootClamping: false };
 
-// Tugma bosish prujinasi (barcha tugmalar uchun bir xil): bosilganda — tez, sakramasdan;
-// qo'yib yuborilganda — yengil "sakrab" qaytadi
+// Tugma bosish prujinasi (barcha tugmalar uchun bir xil): bosilganda — tez, sakramasdan (ζ≈1);
+// qo'yib yuborilganda — yumshoq, sezilar-sezilmas "sakrab" qaytadi (ζ≈0.58, ~10% o'tib ketish)
 export const BOS_KIRISH = { stiffness: 900, damping: 60, mass: 1 };
-export const BOS_QAYTISH = { stiffness: 380, damping: 19, mass: 1 };
+export const BOS_QAYTISH = { stiffness: 360, damping: 22, mass: 1 };

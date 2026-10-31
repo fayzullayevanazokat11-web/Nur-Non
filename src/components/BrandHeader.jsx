@@ -65,7 +65,8 @@ export function BrandHeader({ onLogo, menuOchiq = false, sahifa, suzuvchi = fals
   };
   const [t, setT] = useState(hozir());
   useEffect(() => {
-    const id = setInterval(() => setT(hozir()), tikMs(30000)); // 30s (test rejimida — har soniya)
+    // 30s (test rejimida — har soniya); ko'rinadigan matn o'zgarmasa qayta chizilmaydi
+    const id = setInterval(() => setT((p) => { const n = hozir(); return JSON.stringify(p) === JSON.stringify(n) ? p : n; }), tikMs(30000));
     return () => clearInterval(id);
   }, []);
 

@@ -1,4 +1,4 @@
-// Tugma — Pressable asosida. Bosilganda silliq (ease-in-out) kichrayadi + shaffoflashadi.
+// Tugma — Pressable asosida. Bosilganda prujina bilan kichrayadi (native, barcha tugmalar bilan bir xil his).
 // Yozuvi o'zgarsa (masalan "Saqlash" → "Saqlandi") — yangi holat yumshoq paydo bo'ladi.
 import { useEffect, useRef } from "react";
 import { Animated, Pressable, Text, Easing, StyleSheet } from "react-native";
@@ -36,14 +36,19 @@ export function Btn({
     Animated.timing(pop, { toValue: 1, duration: 260, easing: Easing.out(Easing.back(1.6)), useNativeDriver: true }).start();
   }, [holat]);
 
-  const scale = Animated.multiply(
-    v.interpolate({ inputRange: [0, 1], outputRange: [1, 0.97] }),
-    pop.interpolate({ inputRange: [0, 1], outputRange: [0.94, 1] })
-  );
-  const opacity = Animated.multiply(
-    v.interpolate({ inputRange: [0, 1], outputRange: [1, 0.9] }),
-    pop.interpolate({ inputRange: [0, 1], outputRange: [0.4, 1] })
-  );
+  // Animatsiya tugunlari bir marta quriladi (har renderda yangi tugun native grafni qayta ulamasin)
+  const tugun = useRef(null);
+  if (!tugun.current) {
+    tugun.current = {
+      scale: Animated.multiply(
+        v.interpolate({ inputRange: [0, 1], outputRange: [1, 0.97] }),
+        pop.interpolate({ inputRange: [0, 1], outputRange: [0.94, 1] })
+      ),
+      // Shaffoflik faqat yozuv almashganda (pop); bosilganda o'zgarmaydi
+      opacity: pop.interpolate({ inputRange: [0, 1], outputRange: [0.4, 1] }),
+    };
+  }
+  const { scale, opacity } = tugun.current;
 
   return (
     <Pressable

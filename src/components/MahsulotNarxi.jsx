@@ -19,13 +19,14 @@ const baseUnit = (birlik) => (birlik === "litr" ? "ml" : "g");
 const ASOSIY_IDLAR = new Set([...OMBOR_MAYDONLAR, SUT].map((m) => m.id));
 
 export function Xomashyo() {
-  const { mahsulotNarxlari, setMahsulotNarxlari, customMahsulotlar, setCustomMahsulotlar, ochirArxivga, xomashyoIkonlari, xomashyoIkonQoy } = useApp();
+  const { nonlar, mahsulotNarxlari, setMahsulotNarxlari, customMahsulotlar, setCustomMahsulotlar, ochirArxivga, xomashyoIkonlari, xomashyoIkonQoy } = useApp();
   const royxat = xomashyoRoyxati(customMahsulotlar);
   // Ikonka bosilsa — shu kartaning o'zida tanlov ochiladi
   const [ikonOchiq, setIkonOchiq] = useState(null);
   useTiklash(() => setIkonOchiq(null));
   const ikonAlmash = (id) => {
-    LayoutAnimation.configureNext(LayoutAnimation.create(200, LayoutAnimation.Types.easeInEaseOut, LayoutAnimation.Properties.opacity));
+    // Panel o'zi silliq paydo bo'ladi (IkonTanlov) — bu yerda faqat qolganlarning siljishi va yopilish
+    LayoutAnimation.configureNext({ duration: 220, update: { type: LayoutAnimation.Types.easeInEaseOut }, delete: { type: LayoutAnimation.Types.easeInEaseOut, property: LayoutAnimation.Properties.opacity } });
     setIkonOchiq((o) => (o === id ? null : id));
   };
 
@@ -44,7 +45,7 @@ export function Xomashyo() {
     const nom = forma.nom.trim();
     const narx = sonF(forma.narx);
     const miqdor = sonF(forma.miqdor);
-    if (!nom || narx <= 0 || miqdor <= 0) {
+    if (!nom || narx <= 0 || Math.round(miqdor * 1000) <= 0) {
       Alert.alert("To'liq emas", `Ingredient nomi, mahsulot narxi va necha ${forma.birlik} ekanini kiriting.`);
       return;
     }
@@ -55,7 +56,13 @@ export function Xomashyo() {
     yopKartalar(); // qo'shilgandan keyin forma yopiladi
   };
 
-  const ochirIngredient = (id) =>
+  const ochirIngredient = (id) => {
+    // Retseptda ishlatilayotgan bo'lsa — o'chirilmaydi (aks holda non tannarxidan jimgina tushib, foyda sun'iy oshardi)
+    const ishlatgan = (nonlar || []).filter((n) => (n.mahsulotlar || []).some((x) => x.id === id));
+    if (ishlatgan.length) {
+      Alert.alert("Retseptda ishlatilmoqda", `Bu ingredient ${ishlatgan.map((n) => `«${n.nom}»`).join(", ")} retseptida bor. Avval uni retseptdan olib tashlang (Assortiment → nonni tahrirlash).`);
+      return;
+    }
     Alert.alert("O'chirish", "Bu ingredientni o'chirasizmi?", [
       { text: "Bekor", style: "cancel" },
       {
@@ -66,6 +73,7 @@ export function Xomashyo() {
         },
       },
     ]);
+  };
 
   return (
     <View>

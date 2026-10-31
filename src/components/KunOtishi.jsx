@@ -11,6 +11,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { markazga, markazdan } from "../logic/yol";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { tanishuvTinglash } from "../logic/tanishuvSignal";
 import { useApp } from "../store/AppData";
 import { ishKuni, ishKuniSana, formatSom } from "../logic/hisob";
 import { sanaChiroyli } from "../logic/davr";
@@ -67,6 +68,8 @@ export function KunOtishi() {
         setTanishuv(o["nurnon:tanishuv"] != null && JSON.parse(o["nurnon:tanishuv"]) === true);
       })
       .catch(() => { setHolat({}); setTanishuv(true); });
+    // Yo'riqnoma shu ochilishda ko'rildi — ertangi salom va xulosa endi chiqadi (qayta ishga tushirish shart emas)
+    return tanishuvTinglash(() => setTanishuv(true));
   }, []);
   const saqla = (yangi) => { setHolat(yangi); AsyncStorage.setItem(kalit(KALIT), JSON.stringify(yangi)).catch(() => {}); };
 
@@ -135,7 +138,9 @@ export function KunOtishi() {
   const kunniBoshla = () => yop(() => { setErtalabPanel(true); markazga(); });
   const tekshiruvKerak = ekran.tur === "salom" && !ertalab.tugallandi && !kunYakunlanganmi();
 
-  const kirish = { opacity: a, transform: [{ translateY: a.interpolate({ inputRange: [0, 1], outputRange: [24, 0] }) }] };
+  // Shaffoflik faqat fonda (bir qatlam); kontent faqat siljiydi — ichma-ich opacity (a²) kontentni kechiktirib,
+  // ortiqcha aralashtirish (blending) qilardi
+  const kirish = { transform: [{ translateY: a.interpolate({ inputRange: [0, 1], outputRange: [24, 0] }) }] };
   const ikonPop = { transform: [{ scale: a.interpolate({ inputRange: [0, 1], outputRange: [0.7, 1] }) }] };
 
   return (
@@ -174,7 +179,7 @@ export function KunOtishi() {
           </Animated.View>
         </View>
 
-        <Animated.View style={[styles.tugmalar, { opacity: a }]}>
+        <Animated.View style={[styles.tugmalar, { transform: [{ translateY: a.interpolate({ inputRange: [0, 1], outputRange: [12, 0] }) }] }]}>
           {tekshiruvKerak && (
             <Pressable accessibilityRole="button" onPress={kunniBoshla} sezgiTuri="otish" style={({ pressed }) => [styles.btn, pressed && styles.bosildi]}>
               <Ionicons name="sunny-outline" size={18} color={C.onAccent} />

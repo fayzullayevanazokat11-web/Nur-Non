@@ -18,12 +18,18 @@ import { C, T, S, R, temaStil } from "../src/theme";
 import { formatSom } from "../src/logic/hisob";
 import { sanaChiroyli, kunTahlili } from "../src/logic/davr";
 import { Qidiruv, qidiruvMos } from "../src/components/Qidiruv";
-import { useState } from "react";
+import { memo, useMemo, useState } from "react";
 import { kunlikHtml, pdfUlash } from "../src/logic/ulashish";
+
+// Qidiruvga yozilganda Statistika (grafik) qayta chizilmaydi — props'lari o'zgarmaydi
+const StatistikaM = memo(Statistika);
+const BOSH = [];
 
 export default function Tarix() {
   const { nonlar, hisobotlarTarixi, ochirArxivga, akkauntNomi, oylikArxiv, hisobotPdfUlash } = useApp();
   const [qidiruv, setQidiruv] = useState("");
+  // Har kun tahlili bir marta (qidiruvga yozilganda qayta hisoblanmaydi)
+  const tahlillar = useMemo(() => new Map((hisobotlarTarixi || []).slice(0, 30).map((h) => [h.id, kunTahlili(h, hisobotlarTarixi)])), [hisobotlarTarixi]);
   const korinadigan = [...(hisobotlarTarixi || [])].slice(0, 30).filter((h) => qidiruvMos(`${h.sana} ${sanaChiroyli(h.sana)}`, qidiruv));
   const pdf = (h) => hisobotPdfUlash(h)
     .catch(() => Alert.alert("Xatolik", "PDF tayyorlab bo'lmadi."));
@@ -39,7 +45,7 @@ export default function Tarix() {
       <ScrollBox contentContainerStyle={styles.scroll}>
         <SahifaSarlavha eyebrow="HISOBOTLAR TARIXI" title="Statistika" subtitle={`30 kun davomida saqlanadi · ${(hisobotlarTarixi || []).length} ta`} icon="stats-chart-outline" />
 
-        {((hisobotlarTarixi || []).length > 0 || Object.keys(oylikArxiv || {}).length > 0) && <Statistika hisobotlar={hisobotlarTarixi || []} nonlar={nonlar} arxiv={oylikArxiv} akkaunt={akkauntNomi} />}
+        {((hisobotlarTarixi || []).length > 0 || Object.keys(oylikArxiv || {}).length > 0) && <StatistikaM hisobotlar={hisobotlarTarixi || BOSH} nonlar={nonlar} arxiv={oylikArxiv} akkaunt={akkauntNomi} />}
 
         {(hisobotlarTarixi || []).length > 0 && (
           <>
@@ -57,7 +63,7 @@ export default function Tarix() {
           <Text style={styles.topilmadi}>«{qidiruv.trim()}» bo'yicha hisobot topilmadi</Text>
         ) : (
           <Guruh>{korinadigan.map((h) => {
-            const tahlil = kunTahlili(h, hisobotlarTarixi);
+            const tahlil = tahlillar.get(h.id) || kunTahlili(h, hisobotlarTarixi);
             const daromad = parseFloat(h.daromad) || 0;
             const ishchiHaq = parseFloat(h.ishchiHaq) || 0;
             const kunOxiri = daromad - ishchiHaq;

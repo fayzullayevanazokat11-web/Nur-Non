@@ -38,14 +38,17 @@ export function MarkazMenyu({ onYop }) {
 
   // Ochilish animatsiyasi: shaffoflik + yuqoridan sirpanish
   const a = useRef(new Animated.Value(0)).current;
+  // Ochilish paytida karta GPU teksturasi bo'lib chiziladi (har kadr 12 qatorni qayta chizmaydi);
+  // animatsiya tugagach — oddiy ko'rinish (ichidagi tugmalar bosilganda tekstura qayta qurilmasin)
+  const [ochilmoqda, setOchilmoqda] = useState(true);
   useEffect(() => {
-    Animated.spring(a, { toValue: 1, ...PRUJINA_YUMSHOQ, useNativeDriver: true }).start();
+    Animated.spring(a, { toValue: 1, ...PRUJINA_YUMSHOQ, overshootClamping: true, restDisplacementThreshold: 0.002, useNativeDriver: true }).start(() => setOchilmoqda(false));
   }, [a]);
   const translateY = a.interpolate({ inputRange: [0, 1], outputRange: [-8, 0] });
 
   return (
     // needsOffscreenAlphaCompositing — shaffoflik o'zgarganda karta bitta qatlam bo'lib chiziladi (chetlari qoraymaydi)
-    <Animated.View needsOffscreenAlphaCompositing style={[styles.wrap, { opacity: a, transform: [{ translateY }] }]}>
+    <Animated.View needsOffscreenAlphaCompositing={ochilmoqda} renderToHardwareTextureAndroid={ochilmoqda} style={[styles.wrap, { opacity: a, transform: [{ translateY }] }]}>
       <Bosma
         accessibilityRole="button"
         onPress={() => { onYop?.(); router.push("/akkaunt"); }}

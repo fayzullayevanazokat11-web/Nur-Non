@@ -85,10 +85,12 @@ export function nonVazniOl(non) {
 
 // ── Ingredient va tannarx ──
 export function getIngNarx(m, narxlar) {
+  // Raqam bo'yicha tekshiriladi: "0" satri rost hisoblanib Infinity/NaN bermasin
   const p = narxlar?.[m.id];
-  if (p && p.miqdor && p.narx && m.miqdor)
-    return Math.round((parseFloat(m.miqdor) / parseFloat(p.miqdor)) * parseFloat(p.narx));
-  return parseFloat(m.narx) || 0;
+  const pm = parseFloat(p?.miqdor) || 0, pn = parseFloat(p?.narx) || 0, mm = parseFloat(m?.miqdor) || 0;
+  if (pm > 0 && pn > 0 && mm > 0) return Math.round((mm / pm) * pn);
+  const n = parseFloat(m?.narx);
+  return isFinite(n) ? n : 0;
 }
 
 export function getQopTannarx(non, narxlar) {
@@ -214,7 +216,11 @@ export function hisoblaKunlik({
   // (aks holda kunlik ishchi haqi darrov ayrilib, kun boshidan minusga kirib ketadi).
   // Sut omborda turmaydi — shu kuni kelgan litr × 1 litr narxi daromaddan to'g'ridan-to'g'ri ayriladi
   const sutXarajat = Math.round((parseFloat(sutLitr) || 0) * sutLitrNarxi(mahsulotNarxlari));
-  const kunBoshlandi = jamiQop > 0 || jamiNon > 0 || xarajatJami > 0 || sutXarajat > 0 || oq.optom + oq.qarz > 0;
+  // Faqat tonggi qoldiq sotilgan kun ham "boshlangan": kun oxiri qoldig'i yozilgan bo'lsa
+  // (kun boshida maydon bo'sh — shuning uchun darrov minusga kirmaydi)
+  const qoldiqKiritildi = Object.values(sotilmaganNon || {}).some((v) => String(v ?? "").trim() !== "");
+  const kunBoshlandi = jamiQop > 0 || jamiNon > 0 || xarajatJami > 0 || sutXarajat > 0 || oq.optom + oq.qarz > 0
+    || (jamiBoshlang > 0 && qoldiqKiritildi);
   // O'z xomashyomiz sof foydadan AYRILMAYDI — u ombor (keltirilgan set) orqali alohida
   // hisoblanadi. Tashqaridan olingan non narxi esa omborda yo'q, shuning uchun ayriladi.
   const sofFoyda = kunBoshlandi ? Math.round(daromad - tashqariTannarx - ishchiHaq - xarajatJami - sutXarajat) : 0;

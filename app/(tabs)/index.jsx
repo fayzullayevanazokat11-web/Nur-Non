@@ -2,7 +2,7 @@
 // ustunlari, "Hisob-kitob" guruhi (qop hisobi + kun yakunini bekor qilish, statistika)
 // va bugungi ishchilar haqi (jami bilan).
 import { tikMs } from "../../src/store/rejim";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { View, Text, Pressable, Image, StyleSheet, LayoutAnimation, AppState, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -48,10 +48,19 @@ export default function Markaz() {
   useFocusEffect(useCallback(() => { setErtalabYonalish(null); }, []));
 
   const [davomatOch, setDavomatOch] = useState(0); // Kunlik vazifadan bosilganda davomat kartasi ochiladi
-  const [tick, setTick] = useState(0);
+  // Tick faqat ko'rinadigan narsa o'zgarganda yangilanadi (ish kuni, kechki payt, muhr muddati) — har 30 s
+  // (test maydonida har soniya) butun Markaz qayta chizilmasin
+  const muhrRef = useRef(lockedDayStats); muhrRef.current = lockedDayStats;
+  const imzo = () => {
+    const lu = muhrRef.current?.lockedUntil;
+    return `${localSana()}|${kechqurunmi() ? 1 : 0}|${lu && Date.now() > lu ? 1 : 0}`;
+  };
+  const [tick, setTick] = useState(imzo);
   useEffect(() => {
-    const id = setInterval(() => setTick((t) => (t + 1) % 1000000), tikMs(30000));
-    return () => clearInterval(id);
+    const yangila = () => setTick((p) => { const n = imzo(); return p === n ? p : n; });
+    const id = setInterval(yangila, tikMs(30000));
+    const sub = AppState.addEventListener("change", (h) => { if (h === "active") yangila(); });
+    return () => { clearInterval(id); sub.remove(); };
   }, []);
   const bugunSanasi = useMemo(() => localSana(), [tick]);
 

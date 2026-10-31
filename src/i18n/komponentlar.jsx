@@ -2,7 +2,7 @@
 // Ilova kodi bularni to'g'ridan-to'g'ri import qilmaydi: metro.config.js `react-native`
 // importini shu yerga yo'naltiradi, shuning uchun kelajakdagi har qanday yangi matn ham
 // avtomatik o'giriladi.
-import { forwardRef, useRef, useState } from "react";
+import { forwardRef, useEffect, useRef, useState } from "react";
 import { Text as RNText, TextInput as RNTextInput, Alert as RNAlert, Pressable as RNPressable, Platform, Animated, StyleSheet } from "react-native";
 import { useTil, getTil } from "./til";
 import { ogir } from "./translit";
@@ -26,41 +26,84 @@ export const TextInput = forwardRef(function TextInput(props, ref) {
 // Pressable — bosilganda yengil tebranish va BOSISH ANIMATSIYASI (ilovadagi barcha tugmalar uchun).
 // sezgiTuri: "bos" (sukut), "otish" (sahifa/bo'lim almashishi), "tayyor" yoki false (jim).
 //
-// Animatsiya: barmoq tekkanda tugma prujina bilan biroz kichrayadi, qo'yilganda yumshoq "sakrab" qaytadi.
+// Animatsiya: barmoq tekkanda tugma prujina bilan biroz kichrayadi, qo'yilganda yumshoq qaytadi.
 //  • native driver (UI thread) — JS band bo'lsa ham silliq, kadr tashlamaydi;
+//  • renderda yangi animatsiya tuguni yaratilmaydi (interpolate yo'q) va o'lcham state'da emas —
+//    bosish qayta render qilmaydi;
 //  • qisqarish o'lchamga mos: kichik tugma ~6%, katta karta ~1–2% (chetlari ~3px ichkariga) — tabiiy;
-//  • shaffoflik o'zgarmaydi (Android'da soyali elementning chetlari qorayardi);
-//  • o'z transform animatsiyasi bor tugmalar (Bosma, Btn, style({pressed}) da scale) — tegilmaydi;
-//  • animatsiya={false} — o'chirish (masalan, ichida o'z animatsiyasi bor bo'lsa).
+//  • tugmaning o'z dizaynidagi style({ pressed }) scale'i bo'lsa — aynan shu qiymatga, lekin bir kadrda
+//    sakramasdan, prujina bilan boradi; bosilgandagi shaffoflik e'tiborsiz (Android'da soyali elementning
+//    chetlari qorayardi), boshqa farqlar (masalan, fon rangi) bosilganda qo'llanadi;
+//  • scroll ichida: bosish 70 ms kechikib boshlanadi — ro'yxat aylantirilganda kartalar "silkinmaydi";
+//  • animatsiya={false} — o'chirish (ichida o'z bosish animatsiyasi bor bo'lsa: Bosma, Btn).
 const AnimPressable = Animated.createAnimatedComponent(RNPressable);
-const transformBormi = (s) => { const f = StyleSheet.flatten(s); return !!(f && f.transform); };
+const WEB = Platform.OS === "web";
+const tekis = (s) => StyleSheet.flatten(s) || {};
+const scaleOl = (t) => {
+  if (!Array.isArray(t)) return null;
+  const x = t.find((o) => o && typeof o.scale === "number");
+  return x ? x.scale : null;
+};
+const scalesiz = (t) => (Array.isArray(t) ? t.filter((o) => !(o && "scale" in o)) : []);
 
 export const Pressable = forwardRef(function Pressable(
-  { onPress, sezgiTuri = "bos", animatsiya = true, style, onPressIn, onPressOut, onLayout, disabled, ...props },
+  { onPress, sezgiTuri = "bos", animatsiya = true, style, onPressIn, onPressOut, onLayout, disabled, unstable_pressDelay, ...props },
   ref
 ) {
   const bosildi = onPress
     ? (e) => { if (sezgiTuri) sezgi(sezgiTuri); onPress(e); }
     : undefined;
-  const v = useRef(new Animated.Value(0)).current;
-  const [en, setEn] = useState(0);
-  const [bosilgan, setBosilgan] = useState(false);
+  const v = useRef(new Animated.Value(1)).current; // to'g'ridan-to'g'ri scale
+  const enRef = useRef(0);
+  const bosRef = useRef(false);
+  const funk = typeof style === "function";
+  const [bosilgan, setBosilgan] = useState(false); // faqat style funksiya bo'lsa (fon rangi kabi farqlar uchun)
   const faol = !!(onPress || props.onLongPress) && !disabled;
-  // style funksiya bo'lsa — joriy bosilgan holat bilan hisoblanadi
-  const joriy = typeof style === "function" ? style({ pressed: bosilgan }) : style;
-  const oziAnimli = typeof style === "function" ? transformBormi(style({ pressed: true })) || transformBormi(joriy) : transformBormi(joriy);
-  const anim = animatsiya !== false && faol && !oziAnimli;
-  const chuqurlik = en > 0 ? Math.min(0.06, 6 / en) : 0.04;
-  const prujina = (to) => Animated.spring(v, { toValue: to, ...(to ? KIRISH : QAYTISH), useNativeDriver: Platform.OS !== "web", restDisplacementThreshold: 0.001, restSpeedThreshold: 0.001 }).start();
+  const anim = animatsiya !== false && faol;
+
+  let uslub;
+  let dam = 1, maqsad = null;
+  if (!anim) {
+    uslub = funk ? style({ pressed: bosilgan }) : style;
+  } else {
+    const ochiq = tekis(funk ? style({ pressed: false }) : style);
+    const bosiq = funk ? tekis(style({ pressed: true })) : ochiq;
+    dam = scaleOl(ochiq.transform) ?? 1;
+    const b = scaleOl(bosiq.transform);
+    maqsad = b != null && b !== dam ? b : null;
+    const { transform: _t, opacity: _o, ...qolgan } = funk && bosilgan ? bosiq : ochiq;
+    const tr = [...scalesiz(ochiq.transform), { scale: v }];
+    uslub = ochiq.opacity != null ? [qolgan, { opacity: ochiq.opacity, transform: tr }] : [qolgan, { transform: tr }];
+  }
+  const holat = useRef({}); holat.current = { dam, maqsad, anim };
+  // Tinch holatdagi scale o'zgarsa (kamdan-kam) — qiymat moslanadi
+  useEffect(() => { if (!bosRef.current) v.setValue(dam); }, [dam, v]);
+
+  const prujina = (to, cfg) => Animated.spring(v, { toValue: to, ...cfg, useNativeDriver: !WEB, restDisplacementThreshold: 0.0005, restSpeedThreshold: 0.001 }).start();
   return (
     <AnimPressable
       ref={ref}
       onPress={bosildi}
       disabled={disabled}
-      onPressIn={(e) => { if (typeof style === "function") setBosilgan(true); if (anim) prujina(1); onPressIn?.(e); }}
-      onPressOut={(e) => { if (typeof style === "function") setBosilgan(false); if (anim) prujina(0); onPressOut?.(e); }}
-      onLayout={(e) => { const w = e.nativeEvent.layout.width; if (Math.abs(w - en) > 1) setEn(w); onLayout?.(e); }}
-      style={anim ? [joriy, { transform: [{ scale: v.interpolate({ inputRange: [0, 1], outputRange: [1, 1 - chuqurlik] }) }] }] : joriy}
+      unstable_pressDelay={unstable_pressDelay ?? (WEB ? undefined : 70)}
+      onPressIn={(e) => {
+        bosRef.current = true;
+        if (funk) setBosilgan(true);
+        const h = holat.current;
+        if (h.anim) {
+          const en = enRef.current;
+          prujina(h.maqsad ?? h.dam * (1 - (en > 0 ? Math.min(0.06, 6 / en) : 0.04)), KIRISH);
+        }
+        onPressIn?.(e);
+      }}
+      onPressOut={(e) => {
+        bosRef.current = false;
+        if (funk) setBosilgan(false);
+        if (holat.current.anim) prujina(holat.current.dam, QAYTISH);
+        onPressOut?.(e);
+      }}
+      onLayout={(e) => { enRef.current = e.nativeEvent.layout.width; onLayout?.(e); }}
+      style={uslub}
       {...props}
     />
   );

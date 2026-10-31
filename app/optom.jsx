@@ -25,7 +25,7 @@ import { BoshHolat } from "../src/components/BoshHolat";
 
 
 export default function Optom() {
-  const { nonlar, optomlar, setOptomlar, ochirArxivga, yozuvSanasi } = useApp();
+  const { nonlar, optomlar, setOptomlar, ochirArxivga, yozuvSanasi, sanaYopiqmi } = useApp();
   // Bugun yakunlangan bo'lsa — yangi yozuv ertangi ish kuniga tushadi
   const localSana = yozuvSanasi;
   const BOSH = { ism: "", izoh: "", sana: "", sanaTanlandi: false, soat: "", savat: {}, donaChegirma: "", chegirma: "" };
@@ -65,6 +65,7 @@ export default function Optom() {
   const saqla = () => {
     if (savatHisob.items.length === 0) { Alert.alert("Non tanlanmagan", "Kamida bitta non turidan soni kiriting."); return; }
     const sana = forma.sanaTanlandi && forma.sana ? forma.sana : localSana();
+    if (forma.sanaTanlandi && sanaYopiqmi(sana)) { Alert.alert("Kun yakunlangan", `${sana} kuni yakunlangan — hisoboti yozilgan, bu yozuv hech bir hisobotga tushmaydi. Boshqa sanani tanlang yoki sanani avtomatik qoldiring.`); return; }
     const soat = forma.soat || hozirgiSoat(); // qo'lda tanlanmasa — hozirgi vaqt
     setOptomlar((prev) => [...prev, {
       id: Date.now(), ism: forma.ism.trim() || ISM_SUKUT, sana, soat, vaqt: Date.now(),

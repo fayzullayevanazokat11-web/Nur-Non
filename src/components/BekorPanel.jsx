@@ -1,7 +1,7 @@
 // "Bekor qilish" paneli — katta amaldan keyin (kunni yakunlash, zaxirani nollash)
 // 10 soniya pastda turadi; bosilsa hammasi amal oldidagi holatga qaytadi.
 import { useEffect, useRef } from "react";
-import { View, Text, Pressable, Animated, Easing, StyleSheet } from "react-native";
+import { View, Text, Pressable, Animated, Easing, StyleSheet, Platform } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useApp } from "../store/AppData";
@@ -19,11 +19,12 @@ export function BekorPanel() {
     if (!bekor) return undefined;
     kirish.setValue(0); vaqt.setValue(1);
     Animated.timing(kirish, { toValue: 1, duration: 260, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start();
-    Animated.timing(vaqt, { toValue: 0, duration: MUDDAT, easing: Easing.linear, useNativeDriver: false }).start();
+    // Vaqt chizig'i — scaleX (native driver): 10 soniya davomida JS va layout band bo'lmaydi
+    Animated.timing(vaqt, { toValue: 0, duration: MUDDAT, easing: Easing.linear, useNativeDriver: Platform.OS !== "web" }).start();
     const t = setTimeout(() => {
       Animated.timing(kirish, { toValue: 0, duration: 200, useNativeDriver: true }).start(() => bekorYop());
     }, MUDDAT);
-    return () => clearTimeout(t);
+    return () => { clearTimeout(t); vaqt.stopAnimation(); kirish.stopAnimation(); };
   }, [bekor?.id]);
 
   if (!bekor) return null;
@@ -35,10 +36,10 @@ export function BekorPanel() {
       <View style={styles.panel}>
         <Ionicons name="checkmark-circle" size={18} color={C.onAccent} />
         <Text style={styles.matn} numberOfLines={2}>{bekor.matn}</Text>
-        <Pressable accessibilityRole="button" accessibilityLabel="Amalni bekor qilish" onPress={bekorQil} hitSlop={8} style={({ pressed }) => [styles.btn, pressed && { opacity: 0.7 }]}>
+        <Pressable accessibilityRole="button" accessibilityLabel="Amalni bekor qilish" onPress={bekorQil} hitSlop={8} style={styles.btn}>
           <Text style={styles.btnTxt}>Bekor qilish</Text>
         </Pressable>
-        <Animated.View style={[styles.vaqt, { width: vaqt.interpolate({ inputRange: [0, 1], outputRange: ["0%", "100%"] }) }]} />
+        <Animated.View style={[styles.vaqt, { transform: [{ scaleX: vaqt }] }]} />
       </View>
     </Animated.View>
   );
@@ -50,5 +51,5 @@ const styles = temaStil(() => StyleSheet.create({
   matn:  { flex: 1, fontSize: T.sm, fontWeight: "700", color: C.bg },
   btn:   { paddingVertical: 8, paddingHorizontal: 12, borderRadius: R.pill, backgroundColor: C.accent },
   btnTxt:{ fontSize: T.xs, fontWeight: "800", color: C.onAccent },
-  vaqt:  { position: "absolute", left: 0, bottom: 0, height: 3, backgroundColor: C.accent },
+  vaqt:  { position: "absolute", left: 0, right: 0, bottom: 0, height: 3, backgroundColor: C.accent, transformOrigin: "left" },
 }));

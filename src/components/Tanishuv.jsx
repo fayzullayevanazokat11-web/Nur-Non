@@ -3,12 +3,13 @@
 // (ma'lumoti bor — yangilangan — ilovada chiqmaydi); menyudagi «Yo'riqnoma»dan qayta ochiladi.
 // Qadamlar orasida tugmalar yoki chapga-o'ngga surish bilan o'tiladi.
 import { useEffect, useRef, useState } from "react";
-import { View, Text, Image, Pressable, TextInput, Animated, Easing, PanResponder, LayoutAnimation, Platform, StyleSheet, BackHandler } from "react-native";
+import { View, Text, Image, Pressable, TextInput, Animated, Easing, PanResponder, Platform, StyleSheet, BackHandler } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useApp } from "../store/AppData";
 import usePersistedState from "../store/usePersistedState";
 import { ruxsatSora, ruxsatHolati, ESLATMA_SOAT } from "../logic/bildirishnoma";
+import { tanishuvTugadi } from "../logic/tanishuvSignal";
 import { C, T, S, R, temaStil } from "../theme";
 
 const LOGO = require("../../assets/logo-tight.png");
@@ -25,7 +26,6 @@ const QADAMLAR = ["salom", "nom", "kun", "bolim", "xavfsiz", "eslatma"];
 let ochuvchi = null;
 export const tanishuvniOch = () => ochuvchi?.();
 
-const silliq = () => LayoutAnimation.configureNext(LayoutAnimation.create(240, LayoutAnimation.Types.easeInEaseOut, LayoutAnimation.Properties.opacity));
 
 export function Tanishuv() {
   const { tayyor, hisobotlarTarixi, qarzlar, kartalar, akkauntNomi, setAkkauntNomi, setEslatmaYoqilgan, eslatmaYangila } = useApp();
@@ -47,7 +47,7 @@ export function Tanishuv() {
 
   // Yangilangan ilova (ma'lumoti bor) — yo'riqnoma kerak emas
   const malumotBor = (hisobotlarTarixi || []).length > 0 || (qarzlar || []).length > 0 || (kartalar || []).length > 0;
-  useEffect(() => { if (tayyor && yuklandi && korildi == null && malumotBor) setKorildi(true); }, [tayyor, yuklandi, korildi, malumotBor]);
+  useEffect(() => { if (tayyor && yuklandi && korildi == null && malumotBor) { setKorildi(true); tanishuvTugadi(); } }, [tayyor, yuklandi, korildi, malumotBor]);
   const korsat = majburiy || (tayyor && yuklandi && korildi == null && !malumotBor);
 
   useEffect(() => { if (korsat) setNom(akkauntNomi || ""); }, [korsat]);
@@ -57,7 +57,7 @@ export function Tanishuv() {
     let tirik = true;
     ruxsatHolati().then((h) => { if (tirik && h === "bor") setRuxsat("bor"); });
     return () => { tirik = false; };
-  }, [korsat]);
+  }, [korsat, i]);
 
   // Ochilish (fon) va har qadam (kontent) animatsiyasi
   useEffect(() => {
@@ -75,13 +75,14 @@ export function Tanishuv() {
     Animated.timing(fon, { toValue: 0, duration: 220, easing: Easing.in(Easing.cubic), useNativeDriver: true }).start(() => {
       setKorildi(true);
       setMajburiy(false);
+      tanishuvTugadi();
     });
   };
   const nomniSaqla = () => { const t = nom.trim(); if (t && t !== akkauntNomi) setAkkauntNomi(t); };
   const otish = (j) => {
     if (j < 0 || j >= QADAMLAR.length || j === i) return;
     if (QADAMLAR[i] === "nom") nomniSaqla();
-    silliq();
+    // Qadam almashuvi — faqat Animated (kirish/surilish); LayoutAnimation qo'shilsa eski va yangi matn ustma-ust ko'rinardi
     setYon(j > i ? 1 : -1);
     setI(j);
   };

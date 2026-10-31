@@ -36,7 +36,8 @@ export function TannarxKalk() {
   const yangiNarxlar = (narxTarixi || []).filter((o) => hozir - (o.vaqt || 0) < NARX_KORINISH);
   useTiklash(() => setIkonOchiq(null));
   const ikonAlmash = (k) => {
-    LayoutAnimation.configureNext(LayoutAnimation.create(200, LayoutAnimation.Types.easeInEaseOut, LayoutAnimation.Properties.opacity));
+    // Panel o'zi silliq paydo bo'ladi (IkonTanlov) — bu yerda faqat qolganlarning siljishi va yopilish
+    LayoutAnimation.configureNext({ duration: 220, update: { type: LayoutAnimation.Types.easeInEaseOut }, delete: { type: LayoutAnimation.Types.easeInEaseOut, property: LayoutAnimation.Properties.opacity } });
     setIkonOchiq((o) => (o === k ? null : k));
   };
   const xTanlov = (k, m) => ikonOchiq === k && (

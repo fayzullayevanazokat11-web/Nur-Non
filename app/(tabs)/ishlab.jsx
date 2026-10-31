@@ -55,8 +55,10 @@ export default function IshlabChiqarish() {
 
   // Ikonkani bosib o'zgartirish: qaysi ikonkaning tanlovi ochiq ("non:<id>", "x:<joy>:<xId>")
   const [ikonOchiq, setIkonOchiq] = useState(null);
-  const ikonAlmash = (k) => { silliq(); setIkonOchiq((o) => (o === k ? null : k)); };
-  const ikonYop = () => { silliq(); setIkonOchiq(null); };
+  // Panel o'zi silliq paydo bo'ladi (IkonTanlov) — bu yerda faqat qolganlarning siljishi va yopilish
+  const silliqJoy = () => LayoutAnimation.configureNext({ duration: 220, update: { type: LayoutAnimation.Types.easeInEaseOut }, delete: { type: LayoutAnimation.Types.easeInEaseOut, property: LayoutAnimation.Properties.opacity } });
+  const ikonAlmash = (k) => { silliqJoy(); setIkonOchiq((o) => (o === k ? null : k)); };
+  const ikonYop = () => { silliqJoy(); setIkonOchiq(null); };
   // Xomashyo qatori — ikonka bosilsa shu qator tagida tanlov ochiladi
   const xIkon = (joy, m, size = 16) => (
     <BosiladiganIkon belgi={false} label={`${m.nom}: ikonkani o'zgartirish`} ochiq={ikonOchiq === `x:${joy}:${m.id}`} onPress={() => ikonAlmash(`x:${joy}:${m.id}`)}>

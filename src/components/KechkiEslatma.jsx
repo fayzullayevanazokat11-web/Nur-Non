@@ -5,6 +5,7 @@ import { useEffect, useRef } from "react";
 import { View, Text, Animated, Easing, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
+import { useIsFocused } from "@react-navigation/native";
 import { Bosma } from "./Bosma";
 import { YAKUN_SOAT } from "../logic/eslatma";
 import { C, T, S, R, temaStil } from "../theme";
@@ -12,17 +13,19 @@ import { C, T, S, R, temaStil } from "../theme";
 export const kechqurunmi = (d = new Date()) => d.getHours() >= YAKUN_SOAT || d.getHours() < 3;
 
 export function KechkiEslatma({ korinadi }) {
-  // Oy ikonkasi sekin "nafas oladi" (native driver — JS'ga yuk bermaydi)
+  // Oy ikonkasi sekin "nafas oladi" (native driver — JS'ga yuk bermaydi). Markaz ko'rinmayotganda
+  // (boshqa bo'lim ochiq) to'xtaydi — UI thread bekorga kadr chizmasin
+  const fokus = useIsFocused();
   const nafas = useRef(new Animated.Value(0)).current;
   useEffect(() => {
-    if (!korinadi) return undefined;
+    if (!korinadi || !fokus) return undefined;
     const loop = Animated.loop(Animated.sequence([
       Animated.timing(nafas, { toValue: 1, duration: 1400, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
       Animated.timing(nafas, { toValue: 0, duration: 1400, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
     ]));
     loop.start();
-    return () => loop.stop();
-  }, [korinadi, nafas]);
+    return () => { loop.stop(); nafas.setValue(0); };
+  }, [korinadi, fokus, nafas]);
   if (!korinadi) return null;
   const scale = nafas.interpolate({ inputRange: [0, 1], outputRange: [1, 1.1] });
   return (

@@ -18,9 +18,12 @@ export function Xabarcha() {
   useEffect(() => {
     tinglovchi = (m) => {
       clearTimeout(t.current);
-      setMatn(m);
-      a.setValue(0);
-      Animated.spring(a, { toValue: 1, ...PRUJINA, useNativeDriver: true }).start();
+      // Keyingi kadrda: saqlash bilan bir commit'ga tushib, ro'yxat LayoutAnimation'i bilan ustma-ust animatsiyalanmasin
+      requestAnimationFrame(() => {
+        setMatn(m);
+        a.setValue(0);
+        Animated.spring(a, { toValue: 1, ...PRUJINA, useNativeDriver: true }).start();
+      });
       t.current = setTimeout(() => {
         Animated.timing(a, { toValue: 0, duration: 200, useNativeDriver: true }).start(() => setMatn(null));
       }, 1600);
@@ -41,6 +44,6 @@ export function Xabarcha() {
 }
 
 const styles = temaStil(() => StyleSheet.create({
-  quti: { position: "absolute", alignSelf: "center", flexDirection: "row", alignItems: "center", gap: S[2], backgroundColor: C.accent, borderRadius: R.pill, paddingVertical: 10, paddingHorizontal: 18, shadowColor: "#000", shadowOpacity: 0.2, shadowRadius: 12, shadowOffset: { width: 0, height: 4 }, elevation: 10 },
+  quti: { position: "absolute", alignSelf: "center", flexDirection: "row", alignItems: "center", gap: S[2], backgroundColor: C.accent, borderRadius: R.pill, paddingVertical: 10, paddingHorizontal: 18, shadowColor: "#000", shadowOpacity: 0.2, shadowRadius: 12, shadowOffset: { width: 0, height: 4 } }, // elevation yo'q: Android'da shaffoflik animatsiyasida soya chetlari qorayardi
   matn: { fontSize: T.sm, fontWeight: "800", color: C.onAccent },
 }));

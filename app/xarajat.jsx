@@ -24,7 +24,7 @@ import { BoshHolat } from "../src/components/BoshHolat";
 
 
 export default function Xarajat() {
-  const { kunlikXarajatlar, setKunlikXarajatlar, ochirArxivga, yozuvSanasi } = useApp();
+  const { kunlikXarajatlar, setKunlikXarajatlar, ochirArxivga, yozuvSanasi, sanaYopiqmi } = useApp();
   // Bugun yakunlangan bo'lsa — yangi yozuv ertangi ish kuniga tushadi
   const localSana = yozuvSanasi;
   const bugun = bugunSana();
@@ -65,6 +65,8 @@ export default function Xarajat() {
     if (!forma.izoh.trim()) { Alert.alert("Izoh kiritilmagan", "Xarajat nimaga ketganini yozing."); return; }
     // Qo'lda tanlanmagan bo'lsa har save'da joriy kun (uzoq vaqt ochiq qolsa ham to'g'ri)
     const sana = forma.sanaTanlandi && forma.sana ? forma.sana : localSana();
+    const asl = tahrirId ? (kunlikXarajatlar || []).find((x) => x.id === tahrirId) : null;
+    if (forma.sanaTanlandi && sanaYopiqmi(sana) && (!asl || asl.sana !== sana)) { Alert.alert("Kun yakunlangan", `${sana} kuni yakunlangan — hisoboti yozilgan, bu yozuv hech bir hisobotga tushmaydi. Boshqa sanani tanlang yoki sanani avtomatik qoldiring.`); return; }
     const soat = forma.soat || hozirgiSoat(); // qo'lda tanlanmasa — hozirgi vaqt
     if (tahrirId) {
       setKunlikXarajatlar((prev) => prev.map((x) => x.id === tahrirId ? { ...x, summa, izoh: forma.izoh.trim(), sana, soat } : x));

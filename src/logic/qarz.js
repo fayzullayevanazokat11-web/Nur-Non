@@ -65,13 +65,13 @@ export function qarzdorTarixi(guruh) {
 
 // To'lov qarzdorning eng eski ochiq qarzlaridan boshlab taqsimlanadi (FIFO).
 // Qaytaradi: yangi qarzlar ro'yxati. Summa umumiy qoldiqdan oshmasligi kerak.
-export function tolovQil(qarzlar, kalit, summa, vaqt = Date.now()) {
+// sana — to'lov qaysi ish kuniga yoziladi (kun yakunlangan bo'lsa — ertangi, yozuvSanasi)
+export function tolovQil(qarzlar, kalit, summa, vaqt = Date.now(), sana = bugunSana()) {
   let qoldi = Math.round(son(summa));
   const ochiqlar = (qarzlar || [])
     .filter((q) => qarzdorKaliti(q.ism) === kalit && qarzQoldiq(q) > 0)
     .sort((a, b) => (a.vaqt || 0) - (b.vaqt || 0))
     .map((q) => q.id);
-  const sana = bugunSana();
   let n = 0;
   return (qarzlar || []).map((q) => {
     if (qoldi <= 0 || !ochiqlar.includes(q.id)) return q;

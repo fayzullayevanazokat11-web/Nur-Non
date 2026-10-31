@@ -12,14 +12,18 @@ const ikki = (n) => String(n).padStart(2, "0");
 const sanaKalit = (d) => `${d.getFullYear()}-${ikki(d.getMonth() + 1)}-${ikki(d.getDate())}`;
 
 let sozlandi = false;
-async function sozla() {
-  if (sozlandi) return;
-  sozlandi = true;
-  Notifications.setNotificationHandler({
-    handleNotification: async () => ({ shouldShowAlert: true, shouldPlaySound: true, shouldSetBadge: false }),
-  });
-  if (Platform.OS === "android") {
-    await Notifications.setNotificationChannelAsync(KANAL, { name: "Eslatmalar", importance: Notifications.AndroidImportance.DEFAULT });
+let kanalNomi = null;
+// kanal — Android sozlamalarida ko'rinadigan kanal nomi (ilova yozuvida: lotin/kirill)
+async function sozla(kanal = "Eslatmalar") {
+  if (!sozlandi) {
+    sozlandi = true;
+    Notifications.setNotificationHandler({
+      handleNotification: async () => ({ shouldShowAlert: true, shouldPlaySound: true, shouldSetBadge: false }),
+    });
+  }
+  if (Platform.OS === "android" && kanalNomi !== kanal) {
+    kanalNomi = kanal;
+    await Notifications.setNotificationChannelAsync(KANAL, { name: kanal, importance: Notifications.AndroidImportance.DEFAULT });
   }
 }
 
@@ -27,7 +31,7 @@ async function sozla() {
 export async function ruxsatSora() {
   if (Platform.OS === "web") return false;
   try {
-    await sozla();
+    await sozla(kanalNomi || undefined);
     const joriy = await Notifications.getPermissionsAsync();
     if (joriy.granted) return true;
     if (!joriy.canAskAgain) return false;
@@ -59,10 +63,10 @@ export async function ruxsatHolati() {
 }
 
 // Eslatmalarni qayta tuzish. yakunlanganSana — bugun yakunlangan bo'lsa shu sana.
-export async function kunYakunEslatmalari({ yoqilgan, yakunlanganSana, sarlavha, matn }) {
+export async function kunYakunEslatmalari({ yoqilgan, yakunlanganSana, sarlavha, matn, kanalNomi: kanal }) {
   if (Platform.OS === "web") return;
   try {
-    await sozla();
+    await sozla(kanal);
     const rejada = await Notifications.getAllScheduledNotificationsAsync();
     await Promise.all(rejada.filter((n) => String(n.identifier).startsWith(PREFIKS))
       .map((n) => Notifications.cancelScheduledNotificationAsync(n.identifier)));

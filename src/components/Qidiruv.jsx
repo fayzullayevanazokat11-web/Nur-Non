@@ -2,10 +2,12 @@
 import { View, TextInput, Pressable, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { C, T, S, R, temaStil } from "../theme";
+import { cyrToLat } from "../i18n/translit";
 
-// Katta-kichik harf, apostrof turlari va ortiqcha bo'shliq farq qilmaydi
+// Katta-kichik harf, apostrof turlari, ortiqcha bo'shliq va yozuv (lotin/kirill) farq qilmaydi:
+// ikkala tomon ham lotinga keltiriladi — kirillda ko'rinayotgan ism kirillda yozilsa ham topiladi
 export const qidiruvMos = (matn, soz) => {
-  const n = (x) => String(x || "").toLowerCase().replace(/[ʻʼ‘’`´]/g, "'").replace(/\s+/g, " ").trim();
+  const n = (x) => cyrToLat(String(x || "")).toLowerCase().replace(/[ʻʼ‘’`´]/g, "'").replace(/\s+/g, " ").trim();
   const q = n(soz);
   if (!q) return true;
   // So'z boshidan mos kelishi kerak: "shanba" — "Shanba"ni topadi, lekin "Yakshanba"/"Dushanba"ni emas

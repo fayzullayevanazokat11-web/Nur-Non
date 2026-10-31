@@ -4,11 +4,10 @@
 //             Sarlavha
 //             izoh
 // Paydo bo'lganda silliq ko'tariladi; orqaga tugmasi bosilganda yumshoq kichrayadi.
-import { useEffect, useRef } from "react";
-import { View, Text, Image, Pressable, Animated, Easing, StyleSheet } from "react-native";
+import { View, Text, Image, Pressable, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import { C, T, S, R, ANIM, temaStil } from "../theme";
+import { C, T, S, R, temaStil } from "../theme";
 
 const orqagaQayt = () => (router.canGoBack() ? router.back() : router.replace("/"));
 
@@ -16,8 +15,6 @@ export function SahifaSarlavha({ eyebrow, title, subtitle, icon, image, ton = "a
   const rang = C[ton] || C.accent;
 
 
-  const bos = useRef(new Animated.Value(0)).current;
-  const bosish = (v) => Animated.timing(bos, { toValue: v, duration: ANIM.pressDuration, easing: Easing.inOut(Easing.ease), useNativeDriver: true }).start();
 
   return (
     <View style={[styles.wrap, style]}>
@@ -27,20 +24,14 @@ export function SahifaSarlavha({ eyebrow, title, subtitle, icon, image, ton = "a
           accessibilityLabel="Orqaga"
           onPress={orqagaQayt}
           sezgiTuri="otish"
-          onPressIn={() => bosish(1)}
-          onPressOut={() => bosish(0)}
           hitSlop={8}
           style={styles.backWrap}
         >
-          <Animated.View
-            style={[styles.backBtn, {
-              opacity: bos.interpolate({ inputRange: [0, 1], outputRange: [1, 0.6] }),
-              transform: [{ translateX: bos.interpolate({ inputRange: [0, 1], outputRange: [0, -3] }) }],
-            }]}
-          >
+          {/* Bosish animatsiyasi — umumiy prujina (Pressable o'rami), boshqa tugmalar bilan bir xil */}
+          <View style={styles.backBtn}>
             <Ionicons name="chevron-back" size={20} color={C.text} />
             <Text style={styles.backTxt}>{orqaga}</Text>
-          </Animated.View>
+          </View>
         </Pressable>
       ) : null}
 

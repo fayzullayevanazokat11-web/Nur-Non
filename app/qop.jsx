@@ -85,7 +85,11 @@ export default function Qop() {
   // (bugungi sonlar boshqa kunga aralashmasin); bugunga qaytilsa — bugungi saqlangan sonlar
   useEffect(() => {
     if (tegildi) return;
-    if (tanSana === localSana()) { setFTash(toStr(tashqariSonlar)); return; }
+    // Bugunga qaytildi (masalan, o'tgan kun yakunlangach) — to'rttala forma saqlangan bugungi holatdan
+    if (tanSana === localSana()) {
+      setFQop(toStr(ozIshlabQoplar)); setFTash(toStr(tashqariSonlar)); setFSot(toStr(sotilmaganNon)); setFYaroqsiz(toStr(qoldaYaroqsiz));
+      return;
+    }
     const k = (tashqiKirim || {})[tanSana] || {};
     const ids = new Set([...Object.keys(k.m1 || {}), ...Object.keys(k.m2 || {})]);
     setFTash(Object.fromEntries([...ids].map((id) => [id, String((parseInt((k.m1 || {})[id]) || 0) + (parseInt((k.m2 || {})[id]) || 0))])));
@@ -110,13 +114,20 @@ export default function Qop() {
   // O'tgan (unutilgan) kun: uning yozuvlari bugungi yakunlashdan oldin kiritilgan bo'lishi mumkin —
   // shuning uchun "oxirgi yakunlashdan keyingi" filtri faqat bugun uchun; o'tgan kunda — sana bo'yicha
   const chegaraVaqt = tanSana === localSana() ? oxirgiYakunlashVaqti : 0;
+  // Tonggi qoldiq: o'tgan sana uchun — undan oldingi kun hisobotining kun oxiri qoldig'i
+  // (bir necha kun unutilsa, har biri o'z tonggi qoldig'i bilan yakunlansin)
+  const boshlang = useMemo(() => {
+    if (tanSana >= localSana()) return boshlangichQoldiq;
+    const old = (hisobotlarTarixi || []).find((h) => h.sana === oldingiSana(tanSana));
+    return old ? (old.sotilmaganNon || {}) : boshlangichQoldiq;
+  }, [tanSana, hisobotlarTarixi, boshlangichQoldiq]);
   const args = {
     nonlar, ishchilar, optomlar, qarzlar, mahsulotNarxlari, braklar,
     ozIshlabQoplar: fQop, tashqariSonlar: fTash, sotilmaganNon: fSot,
-    boshlangichQoldiq, qoldaYaroqsiz: fYaroqsiz, kunlikXarajatlar, oxirgiYakunlashVaqti: chegaraVaqt, sana: tanSana,
+    boshlangichQoldiq: boshlang, qoldaYaroqsiz: fYaroqsiz, kunlikXarajatlar, oxirgiYakunlashVaqti: chegaraVaqt, sana: tanSana,
     sutLitr: sutLitri((sutKirimi || {})[tanSana]),
   };
-  const stats = useMemo(() => hisoblaKunlik(args), [fQop, fTash, fSot, fYaroqsiz, nonlar, ishchilar, optomlar, qarzlar, mahsulotNarxlari, braklar, boshlangichQoldiq, kunlikXarajatlar, chegaraVaqt, tanSana, sutKirimi]);
+  const stats = useMemo(() => hisoblaKunlik(args), [fQop, fTash, fSot, fYaroqsiz, nonlar, ishchilar, optomlar, qarzlar, mahsulotNarxlari, braklar, boshlang, kunlikXarajatlar, chegaraVaqt, tanSana, sutKirimi]);
   const qadamlar = [
     { k: "qop", nom: "Qop", ok: stats.jamiQop > 0 || stats.jamiNon > 0 },
     { k: "sut", nom: "Sut", ok: sutLitri((sutKirimi || {})[tanSana]) > 0 },
@@ -130,7 +141,7 @@ export default function Qop() {
     const a = parseInt((kirimKun.m1 || {})[id]) || 0, b = parseInt((kirimKun.m2 || {})[id]) || 0;
     return a || b ? `ertalab ${a} + obeddan keyin ${b}` : "";
   };
-  const qoldiqlar = useMemo(() => qoldiqlarHisobi(nonlar, args), [fQop, fTash, fSot, fYaroqsiz, nonlar, boshlangichQoldiq, optomlar, qarzlar, chegaraVaqt, tanSana]);
+  const qoldiqlar = useMemo(() => qoldiqlarHisobi(nonlar, args), [fQop, fTash, fSot, fYaroqsiz, nonlar, boshlang, optomlar, qarzlar, chegaraVaqt, tanSana]);
   const haq = useMemo(() => ishchiHaqlari(nonlar, ishchilar, fQop, bugungiBrak), [nonlar, ishchilar, fQop, bugungiBrak]);
 
   // Forma saqlanganidan farq qilmasa (va ichida ma'lumot bo'lsa) — tugma "Saqlandi"
@@ -233,7 +244,7 @@ export default function Qop() {
         //    (bugungi karta/optom/brak/xarajat yozuvlari ham sana bilan birga)
         const snap = {
           id: Date.now(), sana, vaqt: Date.now(),
-          boshlangichQoldiq, ozIshlabQoplar: fQop, tashqariSonlar: fTash, qoldaYaroqsiz: fYaroqsiz, sotilmaganNon: fSot,
+          boshlangichQoldiq: boshlang, ozIshlabQoplar: fQop, tashqariSonlar: fTash, qoldaYaroqsiz: fYaroqsiz, sotilmaganNon: fSot,
           nonlarSnapshot: JSON.parse(JSON.stringify(nonlar)),
           ishchilarSnapshot: JSON.parse(JSON.stringify(ishchilar)),
           mahsulotNarxlariSnapshot: JSON.parse(JSON.stringify(mahsulotNarxlari)),
