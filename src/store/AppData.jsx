@@ -5,7 +5,7 @@ import { LayoutAnimation, AppState, Platform } from "react-native";
 import * as FileSystem from "expo-file-system";
 import usePersistedState, { useHidratsiya } from "./usePersistedState";
 import { arxivla } from "../logic/davr";
-import { kunYakunEslatmalari } from "../logic/bildirishnoma";
+import { kunYakunEslatmalari, birinchiMartaRuxsat } from "../logic/bildirishnoma";
 import { nusxaSaqla, nusxaBormi } from "../logic/avtoZaxira";
 import { bugunSana, keyingiSana, oldingiSana, kunRoliBilan } from "../logic/hisob";
 import { rasmSaqla, rasmFaylOchir, pdfRasmlari } from "../logic/qopRasm";
@@ -487,6 +487,14 @@ export function AppDataProvider({ children }) {
       matn: ogir("Bugungi qop hisobini kiriting va «Kunni yakunlash»ni bosing.", til),
     });
   }, [tayyor, eslatmaYoqilgan, yakunSana, eslatmaKalit]);
+
+  // Kechki eslatma standart: ruxsat hali so'ralmagan bo'lsa — ilova ochilgach bir marta so'raladi,
+  // berilsa eslatmalar darhol rejalashtiriladi (test maydonida emas)
+  useEffect(() => {
+    if (!tayyor || testmi()) return undefined;
+    const t = setTimeout(() => { birinchiMartaRuxsat().then((bor) => { if (bor) eslatmaYangila(); }); }, 2500);
+    return () => clearTimeout(t);
+  }, [tayyor]);
 
   // ── Tarixdagilar: o'chirish (arxivga) va qaytarish ──
   // tur → [joriy ro'yxat, setter]

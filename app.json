@@ -15,7 +15,7 @@
     "android": {
       "package": "com.nurnon.app",
       "versionCode": 2,
-      "permissions": ["android.permission.CAMERA"],
+      "permissions": ["android.permission.CAMERA", "android.permission.POST_NOTIFICATIONS", "android.permission.RECEIVE_BOOT_COMPLETED"],
       "backgroundColor": "#FCF4E4",
       "adaptiveIcon": {
         "foregroundImage": "./assets/icon.png",
@@ -28,6 +28,7 @@
     },
     "plugins": [
       "expo-router",
+      ["expo-notifications", { "color": "#A05F27" }],
       ["expo-font", { "fonts": ["./assets/fonts/Ionicons.ttf"] }],
       ["expo-image-picker", {
         "photosPermission": "Ertalabgi qop rasmlarini galereyadan tanlash uchun ruxsat kerak.",

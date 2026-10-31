@@ -14,6 +14,7 @@ import { ScreenHeader } from "../../src/components/ScreenHeader";
 import { ScrollBox } from "../../src/components/ScrollBox";
 import { Bosma } from "../../src/components/Bosma";
 import { EslatmalarPanel } from "../../src/components/EslatmalarPanel";
+import { KechkiEslatma, kechqurunmi } from "../../src/components/KechkiEslatma";
 import { ErtalabTekshiruv } from "../../src/components/ErtalabTekshiruv";
 import { DavomatKarta } from "../../src/components/Davomat";
 import { ixcham } from "../../src/components/Statistika";
@@ -127,6 +128,9 @@ export default function Markaz() {
     <SafeAreaView style={styles.safe} edges={["top"]}>
       <ScrollBox contentContainerStyle={styles.scroll}>
         <ScreenHeader eyebrow="Bosh sahifa" title="Markaz" image={require("../../assets/tabicons/markaz.png")} />
+
+        {/* Kechki eslatma — standart: kechqurun kun yakunlanmagan bo'lsa doim ko'rinadi */}
+        <KechkiEslatma korinadi={!locked && kechqurunmi()} />
 
         <EslatmalarPanel />
 

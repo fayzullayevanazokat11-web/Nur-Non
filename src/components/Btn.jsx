@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import { Animated, Pressable, Text, Easing, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { C, T, R, ANIM, temaStil } from "../theme";
+import { BOS_KIRISH, BOS_QAYTISH } from "../logic/fizika";
 
 export function Btn({
   children,
@@ -21,13 +22,9 @@ export function Btn({
   const fg = disabled ? C.muted : secondary ? C.sub : textColor;
 
   const v = useRef(new Animated.Value(0)).current;
+  // Prujina (barcha tugmalar bilan bir xil his): bosilganda tez, qo'yilganda yengil "sakrab"
   const animate = (to) =>
-    Animated.timing(v, {
-      toValue: to,
-      duration: ANIM.pressDuration,
-      easing: Easing.inOut(Easing.ease),
-      useNativeDriver: true,
-    }).start();
+    Animated.spring(v, { toValue: to, ...(to ? BOS_KIRISH : BOS_QAYTISH), useNativeDriver: true, restDisplacementThreshold: 0.001, restSpeedThreshold: 0.001 }).start();
 
   // Holat almashganda (yozuv yoki ikonka) — qisqa "pop"
   const holat = `${String(children)}|${icon || ""}`;
@@ -53,6 +50,7 @@ export function Btn({
       onPress={disabled ? undefined : onPress}
       disabled={disabled}
       sezgiTuri={sezgiTuri}
+      animatsiya={false}
       onPressIn={() => !disabled && animate(1)}
       onPressOut={() => !disabled && animate(0)}
       style={full ? styles.full : undefined}

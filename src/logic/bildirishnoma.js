@@ -36,6 +36,19 @@ export async function ruxsatSora() {
   } catch { return false; }
 }
 
+// Kechki eslatma — standart funksiya: ruxsat hali hech so'ralmagan bo'lsa, ilova ochilganda bir marta
+// so'raladi (yo'riqnomani o'tkazib yuborganlar ham eslatmasiz qolmasin). Rad etilgan bo'lsa — qayta
+// bezovta qilinmaydi (menyuda "Ruxsat berish" turadi). Qaytaradi: ruxsat berildimi
+export async function birinchiMartaRuxsat() {
+  if (Platform.OS === "web") return false;
+  try {
+    const joriy = await Notifications.getPermissionsAsync();
+    if (joriy.granted) return true;
+    if (joriy.status !== "undetermined" || !joriy.canAskAgain) return false;
+    return await ruxsatSora();
+  } catch { return false; }
+}
+
 // Joriy ruxsat holati (so'ramasdan): "bor" | "yoq" | "web"
 export async function ruxsatHolati() {
   if (Platform.OS === "web") return "web";

@@ -102,7 +102,7 @@ export function ExpandableCard({ header, children, defaultOpen = false, ochKalit
   const Qobiq = ichki ? View : Card;
   return (
     <Qobiq {...(ichki ? {} : { animate: false })} style={ichki ? [open && styles.ichkiOchiq, style] : [styles.card, style]}>
-      <Pressable onPress={toggle} onPressIn={() => animatePress(1)} onPressOut={() => animatePress(0)}>
+      <Pressable animatsiya={false} onPress={toggle} onPressIn={() => animatePress(1)} onPressOut={() => animatePress(0)}>
         <Animated.View needsOffscreenAlphaCompositing style={[styles.head, open ? styles.headOpen : styles.headClosed, { opacity: headOpacity }]}>
           <View style={styles.headLeft}>{header}</View>
           <Animated.View style={{ transform: [{ rotate: spin }] }}>

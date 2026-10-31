@@ -2,11 +2,12 @@
 // Ilova kodi bularni to'g'ridan-to'g'ri import qilmaydi: metro.config.js `react-native`
 // importini shu yerga yo'naltiradi, shuning uchun kelajakdagi har qanday yangi matn ham
 // avtomatik o'giriladi.
-import { forwardRef } from "react";
-import { Text as RNText, TextInput as RNTextInput, Alert as RNAlert, Pressable as RNPressable, Platform } from "react-native";
+import { forwardRef, useRef, useState } from "react";
+import { Text as RNText, TextInput as RNTextInput, Alert as RNAlert, Pressable as RNPressable, Platform, Animated, StyleSheet } from "react-native";
 import { useTil, getTil } from "./til";
 import { ogir } from "./translit";
 import { sezgi } from "../logic/sezgi";
+import { BOS_KIRISH as KIRISH, BOS_QAYTISH as QAYTISH } from "../logic/fizika";
 
 const ogirBola = (c, til) =>
   typeof c === "string" ? ogir(c, til) : Array.isArray(c) ? c.map((x) => ogirBola(x, til)) : c;
@@ -22,13 +23,47 @@ export const TextInput = forwardRef(function TextInput(props, ref) {
   return <RNTextInput ref={ref} {...props} placeholder={ogir(props.placeholder, til)} />;
 });
 
-// Pressable — bosilganda yengil tebranish (doim yoqiq).
+// Pressable — bosilganda yengil tebranish va BOSISH ANIMATSIYASI (ilovadagi barcha tugmalar uchun).
 // sezgiTuri: "bos" (sukut), "otish" (sahifa/bo'lim almashishi), "tayyor" yoki false (jim).
-export const Pressable = forwardRef(function Pressable({ onPress, sezgiTuri = "bos", ...props }, ref) {
+//
+// Animatsiya: barmoq tekkanda tugma prujina bilan biroz kichrayadi, qo'yilganda yumshoq "sakrab" qaytadi.
+//  • native driver (UI thread) — JS band bo'lsa ham silliq, kadr tashlamaydi;
+//  • qisqarish o'lchamga mos: kichik tugma ~6%, katta karta ~1–2% (chetlari ~3px ichkariga) — tabiiy;
+//  • shaffoflik o'zgarmaydi (Android'da soyali elementning chetlari qorayardi);
+//  • o'z transform animatsiyasi bor tugmalar (Bosma, Btn, style({pressed}) da scale) — tegilmaydi;
+//  • animatsiya={false} — o'chirish (masalan, ichida o'z animatsiyasi bor bo'lsa).
+const AnimPressable = Animated.createAnimatedComponent(RNPressable);
+const transformBormi = (s) => { const f = StyleSheet.flatten(s); return !!(f && f.transform); };
+
+export const Pressable = forwardRef(function Pressable(
+  { onPress, sezgiTuri = "bos", animatsiya = true, style, onPressIn, onPressOut, onLayout, disabled, ...props },
+  ref
+) {
   const bosildi = onPress
     ? (e) => { if (sezgiTuri) sezgi(sezgiTuri); onPress(e); }
     : undefined;
-  return <RNPressable ref={ref} onPress={bosildi} {...props} />;
+  const v = useRef(new Animated.Value(0)).current;
+  const [en, setEn] = useState(0);
+  const [bosilgan, setBosilgan] = useState(false);
+  const faol = !!(onPress || props.onLongPress) && !disabled;
+  // style funksiya bo'lsa — joriy bosilgan holat bilan hisoblanadi
+  const joriy = typeof style === "function" ? style({ pressed: bosilgan }) : style;
+  const oziAnimli = typeof style === "function" ? transformBormi(style({ pressed: true })) || transformBormi(joriy) : transformBormi(joriy);
+  const anim = animatsiya !== false && faol && !oziAnimli;
+  const chuqurlik = en > 0 ? Math.min(0.06, 6 / en) : 0.04;
+  const prujina = (to) => Animated.spring(v, { toValue: to, ...(to ? KIRISH : QAYTISH), useNativeDriver: Platform.OS !== "web", restDisplacementThreshold: 0.001, restSpeedThreshold: 0.001 }).start();
+  return (
+    <AnimPressable
+      ref={ref}
+      onPress={bosildi}
+      disabled={disabled}
+      onPressIn={(e) => { if (typeof style === "function") setBosilgan(true); if (anim) prujina(1); onPressIn?.(e); }}
+      onPressOut={(e) => { if (typeof style === "function") setBosilgan(false); if (anim) prujina(0); onPressOut?.(e); }}
+      onLayout={(e) => { const w = e.nativeEvent.layout.width; if (Math.abs(w - en) > 1) setEn(w); onLayout?.(e); }}
+      style={anim ? [joriy, { transform: [{ scale: v.interpolate({ inputRange: [0, 1], outputRange: [1, 1 - chuqurlik] }) }] }] : joriy}
+      {...props}
+    />
+  );
 });
 
 // Web'da RN Alert hech narsa qilmaydi — brauzerning confirm/alert oynasi bilan almashtiramiz

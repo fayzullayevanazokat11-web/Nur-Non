@@ -29,7 +29,8 @@ export function EslatmalarPanel() {
     omborlar, omborSorovlar, qarzlar, royxat, lockedDayStats,
   }) : []), [tayyor, nonlar, hisobotlarTarixi, ozIshlabQoplar, tashqariSonlar, omborlar, omborSorovlar, qarzlar, royxat, lockedDayStats, daqiqa]);
   const bugun = bugunSana();
-  const korinadi = hammasi.filter((e) => yashirin?.[e.id] !== bugun);
+  // "Kun yakunlanmagan" — Markazdagi kechki eslatma bannerida (standart, yashirib bo'lmaydi); bu yerda takrorlanmaydi
+  const korinadi = hammasi.filter((e) => e.tur !== "yakun" && yashirin?.[e.id] !== bugun);
 
   const yashir = (id) => {
     silliq();
