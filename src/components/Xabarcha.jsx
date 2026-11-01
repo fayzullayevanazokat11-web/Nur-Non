@@ -25,7 +25,8 @@ export function Xabarcha() {
         Animated.spring(a, { toValue: 1, ...PRUJINA, useNativeDriver: true }).start();
       });
       t.current = setTimeout(() => {
-        Animated.timing(a, { toValue: 0, duration: 200, useNativeDriver: true }).start(() => setMatn(null));
+        // Faqat so'nish oxirigacha yetsa tozalanadi (yangi xabar so'nishni to'xtatsa — u yo'qolmasin)
+        Animated.timing(a, { toValue: 0, duration: 200, useNativeDriver: true }).start(({ finished }) => { if (finished) setMatn(null); });
       }, 1600);
     };
     return () => { tinglovchi = null; clearTimeout(t.current); };

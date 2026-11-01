@@ -9,6 +9,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 
 import { useApp } from "../src/store/AppData";
+import { useKechikkan } from "../src/logic/kechikkan";
 import { Card } from "../src/components/Card";
 import { Btn } from "../src/components/Btn";
 import { omborRoyxati, getLavozimLabel } from "../src/logic/konstantalar";
@@ -32,6 +33,21 @@ const tekisla = (obj) => JSON.stringify(Object.keys(obj || {})
   .map((k) => [k, String(obj[k]).trim()]));
 // Ish kuni sanasi (kun tunda 03:00 da tugaydi)
 const localSana = () => bugunSana();
+
+// Kelmaganlik sababi — har harfda emas, yozish to'xtagach saqlanadi (butun ilova qayta chizilmasin)
+function SababMaydon({ label, qiymat, onSaqla }) {
+  const [saqla] = useKechikkan(onSaqla);
+  return (
+    <TextInput
+      accessibilityLabel={label}
+      defaultValue={qiymat}
+      onChangeText={saqla}
+      placeholder="Sababi (ixtiyoriy)"
+      placeholderTextColor={C.muted}
+      style={styles.sababInput}
+    />
+  );
+}
 
 export default function Qop() {
   const {
@@ -369,13 +385,10 @@ export default function Qop() {
               {(ishchilar || []).filter((w) => w.holat === "Aktiv" && w.kelmadi).map((w) => (
                 <View key={`${tanSana}-${w.id}`} style={styles.sababQator}>
                   <Text style={styles.sababIsm} numberOfLines={1}>{w.ism}</Text>
-                  <TextInput
-                    accessibilityLabel={`${w.ism}: ${tanSana} kelmaganlik sababi`}
-                    defaultValue={((kelmaslikIzohlari || {})[tanSana] || {})[w.id] || ""}
-                    onChangeText={(v) => kelmaslikIzohQoy(w.id, v, tanSana)}
-                    placeholder="Sababi (ixtiyoriy)"
-                    placeholderTextColor={C.muted}
-                    style={styles.sababInput}
+                  <SababMaydon
+                    label={`${w.ism}: ${tanSana} kelmaganlik sababi`}
+                    qiymat={((kelmaslikIzohlari || {})[tanSana] || {})[w.id] || ""}
+                    onSaqla={(v) => kelmaslikIzohQoy(w.id, v, tanSana)}
                   />
                 </View>
               ))}

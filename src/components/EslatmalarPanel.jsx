@@ -3,7 +3,7 @@
 // Hech narsa bo'lmasa panel umuman ko'rinmaydi (minimal).
 import { tikMs } from "../store/rejim";
 import { useEffect, useMemo, useState } from "react";
-import { View, Text, Pressable, StyleSheet, LayoutAnimation } from "react-native";
+import { View, Text, Pressable, StyleSheet, LayoutAnimation, AppState } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 
@@ -20,11 +20,15 @@ export function EslatmalarPanel() {
   const { nonlar, hisobotlarTarixi, ozIshlabQoplar, tashqariSonlar, omborlar, omborSorovlar, qarzlar, customMahsulotlar, lockedDayStats, tayyor } = useApp();
   // Yashirilganlar: { id: sana } — faqat shu kun uchun
   const [yashirin, setYashirin] = usePersistedState("nurnon:yashirinEslatmalar", {}, { hidratsiya: false });
-  const [daqiqa, setDaqiqa] = useState(() => new Date().getHours());
+  // Imzo: ish kuni + soat (kun almashsa — xuddi shu soatda bo'lsa ham — qayta hisoblanadi)
+  const imzo = () => `${bugunSana()}|${new Date().getHours()}`;
+  const [daqiqa, setDaqiqa] = useState(imzo);
   // Eslatmalar soat bo'yicha o'zgaradi (masalan, kechqurun) — qayta hisob faqat soat almashganda
   useEffect(() => {
-    const t = setInterval(() => setDaqiqa((x) => { const n = new Date().getHours(); return x === n ? x : n; }), tikMs(60000));
-    return () => clearInterval(t);
+    const yangila = () => setDaqiqa((x) => { const n = imzo(); return x === n ? x : n; });
+    const t = setInterval(yangila, tikMs(60000));
+    const sub = AppState.addEventListener("change", (h) => { if (h === "active") yangila(); });
+    return () => { clearInterval(t); sub.remove(); };
   }, []);
 
   const royxat = useMemo(() => omborRoyxati(customMahsulotlar), [customMahsulotlar]);

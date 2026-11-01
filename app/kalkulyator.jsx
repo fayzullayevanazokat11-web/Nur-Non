@@ -63,11 +63,12 @@ export default function Kalkulyator() {
   };
 
   // Umumiy narx paneli — sahifada sarlavha ostida; scroll qilib o'tilganda tepada qotib turadi
-  const jamiPanel = (
+  // yopishqoq — tepada qotib turadigan nusxa: joriy summadan boshlanadi (har paydo bo'lganda 0 dan sanamaydi)
+  const jamiPanel = (yopishqoq) => (
     <View style={styles.jami}>
       <View style={styles.flex1}>
         <Text style={styles.jamiNom}>UMUMIY NARX</Text>
-        <AnimSon qiymat={hisob.summa} style={styles.jamiQiymat} numberOfLines={1} adjustsFontSizeToFit />
+        <AnimSon qiymat={hisob.summa} bosh={yopishqoq ? hisob.summa : 0} style={styles.jamiQiymat} numberOfLines={1} adjustsFontSizeToFit />
         <Text style={styles.jamiDona}>{hisob.dona} dona non</Text>
       </View>
       {hisob.dona > 0 && (
@@ -85,7 +86,7 @@ export default function Kalkulyator() {
         <SahifaSarlavha eyebrow="TEZ HISOB" title="Non kalkulyatori" image={require("../assets/tabicons/kalkulyator.png")} />
         {/* Umumiy narx — scroll qilinganda tepada yopishib turadi */}
         <View style={styles.tepa} onLayout={(e) => setJamiY(e.nativeEvent.layout.y)}>
-          {jamiPanel}
+          {jamiPanel(false)}
         </View>
 
         {(nonlar || []).length === 0 ? (
@@ -140,7 +141,7 @@ export default function Kalkulyator() {
           </View>
         )}
       </ScrollBox>
-      {yopishgan && <View pointerEvents="box-none" style={[styles.yopishgan, { top: insets.top + tepaJoy }]}>{jamiPanel}</View>}
+      {yopishgan && <View pointerEvents="box-none" style={[styles.yopishgan, { top: insets.top + tepaJoy }]}>{jamiPanel(true)}</View>}
     </SafeAreaView>
   );
 }

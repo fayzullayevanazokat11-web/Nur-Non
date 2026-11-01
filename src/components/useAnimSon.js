@@ -4,9 +4,10 @@ import { createElement, useEffect, useRef, useState } from "react";
 import { Text } from "react-native";
 import { formatSom } from "../logic/hisob";
 
-export function useAnimSon(qiymat, davom = 650) {
-  const [korinish, setKorinish] = useState(0);
-  const joriy = useRef(0);
+// bosh — boshlang'ich ko'rinish (masalan, yopishqoq nusxa joriy summadan boshlansin, 0 dan sanamasin)
+export function useAnimSon(qiymat, davom = 650, bosh = 0) {
+  const [korinish, setKorinish] = useState(bosh);
+  const joriy = useRef(bosh);
   useEffect(() => {
     const boshi = joriy.current;
     const oxiri = Number(qiymat) || 0;
@@ -28,7 +29,7 @@ export function useAnimSon(qiymat, davom = 650) {
 }
 
 // Animatsiyali son matni — alohida komponent: har kadrda faqat shu Text qayta chiziladi (butun sahifa emas)
-export function AnimSon({ qiymat, style, qoshimcha = " so'm", ...rest }) {
-  const k = useAnimSon(qiymat);
+export function AnimSon({ qiymat, bosh = 0, style, qoshimcha = " so'm", ...rest }) {
+  const k = useAnimSon(qiymat, 650, bosh);
   return createElement(Text, { style, ...rest }, `${formatSom(Math.round(k))}${qoshimcha}`);
 }

@@ -36,7 +36,9 @@ export default function Ombor() {
   // hozirgi qoldig'i yoziladi (zaxira shu qiymatga tenglashtiriladi)
   const [rejim, setRejim] = useState("qosh");
   // Rejim almashsa forma ham tozalanadi: "aniq qoldiq" uchun yozilgan son "kirim" bo'lib saqlanib ketmasin (yoki aksincha)
-  useTiklash(() => { setRejim("qosh"); setForma(boshForma(royxat)); });
+  // Boshqa bo'limga o'tilganda rejim "Qo'shish"ga qaytadi; forma faqat rejim haqiqatan almashsa tozalanadi
+  // (Qo'shish rejimida yozilgan miqdorlar saqlanib qoladi)
+  useTiklash(() => { if (rejim !== "qosh") { setRejim("qosh"); setForma(boshForma(royxat)); } });
 
   const balans = useMemo(() => omborBalans(omborlar, royxat), [omborlar, royxat]);
   const setSoni = (omborlar || []).filter((h) => h.turi === "yangiset").length;

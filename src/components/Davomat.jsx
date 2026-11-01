@@ -1,11 +1,12 @@
 // "Bugungi davomat" — Markazda turadi (avval Xodimlar bo'limida edi). Kelgan xodim «Keldi» deb belgilanadi,
 // kechiksa kelgan vaqti yoziladi; ismi tagidagi qator bosilsa — bugungi ishi (boshqa lavozim, haq turi,
 // kimning o'rniga). Belgilanmagan xodimga bugungi haq hisoblanmaydi.
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { View, Text, Pressable, TextInput, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
 import { useApp } from "../store/AppData";
+import { useKechikkan } from "../logic/kechikkan";
 import { ExpandableCard } from "./ExpandableCard";
 import { useTiklash } from "./useTiklash";
 import { formatSom, sonOl, kunRoliBilan, ishchiHaqlari } from "../logic/hisob";
@@ -105,6 +106,10 @@ function rolMatni(w, rol, ishchilar) {
 function BugungiIsh({ w, rol, ishchilar, nonlar, boshqalar, onQoy }) {
   const { ozIshlabQoplar } = useApp();
   const [haq, setHaq] = useState(rol?.haq != null ? String(rol.haq) : "");
+  // Haq/narx maydonlari har harfda emas, yozish to'xtagach saqlanadi (butun ilova qayta chizilmasin).
+  // turNarx — bir necha non narxi tez ketma-ket yozilsa, hammasi bitta yozuvga yig'iladi
+  const turNarx = useRef({});
+  const [qoyKech] = useKechikkan((patch) => { turNarx.current = {}; onQoy(patch); });
   const lavozim = rol?.lavozimId || w.lavozimId;
   // Haq turi: sukut — o'zining turi. "Qop bo'yicha" tanlansa: kimning o'rniga bo'lsa o'sha odamning
   // nonlari, bo'lmasa o'zining (yoki barcha o'zimiz pishiradigan) nonlari qoplariga ko'payadi.
@@ -163,7 +168,7 @@ function BugungiIsh({ w, rol, ishchilar, nonlar, boshqalar, onQoy }) {
               <TextInput
                 accessibilityLabel={`${w.ism}: ${nom} qop narxi`}
                 defaultValue={rol?.nonNarxlari?.[nom] ? String(rol.nonNarxlari[nom]) : ""}
-                onChangeText={(v) => { const t = v.replace(/[^\d]/g, ""); onQoy({ nonNarxlari: { ...(rol?.nonNarxlari || {}), [nom]: t ? Number(t) : 0 } }); }}
+                onChangeText={(v) => { const t = v.replace(/[^\d]/g, ""); turNarx.current = { ...turNarx.current, [nom]: t ? Number(t) : 0 }; qoyKech({ nonNarxlari: { ...(rol?.nonNarxlari || {}), ...turNarx.current } }); }}
                 placeholder={asl ? `${o ? o.ism.split(" ")[0] + "da" : "odatda"}: ${formatSom(asl)}` : "1 qop uchun so'm"}
                 placeholderTextColor={C.muted}
                 keyboardType="number-pad"
@@ -176,7 +181,7 @@ function BugungiIsh({ w, rol, ishchilar, nonlar, boshqalar, onQoy }) {
       <TextInput
         accessibilityLabel={`${w.ism}: bugungi haq`}
         value={haq}
-        onChangeText={(v) => { const t = v.replace(/[^\d]/g, ""); setHaq(t); onQoy({ haq: t ? Number(t) : null }); }}
+        onChangeText={(v) => { const t = v.replace(/[^\d]/g, ""); setHaq(t); qoyKech({ haq: t ? Number(t) : null }); }}
         placeholder={haqTuri === "qop" ? "1 qop uchun so'm (bo'sh — o'zining)" : (w.haqTuri === "qop" ? "Kunlik summa (so'm)" : `Bo'sh — o'zining: ${formatSom(w.miqdor)}`)}
         placeholderTextColor={C.muted}
         keyboardType="number-pad"
@@ -219,11 +224,12 @@ function BugungiIsh({ w, rol, ishchilar, nonlar, boshqalar, onQoy }) {
 function IzohMaydon({ ism, qiymat, onSaqla }) {
   const [matn, setMatn] = useState(qiymat);
   useEffect(() => { setMatn(qiymat); }, [qiymat]);
+  const [saqla] = useKechikkan(onSaqla); // har harfda emas — yozish to'xtagach
   return (
     <TextInput
       accessibilityLabel={`${ism}: kelmaganlik sababi`}
       value={matn}
-      onChangeText={(v) => { setMatn(v); onSaqla(v); }}
+      onChangeText={(v) => { setMatn(v); saqla(v); }}
       placeholder="Sababi (ixtiyoriy): kasal, oilaviy..."
       placeholderTextColor={C.muted}
       style={styles.izohInput}

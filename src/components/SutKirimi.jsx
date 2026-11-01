@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { View, Text, TextInput, StyleSheet } from "react-native";
 
 import { useApp } from "../store/AppData";
+import { useKechikkan } from "../logic/kechikkan";
 import { formatSom, sutLitrNarxi, sutLitri, bugunSana } from "../logic/hisob";
 import { C, T, S, R, temaStil } from "../theme";
 
@@ -12,7 +13,9 @@ const MAHALLAR = [["m1", "1-mahal"], ["m2", "2-mahal"]];
 
 function LitrMaydon({ sana, mahal, nom, qiymat, onSaqla, faqatKorish }) {
   const [matn, setMatn] = useState(qiymat ? String(qiymat) : "");
-  useEffect(() => { setMatn(qiymat ? String(qiymat) : ""); }, [qiymat, sana]);
+  // Tashqaridan o'zgarsa — yangilanadi; yozilayotgan matn shu qiymatni bildirsa ("1." kabi) — tegilmaydi
+  useEffect(() => { setMatn((m) => ((parseFloat(m) || 0) === (Number(qiymat) || 0) ? m : (qiymat ? String(qiymat) : ""))); }, [qiymat, sana]);
+  const [saqla] = useKechikkan(onSaqla); // har harfda emas — yozish to'xtagach
   return (
     <View style={styles.maydon}>
       <Text style={styles.mahal}>{nom}</Text>
@@ -23,7 +26,7 @@ function LitrMaydon({ sana, mahal, nom, qiymat, onSaqla, faqatKorish }) {
           onChangeText={(v) => {
             const t = v.replace(",", ".").replace(/[^\d.]/g, "");
             setMatn(t);
-            onSaqla(parseFloat(t) || 0);
+            saqla(parseFloat(t) || 0);
           }}
           placeholder="0"
           placeholderTextColor={C.muted}

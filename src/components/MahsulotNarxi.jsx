@@ -2,10 +2,11 @@
 // Yangi ingredient: mahsulot narxi va necha kg (litr) ekani kiritiladi — 1 kg (1 litr)
 // narxini tizim o'zi topadi. Har xomashyoda ikonka (yangilarida tanlanadi).
 // Bu narxlar Assortimentdagi non foydasi hisobiga ulanadi.
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { View, Text, TextInput, Pressable, StyleSheet, Alert, LayoutAnimation } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useApp } from "../store/AppData";
+import { useKechikkan } from "../logic/kechikkan";
 import { useTiklash } from "./useTiklash";
 import { Card } from "./Card";
 import { Btn } from "./Btn";
@@ -17,6 +18,15 @@ import { XomashyoIkon, IKON_TANLOV, IkonTanlov, BosiladiganIkon, xomashyoIkonKal
 
 const baseUnit = (birlik) => (birlik === "litr" ? "ml" : "g");
 const ASOSIY_IDLAR = new Set([...OMBOR_MAYDONLAR, SUT].map((m) => m.id));
+
+// Narx/miqdor maydoni — matn shu yerda turadi, umumiy narxlar ro'yxatiga yozish to'xtagach yoziladi
+// (har harfda butun ilova qayta chizilmasin); tashqaridan o'zgarsa (masalan, qaytarish) — yangilanadi
+function NarxMaydon({ qiymat, onSaqla }) {
+  const [matn, setMatn] = useState(String(qiymat ?? ""));
+  useEffect(() => { setMatn(String(qiymat ?? "")); }, [qiymat]);
+  const [saqla] = useKechikkan(onSaqla);
+  return <TextInput value={matn} onChangeText={(v) => { setMatn(v); saqla(v); }} keyboardType="numeric" placeholder="0" placeholderTextColor={C.muted} style={styles.input} />;
+}
 
 export function Xomashyo() {
   const { nonlar, mahsulotNarxlari, setMahsulotNarxlari, customMahsulotlar, setCustomMahsulotlar, ochirArxivga, xomashyoIkonlari, xomashyoIkonQoy } = useApp();
@@ -188,11 +198,11 @@ export function Xomashyo() {
             <View style={styles.inputs}>
               <View style={styles.col}>
                 <Text style={styles.lbl}>MIQDORI ({unit.toUpperCase()})</Text>
-                <TextInput value={p.miqdor ?? ""} onChangeText={(v) => yangilaNarx(m.id, "miqdor", v)} keyboardType="numeric" placeholder="0" placeholderTextColor={C.muted} style={styles.input} />
+                <NarxMaydon qiymat={p.miqdor ?? ""} onSaqla={(v) => yangilaNarx(m.id, "miqdor", v)} />
               </View>
               <View style={styles.col}>
                 <Text style={styles.lbl}>NARXI (SO'M)</Text>
-                <TextInput value={p.narx ?? ""} onChangeText={(v) => yangilaNarx(m.id, "narx", v)} keyboardType="numeric" placeholder="0" placeholderTextColor={C.muted} style={styles.input} />
+                <NarxMaydon qiymat={p.narx ?? ""} onSaqla={(v) => yangilaNarx(m.id, "narx", v)} />
               </View>
             </View>
 

@@ -7,6 +7,7 @@ import usePersistedState, { useHidratsiya } from "./usePersistedState";
 import { arxivla } from "../logic/davr";
 import { kunYakunEslatmalari, birinchiMartaRuxsat } from "../logic/bildirishnoma";
 import { tanishuvTinglash } from "../logic/tanishuvSignal";
+import { hammasiniYoz } from "../logic/kechikkan";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { nusxaSaqla, nusxaBormi } from "../logic/avtoZaxira";
 import { bugunSana, keyingiSana, oldingiSana, kunRoliBilan } from "../logic/hisob";
@@ -321,9 +322,12 @@ export function AppDataProvider({ children }) {
   };
 
   // Saqlangan kunlik kiritmalar berilgan forma bilan bir xil bo'lsa — tozalanadi
+  // Har bir saqlangan maydon bo'sh yoki hisobotdagining aynan o'zi bo'lsa (masalan, kecha qop saqlangan,
+  // qoldiq esa yakunlashda yozilgan) — hammasi kechaniki, tozalanadi. Biror maydon farq qilsa — bugunniki, tegilmaydi.
   const kechagiKiritmalarniTozala = (forma) => {
     const juft = [[ozIshlabQoplar, forma.ozIshlabQoplar], [sotilmaganNon, forma.sotilmaganNon], [qoldaYaroqsiz, forma.qoldaYaroqsiz], [tashqariSonlar, forma.tashqariSonlar]];
-    if (juft.some(([s]) => tekisla(s) !== "[]") && juft.every(([s, f]) => tekisla(s) === tekisla(f))) {
+    const bosh = (x) => tekisla(x) === "[]";
+    if (juft.some(([s]) => !bosh(s)) && juft.every(([s, f]) => bosh(s) || tekisla(s) === tekisla(f))) {
       setOzIshlabQoplar({}); setSotilmaganNon({}); setQoldaYaroqsiz({}); setTashqariSonlar({});
     }
   };
@@ -415,7 +419,8 @@ export function AppDataProvider({ children }) {
   useEffect(() => {
     const tekshir = () => setKunKalit((p) => { const b = bugunSana(); return p === b ? p : b; });
     const t = setInterval(tekshir, tikMs(30000));
-    const sub = AppState.addEventListener("change", (h) => { if (h === "active") tekshir(); });
+    // Fonga o'tilganda maydonlarda kechiktirib saqlanayotgan qiymatlar darhol yoziladi (yo'qolmasin)
+    const sub = AppState.addEventListener("change", (h) => { if (h === "active") tekshir(); else hammasiniYoz(); });
     return () => { clearInterval(t); sub.remove(); };
   }, []);
 
@@ -578,7 +583,7 @@ export function AppDataProvider({ children }) {
     // shu kuni qaytarilsa, ular ham tiklanadi (aks holda yetim kalit sifatida tozalanib yo'qolardi)
     if (tur === "non") {
       const k = String(id);
-      qoshimcha = { ...qoshimcha, kun: bugunSana(), kunlik: {
+      qoshimcha = { ...qoshimcha, kun: bugunSana(), yakunlangan: kunYakunlanganmi(), kunlik: {
         boshlangichQoldiq: (boshlangichQoldiq || {})[k], ozIshlabQoplar: (ozIshlabQoplar || {})[k],
         tashqariSonlar: (tashqariSonlar || {})[k], sotilmaganNon: (sotilmaganNon || {})[k], qoldaYaroqsiz: (qoldaYaroqsiz || {})[k],
       } };
@@ -660,14 +665,28 @@ export function AppDataProvider({ children }) {
       setHisobotlarTarixi((p) => [...(p || []), e.snap].sort((a, b) => String(b.sana).localeCompare(String(a.sana))));
       // Kecha yakuni bekor qilinib, qayta yakunlanmay qolgan bo'lsa: bekor qilish o'sha kun formasini
       // kiritmalarga qaytargan edi — endi ular hisobotda. Tonggi qoldiq — o'sha kun oxiri qoldig'i.
-      if (e.snap.sana === oldingiSana(bugunSana())) {
+      // Faqat bugun hali ochiq bo'lsa: bugun yakunlangan bo'lsa, boshlangichQoldiq allaqachon ERTANGI tonggi
+      // qoldiq (bugungi kun oxiri) — uni eski kun qoldig'i bilan bosib bo'lmaydi.
+      if (e.snap.sana === oldingiSana(bugunSana()) && !kunYakunlanganmi()) {
         setBoshlangichQoldiq((e.forma || {}).sotilmaganNon || {});
         kechagiKiritmalarniTozala(e.forma || {});
       }
-      // Asl yakundan keyin kiritilgan yozuvlar (bekor qilinganda o'sha kunga qaytgan) — keyingi kunga
+      // Asl yakundan keyin kiritilgan yozuvlar (bekor qilinganda o'sha kunga qaytgan) — keyingi kunga.
+      // Keyingi kun ham yopilgan (hisoboti bor) bo'lsa — joriy ochiq ish kuniga: vaqti yangilanadi
+      // (asli asliVaqt'da), aks holda "oxirgi yakundan keyingi" filtridan o'tmay, hech bir hisobotga tushmasdi.
       if (e.vaqtAsl) {
-        const keyingiga = sanaKochir(e.kun, keyingiSana(e.kun), e.vaqtAsl);
-        setKartalarXom(keyingiga); setBraklarXom(keyingiga); setOptomlarXom(keyingiga); setQarzlarXom(keyingiga); setKunlikXarajatlarXom(keyingiga);
+        const keyingi = keyingiSana(e.kun);
+        if (!sanaYopiqmi(keyingi)) {
+          const k = sanaKochir(e.kun, keyingi, e.vaqtAsl);
+          setKartalarXom(k); setBraklarXom(k); setOptomlarXom(k); setQarzlarXom(k); setKunlikXarajatlarXom(k);
+        } else {
+          const ga = yozuvSanasi(), hozir = Date.now();
+          const mos = (x) => x && x.sana === e.kun && (x.vaqt || 0) > e.vaqtAsl;
+          const yangila = (arr) => ((arr || []).some(mos) ? arr.map((x) => (mos(x) ? { ...x, sana: ga, vaqt: hozir, asliVaqt: x.vaqt } : x)) : arr);
+          setKartalarXom(yangila); setBraklarXom(yangila); setOptomlarXom(yangila); setKunlikXarajatlarXom(yangila);
+          // Qarz vaqti qarz yoshini belgilaydi — faqat sanasi (va to'lovlari) ko'chadi
+          setQarzlarXom(sanaKochir(e.kun, ga, e.vaqtAsl));
+        }
       }
       // O'sha kunning xomashyo so'rovnomasi ham qaytadi (ombordan hali ayrilmagan bo'lsa)
       if (e.sorov && !(omborTasdiqlar || []).some((t) => t.sorovId === e.sorov.id)) {
@@ -727,8 +746,15 @@ export function AppDataProvider({ children }) {
     if (y.tur === "non" && q.kunlik && q.kun === bugunSana()) {
       const k = String(y.element.id);
       const tikla = (set, v) => { if (v !== undefined && v !== null && v !== "") set((p) => ((p || {})[k] !== undefined ? p : { ...(p || {}), [k]: v })); };
-      tikla(setBoshlangichQoldiq, q.kunlik.boshlangichQoldiq); tikla(setOzIshlabQoplar, q.kunlik.ozIshlabQoplar);
-      tikla(setTashqariSonlar, q.kunlik.tashqariSonlar); tikla(setSotilmaganNon, q.kunlik.sotilmaganNon); tikla(setQoldaYaroqsiz, q.kunlik.qoldaYaroqsiz);
+      if (!!q.yakunlangan === kunYakunlanganmi()) {
+        // O'chirilgandagi holat bilan bir xil — hammasi joyiga
+        tikla(setBoshlangichQoldiq, q.kunlik.boshlangichQoldiq); tikla(setOzIshlabQoplar, q.kunlik.ozIshlabQoplar);
+        tikla(setTashqariSonlar, q.kunlik.tashqariSonlar); tikla(setSotilmaganNon, q.kunlik.sotilmaganNon); tikla(setQoldaYaroqsiz, q.kunlik.qoldaYaroqsiz);
+      } else if (!q.yakunlangan && kunYakunlanganmi()) {
+        // Kun ochiqligida o'chirilib, yakunlangandan keyin qaytarildi: kiritmalar endi ertangi kunniki —
+        // faqat kun oxiri qoldig'i ertangi tonggi qoldiq bo'lib o'tadi
+        tikla(setBoshlangichQoldiq, q.kunlik.sotilmaganNon);
+      }
     }
     if (y.tur === "ingredient" && q.narx) {
       setMahsulotNarxlari((p) => ({ ...p, [y.element.id]: q.narx }));

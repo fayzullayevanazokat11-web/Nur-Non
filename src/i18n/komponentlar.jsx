@@ -2,12 +2,13 @@
 // Ilova kodi bularni to'g'ridan-to'g'ri import qilmaydi: metro.config.js `react-native`
 // importini shu yerga yo'naltiradi, shuning uchun kelajakdagi har qanday yangi matn ham
 // avtomatik o'giriladi.
-import { forwardRef, useEffect, useRef, useState } from "react";
+import { forwardRef, useLayoutEffect, useRef, useState } from "react";
 import { Text as RNText, TextInput as RNTextInput, Alert as RNAlert, Pressable as RNPressable, Platform, Animated, StyleSheet } from "react-native";
 import { useTil, getTil } from "./til";
 import { ogir } from "./translit";
 import { sezgi } from "../logic/sezgi";
 import { BOS_KIRISH as KIRISH, BOS_QAYTISH as QAYTISH } from "../logic/fizika";
+import { hammasiniYoz } from "../logic/kechikkan";
 
 const ogirBola = (c, til) =>
   typeof c === "string" ? ogir(c, til) : Array.isArray(c) ? c.map((x) => ogirBola(x, til)) : c;
@@ -50,12 +51,21 @@ export const Pressable = forwardRef(function Pressable(
   { onPress, sezgiTuri = "bos", animatsiya = true, style, onPressIn, onPressOut, onLayout, disabled, unstable_pressDelay, ...props },
   ref
 ) {
+  // Maydonlarda kechiktirib saqlanayotgan qiymat bo'lsa — bosish tugagach yoziladi va tugma ishi keyingi
+  // kadrda, yangilangan holat bilan (eng so'nggi onPress) bajariladi: eski qiymat bilan ishlamaydi.
+  // Barmoq tekkanda emas (o'shanda sahifa o'zgarib, tugma barmoq ostidan siljib ketishi mumkin edi).
+  const onPressRef = useRef(onPress); onPressRef.current = onPress;
   const bosildi = onPress
-    ? (e) => { if (sezgiTuri) sezgi(sezgiTuri); onPress(e); }
+    ? (e) => {
+      if (sezgiTuri) sezgi(sezgiTuri);
+      if (hammasiniYoz()) requestAnimationFrame(() => onPressRef.current?.(e));
+      else onPress(e);
+    }
     : undefined;
   const v = useRef(new Animated.Value(1)).current; // to'g'ridan-to'g'ri scale
   const enRef = useRef(0);
   const bosRef = useRef(false);
+  const kichraydi = useRef(false); // bosish prujinasi boshlangan — qo'yilganda albatta qaytariladi
   const funk = typeof style === "function";
   const [bosilgan, setBosilgan] = useState(false); // faqat style funksiya bo'lsa (fon rangi kabi farqlar uchun)
   const faol = !!(onPress || props.onLongPress) && !disabled;
@@ -76,8 +86,9 @@ export const Pressable = forwardRef(function Pressable(
     uslub = ochiq.opacity != null ? [qolgan, { opacity: ochiq.opacity, transform: tr }] : [qolgan, { transform: tr }];
   }
   const holat = useRef({}); holat.current = { dam, maqsad, anim };
-  // Tinch holatdagi scale o'zgarsa (kamdan-kam) — qiymat moslanadi
-  useEffect(() => { if (!bosRef.current) v.setValue(dam); }, [dam, v]);
+  // Tinch holatdagi scale o'zgarsa yoki animatsiya qayta yoqilsa (masalan, bosish tugmani o'zi o'chirib,
+  // keyin yana yoqilsa) — qiymat tinch holatga keltiriladi; v ko'rinishga ulangan paytda, chizishdan oldin
+  useLayoutEffect(() => { if (anim && !bosRef.current) { kichraydi.current = false; v.setValue(dam); } }, [dam, anim, v]);
 
   const prujina = (to, cfg) => Animated.spring(v, { toValue: to, ...cfg, useNativeDriver: !WEB, restDisplacementThreshold: 0.0005, restSpeedThreshold: 0.001 }).start();
   return (
@@ -92,6 +103,7 @@ export const Pressable = forwardRef(function Pressable(
         const h = holat.current;
         if (h.anim) {
           const en = enRef.current;
+          kichraydi.current = true;
           prujina(h.maqsad ?? h.dam * (1 - (en > 0 ? Math.min(0.06, 6 / en) : 0.04)), KIRISH);
         }
         onPressIn?.(e);
@@ -99,7 +111,9 @@ export const Pressable = forwardRef(function Pressable(
       onPressOut={(e) => {
         bosRef.current = false;
         if (funk) setBosilgan(false);
-        if (holat.current.anim) prujina(holat.current.dam, QAYTISH);
+        // Bosish paytida tugma o'chib qolgan bo'lsa ham (anim=false) — kichraygan holatda qolmasin
+        if (holat.current.anim || kichraydi.current) prujina(holat.current.dam, QAYTISH);
+        kichraydi.current = false;
         onPressOut?.(e);
       }}
       onLayout={(e) => { enRef.current = e.nativeEvent.layout.width; onLayout?.(e); }}

@@ -49,7 +49,9 @@ function useTemaParda() {
 
   if (!parda) return null;
   return (
-    <Animated.View style={[StyleSheet.absoluteFill, { opacity: ochiq }]}>
+    // needsOffscreenAlphaCompositing — ikki qatlam bitta guruh bo'lib xiralashadi (Android'da pastki yangi rang
+    // paydo bo'lish paytida sizib chiqmasin); parda faqat ~0.6 s turadi
+    <Animated.View needsOffscreenAlphaCompositing style={[StyleSheet.absoluteFill, { opacity: ochiq }]}>
       <View style={[StyleSheet.absoluteFill, { backgroundColor: parda.yangi }]} />
       <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: parda.eski, opacity: eskiOp }]} />
     </Animated.View>

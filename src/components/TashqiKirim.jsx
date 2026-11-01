@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { View, Text, TextInput, StyleSheet } from "react-native";
 
 import { useApp } from "../store/AppData";
+import { useKechikkan } from "../logic/kechikkan";
 import { formatSom, olishNarxi, bugunSana } from "../logic/hisob";
 import { C, T, S, R, temaStil } from "../theme";
 
@@ -12,12 +13,13 @@ export const MAHALLAR = [["m1", "Ertalab"], ["m2", "Obeddan keyin"]];
 
 function SonMaydon({ nom, qiymat, onSaqla, faqatKorish }) {
   const [matn, setMatn] = useState(qiymat ? String(qiymat) : "");
-  useEffect(() => { setMatn(qiymat ? String(qiymat) : ""); }, [qiymat]);
+  useEffect(() => { setMatn((m) => ((parseInt(m) || 0) === (Number(qiymat) || 0) ? m : (qiymat ? String(qiymat) : ""))); }, [qiymat]);
+  const [saqla] = useKechikkan(onSaqla); // har harfda emas — yozish to'xtagach
   return (
     <TextInput
       accessibilityLabel={nom}
       value={matn}
-      onChangeText={(v) => { const t = v.replace(/[^\d]/g, ""); setMatn(t); onSaqla(t); }}
+      onChangeText={(v) => { const t = v.replace(/[^\d]/g, ""); setMatn(t); saqla(t); }}
       placeholder="0"
       placeholderTextColor={C.muted}
       keyboardType="number-pad"
