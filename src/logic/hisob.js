@@ -118,9 +118,13 @@ export function donaFoyda(non, narxlar) {
 // Bugun optom/qarz orqali ketgan nonlar (kunlik hisobdan ayriladi).
 // oxirgiYakunlashVaqti'dan keyin yaratilganlargina kiradi — eskilar tarixga ketgan.
 // sana — hisob qaysi ish kuni uchun yuritilayotgani (sukut: bugun; o'tgan sana bilan yakunlashda boshqa)
+// hisobVaqt — yozuv boshqa kunga ko'chirilganda (masalan, qarz: uning asl vaqti qarz yoshini belgilaydi
+// va o'zgartirilmaydi) qaysi kun hisobiga kirishini bildiruvchi vaqt
+const hisobVaqti = (e) => e.hisobVaqt || e.vaqt || 0;
+
 function divertedByNon(optomlar, qarzlar, oxirgiYakunlashVaqti = 0, sana = bugunSana()) {
   const bugun = sana;
-  const yangi = (e) => (e.vaqt || 0) > (oxirgiYakunlashVaqti || 0);
+  const yangi = (e) => hisobVaqti(e) > (oxirgiYakunlashVaqti || 0);
   const map = {};
   (optomlar || []).filter((o) => o.sana === bugun && yangi(o)).forEach((o) =>
     (o.savat || []).forEach((s) => { map[s.nonNomi] = (map[s.nonNomi] || 0) + (s.soni || 0); }));
@@ -134,7 +138,7 @@ function divertedByNon(optomlar, qarzlar, oxirgiYakunlashVaqti = 0, sana = bugun
 // Shu kuni optom va qarzga sotilgan summa (chegirmadan keyin) — kunlik daromadga kiradi.
 // Qarz sotilgan kuni daromad bo'ladi; keyingi to'lovlar qayta hisoblanmaydi.
 function optomQarzSummasi(optomlar, qarzlar, oxirgiYakunlashVaqti = 0, sana = bugunSana()) {
-  const yangi = (e) => (e.vaqt || 0) > (oxirgiYakunlashVaqti || 0);
+  const yangi = (e) => hisobVaqti(e) > (oxirgiYakunlashVaqti || 0);
   const yig = (arr) => (arr || []).filter((e) => e.sana === sana && yangi(e)).reduce((s, e) => s + sonOl(e.summa), 0);
   return { optom: yig(optomlar), qarz: yig(qarzlar) };
 }

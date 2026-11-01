@@ -52,7 +52,7 @@ function SababMaydon({ label, qiymat, onSaqla }) {
 export default function Qop() {
   const {
     nonlar, ishchilar: xomIshchilar, optomlar, qarzlar, mahsulotNarxlari, braklar, kartalar,
-    ozIshlabQoplar, setOzIshlabQoplar, tashqariSonlar, setTashqariSonlar,
+    ozIshlabQoplar, setOzIshlabQoplar, tashqariSonlar, setTashqariSonlar, setKiritmaKuni,
     sotilmaganNon, setSotilmaganNon,
     boshlangichQoldiq, qoldaYaroqsiz, setQoldaYaroqsiz,
     kunlikXarajatlar,
@@ -169,6 +169,7 @@ export default function Qop() {
   const saqla = () => {
     if (saqlandi) return;
     setOzIshlabQoplar(fQop);
+    setKiritmaKuni(tanSana); // saqlangan kiritmalar shu ish kuniniki
     setTashqariSonlar(fTash);
     setSotilmaganNon(fSot);
     setQoldaYaroqsiz(fYaroqsiz);

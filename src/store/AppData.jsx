@@ -70,7 +70,7 @@ const tekisla = (obj) => JSON.stringify(Object.keys(obj || {})
 // Yozuvlar sanasini ko'chirish: `dan` sanali va `vaqtDan` dan keyin kiritilganlar → `ga`.
 // Qarz to'lovlari (ichki tolovlar) ham ko'chiriladi.
 const sanaKochir = (dan, ga, vaqtDan) => (arr) => {
-  const mos = (x) => x && x.sana === dan && (x.vaqt || 0) > (vaqtDan || 0);
+  const mos = (x) => x && x.sana === dan && (x.hisobVaqt || x.vaqt || 0) > (vaqtDan || 0);
   if (!(arr || []).some((x) => mos(x) || (x?.tolovlar || []).some(mos))) return arr;
   return arr.map((x) => {
     let y = mos(x) ? { ...x, sana: ga } : x;
@@ -100,6 +100,10 @@ export function AppDataProvider({ children }) {
 
   // ── Kunlik kiritmalar (ham saqlanadi) ──
   const [ozIshlabQoplar, setOzIshlabQoplar]       = usePersistedState("nurnon:ozIshlabQoplar", {});
+  // Saqlangan kunlik kiritmalar (qop/qoldiq/yaroqsiz/olingan dona) qaysi ish kuniga tegishli:
+  // Kunlik qop hisobida "Saqlash" — tanlangan sana; yakun bekor qilinsa — o'sha kun; yakunlanib tozalansa — "".
+  // Unutilgan kun yakunlanganda kiritmalar faqat aynan o'sha kunniki bo'lsa tozalanadi (taxmin emas).
+  const [kiritmaKuni, setKiritmaKuni]             = usePersistedState("nurnon:kiritmaKuni", "");
   const [tashqariSonlar, setTashqariSonlar]       = usePersistedState("nurnon:tashqariSonlar", {});
   const [sotilmaganNon, setSotilmaganNon]         = usePersistedState("nurnon:sotilmaganNon", {});
   const [kunlikQopSoni, setKunlikQopSoni]         = usePersistedState("nurnon:kunlikQopSoni", "");
@@ -309,26 +313,41 @@ export function AppDataProvider({ children }) {
       setOxirgiYakunlashVaqti(vaqt);
       // Kun oxiri qoldiq → ertangi tonggi zaxira; bugungi kiritmalar tozalanadi
       setBoshlangichQoldiq(forma.sotilmaganNon || {});
-      setSotilmaganNon({}); setOzIshlabQoplar({}); setTashqariSonlar({}); setQoldaYaroqsiz({});
+      setSotilmaganNon({}); setOzIshlabQoplar({}); setTashqariSonlar({}); setQoldaYaroqsiz({}); setKiritmaKuni("");
     } else if (snap.sana === oldingiSana(bugunSana())) {
       // Unutilgan KECHAGI kun: uning qoldig'i bugungi tonggi qoldiq bo'ladi.
       setBoshlangichQoldiq(forma.sotilmaganNon || {});
       // Saqlangan kiritmalar aynan kechagi formaning o'zi bo'lsa (kecha kiritilib, yakunlanmay qolgan) —
       // ular endi hisobotda; bugunga ikkinchi marta tushmasligi uchun tozalanadi. Farq qilsa — bugunniki, tegilmaydi.
-      kechagiKiritmalarniTozala(forma);
+      kechagiKiritmalarniTozala(forma, snap.sana);
     }
     // Undan ham eski kun — faqat hisobot yoziladi, bugungi holat o'zgarmaydi
     return true;
   };
 
   // Saqlangan kunlik kiritmalar berilgan forma bilan bir xil bo'lsa — tozalanadi
-  // Har bir saqlangan maydon bo'sh yoki hisobotdagining aynan o'zi bo'lsa (masalan, kecha qop saqlangan,
-  // qoldiq esa yakunlashda yozilgan) — hammasi kechaniki, tozalanadi. Biror maydon farq qilsa — bugunniki, tegilmaydi.
-  const kechagiKiritmalarniTozala = (forma) => {
+  // Saqlangan kiritmalar yakunlangan kunniki bo'lsa — endi ular hisobotda, bugunga ikkinchi marta tushmasligi
+  // uchun tozalanadi. Qaysi kunniki ekani belgidan (kiritmaKuni) olinadi: bugun saqlangani (hatto kechagisiga
+  // teng bo'lsa ham) tegilmaydi. Belgi yo'q eski ma'lumotda — taxmin: har bir saqlangan maydon bo'sh yoki
+  // hisobotdagining aynan o'zi bo'lsa.
+  const kechagiKiritmalarniTozala = (forma, sana) => {
     const juft = [[ozIshlabQoplar, forma.ozIshlabQoplar], [sotilmaganNon, forma.sotilmaganNon], [qoldaYaroqsiz, forma.qoldaYaroqsiz], [tashqariSonlar, forma.tashqariSonlar]];
     const bosh = (x) => tekisla(x) === "[]";
-    if (juft.some(([s]) => !bosh(s)) && juft.every(([s, f]) => bosh(s) || tekisla(s) === tekisla(f))) {
-      setOzIshlabQoplar({}); setSotilmaganNon({}); setQoldaYaroqsiz({}); setTashqariSonlar({});
+    if (!juft.some(([s]) => !bosh(s))) return;
+    const ularniki = kiritmaKuni
+      ? kiritmaKuni === sana
+      : juft.every(([s, f]) => bosh(s) || tekisla(s) === tekisla(f));
+    if (ularniki) {
+      setOzIshlabQoplar({}); setSotilmaganNon({}); setQoldaYaroqsiz({});
+      // Olingan dona bugungi Kunlik vazifa kirimidan qayta tuziladi (bugun tashqi non kelgan bo'lsa — yo'qolmasin)
+      const k = (tashqiKirim || {})[bugunSana()] || {};
+      const bugungi = {};
+      new Set([...Object.keys(k.m1 || {}), ...Object.keys(k.m2 || {})]).forEach((id) => {
+        const n = (parseInt((k.m1 || {})[id]) || 0) + (parseInt((k.m2 || {})[id]) || 0);
+        if (n > 0) bugungi[id] = String(n);
+      });
+      setTashqariSonlar(bugungi);
+      setKiritmaKuni(Object.keys(bugungi).length ? bugunSana() : "");
     }
   };
 
@@ -379,6 +398,7 @@ export function AppDataProvider({ children }) {
     setOxirgiYakunlashVaqti(oldin.oxirgiYakunlashVaqti || 0);
     setBoshlangichQoldiq(oldin.boshlangichQoldiq || {});
     setOzIshlabQoplar(oldin.ozIshlabQoplar || {});
+    setKiritmaKuni(yakunBekor.kun); // kiritmalarga yana o'sha kun formasi qaytdi
     setTashqariSonlar(oldin.tashqariSonlar || {});
     setSotilmaganNon(oldin.sotilmaganNon || {});
     setQoldaYaroqsiz(oldin.qoldaYaroqsiz || {});
@@ -498,6 +518,7 @@ export function AppDataProvider({ children }) {
         if (jami > 0) q[nonId] = String(jami); else delete q[nonId];
         return q;
       });
+      if (!kiritmaKuni) setKiritmaKuni(bugunSana()); // olingan dona — bugungi kiritma
       // Ertalabgi kirim yozilsa — qadam bajarildi (vazifa tasdiqlangandan keyin belgilar o'zgarmaydi)
       if (ertalabOl().tugallandi) return;
       const ertalabgi = Object.values(yangiKun.m1 || {}).some((v) => v > 0) || Object.values(yangiKun.m2 || {}).some((v) => v > 0);
@@ -669,7 +690,7 @@ export function AppDataProvider({ children }) {
       // qoldiq (bugungi kun oxiri) — uni eski kun qoldig'i bilan bosib bo'lmaydi.
       if (e.snap.sana === oldingiSana(bugunSana()) && !kunYakunlanganmi()) {
         setBoshlangichQoldiq((e.forma || {}).sotilmaganNon || {});
-        kechagiKiritmalarniTozala(e.forma || {});
+        kechagiKiritmalarniTozala(e.forma || {}, e.snap.sana);
       }
       // Asl yakundan keyin kiritilgan yozuvlar (bekor qilinganda o'sha kunga qaytgan) — keyingi kunga.
       // Keyingi kun ham yopilgan (hisoboti bor) bo'lsa — joriy ochiq ish kuniga: vaqti yangilanadi
@@ -684,8 +705,13 @@ export function AppDataProvider({ children }) {
           const mos = (x) => x && x.sana === e.kun && (x.vaqt || 0) > e.vaqtAsl;
           const yangila = (arr) => ((arr || []).some(mos) ? arr.map((x) => (mos(x) ? { ...x, sana: ga, vaqt: hozir, asliVaqt: x.vaqt } : x)) : arr);
           setKartalarXom(yangila); setBraklarXom(yangila); setOptomlarXom(yangila); setKunlikXarajatlarXom(yangila);
-          // Qarz vaqti qarz yoshini belgilaydi — faqat sanasi (va to'lovlari) ko'chadi
-          setQarzlarXom(sanaKochir(e.kun, ga, e.vaqtAsl));
+          // Qarz vaqti qarz yoshini belgilaydi — o'zgarmaydi; hisobga kirishi uchun alohida hisobVaqt
+          // qo'yiladi (to'lovlari ham ko'chadi)
+          setQarzlarXom((arr) => {
+            const k = sanaKochir(e.kun, ga, e.vaqtAsl)(arr);
+            if (k === arr) return arr;
+            return k.map((x, i) => (x.sana === ga && arr[i]?.sana === e.kun && mos(arr[i]) ? { ...x, hisobVaqt: hozir } : x));
+          });
         }
       }
       // O'sha kunning xomashyo so'rovnomasi ham qaytadi (ombordan hali ayrilmagan bo'lsa)
@@ -938,6 +964,7 @@ export function AppDataProvider({ children }) {
     narxTarixi: [narxTarixi, setNarxTarixi, "array"],
     xomashyoIkonlari: [xomashyoIkonlari, setXomashyoIkonlari, "object"],
     ertalabTekshiruv: [ertalabTekshiruv, setErtalabTekshiruv, "objectOrNull"],
+    kiritmaKuni: [kiritmaKuni, setKiritmaKuni, "string"],
   };
 
   // Joriy bazaning to'liq nusxasi
@@ -1032,7 +1059,7 @@ export function AppDataProvider({ children }) {
     braklar: BRAKSIZ, setBraklar,
     gazNarx, setGazNarx,
     elektroNarx, setElektroNarx,
-    ozIshlabQoplar, setOzIshlabQoplar,
+    ozIshlabQoplar, setOzIshlabQoplar, kiritmaKuni, setKiritmaKuni,
     tashqariSonlar, setTashqariSonlar,
     sotilmaganNon, setSotilmaganNon,
     kunlikQopSoni, setKunlikQopSoni,
